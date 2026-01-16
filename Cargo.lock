@@ -275,7 +275,11 @@ checksum = "3397ab3fc5b198bbfe55d827ff58bd69f2a8d3f9f71c3732c23c2093fec4d3ef"
 dependencies = [
  "anchor-lang",
  "spl-associated-token-account",
+ "spl-pod",
  "spl-token",
+ "spl-token-2022",
+ "spl-token-group-interface",
+ "spl-token-metadata-interface",
 ]
 
 [[package]]
@@ -3184,6 +3188,7 @@ name = "sealed_bid_auction"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "anchor-spl",
  "arcium-anchor",
  "arcium-client",
  "arcium-macros",
