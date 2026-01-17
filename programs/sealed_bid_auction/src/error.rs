@@ -14,8 +14,4 @@ pub enum ErrorCode {
     WrongAuctionType,
     #[msg("Unauthorized")]
     Unauthorized,
-    #[msg("Maximum number of options reached for this market")]
-    MaxOptionsReached,
-    #[msg("Invalid option index - must be current_options + 1")]
-    InvalidOptionIndex,
 }

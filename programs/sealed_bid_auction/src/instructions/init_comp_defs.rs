@@ -83,9 +83,9 @@ pub fn init_determine_winner_vickrey_comp_def(
     Ok(())
 }
 
-#[init_computation_definition_accounts("init_option_state", payer)]
+#[init_computation_definition_accounts("init_market_state", payer)]
 #[derive(Accounts)]
-pub struct InitOptionStateCompDef<'info> {
+pub struct InitMarketStateCompDef<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     #[account(mut, address = derive_mxe_pda!())]
@@ -97,7 +97,7 @@ pub struct InitOptionStateCompDef<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn init_option_state_comp_def(ctx: Context<InitOptionStateCompDef>) -> Result<()> {
+pub fn init_market_state_comp_def(ctx: Context<InitMarketStateCompDef>) -> Result<()> {
     init_comp_def(ctx.accounts, None, None)?;
     Ok(())
 }

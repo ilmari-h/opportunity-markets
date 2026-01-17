@@ -17,7 +17,7 @@ pub const COMP_DEF_OFFSET_PLACE_BID: u32 = comp_def_offset("place_bid");
 pub const COMP_DEF_OFFSET_DETERMINE_WINNER_FIRST_PRICE: u32 =
     comp_def_offset("determine_winner_first_price");
 pub const COMP_DEF_OFFSET_DETERMINE_WINNER_VICKREY: u32 = comp_def_offset("determine_winner_vickrey");
-pub const COMP_DEF_OFFSET_INIT_OPTION_STATE: u32 = comp_def_offset("init_option_state");
+pub const COMP_DEF_OFFSET_INIT_MARKET_STATE: u32 = comp_def_offset("init_market_state");
 
 declare_id!("D1Zf4HpT6LpLZhGbUD4QXqAHjseNq2Ni8C4aVE2urtuw");
 
@@ -96,29 +96,25 @@ pub mod sealed_bid_auction {
         instructions::close_auction(ctx)
     }
 
-    pub fn create_market(ctx: Context<CreateMarket>, market_index: u64) -> Result<()> {
-        instructions::create_market(ctx, market_index)
+    pub fn init_market_state_comp_def(ctx: Context<InitMarketStateCompDef>) -> Result<()> {
+        instructions::init_market_state_comp_def(ctx)
     }
 
-    pub fn init_option_state_comp_def(ctx: Context<InitOptionStateCompDef>) -> Result<()> {
-        instructions::init_option_state_comp_def(ctx)
-    }
-
-    pub fn create_option(
-        ctx: Context<CreateOption>,
+    pub fn create_market(
+        ctx: Context<CreateMarket>,
         computation_offset: u64,
-        option_index: u16,
+        market_index: u64,
         nonce: u128,
     ) -> Result<()> {
-        instructions::create_option(ctx, computation_offset, option_index, nonce)
+        instructions::create_market(ctx, computation_offset, market_index, nonce)
     }
 
-    #[arcium_callback(encrypted_ix = "init_option_state")]
-    pub fn init_option_state_callback(
-        ctx: Context<InitOptionStateCallback>,
-        output: SignedComputationOutputs<InitOptionStateOutput>,
+    #[arcium_callback(encrypted_ix = "init_market_state")]
+    pub fn init_market_state_callback(
+        ctx: Context<InitMarketStateCallback>,
+        output: SignedComputationOutputs<InitMarketStateOutput>,
     ) -> Result<()> {
-        instructions::init_option_state_callback(ctx, output)
+        instructions::init_market_state_callback(ctx, output)
     }
 
     pub fn determine_winner_first_price(

@@ -71,7 +71,7 @@ pub fn create_auction(
     auction.end_time = end_time;
     auction.bid_count = 0;
     auction.state_nonce = nonce;
-    auction.encrypted_state = [[0u8; 32]; 5];
+    auction.encrypted_state = [[0u8; 32]; 10];
 
     ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
 

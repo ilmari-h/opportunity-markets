@@ -85,15 +85,19 @@ mod circuits {
         .reveal()
     }
 
-    // Conviction market option state - tracks total stake for an option
-    pub struct OptionState {
-        pub total_stake: u64,
+    // Conviction market state - tracks vote counts for all options
+    // Using individual fields to match AuctionState pattern (5 ciphertexts)
+    pub struct MarketState {
+        pub votes: [u64; 10],
     }
 
     #[instruction]
-    pub fn init_option_state(mxe: Mxe) -> Enc<Mxe, OptionState> {
-        let initial_state = OptionState {
-            total_stake: 0,
+    pub fn init_market_state(mxe: Mxe) -> Enc<Mxe, MarketState> {
+        let initial_state = MarketState {
+            votes: [
+                0, 0, 0, 0 ,0,
+                0, 0, 0, 0 ,0,
+                ],
         };
         mxe.from_arcis(initial_state)
     }

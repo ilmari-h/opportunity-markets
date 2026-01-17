@@ -24,7 +24,7 @@ pub struct Auction {
     pub end_time: i64,
     pub bid_count: u8,
     pub state_nonce: u128,
-    pub encrypted_state: [[u8; 32]; 5],
+    pub encrypted_state: [[u8; 32]; 10],
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace)]
@@ -40,20 +40,7 @@ pub struct ConvictionMarket {
     pub bump: u8,
     pub creator: Pubkey,
     pub index: u64,
-
     pub reward_token_mint: Pubkey,
-    pub current_options: u8,
-
-    pub encrypted_state: [[u8; 32]; 10],
-}
-
-
-#[account]
-#[derive(InitSpace)]
-pub struct ConvictionOption {
-    pub bump: u8,
-    pub option_index: u16,
-    pub market: Pubkey,
     pub state_nonce: u128,
-    pub encrypted_state: [[u8; 32]; 1],
+    pub encrypted_state: [[u8; 32]; 10],
 }

@@ -103,6 +103,10 @@ describe("SealedBidAuction", () => {
 
       console.log("4. Initializing determine_winner_vickrey comp def...");
       await initCompDef(program, owner, "determine_winner_vickrey");
+      console.log("   Done.");
+
+      console.log("5. Initializing init_market_state comp def...");
+      await initCompDef(program, owner, "init_market_state");
       console.log("   Done.\n");
 
       compDefsInitialized = true;
@@ -606,7 +610,7 @@ describe("SealedBidAuction", () => {
   // });
 
   describe("ConvictionMarket", () => {
-    it("creates a conviction market and emits event", async () => {
+    it("creates a conviction market with MPC-initialized encrypted state", async () => {
       console.log("\n=== ConvictionMarket Test ===\n");
 
       // Create a token mint for rewards
@@ -629,15 +633,35 @@ describe("SealedBidAuction", () => {
       // Listen for the event
       const marketCreatedPromise = awaitEvent("marketCreatedEvent");
 
-      // Create market
-      console.log("\nStep 2: Creating conviction market...");
+      // Create market with MPC initialization
+      console.log("\nStep 2: Creating conviction market with MPC initialization...");
+      const computationOffset = new anchor.BN(randomBytes(8), "hex");
       const marketIndex = new anchor.BN(1);
+      const nonce = randomBytes(16);
 
       const createMarketSig = await program.methods
-        .createMarket(marketIndex)
+        .createMarket(
+          computationOffset,
+          marketIndex,
+          new anchor.BN(deserializeLE(nonce).toString())
+        )
         .accountsPartial({
           creator: owner.publicKey,
           market: marketPDA,
+          computationAccount: getComputationAccAddress(
+            arciumEnv.arciumClusterOffset,
+            computationOffset
+          ),
+          clusterAccount,
+          mxeAccount: getMXEAccAddress(program.programId),
+          mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+          executingPool: getExecutingPoolAccAddress(
+            arciumEnv.arciumClusterOffset
+          ),
+          compDefAccount: getCompDefAccAddress(
+            program.programId,
+            Buffer.from(getCompDefAccOffset("init_market_state")).readUInt32LE()
+          ),
           rewardTokenMint: rewardMint,
           tokenProgram: TOKEN_PROGRAM_ID,
         })
@@ -645,13 +669,21 @@ describe("SealedBidAuction", () => {
 
       console.log("   Create market tx:", createMarketSig);
 
+      // Wait for MPC computation to finalize
+      const finalizeSig = await awaitComputationFinalization(
+        provider as anchor.AnchorProvider,
+        computationOffset,
+        program.programId,
+        "confirmed"
+      );
+      console.log("   Finalize tx:", finalizeSig);
+
       // Verify event
       const marketCreatedEvent = await marketCreatedPromise;
       console.log("\n=== Market Created Event ===");
       console.log("   Market:", marketCreatedEvent.market.toBase58());
       console.log("   Creator:", marketCreatedEvent.creator.toBase58());
       console.log("   Index:", marketCreatedEvent.index.toNumber());
-      console.log("   Max Options:", marketCreatedEvent.maxOptions);
 
       // Assertions
       expect(marketCreatedEvent.market.toBase58()).to.equal(marketPDA.toBase58());
@@ -659,7 +691,6 @@ describe("SealedBidAuction", () => {
         owner.publicKey.toBase58()
       );
       expect(marketCreatedEvent.index.toNumber()).to.equal(1);
-      expect(marketCreatedEvent.maxOptions).to.equal(100);
 
       // Fetch and verify on-chain account
       const marketAccount = await program.account.convictionMarket.fetch(
@@ -669,11 +700,13 @@ describe("SealedBidAuction", () => {
         owner.publicKey.toBase58()
       );
       expect(marketAccount.index.toNumber()).to.equal(1);
-      expect(marketAccount.maxOptions).to.equal(100);
-      expect(marketAccount.currentOptions).to.equal(0);
       expect(marketAccount.rewardTokenMint.toBase58()).to.equal(
         rewardMint.toBase58()
       );
+
+      // Verify encrypted state was initialized (should have non-zero nonce after MPC callback)
+      console.log("   State nonce:", marketAccount.stateNonce.toString());
+      expect(marketAccount.stateNonce.toString()).to.not.equal("0");
 
       console.log("\n   ConvictionMarket test PASSED!");
     });
@@ -741,6 +774,17 @@ describe("SealedBidAuction", () => {
       case "determine_winner_vickrey":
         sig = await program.methods
           .initDetermineWinnerVickreyCompDef()
+          .accounts({
+            compDefAccount: compDefPDA,
+            payer: owner.publicKey,
+            mxeAccount: getMXEAccAddress(program.programId),
+          })
+          .signers([owner])
+          .rpc({ preflightCommitment: "confirmed" });
+        break;
+      case "init_market_state":
+        sig = await program.methods
+          .initMarketStateCompDef()
           .accounts({
             compDefAccount: compDefPDA,
             payer: owner.publicKey,
