@@ -1,0 +1,141 @@
+
+use anchor_lang::prelude::*;
+use arcium_anchor::prelude::*;
+use arcium_client::idl::arcium::types::CallbackAccount;
+
+use crate::error::ErrorCode;
+use crate::state::VoteToken;
+use crate::{COMP_DEF_OFFSET_CALCULATE_VOTE_TOKEN_BALANCE};
+use crate::{ID, ID_CONST, SignerAccount};
+
+pub const VOTE_TOKEN_VAULT_SEED: &[u8] = b"vote_token_vault";
+
+#[queue_computation_accounts("calculate_vote_token_balance", signer)]
+#[derive(Accounts)]
+#[instruction(computation_offset: u64)]
+pub struct MintVoteTokens<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"vote_token_account", signer.key().as_ref()],
+        bump = vote_token_account.bump,
+    )]
+    pub vote_token_account: Account<'info, VoteToken>,
+
+    // Arcium accounts
+    #[account(
+        init_if_needed,
+        space = 9,
+        payer = signer,
+        seeds = [&SIGN_PDA_SEED],
+        bump,
+        address = derive_sign_pda!(),
+    )]
+    pub sign_pda_account: Account<'info, SignerAccount>,
+    #[account(address = derive_mxe_pda!())]
+    pub mxe_account: Account<'info, MXEAccount>,
+    #[account(mut, address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet))]
+    /// CHECK: mempool_account
+    pub mempool_account: UncheckedAccount<'info>,
+    #[account(mut, address = derive_execpool_pda!(mxe_account, ErrorCode::ClusterNotSet))]
+    /// CHECK: executing_pool
+    pub executing_pool: UncheckedAccount<'info>,
+    #[account(mut, address = derive_comp_pda!(computation_offset, mxe_account, ErrorCode::ClusterNotSet))]
+    /// CHECK: computation_account
+    pub computation_account: UncheckedAccount<'info>,
+    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_CALCULATE_VOTE_TOKEN_BALANCE))]
+    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    #[account(mut, address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet))]
+    pub cluster_account: Account<'info, Cluster>,
+    #[account(mut, address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS)]
+    pub pool_account: Account<'info, FeePool>,
+    #[account(address = ARCIUM_CLOCK_ACCOUNT_ADDRESS)]
+    pub clock_account: Account<'info, ClockAccount>,
+    pub system_program: Program<'info, System>,
+    pub arcium_program: Program<'info, Arcium>,
+}
+
+pub fn mint_vote_tokens(
+    ctx: Context<MintVoteTokens>,
+    computation_offset: u64,
+    trade_amount: u64,
+    buy: bool,
+) -> Result<()> {
+    // Initialize vote token fields
+    let vta = &mut ctx.accounts.vote_token_account;
+    let vta_pubkey = vta.key();
+
+    // TODO: trade logic!
+
+    // Build args for encrypted computation
+    let args = ArgBuilder::new()
+        .plaintext_u128(vta.state_nonce)
+        .account(vta_pubkey, 8, 32 * 1)
+        .plaintext_u64(trade_amount)
+        .plaintext_bool(buy)
+        .build();
+
+    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
+
+    // Queue computation with callback
+    queue_computation(
+        ctx.accounts,
+        computation_offset,
+        args,
+        None,
+        vec![CalculateVoteTokenBalanceCallback::callback_ix(
+            computation_offset,
+            &ctx.accounts.mxe_account,
+            &[CallbackAccount {
+                pubkey: vta_pubkey,
+                is_writable: true,
+            }],
+        )?],
+        1,
+        0,
+    )?;
+
+    Ok(())
+}
+
+#[callback_accounts("calculate_vote_token_balance")]
+#[derive(Accounts)]
+pub struct CalculateVoteTokenBalanceCallback<'info> {
+    pub arcium_program: Program<'info, Arcium>,
+    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_CALCULATE_VOTE_TOKEN_BALANCE))]
+    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    #[account(address = derive_mxe_pda!())]
+    pub mxe_account: Account<'info, MXEAccount>,
+    /// CHECK: computation_account
+    pub computation_account: UncheckedAccount<'info>,
+    #[account(address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet))]
+    pub cluster_account: Account<'info, Cluster>,
+    #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
+    /// CHECK: instructions_sysvar
+    pub instructions_sysvar: AccountInfo<'info>,
+
+    // Callback account
+    #[account(mut)]
+    pub vote_token_account: Account<'info, VoteToken>,
+}
+
+pub fn calculate_vote_token_balance_callback(
+    ctx: Context<CalculateVoteTokenBalanceCallback>,
+    output: SignedComputationOutputs<CalculateVoteTokenBalanceOutput>,
+) -> Result<()> {
+    let o = match output.verify_output(
+        &ctx.accounts.cluster_account,
+        &ctx.accounts.computation_account,
+    ) {
+        Ok(CalculateVoteTokenBalanceOutput { field_0 }) => field_0,
+        Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+    };
+
+    let vta = &mut ctx.accounts.vote_token_account;
+    vta.state_nonce = o.nonce;
+    vta.encrypted_state = o.ciphertexts;
+
+    Ok(())
+}

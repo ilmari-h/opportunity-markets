@@ -1,45 +1,35 @@
 use anchor_lang::prelude::*;
-use anchor_lang::system_program::{transfer, Transfer};
 use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::state::{VoteToken, VoteTokenVault};
-use crate::COMP_DEF_OFFSET_INIT_VOTE_TOKEN;
+use crate::state::VoteToken;
+use crate::COMP_DEF_OFFSET_INIT_VOTE_TOKEN_ACCOUNT;
 use crate::{ID, ID_CONST, SignerAccount};
 
 pub const VOTE_TOKEN_VAULT_SEED: &[u8] = b"vote_token_vault";
 
-#[queue_computation_accounts("init_vote_token", buyer)]
+#[queue_computation_accounts("init_vote_token_account", signer)]
 #[derive(Accounts)]
 #[instruction(computation_offset: u64)]
-pub struct PurchaseVoteToken<'info> {
+pub struct InitVoteTokenAccount<'info> {
     #[account(mut)]
-    pub buyer: Signer<'info>,
+    pub signer: Signer<'info>,
 
     #[account(
         init,
-        payer = buyer,
+        payer = signer,
         space = 8 + VoteToken::INIT_SPACE,
-        seeds = [b"vote_token", buyer.key().as_ref()],
+        seeds = [b"vote_token_account", signer.key().as_ref()],
         bump,
     )]
-    pub vote_token: Account<'info, VoteToken>,
-
-    #[account(
-        init_if_needed,
-        payer = buyer,
-        space = 8 + VoteTokenVault::INIT_SPACE,
-        seeds = [VOTE_TOKEN_VAULT_SEED],
-        bump,
-    )]
-    pub vote_token_vault: Account<'info, VoteTokenVault>,
+    pub vote_token_account: Account<'info, VoteToken>,
 
     // Arcium accounts
     #[account(
         init_if_needed,
         space = 9,
-        payer = buyer,
+        payer = signer,
         seeds = [&SIGN_PDA_SEED],
         bump,
         address = derive_sign_pda!(),
@@ -56,7 +46,7 @@ pub struct PurchaseVoteToken<'info> {
     #[account(mut, address = derive_comp_pda!(computation_offset, mxe_account, ErrorCode::ClusterNotSet))]
     /// CHECK: computation_account
     pub computation_account: UncheckedAccount<'info>,
-    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_INIT_VOTE_TOKEN))]
+    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_INIT_VOTE_TOKEN_ACCOUNT))]
     pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
     #[account(mut, address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet))]
     pub cluster_account: Account<'info, Cluster>,
@@ -64,53 +54,26 @@ pub struct PurchaseVoteToken<'info> {
     pub pool_account: Account<'info, FeePool>,
     #[account(address = ARCIUM_CLOCK_ACCOUNT_ADDRESS)]
     pub clock_account: Account<'info, ClockAccount>,
-
     pub system_program: Program<'info, System>,
     pub arcium_program: Program<'info, Arcium>,
 }
 
-pub fn purchase_vote_token(
-    ctx: Context<PurchaseVoteToken>,
+// https://github.com/Pythia-Markets/pythia-opportunity-markets/blob/master/programs/pythia_op/src/lib.rs
+pub fn init_vote_token_account(
+    ctx: Context<InitVoteTokenAccount>,
     computation_offset: u64,
-    lamports_to_spend: u64,
-    encrypted_amount: [u8; 32],
-    buyer_pubkey: [u8; 32],
-    nonce: u128,
+    nonce: u128
 ) -> Result<()> {
-    // Transfer SOL to vault
-    transfer(
-        CpiContext::new(
-            ctx.accounts.system_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.buyer.to_account_info(),
-                to: ctx.accounts.vote_token_vault.to_account_info(),
-            },
-        ),
-        lamports_to_spend,
-    )?;
-
-    // Update vault tracking
-    let vault = &mut ctx.accounts.vote_token_vault;
-    if vault.bump == 0 {
-        vault.bump = ctx.bumps.vote_token_vault;
-    }
-    vault.bought_lamports = vault.bought_lamports.checked_add(lamports_to_spend)
-        .ok_or(ErrorCode::Overflow)?;
-
     // Initialize vote token fields
-    let vote_token = &mut ctx.accounts.vote_token;
-    vote_token.bump = ctx.bumps.vote_token;
-    vote_token.owner = ctx.accounts.buyer.key();
-    vote_token.state_nonce = nonce;
-
-    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
+    let vote_token = &mut ctx.accounts.vote_token_account;
+    vote_token.bump = ctx.bumps.vote_token_account;
+    vote_token.owner = ctx.accounts.signer.key();
+    vote_token.state_nonce = 0;
 
     // Build args for encrypted computation
-    let args = ArgBuilder::new()
-        .x25519_pubkey(buyer_pubkey)
-        .encrypted_u64(encrypted_amount)
-        .plaintext_u128(nonce)
-        .build();
+    let args = ArgBuilder::new().plaintext_u128(nonce).build();
+
+    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
 
     // Queue computation with callback
     queue_computation(
@@ -118,11 +81,11 @@ pub fn purchase_vote_token(
         computation_offset,
         args,
         None,
-        vec![InitVoteTokenCallback::callback_ix(
+        vec![InitVoteTokenAccountCallback::callback_ix(
             computation_offset,
             &ctx.accounts.mxe_account,
             &[CallbackAccount {
-                pubkey: ctx.accounts.vote_token.key(),
+                pubkey: ctx.accounts.vote_token_account.key(),
                 is_writable: true,
             }],
         )?],
@@ -133,11 +96,11 @@ pub fn purchase_vote_token(
     Ok(())
 }
 
-#[callback_accounts("init_vote_token")]
+#[callback_accounts("init_vote_token_account")]
 #[derive(Accounts)]
-pub struct InitVoteTokenCallback<'info> {
+pub struct InitVoteTokenAccountCallback<'info> {
     pub arcium_program: Program<'info, Arcium>,
-    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_INIT_VOTE_TOKEN))]
+    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_INIT_VOTE_TOKEN_ACCOUNT))]
     pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
     #[account(address = derive_mxe_pda!())]
     pub mxe_account: Account<'info, MXEAccount>,
@@ -152,15 +115,15 @@ pub struct InitVoteTokenCallback<'info> {
     pub vote_token: Account<'info, VoteToken>,
 }
 
-pub fn init_vote_token_callback(
-    ctx: Context<InitVoteTokenCallback>,
-    output: SignedComputationOutputs<InitVoteTokenOutput>,
+pub fn init_vote_token_account_callback(
+    ctx: Context<InitVoteTokenAccountCallback>,
+    output: SignedComputationOutputs<InitVoteTokenAccountOutput>,
 ) -> Result<()> {
     let o = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
-        Ok(InitVoteTokenOutput { field_0 }) => field_0,
+        Ok(InitVoteTokenAccountOutput { field_0 }) => field_0,
         Err(_) => return Err(ErrorCode::AbortedComputation.into()),
     };
 

@@ -13,10 +13,10 @@ pub struct ConvictionMarket {
 #[account]
 #[derive(InitSpace)]
 pub struct VoteToken {
+    pub encrypted_state: [[u8; 32]; 1],  // encrypted token amount
     pub bump: u8,
     pub owner: Pubkey,
     pub state_nonce: u128,
-    pub encrypted_state: [[u8; 32]; 1],  // encrypted token amount
 }
 
 #[account]
