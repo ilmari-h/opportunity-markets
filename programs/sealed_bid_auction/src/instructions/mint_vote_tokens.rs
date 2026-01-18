@@ -1,14 +1,17 @@
+use std::ops::Mul;
 
 use anchor_lang::prelude::*;
+use anchor_lang::system_program;
 use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
 use crate::state::VoteToken;
-use crate::{COMP_DEF_OFFSET_CALCULATE_VOTE_TOKEN_BALANCE};
+use crate::COMP_DEF_OFFSET_CALCULATE_VOTE_TOKEN_BALANCE;
 use crate::{ID, ID_CONST, SignerAccount};
 
-pub const VOTE_TOKEN_VAULT_SEED: &[u8] = b"vote_token_vault";
+pub const VOTE_TOKEN_ACCOUNT_SEED: &[u8] = b"vote_token_account";
+pub const PRICE_PER_VOTE_TOKEN_LAMPORTS: u64 = 1_000_000; // 0.001 SOL per vote token
 
 #[queue_computation_accounts("calculate_vote_token_balance", signer)]
 #[derive(Accounts)]
@@ -19,7 +22,7 @@ pub struct MintVoteTokens<'info> {
 
     #[account(
         mut,
-        seeds = [b"vote_token_account", signer.key().as_ref()],
+        seeds = [VOTE_TOKEN_ACCOUNT_SEED, signer.key().as_ref()],
         bump = vote_token_account.bump,
     )]
     pub vote_token_account: Account<'info, VoteToken>,
@@ -63,23 +66,43 @@ pub fn mint_vote_tokens(
     trade_amount: u64,
     buy: bool,
 ) -> Result<()> {
-    // Initialize vote token fields
     let vta = &mut ctx.accounts.vote_token_account;
     let vta_pubkey = vta.key();
+    let signer = &ctx.accounts.signer;
 
-    // TODO: trade logic!
+    let lamports_amount = trade_amount
+        .checked_mul(PRICE_PER_VOTE_TOKEN_LAMPORTS)
+        .ok_or(ErrorCode::InsufficientBalance)?;
+
+    // Selling: actual transfer happens in callback if successful
+    if buy {
+        // Buying: transfer SOL from user to vote_token_account PDA
+        system_program::transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                system_program::Transfer {
+                    from: signer.to_account_info(),
+                    to: vta.to_account_info(),
+                },
+            ),
+            lamports_amount,
+        )?;
+    }
 
     // Build args for encrypted computation
+    // Circuit signature: calculate_vote_token_balance(balance_ctx, amount, sell)
+    // sell = !buy (true means selling, false means buying)
     let args = ArgBuilder::new()
         .plaintext_u128(vta.state_nonce)
         .account(vta_pubkey, 8, 32 * 1)
         .plaintext_u64(trade_amount)
-        .plaintext_bool(buy)
+        .plaintext_bool(!buy) // sell = !buy
         .build();
 
     ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
 
     // Queue computation with callback
+    // Pass both vote_token_account and user account for callback
     queue_computation(
         ctx.accounts,
         computation_offset,
@@ -88,10 +111,16 @@ pub fn mint_vote_tokens(
         vec![CalculateVoteTokenBalanceCallback::callback_ix(
             computation_offset,
             &ctx.accounts.mxe_account,
-            &[CallbackAccount {
-                pubkey: vta_pubkey,
-                is_writable: true,
-            }],
+            &[
+                CallbackAccount {
+                    pubkey: vta_pubkey,
+                    is_writable: true,
+                },
+                CallbackAccount {
+                    pubkey: signer.key(),
+                    is_writable: true,
+                },
+            ],
         )?],
         1,
         0,
@@ -116,16 +145,23 @@ pub struct CalculateVoteTokenBalanceCallback<'info> {
     /// CHECK: instructions_sysvar
     pub instructions_sysvar: AccountInfo<'info>,
 
-    // Callback account
+    // Callback accounts
     #[account(mut)]
     pub vote_token_account: Account<'info, VoteToken>,
+
+    /// CHECK: User account to receive SOL on sell, validated against vote_token_account.owner
+    #[account(mut, address = vote_token_account.owner)]
+    pub user: AccountInfo<'info>,
 }
 
 pub fn calculate_vote_token_balance_callback(
     ctx: Context<CalculateVoteTokenBalanceCallback>,
     output: SignedComputationOutputs<CalculateVoteTokenBalanceOutput>,
 ) -> Result<()> {
-    let o = match output.verify_output(
+    // Output is (bool, Enc<Mxe, UserVoteTokenBalance>)
+    // field_0 = error boolean (true = insufficient balance for sell)
+    // field_1 = updated encrypted balance
+    let res = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
@@ -134,8 +170,35 @@ pub fn calculate_vote_token_balance_callback(
     };
 
     let vta = &mut ctx.accounts.vote_token_account;
-    vta.state_nonce = o.nonce;
-    vta.encrypted_state = o.ciphertexts;
+    let error = res.field_0;
+    let amount_sold = res.field_1;
+    let encrypted_balance = res.field_2;
+
+    if error {
+        return Err(ErrorCode::InsufficientBalance.into());
+    }
+
+    // If this was a sell operation and it succeeded, transfer SOL to user
+    if amount_sold > 0 {
+        // Transfer SOL from vote_token_account PDA to user
+        let vta_lamports = vta.to_account_info().lamports();
+        let rent = Rent::get()?;
+        let min_rent = rent.minimum_balance(vta.to_account_info().data_len());
+
+        // Ensure we don't go below rent-exempt minimum
+        let available = vta_lamports.saturating_sub(min_rent);
+        let amount_sold_lamports = amount_sold.mul(PRICE_PER_VOTE_TOKEN_LAMPORTS);
+        let transfer_amount = amount_sold_lamports.min(available);
+
+        if transfer_amount > 0 {
+            **vta.to_account_info().try_borrow_mut_lamports()? -= transfer_amount;
+            **ctx.accounts.user.try_borrow_mut_lamports()? += transfer_amount;
+        }
+    }
+
+    // Update encrypted state
+    vta.state_nonce = encrypted_balance.nonce;
+    vta.encrypted_state = encrypted_balance.ciphertexts;
 
     Ok(())
 }

@@ -8,6 +8,6 @@ pub enum ErrorCode {
     ClusterNotSet,
     #[msg("Unauthorized")]
     Unauthorized,
-    #[msg("Arithmetic overflow")]
-    Overflow,
+    #[msg("Insufficient balance")]
+    InsufficientBalance,
 }

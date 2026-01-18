@@ -17,6 +17,9 @@ pub struct VoteToken {
     pub bump: u8,
     pub owner: Pubkey,
     pub state_nonce: u128,
+
+    // Balance that the user can claim by calling claim_lamports
+    pub sold_lamports: u64,
 }
 
 #[account]
