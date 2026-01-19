@@ -16,6 +16,7 @@ pub use state::*;
 pub const COMP_DEF_OFFSET_INIT_MARKET_STATE: u32 = comp_def_offset("init_market_state");
 pub const COMP_DEF_OFFSET_INIT_VOTE_TOKEN_ACCOUNT: u32 = comp_def_offset("init_vote_token_account");
 pub const COMP_DEF_OFFSET_CALCULATE_VOTE_TOKEN_BALANCE: u32 = comp_def_offset("calculate_vote_token_balance");
+pub const COMP_DEF_OFFSET_BUY_CONVICTION_MARKET_SHARES: u32 = comp_def_offset("buy_conviction_market_shares");
 
 declare_id!("HFd2ZC5pGNY8RrUFXxbreawK5UCa617qaJEfo1aUhdU7");
 
@@ -38,7 +39,7 @@ pub mod sealed_bid_auction {
     pub fn create_market(
         ctx: Context<CreateMarket>,
         market_index: u64,
-        max_options: u64,
+        max_options: u16,
         reward_amount: u64,
         time_to_stake: u64,
         time_to_reveal: u64,
@@ -48,7 +49,7 @@ pub mod sealed_bid_auction {
 
     pub fn add_market_option(
         ctx: Context<AddMarketOption>,
-        option_index: u64,
+        option_index: u16,
         name: String,
     ) -> Result<()> {
         instructions::add_market_option(ctx, option_index, name)
@@ -89,5 +90,28 @@ pub mod sealed_bid_auction {
         output: SignedComputationOutputs<CalculateVoteTokenBalanceOutput>,
     ) -> Result<()> {
         instructions::calculate_vote_token_balance_callback(ctx, output)
+    }
+
+    pub fn buy_conviction_market_shares_comp_def(ctx: Context<BuyConvictionMarketSharesCompDef>) -> Result<()> {
+        instructions::buy_conviction_market_shares_comp_def(ctx)
+    }
+
+    pub fn buy_market_shares(
+        ctx: Context<BuyMarketShares>,
+        computation_offset: u64,
+        amount_ciphertext: [u8; 32],
+        selected_option_ciphertext: [u8; 32],
+        user_pubkey: [u8; 32],
+        input_nonce: u128,
+    ) -> Result<()> {
+        instructions::buy_market_shares(ctx, computation_offset, amount_ciphertext, selected_option_ciphertext, user_pubkey, input_nonce)
+    }
+
+    #[arcium_callback(encrypted_ix = "buy_conviction_market_shares")]
+    pub fn buy_conviction_market_shares_callback(
+        ctx: Context<BuyConvictionMarketSharesCallback>,
+        output: SignedComputationOutputs<BuyConvictionMarketSharesOutput>,
+    ) -> Result<()> {
+        instructions::buy_conviction_market_shares_callback(ctx, output)
     }
 }

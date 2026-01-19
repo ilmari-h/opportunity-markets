@@ -4,7 +4,7 @@ use crate::error::ErrorCode;
 use crate::state::{ConvictionMarket, ConvictionMarketOption};
 
 #[derive(Accounts)]
-#[instruction(option_index: u64)]
+#[instruction(option_index: u16)]
 pub struct AddMarketOption<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
@@ -27,7 +27,7 @@ pub struct AddMarketOption<'info> {
 
 pub fn add_market_option(
     ctx: Context<AddMarketOption>,
-    option_index: u64,
+    option_index: u16,
     name: String,
 ) -> Result<()> {
     let market = &mut ctx.accounts.market;

@@ -22,7 +22,7 @@ pub struct CreateMarket<'info> {
 pub fn create_market(
     ctx: Context<CreateMarket>,
     market_index: u64,
-    max_options: u64,
+    max_options: u16,
     reward_amount: u64,
     time_to_stake: u64,
     time_to_reveal: u64,

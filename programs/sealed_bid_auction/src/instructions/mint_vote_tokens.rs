@@ -1,3 +1,5 @@
+// TODO: this is stupid, the SOL lamports should go to a common global vault account
+
 use std::ops::Mul;
 
 use anchor_lang::prelude::*;

@@ -20,4 +20,8 @@ pub enum ErrorCode {
     InvalidOptionIndex,
     #[msg("Maximum options exceeded")]
     MaxOptionsExceeded,
+    #[msg("Market is not open")]
+    MarketNotOpen,
+    #[msg("Invalid option or not enough balance")]
+    SharePurchaseFailed,
 }

@@ -6,8 +6,8 @@ pub struct ConvictionMarket {
     pub bump: u8,
     pub creator: Pubkey,      // part of PDA seed
     pub index: u64,           // part of PDA seed
-    pub total_options: u64,
-    pub max_options: u64,
+    pub total_options: u16,
+    pub max_options: u16,
 
     // If set, means market is funded and ready to be opened for staking.
     // What actions are possible depends on current timestamp in relation to
@@ -32,9 +32,6 @@ pub struct VoteToken {
     pub bump: u8,
     pub owner: Pubkey,
     pub state_nonce: u128,
-
-    // Balance that the user can claim by calling claim_lamports
-    pub sold_lamports: u64,
 }
 
 #[account]
@@ -53,7 +50,10 @@ pub struct ConvictionMarketOption {
 #[account]
 #[derive(InitSpace)]
 pub struct ConvictionMarketShare {
-    // [share amount, selected_option u16]
+    // [share_amount, selected_option]
     pub encrypted_state: [[u8; 32]; 2],
     pub bump: u8,
+    pub owner: Pubkey,
+    pub market: Pubkey,
+    pub state_nonce: u128,
 }
