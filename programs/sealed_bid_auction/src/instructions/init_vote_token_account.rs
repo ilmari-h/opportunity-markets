@@ -61,7 +61,6 @@ pub struct InitVoteTokenAccount<'info> {
     pub arcium_program: Program<'info, Arcium>,
 }
 
-// https://github.com/Pythia-Markets/pythia-opportunity-markets/blob/master/programs/pythia_op/src/lib.rs
 pub fn init_vote_token_account(
     ctx: Context<InitVoteTokenAccount>,
     computation_offset: u64,

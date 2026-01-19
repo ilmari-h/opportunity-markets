@@ -6,12 +6,12 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
+use crate::constants::PRICE_PER_VOTE_TOKEN_LAMPORTS;
 use crate::state::VoteToken;
 use crate::COMP_DEF_OFFSET_CALCULATE_VOTE_TOKEN_BALANCE;
 use crate::{ID, ID_CONST, SignerAccount};
 
 pub const VOTE_TOKEN_ACCOUNT_SEED: &[u8] = b"vote_token_account";
-pub const PRICE_PER_VOTE_TOKEN_LAMPORTS: u64 = 1_000_000; // 0.001 SOL per vote token
 
 #[queue_computation_accounts("calculate_vote_token_balance", signer)]
 #[derive(Accounts)]
@@ -158,9 +158,10 @@ pub fn calculate_vote_token_balance_callback(
     ctx: Context<CalculateVoteTokenBalanceCallback>,
     output: SignedComputationOutputs<CalculateVoteTokenBalanceOutput>,
 ) -> Result<()> {
-    // Output is (bool, Enc<Mxe, UserVoteTokenBalance>)
+    // Output is (bool, u64, Enc<Mxe, UserVoteTokenBalance>)
     // field_0 = error boolean (true = insufficient balance for sell)
-    // field_1 = updated encrypted balance
+    // field_1 = how many vote tokens were sold
+    // field_2 = updated encrypted balance
     let res = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,

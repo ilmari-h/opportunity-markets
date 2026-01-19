@@ -1,9 +1,8 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { SealedBidAuction } from "../target/types/sealed_bid_auction";
 import { randomBytes } from "crypto";
-import { createMint } from "@solana/spl-token";
 import {
   awaitComputationFinalization,
   getArciumEnv,
@@ -18,9 +17,7 @@ import {
   getComputationAccAddress,
   getClusterAccAddress,
   getCompDefAccAddress,
-  RescueCipher,
   deserializeLE,
-  x25519,
 } from "@arcium-hq/client";
 import * as fs from "fs";
 import * as os from "os";
@@ -80,23 +77,15 @@ describe("ConvictionMarket", () => {
     }
   });
 
-  describe("Market Creation", () => {
-    it("creates a conviction market successfully", async () => {
-      console.log("\n=== ConvictionMarket Creation Test ===\n");
-
-      // Create a token mint for rewards
-      console.log("Step 1: Creating reward token mint...");
-      const rewardMint = await createMint(
-        provider.connection,
-        owner,
-        owner.publicKey,
-        null,
-        6 // 6 decimals
-      );
-      console.log("   Reward mint:", rewardMint.toBase58());
+  describe("Market Creation and Setup", () => {
+    it("creates a market, adds options, funds and opens it", async () => {
+      console.log("\n=== Market Creation and Setup Test ===\n");
 
       const marketIndex = new anchor.BN(1);
-      const rewardTokenAmount = new anchor.BN(1_000_000); // 1 token with 6 decimals
+      const maxOptions = new anchor.BN(5);
+      const rewardAmount = new anchor.BN(LAMPORTS_PER_SOL); // 1 SOL reward
+      const timeToStake = new anchor.BN(3600); // 1 hour
+      const timeToReveal = new anchor.BN(1800); // 30 minutes
 
       // Derive market PDA
       const [marketPDA] = PublicKey.findProgramAddressSync(
@@ -108,117 +97,115 @@ describe("ConvictionMarket", () => {
         program.programId
       );
 
-      // Listen for the event
+      // ========== STEP 1: Create Market ==========
+      console.log("Step 1: Creating conviction market...");
       const marketCreatedPromise = awaitEvent("marketCreatedEvent");
 
-      // Create market
-      console.log("\nStep 2: Creating conviction market...");
       const createMarketSig = await program.methods
-        .createMarket(marketIndex, rewardTokenAmount)
+        .createMarket(marketIndex, maxOptions, rewardAmount, timeToStake, timeToReveal)
         .accountsPartial({
           creator: owner.publicKey,
           market: marketPDA,
-          rewardTokenMint: rewardMint,
         })
-        .rpc({ commitment: "confirmed" });
+        .rpc({ skipPreflight: true, commitment: "confirmed" });
 
       console.log("   Create market tx:", createMarketSig);
 
-      // Verify event
       const marketCreatedEvent = await marketCreatedPromise;
-      console.log("\n=== Market Created Event ===");
-      console.log("   Market:", marketCreatedEvent.market.toBase58());
-      console.log("   Creator:", marketCreatedEvent.creator.toBase58());
-      console.log("   Index:", marketCreatedEvent.index.toNumber());
+      console.log("   Market created:", marketCreatedEvent.market.toBase58());
 
-      // Assertions
-      expect(marketCreatedEvent.market.toBase58()).to.equal(
-        marketPDA.toBase58()
-      );
-      expect(marketCreatedEvent.creator.toBase58()).to.equal(
-        owner.publicKey.toBase58()
-      );
-      expect(marketCreatedEvent.index.toNumber()).to.equal(1);
+      // Verify market state
+      let marketAccount = await program.account.convictionMarket.fetch(marketPDA);
+      expect(marketAccount.totalOptions.toNumber()).to.equal(0);
+      expect(marketAccount.maxOptions.toNumber()).to.equal(5);
+      expect(marketAccount.openTimestamp).to.be.null;
+      console.log("   Market initialized with 0 options, max 5");
 
-      // Fetch and verify on-chain account
-      const marketAccount = await program.account.convictionMarket.fetch(
-        marketPDA
-      );
-      expect(marketAccount.creator.toBase58()).to.equal(
-        owner.publicKey.toBase58()
-      );
-      expect(marketAccount.index.toNumber()).to.equal(1);
-      expect(marketAccount.rewardTokenMint.toBase58()).to.equal(
-        rewardMint.toBase58()
-      );
-      expect(marketAccount.rewardTokenAmount.toNumber()).to.equal(1_000_000);
+      // ========== STEP 2: Add 3 Options ==========
+      console.log("\nStep 2: Adding 3 market options...");
 
-      console.log("\n   ConvictionMarket creation test PASSED!");
-    });
+      const optionNames = ["Option A", "Option B", "Option C"];
 
-    it("creates multiple markets with different indices", async () => {
-      console.log("\n=== Multiple Markets Test ===\n");
+      for (let i = 1; i <= 3; i++) {
+        const optionIndex = new anchor.BN(i);
+        const [optionPDA] = PublicKey.findProgramAddressSync(
+          [
+            Buffer.from("option"),
+            marketPDA.toBuffer(),
+            optionIndex.toArrayLike(Buffer, "le", 8),
+          ],
+          program.programId
+        );
 
-      // Create a token mint for rewards
-      const rewardMint = await createMint(
-        provider.connection,
-        owner,
-        owner.publicKey,
-        null,
-        6
+        const addOptionSig = await program.methods
+          .addMarketOption(optionIndex, optionNames[i - 1])
+          .accountsPartial({
+            creator: owner.publicKey,
+            market: marketPDA,
+            option: optionPDA,
+          })
+          .rpc({ commitment: "confirmed" });
+
+        console.log(`   Added option ${i} "${optionNames[i - 1]}": ${addOptionSig.slice(0, 20)}...`);
+
+        // Verify option account
+        const optionAccount = await program.account.convictionMarketOption.fetch(optionPDA);
+        expect(optionAccount.name).to.equal(optionNames[i - 1]);
+        expect(optionAccount.totalShares).to.be.null;
+      }
+
+      // Verify market total options updated
+      marketAccount = await program.account.convictionMarket.fetch(marketPDA);
+      expect(marketAccount.totalOptions.toNumber()).to.equal(3);
+      console.log("   Market now has 3 options");
+
+      // ========== STEP 3: Fund and Open Market ==========
+      console.log("\nStep 3: Funding and opening market...");
+      console.log("   Market PDA:", marketPDA.toBase58());
+      console.log("   Reward amount:", rewardAmount.toNumber());
+
+      // Transfer reward_amount to market PDA (same pattern as airdrop confirmation)
+      const fundTx = new anchor.web3.Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: owner.publicKey,
+          toPubkey: marketPDA,
+          lamports: rewardAmount.toNumber(),
+        })
       );
+      fundTx.feePayer = owner.publicKey;
+      fundTx.recentBlockhash = (await provider.connection.getLatestBlockhash()).blockhash;
+      fundTx.sign(owner);
 
-      // Create market with index 2
-      const marketIndex2 = new anchor.BN(2);
-      const [marketPDA2] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("conviction_market"),
-          owner.publicKey.toBuffer(),
-          marketIndex2.toArrayLike(Buffer, "le", 8),
-        ],
-        program.programId
-      );
+      console.log("   Sending fund transaction...");
+      const fundSig = await provider.connection.sendRawTransaction(fundTx.serialize(), {
+        skipPreflight: true,
+      });
+      console.log("   Fund tx sent:", fundSig);
+      await provider.connection.confirmTransaction(fundSig, "confirmed");
+      console.log("   Funded market with 1 SOL");
 
-      await program.methods
-        .createMarket(marketIndex2, new anchor.BN(500_000))
+      // Open market with timestamp 10 seconds in the future
+      const currentSlot = await provider.connection.getSlot();
+      const currentTimestamp = await provider.connection.getBlockTime(currentSlot);
+      const openTimestamp = new anchor.BN(currentTimestamp! + 10);
+
+      const openMarketSig = await program.methods
+        .openMarket(openTimestamp)
         .accountsPartial({
           creator: owner.publicKey,
-          market: marketPDA2,
-          rewardTokenMint: rewardMint,
+          market: marketPDA,
         })
         .rpc({ commitment: "confirmed" });
 
-      // Create market with index 3
-      const marketIndex3 = new anchor.BN(3);
-      const [marketPDA3] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("conviction_market"),
-          owner.publicKey.toBuffer(),
-          marketIndex3.toArrayLike(Buffer, "le", 8),
-        ],
-        program.programId
-      );
+      console.log("   Opened market:", openMarketSig.slice(0, 20) + "...");
 
-      await program.methods
-        .createMarket(marketIndex3, new anchor.BN(2_000_000))
-        .accountsPartial({
-          creator: owner.publicKey,
-          market: marketPDA3,
-          rewardTokenMint: rewardMint,
-        })
-        .rpc({ commitment: "confirmed" });
+      // Verify market is now open
+      marketAccount = await program.account.convictionMarket.fetch(marketPDA);
+      expect(marketAccount.openTimestamp).to.not.be.null;
+      expect(marketAccount.openTimestamp!.toNumber()).to.equal(openTimestamp.toNumber());
+      console.log("   Market open_timestamp set to:", openTimestamp.toNumber());
 
-      // Verify both markets exist with correct data
-      const market2 = await program.account.convictionMarket.fetch(marketPDA2);
-      const market3 = await program.account.convictionMarket.fetch(marketPDA3);
-
-      expect(market2.index.toNumber()).to.equal(2);
-      expect(market2.rewardTokenAmount.toNumber()).to.equal(500_000);
-
-      expect(market3.index.toNumber()).to.equal(3);
-      expect(market3.rewardTokenAmount.toNumber()).to.equal(2_000_000);
-
-      console.log("   Multiple markets test PASSED!");
+      console.log("\n   Market creation and setup test PASSED!");
     });
   });
 

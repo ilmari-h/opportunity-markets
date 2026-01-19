@@ -7,6 +7,7 @@ pub mod error;
 pub mod events;
 pub mod instructions;
 pub mod state;
+pub mod constants;
 
 pub use error::ErrorCode;
 pub use instructions::*;
@@ -37,9 +38,24 @@ pub mod sealed_bid_auction {
     pub fn create_market(
         ctx: Context<CreateMarket>,
         market_index: u64,
-        reward_token_amount: u64,
+        max_options: u64,
+        reward_amount: u64,
+        time_to_stake: u64,
+        time_to_reveal: u64,
     ) -> Result<()> {
-        instructions::create_market(ctx, market_index, reward_token_amount)
+        instructions::create_market(ctx, market_index, max_options, reward_amount, time_to_stake, time_to_reveal)
+    }
+
+    pub fn add_market_option(
+        ctx: Context<AddMarketOption>,
+        option_index: u64,
+        name: String,
+    ) -> Result<()> {
+        instructions::add_market_option(ctx, option_index, name)
+    }
+
+    pub fn open_market(ctx: Context<OpenMarket>, open_timestamp: u64) -> Result<()> {
+        instructions::open_market(ctx, open_timestamp)
     }
 
     pub fn init_vote_token_account(

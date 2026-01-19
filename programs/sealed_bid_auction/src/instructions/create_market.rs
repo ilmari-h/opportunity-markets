@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::Mint;
 
 use crate::state::ConvictionMarket;
 use crate::events::MarketCreatedEvent;
@@ -17,25 +16,32 @@ pub struct CreateMarket<'info> {
         bump,
     )]
     pub market: Account<'info, ConvictionMarket>,
-    pub reward_token_mint: InterfaceAccount<'info, Mint>,
     pub system_program: Program<'info, System>,
 }
 
 pub fn create_market(
     ctx: Context<CreateMarket>,
     market_index: u64,
-    reward_token_amount: u64,
+    max_options: u64,
+    reward_amount: u64,
+    time_to_stake: u64,
+    time_to_reveal: u64,
 ) -> Result<()> {
     let market = &mut ctx.accounts.market;
     market.bump = ctx.bumps.market;
     market.creator = ctx.accounts.creator.key();
     market.index = market_index;
-    market.reward_token_mint = ctx.accounts.reward_token_mint.key();
-    market.reward_token_amount = reward_token_amount;
+    market.total_options = 0;
+    market.max_options = max_options;
+    market.reward_amount = reward_amount;
+    market.time_to_stake = time_to_stake;
+    market.time_to_reveal = time_to_reveal;
+    market.selected_option = None;
 
     emit!(MarketCreatedEvent {
         market: ctx.accounts.market.key(),
         creator: ctx.accounts.creator.key(),
+        reward_amount: reward_amount,
         index: market_index,
     });
 

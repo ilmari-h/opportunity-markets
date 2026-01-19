@@ -10,4 +10,14 @@ pub enum ErrorCode {
     Unauthorized,
     #[msg("Insufficient balance")]
     InsufficientBalance,
+    #[msg("Insufficient reward funding")]
+    InsufficientRewardFunding,
+    #[msg("Timestamp must be in the future")]
+    InvalidTimestamp,
+    #[msg("Market is already open")]
+    MarketAlreadyOpen,
+    #[msg("Invalid option index")]
+    InvalidOptionIndex,
+    #[msg("Maximum options exceeded")]
+    MaxOptionsExceeded,
 }
