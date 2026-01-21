@@ -6,7 +6,7 @@ use crate::error::ErrorCode;
 use crate::state::ConvictionMarket;
 use crate::events::MarketCreatedEvent;
 use crate::COMP_DEF_OFFSET_INIT_MARKET_SHARES;
-use crate::{ID, ID_CONST, SignerAccount};
+use crate::{ID, ID_CONST, ArciumSignerAccount};
 
 #[queue_computation_accounts("init_market_shares", creator)]
 #[derive(Accounts)]
@@ -32,7 +32,7 @@ pub struct CreateMarket<'info> {
         bump,
         address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, SignerAccount>,
+    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
     #[account(address = derive_mxe_pda!())]
     pub mxe_account: Account<'info, MXEAccount>,
     #[account(mut, address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet))]
@@ -50,7 +50,7 @@ pub struct CreateMarket<'info> {
     pub cluster_account: Account<'info, Cluster>,
     #[account(mut, address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS)]
     pub pool_account: Account<'info, FeePool>,
-    #[account(address = ARCIUM_CLOCK_ACCOUNT_ADDRESS)]
+    #[account(mut, address = ARCIUM_CLOCK_ACCOUNT_ADDRESS)]
     pub clock_account: Account<'info, ClockAccount>,
     pub system_program: Program<'info, System>,
     pub arcium_program: Program<'info, Arcium>,

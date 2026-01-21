@@ -6,7 +6,7 @@ use crate::error::ErrorCode;
 use crate::instructions::mint_vote_tokens::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::{ConvictionMarket, VoteTokenAccount};
 use crate::COMP_DEF_OFFSET_BUY_CONVICTION_MARKET_SHARES;
-use crate::{ID, ID_CONST, SignerAccount};
+use crate::{ID, ID_CONST, ArciumSignerAccount};
 
 pub const CONVICTION_MARKET_SHARE_SEED: &[u8] = b"conviction_market_share";
 
@@ -37,7 +37,7 @@ pub struct BuyMarketShares<'info> {
         bump,
         address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, SignerAccount>,
+    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
     #[account(address = derive_mxe_pda!())]
     pub mxe_account: Account<'info, MXEAccount>,
     #[account(mut, address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet))]
@@ -55,7 +55,7 @@ pub struct BuyMarketShares<'info> {
     pub cluster_account: Account<'info, Cluster>,
     #[account(mut, address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS)]
     pub pool_account: Account<'info, FeePool>,
-    #[account(address = ARCIUM_CLOCK_ACCOUNT_ADDRESS)]
+    #[account(mut, address = ARCIUM_CLOCK_ACCOUNT_ADDRESS)]
     pub clock_account: Account<'info, ClockAccount>,
     pub system_program: Program<'info, System>,
     pub arcium_program: Program<'info, Arcium>,

@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-conviction_market = "46QhSCv1BRzEYpdnzG3n2Zch3psxmPPjQqgL5oDKzPVd"
+conviction_market = "BgtctFuJh2C2dhRQKcz4yrKvYqPrztMJPiEiQdshwUpG"
 
 [registry]
 url = "https://api.apr.dev"
@@ -19,17 +19,9 @@ wallet = "~/.config/solana/id.json"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
 
 [test]
-startup_wait = 5000
+startup_wait = 9_000_000
 shutdown_wait = 2000
 upgradeable = false
-
-[[test.genesis]]
-address = "F3G6Q9tRicyznCqcZLydJ6RxkwDSBeHWM458J7V6aeyk"
-program = "/home/sal/Workspace/arcium/conviction/artifacts/arcium_program_0.5.4.so"
-
-[[test.genesis]]
-address = "L2TExMFKdjpN9kozasaurPirfHy9P8sbXoAN1qA3S95"
-program = "artifacts/lighthouse.so"
 
 [test.validator]
 bind_address = "0.0.0.0"

@@ -18,7 +18,7 @@ pub const COMP_DEF_OFFSET_CALCULATE_VOTE_TOKEN_BALANCE: u32 = comp_def_offset("c
 pub const COMP_DEF_OFFSET_BUY_CONVICTION_MARKET_SHARES: u32 = comp_def_offset("buy_conviction_market_shares");
 pub const COMP_DEF_OFFSET_INIT_MARKET_SHARES: u32 = comp_def_offset("init_market_shares");
 
-declare_id!("46QhSCv1BRzEYpdnzG3n2Zch3psxmPPjQqgL5oDKzPVd");
+declare_id!("BgtctFuJh2C2dhRQKcz4yrKvYqPrztMJPiEiQdshwUpG");
 
 #[arcium_program]
 pub mod conviction_market {
