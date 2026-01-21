@@ -14,3 +14,11 @@ pub struct VoteTokenPurchasedEvent {
     pub buyer: Pubkey,
     pub lamports_spent: u64,
 }
+
+#[event]
+pub struct SharesPurchasedEvent {
+    pub buyer: Pubkey,
+    pub encrypted_disclosed_amount: [u8; 32],
+    pub nonce: u128,
+}
+

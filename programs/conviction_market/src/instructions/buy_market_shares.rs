@@ -3,6 +3,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
+use crate::events::SharesPurchasedEvent;
 use crate::instructions::mint_vote_tokens::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::{ConvictionMarket, VoteTokenAccount};
 use crate::COMP_DEF_OFFSET_BUY_CONVICTION_MARKET_SHARES;
@@ -188,8 +189,16 @@ pub fn buy_conviction_market_shares_callback(
     ctx.accounts.market.encrypted_available_shares = new_market_shares.ciphertexts;
 
     // Update voluntary disclosure fields
-    ctx.accounts.user_vote_token_account.encrypted_state_disclosure = new_user_balance_disclosed.ciphertexts;
-    ctx.accounts.user_vote_token_account.state_nonce_disclosure = new_user_balance_disclosed.nonce;
+    let disclosed_balance_ciphertext = new_user_balance_disclosed.ciphertexts;
+    let disclosed_balance_nonce = new_user_balance_disclosed.nonce;
+    ctx.accounts.user_vote_token_account.encrypted_state_disclosure = disclosed_balance_ciphertext;
+    ctx.accounts.user_vote_token_account.state_nonce_disclosure = disclosed_balance_nonce;
+
+    emit!(SharesPurchasedEvent{
+        buyer: ctx.accounts.user_vote_token_account.owner,
+        encrypted_disclosed_amount: disclosed_balance_ciphertext[0],
+        nonce: disclosed_balance_nonce
+    });
 
     Ok(())
 }
