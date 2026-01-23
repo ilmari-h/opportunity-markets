@@ -38,6 +38,16 @@ pub struct VoteTokenAccount {
     pub bump: u8,
     pub owner: Pubkey,
     pub state_nonce: u128,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct ShareAccount {
+    pub encrypted_state: [[u8; 32]; 1],  // share amount
+    pub state_nonce: u128,
+    pub bump: u8,
+    pub owner: Pubkey,
+    pub market: Pubkey,
 
     pub encrypted_state_disclosure: [[u8; 32];1],
     pub state_nonce_disclosure: u128,

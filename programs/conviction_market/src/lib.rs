@@ -18,7 +18,7 @@ pub const COMP_DEF_OFFSET_CALCULATE_VOTE_TOKEN_BALANCE: u32 = comp_def_offset("c
 pub const COMP_DEF_OFFSET_BUY_CONVICTION_MARKET_SHARES: u32 = comp_def_offset("buy_conviction_market_shares");
 pub const COMP_DEF_OFFSET_INIT_MARKET_SHARES: u32 = comp_def_offset("init_market_shares");
 
-declare_id!("B3qmjxz1iA7ho4bZaEgj2gSXaM5LoPxNRD5EYqTQ1BU8");
+declare_id!("Art6D716XwHHTNUcseMU1aG3gQt9utuaVU6T4zxhBCnt");
 
 #[arcium_program]
 pub mod conviction_market {
@@ -72,6 +72,13 @@ pub mod conviction_market {
 
     pub fn select_option(ctx: Context<SelectOption>, option_index: u16) -> Result<()> {
         instructions::select_option(ctx, option_index)
+    }
+
+    pub fn init_share_account(
+        ctx: Context<InitShareAccount>,
+        state_nonce: u128,
+    ) -> Result<()> {
+        instructions::init_share_account(ctx, state_nonce)
     }
 
     pub fn init_vote_token_account(
@@ -130,7 +137,7 @@ pub mod conviction_market {
             user_pubkey,
             input_nonce,
             authorized_reader_pubkey,
-            authorized_reader_nonce
+            authorized_reader_nonce,
         )
     }
 

@@ -22,6 +22,12 @@ mod circuits {
         pub selected_option: u16,
     }
 
+    // Bought shares amount for ShareAccount
+    #[derive(Clone, Copy)]
+    pub struct BoughtShares {
+        pub amount: u64,
+    }
+
     // Market available shares state
     pub struct MarketAvailableShares {
         pub available_shares: u64,
@@ -78,18 +84,20 @@ mod circuits {
     }
 
     // Buy shares: deduct from user's vote token balance and market's available shares
-    // Returns true if error (insufficient user balance or market shares), false if OK
+    // Returns: (error, new_user_balance, new_market_shares, bought_shares_mxe, bought_shares_shared)
     #[instruction]
     pub fn buy_conviction_market_shares(
         input_ctx: Enc<Shared, BuySharesInput>,
-        authorized_reader_ctx: Shared,
+        shares_recipient_ctx: Shared,
         user_vta_ctx: Enc<Mxe, VoteTokenBalance>,
         market_shares_ctx: Enc<Mxe, MarketShareState>,
+        share_account_ctx: Mxe,
     ) -> (
         bool,
         Enc<Mxe, VoteTokenBalance>,
         Enc<Mxe, MarketShareState>,
-        Enc<Shared, VoteTokenBalance>
+        Enc<Mxe, BoughtShares>,
+        Enc<Shared, BoughtShares>
     ) {
         let input = input_ctx.to_arcis();
         let mut user_balance = user_vta_ctx.to_arcis();
@@ -106,6 +114,10 @@ mod circuits {
         // Error if either check fails
         let error = insufficient_user_balance || insufficient_market_shares;
 
+        // Calculate bought shares (0 on error)
+        let bought_amount = if error { 0 } else { amount };
+        let bought_shares = BoughtShares { amount: bought_amount };
+
         // Deduct from user balance (keep unchanged on error)
         user_balance.amount = if error {
             user_balance.amount
@@ -120,12 +132,12 @@ mod circuits {
             market_shares.shares - amount
         };
 
-        let shared: Enc<Shared, VoteTokenBalance> = authorized_reader_ctx.from_arcis(user_balance);
         (
             error.reveal(),
             user_vta_ctx.owner.from_arcis(user_balance),
             market_shares_ctx.owner.from_arcis(market_shares),
-            shared
+            share_account_ctx.from_arcis(bought_shares),
+            shares_recipient_ctx.from_arcis(bought_shares)
         )
     }
 }

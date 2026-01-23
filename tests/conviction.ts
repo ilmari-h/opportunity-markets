@@ -342,6 +342,29 @@ describe("ConvictionMarket", () => {
       );
       console.log("   Buyer minted", mintAmount, "vote tokens!");
 
+      // ========== STEP 5b: Initialize buyer's share account ==========
+      console.log("\nStep 5b: Initializing buyer's share account...");
+
+      const [buyerShareAccountPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from("share_account"), buyer.publicKey.toBuffer(), marketPDA.toBuffer()],
+        program.programId
+      );
+
+      const shareAccountNonce = new anchor.BN(deserializeLE(randomBytes(16)).toString());
+
+      const initShareAccountSig = await program.methods
+        .initShareAccount(shareAccountNonce)
+        .accountsPartial({
+          signer: buyer.publicKey,
+          market: marketPDA,
+          shareAccount: buyerShareAccountPDA,
+        })
+        .signers([buyer])
+        .rpc({ commitment: "confirmed" });
+
+      console.log("   Init share account tx:", initShareAccountSig);
+      console.log("   Share account PDA:", buyerShareAccountPDA.toBase58());
+
       // ========== STEP 6: Buy market shares with encrypted inputs ==========
       console.log("\nStep 6: Buying market shares with encrypted inputs...");
 
@@ -382,7 +405,6 @@ describe("ConvictionMarket", () => {
           Array.from(publicKey),
           new anchor.BN(deserializeLE(inputNonce).toString()),
 
-          // TODO: can we share with another user's pubkey? Or how to share shared secret?
           Array.from(publicKey),
           new anchor.BN(deserializeLE(randomBytes(16)).toString()),
         )

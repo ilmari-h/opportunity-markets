@@ -5,11 +5,11 @@ use arcium_client::idl::arcium::types::CallbackAccount;
 use crate::error::ErrorCode;
 use crate::events::SharesPurchasedEvent;
 use crate::instructions::mint_vote_tokens::VOTE_TOKEN_ACCOUNT_SEED;
-use crate::state::{ConvictionMarket, VoteTokenAccount};
+use crate::state::{ConvictionMarket, ShareAccount, VoteTokenAccount};
 use crate::COMP_DEF_OFFSET_BUY_CONVICTION_MARKET_SHARES;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
 
-pub const CONVICTION_MARKET_SHARE_SEED: &[u8] = b"conviction_market_share";
+pub const SHARE_ACCOUNT_SEED: &[u8] = b"share_account";
 
 #[queue_computation_accounts("buy_conviction_market_shares", signer)]
 #[derive(Accounts)]
@@ -28,7 +28,14 @@ pub struct BuyMarketShares<'info> {
         seeds = [VOTE_TOKEN_ACCOUNT_SEED, signer.key().as_ref()],
         bump
     )]
-    pub user_vta: Account<'info, VoteTokenAccount>,
+    pub user_vta: Box<Account<'info, VoteTokenAccount>>,
+
+    // Boxed due to heap overflow
+    #[account(
+        seeds = [SHARE_ACCOUNT_SEED, signer.key().as_ref(), market.key().as_ref()],
+        bump,
+    )]
+    pub share_account: Box<Account<'info, ShareAccount>>,
 
     // Arcium accounts
     #[account(
@@ -70,14 +77,13 @@ pub fn buy_market_shares(
     selected_option_ciphertext: [u8; 32],
 
     user_pubkey: [u8; 32],
-    input_nonce_user: u128,
+    input_nonce: u128,
 
-    // Optional voluntary disclosure - to opt out, pass user's own pubkey.
-    // TODO: save this on market creation and enforce that the passed key matches it
-    // Add a flag to market init that enforces if this is required for the market
+    // Optional voluntary disclosure - to opt out, pass user's own pubkey or of deleted keypair.
     authorized_reader_pubkey: [u8; 32],
-    input_nonce_authorized_reader: u128,
+    authorized_reader_nonce: u128,
 ) -> Result<()> {
+
     // Enforce staking period is active
     let market = &ctx.accounts.market;
     let open_timestamp = market.open_timestamp.ok_or_else(|| ErrorCode::MarketNotOpen)?;
@@ -90,6 +96,9 @@ pub fn buy_market_shares(
         ErrorCode::StakingNotActive
     );
 
+
+    //let share_account_key = ctx.accounts.share_account.key();
+
     let user_vta_key = ctx.accounts.user_vta.key();
     let user_vta_nonce = ctx.accounts.user_vta.state_nonce;
 
@@ -98,23 +107,26 @@ pub fn buy_market_shares(
 
     // Build args for encrypted computation
     let args = ArgBuilder::new()
-        // User's trade input
+        // User's trade input (Enc<Shared, BuySharesInput>)
         .x25519_pubkey(user_pubkey)
-        .plaintext_u128(input_nonce_user)
+        .plaintext_u128(input_nonce)
         .encrypted_u64(amount_ciphertext)
         .encrypted_u16(selected_option_ciphertext)
 
-        // Voluntary disclosure
+        // Authorized reader context (Shared)
         .x25519_pubkey(authorized_reader_pubkey)
-        .plaintext_u128(input_nonce_authorized_reader)
+        .plaintext_u128(authorized_reader_nonce)
 
-        // User's VTA
+        // User's VTA (Enc<Mxe, VoteTokenBalance>)
         .plaintext_u128(user_vta_nonce)
         .account(user_vta_key, 8, 32 * 1)
 
-        // Available market shares
+        // Available market shares (Enc<Mxe, MarketShareState>)
         .plaintext_u128(market_state_nonce)
         .account(market_key, 8, 32 * 1)
+
+        // Share account context (Mxe for output encryption)
+        .plaintext_u128(ctx.accounts.share_account.state_nonce)
         .build();
 
     ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
@@ -128,16 +140,20 @@ pub fn buy_market_shares(
         vec![BuyConvictionMarketSharesCallback::callback_ix(
             computation_offset,
             &ctx.accounts.mxe_account,
-                  &[                                                                                                                
-                      CallbackAccount {                                                                                             
-                          pubkey: user_vta_key,                                                                                     
-                          is_writable: true,                                                                                        
-                      },                                                                                                            
-                      CallbackAccount {                                                                                             
-                          pubkey: market_key,                                                                                     
-                          is_writable: true,                                                                                        
-                      },                                                                                                            
-                  ],  
+            &[
+                CallbackAccount {
+                    pubkey: user_vta_key,
+                    is_writable: true,
+                },
+                CallbackAccount {
+                    pubkey: market_key,
+                    is_writable: true,
+                },
+                CallbackAccount {
+                    pubkey: ctx.accounts.share_account.key(),
+                    is_writable: true,
+                },
+            ],  
         )?],
         1,
         0,
@@ -168,6 +184,9 @@ pub struct BuyConvictionMarketSharesCallback<'info> {
 
     #[account(mut)]
     pub market: Account<'info, ConvictionMarket>,
+
+    #[account(mut)]
+    pub share_account: Account<'info, ShareAccount>,
 }
 
 pub fn buy_conviction_market_shares_callback(
@@ -185,7 +204,8 @@ pub fn buy_conviction_market_shares_callback(
     let has_error = res.field_0;
     let new_user_balance = res.field_1;
     let new_market_shares = res.field_2;
-    let new_user_balance_disclosed = res.field_3;
+    let bought_shares_mxe = res.field_3;
+    let bought_shares_shared = res.field_4;
 
     if has_error {
         return Err(ErrorCode::SharePurchaseFailed.into());
@@ -199,16 +219,16 @@ pub fn buy_conviction_market_shares_callback(
     ctx.accounts.market.state_nonce = new_market_shares.nonce;
     ctx.accounts.market.encrypted_available_shares = new_market_shares.ciphertexts;
 
-    // Update voluntary disclosure fields
-    let disclosed_balance_ciphertext = new_user_balance_disclosed.ciphertexts;
-    let disclosed_balance_nonce = new_user_balance_disclosed.nonce;
-    ctx.accounts.user_vote_token_account.encrypted_state_disclosure = disclosed_balance_ciphertext;
-    ctx.accounts.user_vote_token_account.state_nonce_disclosure = disclosed_balance_nonce;
+    // Update share account with bought shares
+    ctx.accounts.share_account.state_nonce = bought_shares_mxe.nonce;
+    ctx.accounts.share_account.encrypted_state = bought_shares_mxe.ciphertexts;
+    ctx.accounts.share_account.state_nonce_disclosure = bought_shares_shared.nonce;
+    ctx.accounts.share_account.encrypted_state_disclosure = bought_shares_shared.ciphertexts;
 
     emit!(SharesPurchasedEvent{
         buyer: ctx.accounts.user_vote_token_account.owner,
-        encrypted_disclosed_amount: disclosed_balance_ciphertext[0],
-        nonce: disclosed_balance_nonce
+        encrypted_disclosed_amount: bought_shares_shared.ciphertexts[0],
+        nonce: bought_shares_shared.nonce
     });
 
     Ok(())
