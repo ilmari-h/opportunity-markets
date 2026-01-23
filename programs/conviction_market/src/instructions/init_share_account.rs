@@ -33,8 +33,10 @@ pub fn init_share_account(
     share_account.market = ctx.accounts.market.key();
     share_account.state_nonce = state_nonce;
     share_account.state_nonce_disclosure = 0; // initialized later
-    share_account.encrypted_state = [[0u8; 32]; 1];
-    share_account.encrypted_state_disclosure = [[0u8; 32]; 1];
+    share_account.encrypted_state = [[0u8; 32]; 2];
+    share_account.encrypted_state_disclosure = [[0u8; 32]; 2];
+    share_account.revealed_amount = None;
+    share_account.revealed_option = None;
 
     Ok(())
 }

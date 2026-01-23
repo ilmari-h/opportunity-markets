@@ -43,14 +43,17 @@ pub struct VoteTokenAccount {
 #[account]
 #[derive(InitSpace)]
 pub struct ShareAccount {
-    pub encrypted_state: [[u8; 32]; 1],  // share amount
+    pub encrypted_state: [[u8; 32]; 2],  // share amount and option
     pub state_nonce: u128,
     pub bump: u8,
     pub owner: Pubkey,
     pub market: Pubkey,
 
-    pub encrypted_state_disclosure: [[u8; 32];1],
+    pub encrypted_state_disclosure: [[u8; 32];2],
     pub state_nonce_disclosure: u128,
+
+    pub revealed_amount: Option<u64>,
+    pub revealed_option: Option<u16>,
 }
 
 #[account]
@@ -75,4 +78,11 @@ pub struct ConvictionMarketShare {
     pub owner: Pubkey,
     pub market: Pubkey,
     pub state_nonce: u128,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct OptionTally {
+    pub bump: u8,
+    pub total_shares_bought: u64,
 }

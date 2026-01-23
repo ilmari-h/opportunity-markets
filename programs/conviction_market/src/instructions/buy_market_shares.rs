@@ -211,15 +211,15 @@ pub fn buy_conviction_market_shares_callback(
         return Err(ErrorCode::SharePurchaseFailed.into());
     }
 
-    // Update user balance
+    // Update user balance to <previous balance> - <bought shares>
     ctx.accounts.user_vote_token_account.state_nonce = new_user_balance.nonce;
     ctx.accounts.user_vote_token_account.encrypted_state = new_user_balance.ciphertexts;
 
-    // Update market shares
+    // Update market shares, decrement user shares.
     ctx.accounts.market.state_nonce = new_market_shares.nonce;
     ctx.accounts.market.encrypted_available_shares = new_market_shares.ciphertexts;
 
-    // Update share account with bought shares
+    // Update share account to the value of bought shares.
     ctx.accounts.share_account.state_nonce = bought_shares_mxe.nonce;
     ctx.accounts.share_account.encrypted_state = bought_shares_mxe.ciphertexts;
     ctx.accounts.share_account.state_nonce_disclosure = bought_shares_shared.nonce;

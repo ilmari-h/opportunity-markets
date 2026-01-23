@@ -24,8 +24,9 @@ mod circuits {
 
     // Bought shares amount for ShareAccount
     #[derive(Clone, Copy)]
-    pub struct BoughtShares {
+    pub struct SharePurchase {
         pub amount: u64,
+        pub selected_option: u16
     }
 
     // Market available shares state
@@ -84,6 +85,7 @@ mod circuits {
     }
 
     // Buy shares: deduct from user's vote token balance and market's available shares
+    // TODO: enforce that selected option > 0 <= max_options
     // Returns: (error, new_user_balance, new_market_shares, bought_shares_mxe, bought_shares_shared)
     #[instruction]
     pub fn buy_conviction_market_shares(
@@ -96,8 +98,8 @@ mod circuits {
         bool,
         Enc<Mxe, VoteTokenBalance>,
         Enc<Mxe, MarketShareState>,
-        Enc<Mxe, BoughtShares>,
-        Enc<Shared, BoughtShares>
+        Enc<Mxe, SharePurchase>,
+        Enc<Shared, SharePurchase>
     ) {
         let input = input_ctx.to_arcis();
         let mut user_balance = user_vta_ctx.to_arcis();
@@ -116,7 +118,10 @@ mod circuits {
 
         // Calculate bought shares (0 on error)
         let bought_amount = if error { 0 } else { amount };
-        let bought_shares = BoughtShares { amount: bought_amount };
+        let bought_shares = SharePurchase {
+            amount: bought_amount,
+            selected_option: input.selected_option
+        };
 
         // Deduct from user balance (keep unchanged on error)
         user_balance.amount = if error {
