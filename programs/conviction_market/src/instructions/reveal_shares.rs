@@ -4,12 +4,11 @@ use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
 use crate::instructions::buy_market_shares::SHARE_ACCOUNT_SEED;
+use crate::instructions::increment_option_tally::OPTION_TALLY_SEED;
 use crate::instructions::mint_vote_tokens::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::{ConvictionMarket, OptionTally, ShareAccount, VoteTokenAccount};
 use crate::COMP_DEF_OFFSET_REVEAL_SHARES;
 use crate::{ArciumSignerAccount, ID, ID_CONST};
-
-pub const OPTION_TALLY_SEED: &[u8] = b"option_tally";
 
 #[init_computation_definition_accounts("reveal_shares", payer)]
 #[derive(Accounts)]
@@ -37,7 +36,7 @@ pub struct RevealShares<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
-    pub market: Account<'info, ConvictionMarket>,
+    pub market: Box<Account<'info, ConvictionMarket>>,
 
     #[account(
         mut,
@@ -52,16 +51,7 @@ pub struct RevealShares<'info> {
         seeds = [VOTE_TOKEN_ACCOUNT_SEED, signer.key().as_ref()],
         bump = user_vta.bump,
     )]
-    pub user_vta: Account<'info, VoteTokenAccount>,
-
-    #[account(
-        init_if_needed,
-        payer = signer,
-        space = 8 + OptionTally::INIT_SPACE,
-        seeds = [OPTION_TALLY_SEED, market.key().as_ref(), &option_index.to_le_bytes()],
-        bump,
-    )]
-    pub option_tally: Account<'info, OptionTally>,
+    pub user_vta: Box<Account<'info, VoteTokenAccount>>,
 
     // Arcium accounts
     #[account(
@@ -100,14 +90,10 @@ pub fn reveal_shares(
     ctx: Context<RevealShares>,
     computation_offset: u64,
     option_index: u16,
+    user_pubkey: [u8; 32],
 ) -> Result<()> {
 
     require!(ctx.accounts.market.selected_option.is_some(), ErrorCode::MarketNotResolved);
-
-    // Initialize option_tally bump if this is the first time
-    if ctx.accounts.option_tally.bump == 0 {
-        ctx.accounts.option_tally.bump = ctx.bumps.option_tally;
-    }
 
     let market = &ctx.accounts.market;
     let clock = Clock::get()?;
@@ -127,7 +113,8 @@ pub fn reveal_shares(
 
     // Build args for encrypted computation
     let args = ArgBuilder::new()
-        // Share account encrypted state (Enc<Mxe, SharePurchase>)
+        // Share account encrypted state (Enc<Shared, SharePurchase>)
+        .x25519_pubkey(user_pubkey)
         .plaintext_u128(share_account_nonce)
         .account(share_account_key, 8, 32 * 2)
         // User VTA encrypted state (Enc<Mxe, VoteTokenBalance>)
@@ -158,10 +145,10 @@ pub fn reveal_shares(
                     pubkey: user_vta_key,
                     is_writable: true,
                 },
-                CallbackAccount {
-                    pubkey: ctx.accounts.option_tally.key(),
-                    is_writable: true,
-                },
+                // CallbackAccount {
+                //     pubkey: ctx.accounts.option_tally.key(),
+                //     is_writable: true,
+                // },
             ],
         )?],
         1,
@@ -192,8 +179,6 @@ pub struct RevealSharesCallback<'info> {
     pub share_account: Account<'info, ShareAccount>,
     #[account(mut)]
     pub user_vta: Account<'info, VoteTokenAccount>,
-    #[account(mut)]
-    pub option_tally: Account<'info, OptionTally>,
 }
 
 pub fn reveal_shares_callback(
@@ -226,16 +211,6 @@ pub fn reveal_shares_callback(
     // Update user VTA with credited balance
     ctx.accounts.user_vta.state_nonce = new_user_balance.nonce;
     ctx.accounts.user_vta.encrypted_state = new_user_balance.ciphertexts;
-
-    // Only increment option tally if revealed in time
-    if revealed_in_time {
-        ctx.accounts.option_tally.total_shares_bought = ctx
-            .accounts
-            .option_tally
-            .total_shares_bought
-            .checked_add(revealed_amount)
-            .ok_or_else(|| ErrorCode::AbortedComputation)?;
-    }
 
     Ok(())
 }

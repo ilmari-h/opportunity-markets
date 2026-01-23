@@ -75,13 +75,14 @@ describe("ConvictionMarket", () => {
       await initCompDef(program, owner, "calculate_vote_token_balance");
       await initCompDef(program, owner, "buy_conviction_market_shares");
       await initCompDef(program, owner, "init_market_shares");
+      await initCompDef(program, owner, "reveal_shares");
 
       compDefsInitialized = true;
     }
   });
 
   describe("Market Creation and Setup", () => {
-    it("creates a market, adds options, funds and opens it", async () => {
+    it("allows user to buy shares and claim yield", async () => {
       console.log("\n=== Market Creation and Setup Test ===\n");
 
       const PRICE_PER_SHARE_LAMPORTS = 1_000_000; // Must match Rust constant
@@ -89,8 +90,10 @@ describe("ConvictionMarket", () => {
       const maxOptions = 5; // u16
       const totalShares = new anchor.BN(1000); // 1000 shares
       const fundingLamports = totalShares.toNumber() * PRICE_PER_SHARE_LAMPORTS; // = 1 SOL
-      const timeToStake = new anchor.BN(3600); // 1 hour
-      const timeToReveal = new anchor.BN(1800); // 30 minutes
+      const timeToStake = new anchor.BN(120);
+
+      // Small time slots that are long enough for reliable testing
+      const timeToReveal = new anchor.BN(20); 
 
       // Derive market PDA
       const [marketPDA] = PublicKey.findProgramAddressSync(
@@ -398,35 +401,37 @@ describe("ConvictionMarket", () => {
       const buySharesComputationOffset = new anchor.BN(randomBytes(8), "hex");
       const disclosureNonce = new anchor.BN(deserializeLE( randomBytes(16)));
 
-      const buySharesSig = await program.methods
-        .buyMarketShares(
-          buySharesComputationOffset,
-          Array.from(ciphertexts[0]),
-          Array.from(ciphertexts[1]),
-          Array.from(publicKey),
-          new anchor.BN(deserializeLE(inputNonce).toString()),
+      const buySharesSig = await sendWithRetry(() =>
+        program.methods
+          .buyMarketShares(
+            buySharesComputationOffset,
+            Array.from(ciphertexts[0]),
+            Array.from(ciphertexts[1]),
+            Array.from(publicKey),
+            new anchor.BN(deserializeLE(inputNonce).toString()),
 
-          Array.from(publicKey),
-          disclosureNonce,
-        )
-        .accountsPartial({
-          signer: buyer.publicKey,
-          market: marketPDA,
-          computationAccount: getComputationAccAddress(
-            arciumEnv.arciumClusterOffset,
-            buySharesComputationOffset
-          ),
-          clusterAccount,
-          mxeAccount: getMXEAccAddress(program.programId),
-          mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
-          executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
-          compDefAccount: getCompDefAccAddress(
-            program.programId,
-            Buffer.from(getCompDefAccOffset("buy_conviction_market_shares")).readUInt32LE()
-          ),
-        })
-        .signers([buyer])
-        .rpc({ commitment: "confirmed" });
+            Array.from(publicKey),
+            disclosureNonce,
+          )
+          .accountsPartial({
+            signer: buyer.publicKey,
+            market: marketPDA,
+            computationAccount: getComputationAccAddress(
+              arciumEnv.arciumClusterOffset,
+              buySharesComputationOffset
+            ),
+            clusterAccount,
+            mxeAccount: getMXEAccAddress(program.programId),
+            mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+            executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
+            compDefAccount: getCompDefAccAddress(
+              program.programId,
+              Buffer.from(getCompDefAccOffset("buy_conviction_market_shares")).readUInt32LE()
+            ),
+          })
+          .signers([buyer])
+          .rpc({ commitment: "confirmed" })
+      );
 
       console.log("   Buy shares tx:", buySharesSig);
 
@@ -458,6 +463,115 @@ describe("ConvictionMarket", () => {
       expect(decryptedShareValues[0]).to.equal(buySharesAmount);
       expect(decryptedShareValues[1]).to.equal(selectedOption);
 
+      // ========== STEP 8: Market creator selects winning option ==========
+      console.log("\nStep 8: Market creator selects winning option...");
+
+      // Select option 1 (the same option the buyer chose)
+      const selectedOptionIndex = 1;
+
+      const selectOptionSig = await program.methods
+        .selectOption(selectedOptionIndex)
+        .accountsPartial({
+          authority: owner.publicKey,
+          market: marketPDA,
+        })
+        .rpc({ commitment: "confirmed" });
+
+      console.log("   Select option tx:", selectOptionSig.slice(0, 20) + "...");
+
+      // Verify market has selected option set
+      marketAccount = await program.account.convictionMarket.fetch(marketPDA);
+      expect(marketAccount.selectedOption).to.not.be.null;
+      expect(marketAccount.selectedOption).to.equal(selectedOptionIndex);
+      console.log("   Market selected option:", marketAccount.selectedOption);
+
+      // ========== STEP 9: User reveals shares ==========
+      console.log("\nStep 9: User reveals shares...");
+
+      const revealComputationOffset = new anchor.BN(randomBytes(8), "hex");
+
+      const revealSharesSig = await program.methods
+        .revealShares(revealComputationOffset, selectedOptionIndex, Array.from(publicKey))
+        .accountsPartial({
+          signer: buyer.publicKey,
+          market: marketPDA,
+          shareAccount: buyerShareAccountPDA,
+          userVta: buyerVoteTokenPDA,
+          computationAccount: getComputationAccAddress(
+            arciumEnv.arciumClusterOffset,
+            revealComputationOffset
+          ),
+          clusterAccount,
+          mxeAccount: getMXEAccAddress(program.programId),
+          mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+          executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
+          compDefAccount: getCompDefAccAddress(
+            program.programId,
+            Buffer.from(getCompDefAccOffset("reveal_shares")).readUInt32LE()
+          ),
+        })
+        .signers([buyer])
+        .rpc({ commitment: "confirmed" });
+
+      console.log("   Reveal shares tx:", revealSharesSig.slice(0, 20) + "...");
+
+      console.log("   Waiting for MPC computation to finalize...");
+      await awaitComputationFinalization(
+        provider as anchor.AnchorProvider,
+        revealComputationOffset,
+        program.programId,
+        "confirmed"
+      );
+      console.log("   Shares revealed!");
+
+      // ========== STEP 10: Verify revealed shares ==========
+      console.log("\nStep 10: Verifying revealed shares...");
+
+      const revealedShareAccount = await program.account.shareAccount.fetch(buyerShareAccountPDA);
+
+      expect(revealedShareAccount.revealedAmount).to.not.be.null;
+      expect(revealedShareAccount.revealedOption).to.not.be.null;
+      expect(revealedShareAccount.revealedAmount!.toString()).to.equal(buySharesAmount.toString());
+      expect(revealedShareAccount.revealedOption).to.equal(Number(selectedOption));
+
+      console.log("   Revealed amount:", revealedShareAccount.revealedAmount!.toNumber());
+      console.log("   Revealed option:", revealedShareAccount.revealedOption);
+      console.log("   Revealed in time:", revealedShareAccount.revealedInTime);
+
+      // ========== STEP 11: Increment option tally ==========
+      console.log("\nStep 11: Incrementing option tally...");
+
+      // Derive option tally PDA
+      const optionIndexBN = new anchor.BN(selectedOptionIndex);
+      const [optionTallyPDA] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("option_tally"),
+          marketPDA.toBuffer(),
+          optionIndexBN.toArrayLike(Buffer, "le", 2),
+        ],
+        program.programId
+      );
+
+      const incrementTallySig = await program.methods
+        .incrementOptionTally(selectedOptionIndex)
+        .accountsPartial({
+          signer: buyer.publicKey,
+          owner: buyer.publicKey,
+          market: marketPDA,
+          shareAccount: buyerShareAccountPDA,
+          optionTally: optionTallyPDA,
+        })
+        .signers([buyer])
+        .rpc({ commitment: "confirmed" });
+
+      console.log("   Increment tally tx:", incrementTallySig.slice(0, 20) + "...");
+
+      // Verify option tally was incremented
+      const optionTallyAccount = await program.account.optionTally.fetch(optionTallyPDA);
+      expect(optionTallyAccount.totalSharesBought.toString()).to.equal(buySharesAmount.toString());
+      console.log("   Option tally total shares:", optionTallyAccount.totalSharesBought.toNumber());
+
+      console.log("\n   Test PASSED! Revealed shares match purchased shares.");
     });
   });
 
@@ -706,7 +820,7 @@ describe("ConvictionMarket", () => {
     });
   });
 
-  type CompDefs =  "init_vote_token_account" | "calculate_vote_token_balance" | "buy_conviction_market_shares" | "init_market_shares"
+  type CompDefs =  "init_vote_token_account" | "calculate_vote_token_balance" | "buy_conviction_market_shares" | "init_market_shares" | "reveal_shares"
 
   async function initCompDef(
     program: Program<ConvictionMarket>,
@@ -776,6 +890,17 @@ describe("ConvictionMarket", () => {
           .signers([owner])
           .rpc({ preflightCommitment: "confirmed" });
         break;
+      case "reveal_shares":
+        sig = await program.methods
+          .revealSharesCompDef()
+          .accounts({
+            compDefAccount: compDefPDA,
+            payer: owner.publicKey,
+            mxeAccount: getMXEAccAddress(program.programId),
+          })
+          .signers([owner])
+          .rpc({ preflightCommitment: "confirmed" });
+        break;
       default:
         throw new Error(`Unknown circuit: ${circuitName}`);
     }
@@ -833,4 +958,28 @@ function readKpJson(path: string): anchor.web3.Keypair {
   return anchor.web3.Keypair.fromSecretKey(
     new Uint8Array(JSON.parse(file.toString()))
   );
+}
+
+async function sendWithRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  retryDelayMs: number = 1000
+): Promise<T> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      const isBlockhashError =
+        error?.message?.includes("Blockhash not found") ||
+        error?.message?.includes("block height exceeded");
+
+      if (isBlockhashError && attempt < maxRetries) {
+        console.log(`   Blockhash expired, retrying... (attempt ${attempt}/${maxRetries})`);
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error("Unreachable");
 }

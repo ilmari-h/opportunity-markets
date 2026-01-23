@@ -75,6 +75,10 @@ pub mod conviction_market {
         instructions::select_option(ctx, option_index)
     }
 
+    pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: u16) -> Result<()> {
+        instructions::increment_option_tally(ctx, option_index)
+    }
+
     pub fn init_share_account(
         ctx: Context<InitShareAccount>,
         state_nonce: u128,
@@ -158,8 +162,9 @@ pub mod conviction_market {
         ctx: Context<RevealShares>,
         computation_offset: u64,
         option_index: u16,
+        user_pubkey: [u8; 32],
     ) -> Result<()> {
-        instructions::reveal_shares(ctx, computation_offset, option_index)
+        instructions::reveal_shares(ctx, computation_offset, option_index, user_pubkey)
     }
 
     #[arcium_callback(encrypted_ix = "reveal_shares")]

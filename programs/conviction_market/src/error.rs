@@ -34,4 +34,12 @@ pub enum ErrorCode {
     OptionMismatch,
     #[msg("Staking period not over")]
     MarketNotResolved,
+    #[msg("Shares not yet revealed")]
+    NotRevealed,
+    #[msg("Revealed after deadline")]
+    RevealedTooLate,
+    #[msg("Tally already incremented for this share account")]
+    TallyAlreadyIncremented,
+    #[msg("Arithmetic overflow")]
+    Overflow,
 }

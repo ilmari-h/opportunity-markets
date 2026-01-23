@@ -150,7 +150,7 @@ mod circuits {
     // Returns: (option_mismatch, revealed_amount, revealed_option, updated_vta_balance)
     #[instruction]
     pub fn reveal_shares(
-        share_account_ctx: Enc<Mxe, SharePurchase>,
+        share_account_ctx: Enc<Shared, SharePurchase>,
         user_vta_ctx: Enc<Mxe, VoteTokenBalance>,
         plaintext_option_index: u16,
         plaintext_revealed_in_time: bool

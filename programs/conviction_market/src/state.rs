@@ -55,6 +55,7 @@ pub struct ShareAccount {
     pub revealed_in_time: bool,
     pub revealed_amount: Option<u64>,
     pub revealed_option: Option<u16>,
+    pub total_incremented: bool
 }
 
 #[account]
