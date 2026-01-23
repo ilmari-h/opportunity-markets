@@ -1,10 +1,12 @@
 # Conviction Market
 
-Private voting market on Solana using Arcium MPC for encrypted vote storage and processing.
+Conviction Markets allow users to influence decision making by staking their capital on a their preferred option.
 
-Users buy vote tokens, then allocate them to market options. Both balances and vote allocations are encrypted on-chain - only the final outcome is revealed.
+Which option the user voted for and with how much stake is stored encrypted on chain and only revealed when the market creator has revealed their choice. Those who put their stake in the chosen option can claim yield. All participants can claim their initial stake back.
 
 ## Build & Test
+
+Arcium v0.6.3 required.
 
 ```bash
 yarn install
@@ -37,7 +39,7 @@ arcium test
 
 ## MPC Circuits
 
-- `init_vote_token_account` - Initialize user balance to 0
+- `init_vote_token_account` - Initialize user balance to 0 // TODO: probably can get rid of this circuit...
 - `calculate_vote_token_balance` - Buy/sell vote tokens
 - `init_market_shares` - Initialize market's available shares
 - `buy_conviction_market_shares` - Purchase shares, deduct from user and market balances
