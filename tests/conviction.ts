@@ -486,6 +486,7 @@ describe("ConvictionMarket", () => {
       console.log("   Market selected option:", marketAccount.selectedOption);
 
       // ========== STEP 9: User reveals shares ==========
+      // TODO: do this with any other wallet as signer to see permissionless mode works
       console.log("\nStep 9: User reveals shares...");
 
       const revealComputationOffset = new anchor.BN(randomBytes(8), "hex");
@@ -542,11 +543,11 @@ describe("ConvictionMarket", () => {
       // ========== STEP 11: Increment option tally ==========
       console.log("\nStep 11: Incrementing option tally...");
 
-      // Derive option tally PDA
+      // Derive option PDA
       const optionIndexBN = new anchor.BN(selectedOptionIndex);
-      const [optionTallyPDA] = PublicKey.findProgramAddressSync(
+      const [optionPDA] = PublicKey.findProgramAddressSync(
         [
-          Buffer.from("option_tally"),
+          Buffer.from("option"),
           marketPDA.toBuffer(),
           optionIndexBN.toArrayLike(Buffer, "le", 2),
         ],
@@ -560,7 +561,7 @@ describe("ConvictionMarket", () => {
           owner: buyer.publicKey,
           market: marketPDA,
           shareAccount: buyerShareAccountPDA,
-          optionTally: optionTallyPDA,
+          option: optionPDA,
         })
         .signers([buyer])
         .rpc({ commitment: "confirmed" });
@@ -568,9 +569,10 @@ describe("ConvictionMarket", () => {
       console.log("   Increment tally tx:", incrementTallySig.slice(0, 20) + "...");
 
       // Verify option tally was incremented
-      const optionTallyAccount = await program.account.optionTally.fetch(optionTallyPDA);
-      expect(optionTallyAccount.totalSharesBought.toString()).to.equal(buySharesAmount.toString());
-      console.log("   Option tally total shares:", optionTallyAccount.totalSharesBought.toNumber());
+      const optionAccount = await program.account.convictionMarketOption.fetch(optionPDA);
+      expect(optionAccount.totalShares).to.not.be.null;
+      expect(optionAccount.totalShares!.toString()).to.equal(buySharesAmount.toString());
+      console.log("   Option tally total shares:", optionAccount.totalShares!.toNumber());
 
       console.log("\n   Test PASSED! Revealed shares match purchased shares.");
     });

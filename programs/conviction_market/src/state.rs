@@ -68,6 +68,7 @@ pub struct ConvictionMarketOption {
     #[max_len(50)]
     pub name: String,
 
+    /// Total shares bought for this option (tally)
     pub total_shares: Option<u64>
 }
 
@@ -80,11 +81,4 @@ pub struct ConvictionMarketShare {
     pub owner: Pubkey,
     pub market: Pubkey,
     pub state_nonce: u128,
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct OptionTally {
-    pub bump: u8,
-    pub total_shares_bought: u64,
 }

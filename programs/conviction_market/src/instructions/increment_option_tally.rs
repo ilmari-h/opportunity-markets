@@ -2,9 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::error::ErrorCode;
 use crate::instructions::buy_market_shares::SHARE_ACCOUNT_SEED;
-use crate::state::{ConvictionMarket, OptionTally, ShareAccount};
-
-pub const OPTION_TALLY_SEED: &[u8] = b"option_tally";
+use crate::state::{ConvictionMarket, ConvictionMarketOption, ShareAccount};
 
 #[derive(Accounts)]
 #[instruction(option_index: u16)]
@@ -27,34 +25,28 @@ pub struct IncrementOptionTally<'info> {
     pub share_account: Account<'info, ShareAccount>,
 
     #[account(
-        init_if_needed,
-        payer = signer,
-        space = 8 + OptionTally::INIT_SPACE,
-        seeds = [OPTION_TALLY_SEED, market.key().as_ref(), &option_index.to_le_bytes()],
-        bump,
+        mut,
+        seeds = [b"option", market.key().as_ref(), &option_index.to_le_bytes()],
+        bump = option.bump,
     )]
-    pub option_tally: Account<'info, OptionTally>,
+    pub option: Account<'info, ConvictionMarketOption>,
 
     pub system_program: Program<'info, System>,
 }
 
 pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, _option_index: u16) -> Result<()> {
-    // Initialize bump if this is a new account
-    if ctx.accounts.option_tally.bump == 0 {
-        ctx.accounts.option_tally.bump = ctx.bumps.option_tally;
-    }
-
     if let Some(revealed_amount) = ctx.accounts.share_account.revealed_amount {
-        ctx.accounts.option_tally.total_shares_bought = ctx
-            .accounts
-            .option_tally
-            .total_shares_bought
-            .checked_add(revealed_amount)
-            .ok_or(ErrorCode::Overflow)?;
+        // Initialize total_shares to 0 if None, then add revealed_amount
+        let current_total = ctx.accounts.option.total_shares.unwrap_or(0);
+        ctx.accounts.option.total_shares = Some(
+            current_total
+                .checked_add(revealed_amount)
+                .ok_or(ErrorCode::Overflow)?
+        );
 
         ctx.accounts.share_account.total_incremented = true;
-        return Ok(())
+        Ok(())
     } else {
-        return Err(ErrorCode::NotRevealed.into());
+        Err(ErrorCode::NotRevealed.into())
     }
 }
