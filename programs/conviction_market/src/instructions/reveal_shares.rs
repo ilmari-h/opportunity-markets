@@ -3,6 +3,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
+use crate::events::SharesRevealedEvent;
 use crate::instructions::buy_market_shares::SHARE_ACCOUNT_SEED;
 use crate::instructions::mint_vote_tokens::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::{ConvictionMarket, ShareAccount, VoteTokenAccount};
@@ -117,14 +118,17 @@ pub fn reveal_shares(
 
     // Build args for encrypted computation
     let args = ArgBuilder::new()
+        
         // Share account encrypted state (Enc<Shared, SharePurchase>)
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(share_account_nonce)
         .account(share_account_key, 8, 32 * 2)
+
         // User VTA encrypted state (Enc<Mxe, VoteTokenBalance>)
         .plaintext_u128(user_vta_nonce)
         .account(user_vta_key, 8, 32 * 1)
-        // Plaintext option index for verification
+
+        // Pass through boolean if revealed in time or not.
         .plaintext_bool(revealed_in_time)
         .build();
 
@@ -205,6 +209,12 @@ pub fn reveal_shares_callback(
     // Update user VTA with credited balance
     ctx.accounts.user_vta.state_nonce = new_user_balance.nonce;
     ctx.accounts.user_vta.encrypted_state = new_user_balance.ciphertexts;
+
+    emit!(SharesRevealedEvent{
+        buyer: ctx.accounts.user_vta.owner,
+        shares_amount: revealed_amount,
+        selected_option: revealed_option
+    });
 
     Ok(())
 }
