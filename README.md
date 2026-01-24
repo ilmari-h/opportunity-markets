@@ -1,4 +1,4 @@
-# Conviction Market
+# Conviction Markets
 
 Conviction Markets allow users to influence decision making by staking their capital on a their preferred option.
 

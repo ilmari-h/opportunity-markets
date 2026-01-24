@@ -16,14 +16,11 @@ pub struct InitVoteTokenAccount<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
-    /// CHECK: can be any account, this is a permissionless operation
-    pub owner: UncheckedAccount<'info>,
-
     #[account(
         init,
         payer = signer,
         space = 8 + VoteTokenAccount::INIT_SPACE,
-        seeds = [b"vote_token_account", owner.key().as_ref()],
+        seeds = [b"vote_token_account", signer.key().as_ref()],
         bump,
     )]
     pub vote_token_account: Account<'info, VoteTokenAccount>,
@@ -70,7 +67,7 @@ pub fn init_vote_token_account(
     // Initialize vote token fields
     let vote_token = &mut ctx.accounts.vote_token_account;
     vote_token.bump = ctx.bumps.vote_token_account;
-    vote_token.owner = ctx.accounts.owner.key();
+    vote_token.owner = ctx.accounts.signer.key();
     vote_token.state_nonce = 0;
 
     // Build args for encrypted computation

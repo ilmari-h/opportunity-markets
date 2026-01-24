@@ -289,7 +289,6 @@ describe("ConvictionMarket", () => {
         )
         .accountsPartial({
           signer: buyer.publicKey,
-          owner: buyer.publicKey,
           voteTokenAccount: buyerVoteTokenPDA,
           computationAccount: getComputationAccAddress(
             arciumEnv.arciumClusterOffset,
@@ -628,7 +627,6 @@ describe("ConvictionMarket", () => {
         )
         .accountsPartial({
           signer: buyer.publicKey,
-          owner: buyer.publicKey,
           voteTokenAccount: voteTokenAccountPDA,
           computationAccount: getComputationAccAddress(
             arciumEnv.arciumClusterOffset,
