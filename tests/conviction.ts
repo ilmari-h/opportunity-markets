@@ -859,64 +859,6 @@ describe("ConvictionMarket", () => {
       expect(decryptedBalanceAfterSell[0]).to.equal(BigInt(expectedBalanceAfterSell));
       console.log("   Verified encrypted balance after sell:", Number(decryptedBalanceAfterSell[0]), "tokens");
 
-      // ========== STEP 5: Try to sell more than balance (should fail gracefully) ==========
-      const oversellAmount = 1000; // Try to sell 1000 tokens (only have 50 left)
-
-      // TODO: this hangs
-      // console.log("\nStep 5: Attempting to oversell", oversellAmount, "vote tokens (should fail)...");
-
-      // const vtaBalanceBeforeOversell = await provider.connection.getBalance(voteTokenAccountPDA);
-      // const buyerBalanceBeforeOversell = await provider.connection.getBalance(buyer.publicKey);
-
-      // const computationOffsetOversell = new anchor.BN(randomBytes(8), "hex");
-      // const oversellSig = await program.methods
-      //   .mintVoteTokens(
-      //     computationOffsetOversell,
-      //     new anchor.BN(oversellAmount),
-      //     false // buy = false (sell)
-      //   )
-      //   .accounts({
-      //     signer: buyer.publicKey,
-      //     computationAccount: getComputationAccAddress(
-      //       arciumEnv.arciumClusterOffset,
-      //       computationOffsetOversell
-      //     ),
-      //     clusterAccount,
-      //     mxeAccount: getMXEAccAddress(program.programId),
-      //     mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
-      //     executingPool: getExecutingPoolAccAddress(
-      //       arciumEnv.arciumClusterOffset
-      //     ),
-      //     compDefAccount: getCompDefAccAddress(
-      //       program.programId,
-      //       Buffer.from(getCompDefAccOffset("calculate_vote_token_balance")).readUInt32LE()
-      //     ),
-      //   })
-      //   .signers([buyer])
-      //   .rpc({ skipPreflight: true, commitment: "confirmed" });
-
-      // console.log("   Oversell tx:", oversellSig);
-
-      // console.log("   Waiting for MPC computation to finalize...");
-      // await awaitComputationFinalization(
-      //   provider as anchor.AnchorProvider,
-      //   computationOffsetOversell,
-      //   program.programId,
-      //   "confirmed"
-      // );
-
-      // // Get balances after oversell attempt
-      // const buyerBalanceAfterOversell = await provider.connection.getBalance(buyer.publicKey);
-      // const vtaBalanceAfterOversell = await provider.connection.getBalance(voteTokenAccountPDA);
-
-      // console.log("   VTA SOL after oversell attempt:", vtaBalanceAfterOversell / anchor.web3.LAMPORTS_PER_SOL);
-
-      // // VTA balance should be unchanged (no transfer because error=true)
-      // // Note: There might be small differences due to rent, but no large transfer should occur
-      // const vtaBalanceDiff = Math.abs(vtaBalanceAfterOversell - vtaBalanceBeforeOversell);
-      // expect(vtaBalanceDiff).to.be.lessThan(oversellAmount * PRICE_PER_VOTE_TOKEN_LAMPORTS);
-      // console.log("   Oversell correctly rejected! No SOL transferred.");
-
       console.log("\n   Vote token buy/sell test PASSED!");
     });
   });
