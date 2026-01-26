@@ -24,6 +24,7 @@ import {
 import * as fs from "fs";
 import * as os from "os";
 import { expect } from "chai";
+import { SetupHelper, Setup, Account } from "./setup";
 
 function getClusterAccount(): PublicKey {
   const arciumEnv = getArciumEnv();
@@ -83,307 +84,36 @@ describe("ConvictionMarket", () => {
   });
 
   describe("Market Creation and Setup", () => {
+    let setup: Setup;
+    let setupHelper: SetupHelper;
+
+    beforeEach(async () => {
+      setupHelper = new SetupHelper(program, provider as anchor.AnchorProvider, mxePublicKey);
+      setup = await setupHelper.create();
+    });
+
     it("allows user to buy shares and claim yield", async () => {
-      console.log("\n=== Market Creation and Setup Test ===\n");
+      console.log("\n=== Testing Buy Shares and Claim Yield ===\n");
 
-      const marketIndex = new anchor.BN(1);
-      const maxOptions = 5; // u16
-      const maxShares = new anchor.BN(1000); // 1000 shares
-      const fundingLamports = new anchor.BN(1_000_000); // = 1 SOL
-      const timeToStake = new anchor.BN(120);
+      const { users, market } = setup;
+      const buyer = users[0];
 
-      // Small time slots that are long enough for reliable testing
-      const timeToReveal = new anchor.BN(10); 
+      // Initialize buyer's share account
+      console.log("\nInitializing buyer's share account...");
+      const buyerShareAccountPDA = await setupHelper.createShareAccount(buyer, market.pda);
 
-      // Derive market PDA
-      const [marketPDA] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("conviction_market"),
-          owner.publicKey.toBuffer(),
-          marketIndex.toArrayLike(Buffer, "le", 8),
-        ],
-        program.programId
-      );
-
-      // ========== STEP 1: Create Market ==========
-      console.log("Step 1: Creating conviction market...");
-      const marketCreatedPromise = awaitEvent("marketCreatedEvent");
-
-      const marketNonce = randomBytes(16);
-      const marketComputationOffset = new anchor.BN(randomBytes(8), "hex");
-
-      const createMarketSig = await program.methods
-        .createMarket(
-          marketIndex,
-          marketComputationOffset,
-          maxOptions,
-          maxShares,
-          fundingLamports,
-          timeToStake,
-          timeToReveal,
-          new anchor.BN(deserializeLE(marketNonce).toString()),
-          null
-        )
-        .accountsPartial({
-          creator: owner.publicKey,
-          market: marketPDA,
-          computationAccount: getComputationAccAddress(
-            arciumEnv.arciumClusterOffset,
-            marketComputationOffset
-          ),
-          clusterAccount,
-          mxeAccount: getMXEAccAddress(program.programId),
-          mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
-          executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
-          compDefAccount: getCompDefAccAddress(
-            program.programId,
-            Buffer.from(getCompDefAccOffset("init_market_shares")).readUInt32LE()
-          ),
-        })
-        .rpc({ skipPreflight: true, commitment: "confirmed" });
-
-      console.log("   Create market tx:", createMarketSig);
-
-      const marketCreatedEvent = await marketCreatedPromise;
-      console.log("   Market created:", marketCreatedEvent.market.toBase58());
-
-      console.log("   Waiting for MPC computation to finalize...");
-      await awaitComputationFinalization(
-        provider as anchor.AnchorProvider,
-        marketComputationOffset,
-        program.programId,
-        "confirmed"
-      );
-      console.log("   Market encrypted state initialized!");
-
-      // Verify market state
-      let marketAccount = await program.account.convictionMarket.fetch(marketPDA);
-      expect(marketAccount.totalOptions).to.equal(0);
-      expect(marketAccount.maxOptions).to.equal(5);
-      expect(marketAccount.openTimestamp).to.be.null;
-      console.log("   Market initialized with 0 options, max 5");
-
-      // ========== STEP 2: Add 3 Options ==========
-      console.log("\nStep 2: Adding 3 market options...");
-
-      const optionNames = ["Option A", "Option B", "Option C"];
-
-      for (let i = 1; i <= 3; i++) {
-        const optionIndex = i; // u16
-        const optionIndexBN = new anchor.BN(i);
-        const [optionPDA] = PublicKey.findProgramAddressSync(
-          [
-            Buffer.from("option"),
-            marketPDA.toBuffer(),
-            optionIndexBN.toArrayLike(Buffer, "le", 2), // u16 = 2 bytes
-          ],
-          program.programId
-        );
-
-        const addOptionSig = await program.methods
-          .addMarketOption(optionIndex, optionNames[i - 1])
-          .accountsPartial({
-            creator: owner.publicKey,
-            market: marketPDA,
-            option: optionPDA,
-          })
-          .rpc({ commitment: "confirmed" });
-
-        console.log(`   Added option ${i} "${optionNames[i - 1]}": ${addOptionSig.slice(0, 20)}...`);
-
-        // Verify option account
-        const optionAccount = await program.account.convictionMarketOption.fetch(optionPDA);
-        expect(optionAccount.name).to.equal(optionNames[i - 1]);
-        expect(optionAccount.totalShares).to.be.null;
-      }
-
-      // Verify market total options updated
-      marketAccount = await program.account.convictionMarket.fetch(marketPDA);
-      expect(marketAccount.totalOptions).to.equal(3);
-      console.log("   Market now has 3 options");
-
-      // ========== STEP 3: Fund and Open Market ==========
-      console.log("\nStep 3: Funding and opening market...");
-      console.log("   Market PDA:", marketPDA.toBase58());
-      console.log("   Max shares:", maxShares.toNumber());
-      console.log("   Funding lamports:", fundingLamports);
-
-      // Transfer funding amount
-      const fundTx = new anchor.web3.Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: owner.publicKey,
-          toPubkey: marketPDA,
-          lamports: fundingLamports.toNumber(),
-        })
-      );
-      fundTx.feePayer = owner.publicKey;
-      fundTx.recentBlockhash = (await provider.connection.getLatestBlockhash()).blockhash;
-      fundTx.sign(owner);
-
-      console.log("   Sending fund transaction...");
-      const fundSig = await provider.connection.sendRawTransaction(fundTx.serialize(), {
-        skipPreflight: true,
-      });
-      console.log("   Fund tx sent:", fundSig);
-      await provider.connection.confirmTransaction(fundSig, "confirmed");
-
-      // Open market with timestamp 10 seconds in the future
-      const currentSlot = await provider.connection.getSlot();
-      const currentTimestamp = await provider.connection.getBlockTime(currentSlot);
-      const openTimestamp = new anchor.BN(currentTimestamp + 10);
-
-      const openMarketSig = await program.methods
-        .openMarket(openTimestamp)
-        .accountsPartial({
-          creator: owner.publicKey,
-          market: marketPDA,
-        })
-        .rpc({ commitment: "confirmed" });
-
-      console.log("   Opened market:", openMarketSig.slice(0, 20) + "...");
-
-      // Verify market is now open
-      marketAccount = await program.account.convictionMarket.fetch(marketPDA);
-      expect(marketAccount.openTimestamp).to.not.be.null;
-      expect(marketAccount.openTimestamp!.toNumber()).to.equal(openTimestamp.toNumber());
-      console.log("   Market open_timestamp set to:", openTimestamp.toNumber());
-
-
-      // ========== STEP 4: Create buyer and initialize their vote token account ==========
-      console.log("\nStep 4: Setting up buyer...");
-
-      const buyer = anchor.web3.Keypair.generate();
-
-      // Airdrop SOL to buyer
-      const airdropSig = await provider.connection.requestAirdrop(
-        buyer.publicKey,
-        2 * anchor.web3.LAMPORTS_PER_SOL
-      );
-      await provider.connection.confirmTransaction(airdropSig, "confirmed");
-      console.log("   Buyer:", buyer.publicKey.toBase58());
-      console.log("   Airdrop complete: 2 SOL");
-
-      // Initialize buyer's vote token account
-      const [buyerVoteTokenPDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from("vote_token_account"), buyer.publicKey.toBuffer()],
-        program.programId
-      );
-
-      // Generate X25519 keypair for encryption
-      const privateKey = x25519.utils.randomPrivateKey();
-      const publicKey = x25519.getPublicKey(privateKey);
-
-      // Derive shared secret with MXE
-      const sharedSecret = x25519.getSharedSecret(privateKey, mxePublicKey);
-      const cipher = new RescueCipher(sharedSecret);
-
-      const buyerVtaNonce = randomBytes(16);
-      const buyerVtaComputationOffset = new anchor.BN(randomBytes(8), "hex");
-
-      const initBuyerVtaSig = await program.methods
-        .initVoteTokenAccount(
-          buyerVtaComputationOffset,
-          Array.from(publicKey),
-          new anchor.BN(deserializeLE(buyerVtaNonce).toString())
-        )
-        .accountsPartial({
-          signer: buyer.publicKey,
-          voteTokenAccount: buyerVoteTokenPDA,
-          computationAccount: getComputationAccAddress(
-            arciumEnv.arciumClusterOffset,
-            buyerVtaComputationOffset
-          ),
-          clusterAccount,
-          mxeAccount: getMXEAccAddress(program.programId),
-          mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
-          executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
-          compDefAccount: getCompDefAccAddress(
-            program.programId,
-            Buffer.from(getCompDefAccOffset("init_vote_token_account")).readUInt32LE()
-          ),
-        })
-        .signers([buyer])
-        .rpc({ skipPreflight: false, commitment: "confirmed" });
-
-      console.log("   Init buyer VTA tx:", initBuyerVtaSig);
-
-      console.log("   Waiting for MPC computation to finalize...");
-      await awaitComputationFinalization(
-        provider as anchor.AnchorProvider,
-        buyerVtaComputationOffset,
-        program.programId,
-        "confirmed"
-      );
-      console.log("   Buyer vote token account initialized!");
-
-      // ========== STEP 5: Buyer mints vote tokens ==========
-      console.log("\nStep 5: Buyer minting vote tokens...");
-
-
+      // Mint vote tokens for buyer
+      console.log("\nMinting vote tokens for buyer...");
       const mintAmount = 100;
-      const mintComputationOffset = new anchor.BN(randomBytes(8), "hex");
+      await setupHelper.mintVoteTokens(buyer, mintAmount);
 
-      const mintSig = await program.methods
-        .mintVoteTokens(mintComputationOffset, Array.from(publicKey), new anchor.BN(mintAmount))
-        .accounts({
-          signer: buyer.publicKey,
-          computationAccount: getComputationAccAddress(
-            arciumEnv.arciumClusterOffset,
-            mintComputationOffset
-          ),
-          clusterAccount,
-          mxeAccount: getMXEAccAddress(program.programId),
-          mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
-          executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
-          compDefAccount: getCompDefAccAddress(
-            program.programId,
-            Buffer.from(getCompDefAccOffset("buy_vote_tokens")).readUInt32LE()
-          ),
-        })
-        .signers([buyer])
-        .rpc({ skipPreflight: false, commitment: "confirmed" });
-
-      console.log("   Mint tx:", mintSig);
-
-      console.log("   Waiting for MPC computation to finalize...");
-      await awaitComputationFinalization(
-        provider as anchor.AnchorProvider,
-        mintComputationOffset,
-        program.programId,
-        "confirmed"
-      );
-      console.log("   Buyer minted", mintAmount, "vote tokens!");
-
-      // ========== STEP 5b: Initialize buyer's share account ==========
-      console.log("\nStep 5b: Initializing buyer's share account...");
-
-      const [buyerShareAccountPDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from("share_account"), buyer.publicKey.toBuffer(), marketPDA.toBuffer()],
-        program.programId
-      );
-
-      const shareAccountNonce = new anchor.BN(deserializeLE(randomBytes(16)).toString());
-
-      const initShareAccountSig = await program.methods
-        .initShareAccount(shareAccountNonce)
-        .accountsPartial({
-          signer: buyer.publicKey,
-          market: marketPDA,
-          shareAccount: buyerShareAccountPDA,
-        })
-        .signers([buyer])
-        .rpc({ commitment: "confirmed" });
-
-      console.log("   Init share account tx:", initShareAccountSig);
-      console.log("   Share account PDA:", buyerShareAccountPDA.toBase58());
-
-      // ========== STEP 6: Buy market shares with encrypted inputs ==========
-      console.log("\nStep 6: Buying market shares with encrypted inputs...");
+      // ========== Buy market shares with encrypted inputs ==========
+      console.log("\nBuying market shares with encrypted inputs...");
 
       // Wait for staking period to be active
       const currentSlotBeforeBuy = await provider.connection.getSlot();
       const currentTimestampBeforeBuy = await provider.connection.getBlockTime(currentSlotBeforeBuy);
-      const targetTimestamp = openTimestamp.toNumber() + 3; // 3 second safety buffer
+      const targetTimestamp = market.openTimestamp.toNumber() + 3; // 3 second safety buffer
 
       if (currentTimestampBeforeBuy! < targetTimestamp) {
         const sleepMs = (targetTimestamp - currentTimestampBeforeBuy!) * 1000;
@@ -397,10 +127,10 @@ describe("ConvictionMarket", () => {
       const inputNonce = randomBytes(16);
 
       // Encrypt both fields together as a struct (BuySharesInput { amount: u64, selected_option: u16 })
-      const ciphertexts = cipher.encrypt([buySharesAmount, selectedOption], inputNonce);
+      const ciphertexts = buyer.cipher.encrypt([buySharesAmount, selectedOption], inputNonce);
 
       const buySharesComputationOffset = new anchor.BN(randomBytes(8), "hex");
-      const disclosureNonce = new anchor.BN(deserializeLE( randomBytes(16)));
+      const disclosureNonce = new anchor.BN(deserializeLE(randomBytes(16)));
 
       const buySharesSig = await sendWithRetry(() =>
         program.methods
@@ -408,15 +138,15 @@ describe("ConvictionMarket", () => {
             buySharesComputationOffset,
             Array.from(ciphertexts[0]),
             Array.from(ciphertexts[1]),
-            Array.from(publicKey),
+            Array.from(buyer.x25519Keypair.publicKey),
             new anchor.BN(deserializeLE(inputNonce).toString()),
 
-            Array.from(publicKey),
+            Array.from(buyer.x25519Keypair.publicKey),
             disclosureNonce,
           )
           .accountsPartial({
-            signer: buyer.publicKey,
-            market: marketPDA,
+            signer: buyer.pubkey,
+            market: market.pda,
             computationAccount: getComputationAccAddress(
               arciumEnv.arciumClusterOffset,
               buySharesComputationOffset
@@ -430,7 +160,7 @@ describe("ConvictionMarket", () => {
               Buffer.from(getCompDefAccOffset("buy_conviction_market_shares")).readUInt32LE()
             ),
           })
-          .signers([buyer])
+          .signers([buyer.keypair])
           .rpc({ commitment: "confirmed" })
       );
 
@@ -445,17 +175,17 @@ describe("ConvictionMarket", () => {
       );
       console.log("   Shares purchased!");
 
-      // ========== STEP 7: Verify share account ==========
-      console.log("\nStep 7: Verifying share account...");
+      // ========== Verify share account ==========
+      console.log("\nVerifying share account...");
 
       // Fetch the share account
       const shareAccount = await program.account.shareAccount.fetch(buyerShareAccountPDA);
 
-      // Verify share account propperties
-      expect(shareAccount.owner.toBase58()).to.equal(buyer.publicKey.toBase58());
-      expect(shareAccount.market.toBase58()).to.equal(marketPDA.toBase58());
+      // Verify share account properties
+      expect(shareAccount.owner.toBase58()).to.equal(buyer.pubkey.toBase58());
+      expect(shareAccount.market.toBase58()).to.equal(market.pda.toBase58());
 
-      const decryptedShareValues = cipher.decrypt(
+      const decryptedShareValues = buyer.cipher.decrypt(
         shareAccount.encryptedState,
         Uint8Array.from(
           shareAccount.stateNonce.toArray("le", 16)
@@ -464,8 +194,8 @@ describe("ConvictionMarket", () => {
       expect(decryptedShareValues[0]).to.equal(buySharesAmount);
       expect(decryptedShareValues[1]).to.equal(selectedOption);
 
-      // ========== STEP 8: Market creator selects winning option ==========
-      console.log("\nStep 8: Market creator selects winning option...");
+      // ========== Market creator selects winning option ==========
+      console.log("\nMarket creator selects winning option...");
 
       // Select option 1 (the same option the buyer chose)
       const selectedOptionIndex = 1;
@@ -473,33 +203,33 @@ describe("ConvictionMarket", () => {
       const selectOptionSig = await program.methods
         .selectOption(selectedOptionIndex)
         .accountsPartial({
-          authority: owner.publicKey,
-          market: marketPDA,
+          authority: setup.marketCreator.pubkey,
+          market: market.pda,
         })
+        .signers([setup.marketCreator.keypair])
         .rpc({ commitment: "confirmed" });
 
       console.log("   Select option tx:", selectOptionSig.slice(0, 20) + "...");
 
       // Verify market has selected option set
-      marketAccount = await program.account.convictionMarket.fetch(marketPDA);
+      let marketAccount = await program.account.convictionMarket.fetch(market.pda);
       expect(marketAccount.selectedOption).to.not.be.null;
       expect(marketAccount.selectedOption).to.equal(selectedOptionIndex);
       console.log("   Market selected option:", marketAccount.selectedOption);
 
-      // ========== STEP 9: User reveals shares ==========
-      // TODO: do this with any other wallet as signer to see permissionless mode works
-      console.log("\nStep 9: User reveals shares...");
+      // ========== User reveals shares ==========
+      console.log("\nUser reveals shares...");
 
       const revealComputationOffset = new anchor.BN(randomBytes(8), "hex");
 
       const revealSharesSig = await program.methods
-        .revealShares(revealComputationOffset, Array.from(publicKey))
+        .revealShares(revealComputationOffset, Array.from(buyer.x25519Keypair.publicKey))
         .accountsPartial({
-          signer: buyer.publicKey, // Could be anyone
-          market: marketPDA,
-          owner: buyer.publicKey,
+          signer: buyer.pubkey,
+          market: market.pda,
+          owner: buyer.pubkey,
           shareAccount: buyerShareAccountPDA,
-          userVta: buyerVoteTokenPDA,
+          userVta: buyer.voteTokenAccountPDA,
           computationAccount: getComputationAccAddress(
             arciumEnv.arciumClusterOffset,
             revealComputationOffset
@@ -513,7 +243,7 @@ describe("ConvictionMarket", () => {
             Buffer.from(getCompDefAccOffset("reveal_shares")).readUInt32LE()
           ),
         })
-        .signers([buyer])
+        .signers([buyer.keypair])
         .rpc({ commitment: "confirmed" });
 
       console.log("   Reveal shares tx:", revealSharesSig.slice(0, 20) + "...");
@@ -527,8 +257,8 @@ describe("ConvictionMarket", () => {
       );
       console.log("   Shares revealed!");
 
-      // ========== STEP 10: Verify revealed shares ==========
-      console.log("\nStep 10: Verifying revealed shares...");
+      // ========== Verify revealed shares ==========
+      console.log("\nVerifying revealed shares...");
 
       const revealedShareAccount = await program.account.shareAccount.fetch(buyerShareAccountPDA);
 
@@ -540,30 +270,22 @@ describe("ConvictionMarket", () => {
       console.log("   Revealed amount:", revealedShareAccount.revealedAmount!.toNumber());
       console.log("   Revealed option:", revealedShareAccount.revealedOption);
 
-      // ========== STEP 11: Increment option tally ==========
-      console.log("\nStep 11: Incrementing option tally...");
+      // ========== Increment option tally ==========
+      console.log("\nIncrementing option tally...");
 
-      // Derive option PDA
-      const optionIndexBN = new anchor.BN(selectedOptionIndex);
-      const [optionPDA] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("option"),
-          marketPDA.toBuffer(),
-          optionIndexBN.toArrayLike(Buffer, "le", 2),
-        ],
-        program.programId
-      );
+      // Get option PDA from market setup
+      const optionPDA = market.options[selectedOptionIndex - 1].pda;
 
       const incrementTallySig = await program.methods
         .incrementOptionTally(selectedOptionIndex)
         .accountsPartial({
-          signer: buyer.publicKey,
-          owner: buyer.publicKey,
-          market: marketPDA,
+          signer: buyer.pubkey,
+          owner: buyer.pubkey,
+          market: market.pda,
           shareAccount: buyerShareAccountPDA,
           option: optionPDA,
         })
-        .signers([buyer])
+        .signers([buyer.keypair])
         .rpc({ commitment: "confirmed" });
 
       console.log("   Increment tally tx:", incrementTallySig.slice(0, 20) + "...");
@@ -575,29 +297,29 @@ describe("ConvictionMarket", () => {
       console.log("   Option tally total shares:", optionAccount.totalShares.toNumber());
       console.log("   Option tally total score:", optionAccount.totalScore?.toNumber() || 0);
 
-      // ========== STEP 12: Wait for reveal period to end and close share account ==========
-      console.log("\nStep 12: Waiting for reveal period to end, then closing share account...");
+      // ========== Wait for reveal period to end and close share account ==========
+      console.log("\nWaiting for reveal period to end, then closing share account...");
 
       // Wait for reveal period end
-      const sleepMs = timeToReveal.muln(1000).toNumber()
+      const sleepMs = market.timeToReveal.muln(1000).toNumber()
       console.log(`   Waiting ${sleepMs}ms for reveal period to end...`);
       await new Promise((resolve) => setTimeout(resolve, sleepMs));
 
       console.log("   Reveal period ended. Closing share account...");
 
       // Get buyer balance before closing
-      const buyerBalanceBeforeClose = await provider.connection.getBalance(buyer.publicKey);
-      const marketBalanceBeforeClose = await provider.connection.getBalance(marketPDA);
+      const buyerBalanceBeforeClose = await provider.connection.getBalance(buyer.pubkey);
+      const marketBalanceBeforeClose = await provider.connection.getBalance(market.pda);
 
       const closeShareAccountSig = await program.methods
         .closeShareAccount(selectedOptionIndex)
         .accountsPartial({
-          owner: buyer.publicKey,
-          market: marketPDA,
+          owner: buyer.pubkey,
+          market: market.pda,
           shareAccount: buyerShareAccountPDA,
           option: optionPDA,
         })
-        .signers([buyer])
+        .signers([buyer.keypair])
         .rpc({ commitment: "confirmed" });
 
       console.log("   Close share account tx:", closeShareAccountSig.slice(0, 20) + "...");
@@ -608,8 +330,8 @@ describe("ConvictionMarket", () => {
       console.log("   Share account closed successfully!");
 
       // Verify buyer received rent refund + reward
-      const buyerBalanceAfterClose = await provider.connection.getBalance(buyer.publicKey);
-      const marketBalanceAfterClose = await provider.connection.getBalance(marketPDA);
+      const buyerBalanceAfterClose = await provider.connection.getBalance(buyer.pubkey);
+      const marketBalanceAfterClose = await provider.connection.getBalance(market.pda);
 
       const buyerBalanceIncrease = buyerBalanceAfterClose - buyerBalanceBeforeClose;
       const marketBalanceDecrease = marketBalanceBeforeClose - marketBalanceAfterClose;
@@ -621,9 +343,8 @@ describe("ConvictionMarket", () => {
         marketBalanceDecrease / LAMPORTS_PER_SOL, "SOL");
 
       // Since the buyer was the only one who bought shares for the winning option,
-      // they should receive approximately 100% of the reward (minus rent for share account closure)
-      // The reward was fundingLamports = 1,000,000 lamports = 0.001 SOL
-      const expectedReward = fundingLamports.toNumber();
+      // they should receive approximately 100% of the reward
+      const expectedReward = market.fundingLamports.toNumber();
       const actualReward = marketBalanceDecrease;
 
       console.log("   Expected reward:", expectedReward / LAMPORTS_PER_SOL, "SOL");
@@ -636,6 +357,301 @@ describe("ConvictionMarket", () => {
       console.log("   ✓ Buyer received ~100% of reward lamports (within 0.1% tolerance)");
 
       console.log("\n   Test PASSED! Revealed shares match purchased shares, share account closed successfully, and buyer received full reward!");
+    });
+  });
+
+  describe("Multi-User Scenarios", () => {
+    let setup: Setup;
+    let setupHelper: SetupHelper;
+
+    beforeEach(async () => {
+      setupHelper = new SetupHelper(program, provider as anchor.AnchorProvider, mxePublicKey);
+      setup = await setupHelper.create();
+    });
+
+    it("allows three users to vote for different options", async () => {
+      console.log("\n=== Testing Three Users Voting for Different Options ===\n");
+
+      const { users, market } = setup;
+
+      // Each user gets 100 vote tokens
+      for (const user of users) {
+        await setupHelper.mintVoteTokens(user, 100);
+      }
+
+      // Each user buys shares for a different option
+      const shareAccounts: PublicKey[] = [];
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
+        const selectedOption = BigInt(i + 1); // User 0 → Option 1, User 1 → Option 2, User 2 → Option 3
+
+        // Initialize share account
+        const shareAccountPDA = await setupHelper.createShareAccount(user, market.pda);
+        shareAccounts.push(shareAccountPDA);
+
+        // Wait for staking period
+        const currentSlot = await provider.connection.getSlot();
+        const currentTimestamp = await provider.connection.getBlockTime(currentSlot);
+        const targetTimestamp = market.openTimestamp.toNumber() + 3;
+
+        if (currentTimestamp! < targetTimestamp) {
+          const sleepMs = (targetTimestamp - currentTimestamp!) * 1000;
+          console.log(`   Waiting ${sleepMs}ms for staking period to start...`);
+          await new Promise((resolve) => setTimeout(resolve, sleepMs));
+        }
+
+        // Buy 50 shares for this option
+        const buySharesAmount = BigInt(50);
+        const inputNonce = randomBytes(16);
+        const ciphertexts = user.cipher.encrypt([buySharesAmount, selectedOption], inputNonce);
+        const buySharesComputationOffset = new anchor.BN(randomBytes(8), "hex");
+        const disclosureNonce = new anchor.BN(deserializeLE(randomBytes(16)));
+
+        await sendWithRetry(() =>
+          program.methods
+            .buyMarketShares(
+              buySharesComputationOffset,
+              Array.from(ciphertexts[0]),
+              Array.from(ciphertexts[1]),
+              Array.from(user.x25519Keypair.publicKey),
+              new anchor.BN(deserializeLE(inputNonce).toString()),
+              Array.from(user.x25519Keypair.publicKey),
+              disclosureNonce,
+            )
+            .accountsPartial({
+              signer: user.pubkey,
+              market: market.pda,
+              computationAccount: getComputationAccAddress(
+                arciumEnv.arciumClusterOffset,
+                buySharesComputationOffset
+              ),
+              clusterAccount,
+              mxeAccount: getMXEAccAddress(program.programId),
+              mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+              executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
+              compDefAccount: getCompDefAccAddress(
+                program.programId,
+                Buffer.from(getCompDefAccOffset("buy_conviction_market_shares")).readUInt32LE()
+              ),
+            })
+            .signers([user.keypair])
+            .rpc({ commitment: "confirmed" })
+        );
+
+        await awaitComputationFinalization(
+          provider as anchor.AnchorProvider,
+          buySharesComputationOffset,
+          program.programId,
+          "confirmed"
+        );
+
+        console.log(`   User ${i + 1} bought 50 shares for Option ${selectedOption}`);
+      }
+
+      // Verify each user's encrypted shares
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
+        const shareAccount = await program.account.shareAccount.fetch(shareAccounts[i]);
+        const decryptedValues = user.cipher.decrypt(
+          shareAccount.encryptedState,
+          Uint8Array.from(shareAccount.stateNonce.toArray("le", 16))
+        );
+        expect(decryptedValues[0]).to.equal(BigInt(50));
+        expect(decryptedValues[1]).to.equal(BigInt(i + 1));
+      }
+
+      console.log("\n   Test PASSED! All three users successfully voted for different options.");
+    });
+
+    it("distributes rewards proportionally among winners", async () => {
+      console.log("\n=== Testing Proportional Reward Distribution ===\n");
+
+      const { users, market } = setup;
+
+      // All 3 users mint vote tokens
+      for (const user of users) {
+        await setupHelper.mintVoteTokens(user, 100);
+      }
+
+      // All 3 users buy different amounts of shares for option 1 (the winner)
+      const shareAccounts: PublicKey[] = [];
+      const shareAmounts = [BigInt(30), BigInt(40), BigInt(50)]; // Different amounts for each user
+
+      // Wait for staking period
+      const currentSlot = await provider.connection.getSlot();
+      const currentTimestamp = await provider.connection.getBlockTime(currentSlot);
+      const targetTimestamp = market.openTimestamp.toNumber() + 3;
+
+      if (currentTimestamp! < targetTimestamp) {
+        const sleepMs = (targetTimestamp - currentTimestamp!) * 1000;
+        console.log(`   Waiting ${sleepMs}ms for staking period to start...`);
+        await new Promise((resolve) => setTimeout(resolve, sleepMs));
+      }
+
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
+        const buySharesAmount = shareAmounts[i];
+        const selectedOption = BigInt(1); // All vote for option 1
+
+        // Initialize share account
+        const shareAccountPDA = await setupHelper.createShareAccount(user, market.pda);
+        shareAccounts.push(shareAccountPDA);
+
+        // Buy shares
+        const inputNonce = randomBytes(16);
+        const ciphertexts = user.cipher.encrypt([buySharesAmount, selectedOption], inputNonce);
+        const buySharesComputationOffset = new anchor.BN(randomBytes(8), "hex");
+        const disclosureNonce = new anchor.BN(deserializeLE(randomBytes(16)));
+
+        await sendWithRetry(() =>
+          program.methods
+            .buyMarketShares(
+              buySharesComputationOffset,
+              Array.from(ciphertexts[0]),
+              Array.from(ciphertexts[1]),
+              Array.from(user.x25519Keypair.publicKey),
+              new anchor.BN(deserializeLE(inputNonce).toString()),
+              Array.from(user.x25519Keypair.publicKey),
+              disclosureNonce,
+            )
+            .accountsPartial({
+              signer: user.pubkey,
+              market: market.pda,
+              computationAccount: getComputationAccAddress(
+                arciumEnv.arciumClusterOffset,
+                buySharesComputationOffset
+              ),
+              clusterAccount,
+              mxeAccount: getMXEAccAddress(program.programId),
+              mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+              executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
+              compDefAccount: getCompDefAccAddress(
+                program.programId,
+                Buffer.from(getCompDefAccOffset("buy_conviction_market_shares")).readUInt32LE()
+              ),
+            })
+            .signers([user.keypair])
+            .rpc({ commitment: "confirmed" })
+        );
+
+        await awaitComputationFinalization(
+          provider as anchor.AnchorProvider,
+          buySharesComputationOffset,
+          program.programId,
+          "confirmed"
+        );
+
+        console.log(`   User ${i + 1} bought ${buySharesAmount} shares for Option 1`);
+      }
+
+      // Market creator selects option 1 as winner
+      await program.methods
+        .selectOption(1)
+        .accountsPartial({
+          authority: setup.marketCreator.pubkey,
+          market: market.pda,
+        })
+        .signers([setup.marketCreator.keypair])
+        .rpc({ commitment: "confirmed" });
+
+      console.log("   Market creator selected Option 1 as winner");
+
+      // Reveal all shares
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
+        const revealComputationOffset = new anchor.BN(randomBytes(8), "hex");
+
+        await program.methods
+          .revealShares(revealComputationOffset, Array.from(user.x25519Keypair.publicKey))
+          .accountsPartial({
+            signer: user.pubkey,
+            market: market.pda,
+            owner: user.pubkey,
+            shareAccount: shareAccounts[i],
+            userVta: user.voteTokenAccountPDA,
+            computationAccount: getComputationAccAddress(
+              arciumEnv.arciumClusterOffset,
+              revealComputationOffset
+            ),
+            clusterAccount,
+            mxeAccount: getMXEAccAddress(program.programId),
+            mempoolAccount: getMempoolAccAddress(arciumEnv.arciumClusterOffset),
+            executingPool: getExecutingPoolAccAddress(arciumEnv.arciumClusterOffset),
+            compDefAccount: getCompDefAccAddress(
+              program.programId,
+              Buffer.from(getCompDefAccOffset("reveal_shares")).readUInt32LE()
+            ),
+          })
+          .signers([user.keypair])
+          .rpc({ commitment: "confirmed" });
+
+        await awaitComputationFinalization(
+          provider as anchor.AnchorProvider,
+          revealComputationOffset,
+          program.programId,
+          "confirmed"
+        );
+
+        console.log(`   User ${i + 1} revealed shares`);
+      }
+
+      // Increment option tally for all users
+      const optionPDA = market.options[0].pda;
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
+        await program.methods
+          .incrementOptionTally(1)
+          .accountsPartial({
+            signer: user.pubkey,
+            owner: user.pubkey,
+            market: market.pda,
+            shareAccount: shareAccounts[i],
+            option: optionPDA,
+          })
+          .signers([user.keypair])
+          .rpc({ commitment: "confirmed" });
+      }
+
+      console.log("   All users incremented option tally");
+
+      // Wait for reveal period to end
+      await new Promise((resolve) => setTimeout(resolve, market.timeToReveal.muln(1000).toNumber()));
+
+      // Close share accounts and claim rewards
+      const rewards: number[] = [];
+      for (let i = 0; i < users.length; i++) {
+        const user = users[i];
+        const balanceBefore = await provider.connection.getBalance(user.pubkey);
+
+        await program.methods
+          .closeShareAccount(1)
+          .accountsPartial({
+            owner: user.pubkey,
+            market: market.pda,
+            shareAccount: shareAccounts[i],
+            option: optionPDA,
+          })
+          .signers([user.keypair])
+          .rpc({ commitment: "confirmed" });
+
+        const balanceAfter = await provider.connection.getBalance(user.pubkey);
+        const reward = balanceAfter - balanceBefore;
+        rewards.push(reward);
+
+        console.log(`   User ${i + 1} received reward: ${reward / LAMPORTS_PER_SOL} SOL`);
+      }
+
+      // Verify total rewards distributed
+      const totalReward = rewards.reduce((a, b) => a + b, 0);
+      const marketFunding = market.fundingLamports.toNumber();
+
+      console.log(`   Total rewards distributed: ${totalReward / LAMPORTS_PER_SOL} SOL`);
+      console.log(`   Market funding: ${marketFunding / LAMPORTS_PER_SOL} SOL`);
+
+      expect(totalReward).to.be.at.least(marketFunding);
+      console.log(`   ✓ Total rewards distributed (${totalReward / LAMPORTS_PER_SOL} SOL) >= market funding (${marketFunding / LAMPORTS_PER_SOL} SOL)`);
+
+      console.log("\n   Test PASSED! Rewards distributed proportionally among all winners.");
     });
   });
 

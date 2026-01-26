@@ -22,7 +22,6 @@ pub struct SharesPurchasedEvent {
     pub nonce: u128,
 }
 
-
 #[event]
 pub struct SharesRevealedEvent {
     pub buyer: Pubkey,
