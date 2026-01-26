@@ -12,3 +12,5 @@ encrypted-ixs/src/main.rs
 artifacts/
 
 deploy.sh
+compute-defs.sh
+test-market.sh

@@ -6,3 +6,9 @@ localnet_timeout_secs = 60
 # MPC backends this MXE supports (default: ["Cerberus"])
 # Supported values: "Cerberus"
 backends = ["Cerberus"]
+
+[devnet]
+# Cluster offset for devnet deployment
+cluster_offset = 456
+# MPC backends this MXE supports
+backends = ["Cerberus"]

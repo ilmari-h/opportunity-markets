@@ -1,7 +1,10 @@
 use anchor_lang::prelude::*;
 use arcium_anchor::prelude::*;
+use arcium_client::idl::arcium::types::{CircuitSource, OffChainCircuitSource};
+use arcium_macros::circuit_hash;
 
 use crate::ID;
+
 
 #[init_computation_definition_accounts("init_vote_token_account", payer)]
 #[derive(Accounts)]
@@ -18,7 +21,21 @@ pub struct InitVoteTokenAccountCompDef<'info> {
 }
 
 pub fn init_vote_token_account_comp_def(ctx: Context<InitVoteTokenAccountCompDef>) -> Result<()> {
-    init_comp_def(ctx.accounts, None, None)?;
+    #[cfg(feature = "hosted-compdefs")]
+    {
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/init_vote_token_account.arcis".to_string(),
+                hash: circuit_hash!("init_vote_token_account"),
+            })),
+            None,
+        )?;
+    }
+    #[cfg(not(feature = "hosted-compdefs"))]
+    {
+        init_comp_def(ctx.accounts, None, None)?;
+    }
     Ok(())
 }
 
@@ -37,7 +54,21 @@ pub struct BuyVoteTokensCompDef<'info> {
 }
 
 pub fn buy_vote_tokens_comp_def(ctx: Context<BuyVoteTokensCompDef>) -> Result<()> {
-    init_comp_def(ctx.accounts, None, None)?;
+    #[cfg(feature = "hosted-compdefs")]
+    {
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/buy_vote_tokens.arcis".to_string(),
+                hash: circuit_hash!("buy_vote_tokens"),
+            })),
+            None,
+        )?;
+    }
+    #[cfg(not(feature = "hosted-compdefs"))]
+    {
+        init_comp_def(ctx.accounts, None, None)?;
+    }
     Ok(())
 }
 
@@ -56,7 +87,21 @@ pub struct ClaimVoteTokensCompDef<'info> {
 }
 
 pub fn claim_vote_tokens_comp_def(ctx: Context<ClaimVoteTokensCompDef>) -> Result<()> {
-    init_comp_def(ctx.accounts, None, None)?;
+    #[cfg(feature = "hosted-compdefs")]
+    {
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/claim_vote_tokens.arcis".to_string(),
+                hash: circuit_hash!("claim_vote_tokens"),
+            })),
+            None,
+        )?;
+    }
+    #[cfg(not(feature = "hosted-compdefs"))]
+    {
+        init_comp_def(ctx.accounts, None, None)?;
+    }
     Ok(())
 }
 
@@ -75,7 +120,21 @@ pub struct BuyConvictionMarketSharesCompDef<'info> {
 }
 
 pub fn buy_conviction_market_shares_comp_def(ctx: Context<BuyConvictionMarketSharesCompDef>) -> Result<()> {
-    init_comp_def(ctx.accounts, None, None)?;
+    #[cfg(feature = "hosted-compdefs")]
+    {
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/buy_conviction_market_shares.arcis".to_string(),
+                hash: circuit_hash!("buy_conviction_market_shares"),
+            })),
+            None,
+        )?;
+    }
+    #[cfg(not(feature = "hosted-compdefs"))]
+    {
+        init_comp_def(ctx.accounts, None, None)?;
+    }
     Ok(())
 }
 
@@ -94,6 +153,53 @@ pub struct InitMarketSharesCompDef<'info> {
 }
 
 pub fn init_market_shares_comp_def(ctx: Context<InitMarketSharesCompDef>) -> Result<()> {
-    init_comp_def(ctx.accounts, None, None)?;
+    #[cfg(feature = "hosted-compdefs")]
+    {
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/init_market_shares.arcis".to_string(),
+                hash: circuit_hash!("init_market_shares"),
+            })),
+            None,
+        )?;
+    }
+    #[cfg(not(feature = "hosted-compdefs"))]
+    {
+        init_comp_def(ctx.accounts, None, None)?;
+    }
+    Ok(())
+}
+
+#[init_computation_definition_accounts("reveal_shares", payer)]
+#[derive(Accounts)]
+pub struct RevealSharesCompDef<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    #[account(mut, address = derive_mxe_pda!())]
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
+    #[account(mut)]
+    /// CHECK: comp_def_account, checked by arcium program.
+    pub comp_def_account: UncheckedAccount<'info>,
+    pub arcium_program: Program<'info, Arcium>,
+    pub system_program: Program<'info, System>,
+}
+
+pub fn reveal_shares_comp_def(ctx: Context<RevealSharesCompDef>) -> Result<()> {
+    #[cfg(feature = "hosted-compdefs")]
+    {
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/reveal_shares.arcis".to_string(),
+                hash: circuit_hash!("reveal_shares"),
+            })),
+            None,
+        )?;
+    }
+    #[cfg(not(feature = "hosted-compdefs"))]
+    {
+        init_comp_def(ctx.accounts, None, None)?;
+    }
     Ok(())
 }

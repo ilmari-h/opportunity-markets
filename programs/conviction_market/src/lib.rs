@@ -20,7 +20,7 @@ pub const COMP_DEF_OFFSET_BUY_CONVICTION_MARKET_SHARES: u32 = comp_def_offset("b
 pub const COMP_DEF_OFFSET_INIT_MARKET_SHARES: u32 = comp_def_offset("init_market_shares");
 pub const COMP_DEF_OFFSET_REVEAL_SHARES: u32 = comp_def_offset("reveal_shares");
 
-declare_id!("8QnM1kLWDFVzCqJNQ8BkyqV32wuGp4DfcqFmDWNXERFT");
+declare_id!("bnchXx34qGANGyEL6MxTYdG8iXmUmSPyQFAGhxj1VKn");
 
 #[arcium_program]
 pub mod conviction_market {
@@ -40,6 +40,10 @@ pub mod conviction_market {
 
     pub fn init_market_shares_comp_def(ctx: Context<InitMarketSharesCompDef>) -> Result<()> {
         instructions::init_market_shares_comp_def(ctx)
+    }
+
+    pub fn reveal_shares_comp_def(ctx: Context<RevealSharesCompDef>) -> Result<()> {
+        instructions::reveal_shares_comp_def(ctx)
     }
 
     pub fn create_market(
@@ -192,11 +196,6 @@ pub mod conviction_market {
     ) -> Result<()> {
         instructions::buy_conviction_market_shares_callback(ctx, output)
     }
-
-    pub fn reveal_shares_comp_def(ctx: Context<RevealSharesCompDef>) -> Result<()> {
-        instructions::reveal_shares_comp_def(ctx)
-    }
-
     pub fn reveal_shares(
         ctx: Context<RevealShares>,
         computation_offset: u64,
