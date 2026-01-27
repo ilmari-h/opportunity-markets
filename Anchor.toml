@@ -6,13 +6,13 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-conviction_market = "bnchXx34qGANGyEL6MxTYdG8iXmUmSPyQFAGhxj1VKn"
+conviction_market = "8QnM1kLWDFVzCqJNQ8BkyqV32wuGp4DfcqFmDWNXERFT"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "https://devnet.helius-rpc.com/?api-key=b9c59519-2243-4e56-bdac-3c4f770c8b89"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
