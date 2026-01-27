@@ -1,6 +1,6 @@
 {
   "name": "@bench.games/conviction-markets",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "author": "Bench",
   "main": "./dist/index.js",
   "devDependencies": {

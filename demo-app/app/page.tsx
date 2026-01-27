@@ -20,9 +20,8 @@ export default function LoginPage() {
       {/* Header with stylized title - slightly off center */}
       <header className="pt-16 pl-8 md:pl-16 lg:pl-24">
         <h1 className="text-2xl md:text-3xl font-light tracking-tight text-foreground">
-          <span className="font-medium">Conviction</span>
-          <span className="text-muted-foreground">Markets</span>
-          <span className="text-xl"> (devnet demo)</span>
+          <span className="text-muted-foreground">Conviction Markets</span>
+          <span className="text-xl"> (devnet)</span>
         </h1>
       </header>
 

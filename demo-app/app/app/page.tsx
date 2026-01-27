@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TokenSwap } from "@/components/token-swap";
+import { CreateMarketDialog } from "@/components/create-market-dialog";
 
 // Mock data for conviction markets
 const mockMarkets = [
@@ -63,8 +64,7 @@ export default function AppPage() {
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-light tracking-tight text-foreground">
-              <span className="font-medium">Conviction</span>
-              <span className="text-muted-foreground">Markets</span>
+              <span>Conviction Markets</span>
             </h1>
           </div>
           {publicKey && (
@@ -86,10 +86,7 @@ export default function AppPage() {
               <h2 className="text-lg font-medium text-foreground">
                 Active Markets
               </h2>
-              <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
-                <Plus className="w-4 h-4 mr-2" />
-                Create New Market
-              </Button>
+              <CreateMarketDialog />
             </div>
 
             <div className="space-y-4">
