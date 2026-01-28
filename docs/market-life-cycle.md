@@ -12,26 +12,30 @@ A Conviction Market enables privacy-preserving decision making where:
 
 The market progresses through distinct phases with time-based transitions:
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           MARKET TIMELINE                                    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  SETUP        STAKING PERIOD           REVEAL PERIOD        CLAIM          │
-│  ──────       ──────────────           ─────────────        ─────          │
-│                                                                             │
-│  ├──────────┼────────────────────────┼─────────────────────┼──────────►    │
-│  │          │                        │                     │               │
-│  │      open_timestamp         stake_end            reveal_end             │
-│  │          │                        │                     │               │
-│  │          │   Users buy shares     │  Reveal & tally     │  Close &      │
-│  │          │   (encrypted)          │  positions          │  claim        │
-│  │          │                        │                     │               │
-│  │  Create  │   Decision maker       │  Winner selected    │  Rewards      │
-│  │  market  │   can see disclosures  │  (if not already)   │  distributed  │
-│  │  & fund  │                        │                     │               │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph SETUP["**SETUP**"]
+        S1[Create market & fund]
+    end
+
+    subgraph STAKING["**STAKING PERIOD**"]
+        ST1[Users buy shares<br/>*encrypted*]
+        ST2[Decision maker<br/>can see disclosures]
+    end
+
+    subgraph REVEAL["**REVEAL PERIOD**"]
+        R1[Reveal & tally<br/>positions]
+        R2[Winner selected<br/>*if not already*]
+    end
+
+    subgraph CLAIM["**CLAIM**"]
+        C1[Close & claim]
+        C2[Rewards distributed]
+    end
+
+    SETUP -->|open_timestamp| STAKING
+    STAKING -->|stake_end| REVEAL
+    REVEAL -->|reveal_end| CLAIM
 ```
 
 ---
@@ -356,47 +360,46 @@ await awaitComputationFinalization(provider, computationOffset, programId);
 
 ## Complete Flow Diagram
 
-```
-DECISION MAKER                          PARTICIPANTS
-──────────────                          ────────────
+```mermaid
+sequenceDiagram
+    box Decision Maker
+        participant DM as Decision Maker
+    end
+    box Participants
+        participant P as Participant
+    end
 
-1. create_market
-   │
-2. add_market_option (×N)
-   │
-3. Fund market (SOL transfer)
-   │
-4. open_market
-   │                                    5. init_vote_token_account
-   │                                       │
-   │                                    6. mint_vote_tokens
-   │                                       │
-   ├───── STAKING PERIOD ──────────────────┤
-   │                                       │
-   │  (reads disclosed votes)           7. init_share_account
-   │                                       │
-   │                                    8. buy_market_shares
-   │                                       │
-   ├───────────────────────────────────────┤
-   │
-9. select_option
-   │
-   ├───── REVEAL PERIOD ───────────────────┤
-   │                                       │
-   │                                    10. reveal_shares
-   │                                       │
-   │                                    11. increment_option_tally
-   │                                       │
-   ├───────────────────────────────────────┤
-   │
-   │                                    12. close_share_account
-   │                                        (claim reward)
-   │
-   │                                    13. claim_vote_tokens
-   │                                        (withdraw SOL)
-   │
-   ▼                                       ▼
-  DONE                                    DONE
+    Note over DM: SETUP PHASE
+    DM->>DM: 1. create_market
+    DM->>DM: 2. add_market_option (×N)
+    DM->>DM: 3. Fund market (SOL transfer)
+    DM->>DM: 4. open_market
+
+    Note over P: PARTICIPANT SETUP
+    P->>P: 5. init_vote_token_account
+    P->>P: 6. mint_vote_tokens
+
+    rect rgb(200, 220, 255)
+        Note over DM,P: STAKING PERIOD
+        DM-->>P: (reads disclosed votes)
+        P->>P: 7. init_share_account
+        P->>P: 8. buy_market_shares
+    end
+
+    DM->>DM: 9. select_option
+
+    rect rgb(220, 255, 220)
+        Note over DM,P: REVEAL PERIOD
+        P->>P: 10. reveal_shares
+        P->>P: 11. increment_option_tally
+    end
+
+    Note over DM,P: CLAIM PHASE
+    P->>P: 12. close_share_account (claim reward)
+    P->>P: 13. claim_vote_tokens (withdraw SOL)
+
+    Note over DM: DONE
+    Note over P: DONE
 ```
 
 ---
@@ -420,13 +423,3 @@ DECISION MAKER                          PARTICIPANTS
 
 ---
 
-## MPC Circuits Summary
-
-| Circuit | Purpose | Invoked By |
-|---------|---------|------------|
-| `init_market_shares` | Initialize encrypted available shares | `create_market` |
-| `init_vote_token_account` | Initialize encrypted zero balance | `init_vote_token_account` |
-| `buy_vote_tokens` | Add to encrypted balance | `mint_vote_tokens` |
-| `claim_vote_tokens` | Subtract from encrypted balance | `claim_vote_tokens` |
-| `buy_conviction_market_shares` | Process encrypted share purchase | `buy_market_shares` |
-| `reveal_shares` | Decrypt and reveal share position | `reveal_shares` |
