@@ -1,8 +1,17 @@
 # Conviction Markets
 
-Conviction Markets allow users to influence decision making by staking their capital on a their preferred option.
+Conviction Markets allow users to influence decision making by staking. Decision makers benefit from conviction markets by getting access to high-quality signals, helping them make the best choice.
 
-Which option the user voted for and with how much stake is stored encrypted on chain and only revealed when the market creator has revealed their choice. Those who put their stake in the chosen option can claim yield. All participants can claim their initial stake back.
+**How it works:**
+
+1. A decision maker creates a market and deposits a reward
+2. Participants propose options to vote on
+3. The decision maker opens voting
+4. Participants stake on their preferred option
+5. The decision maker selects a winning option and closes the market
+6. All participants withdraw their stake; those who backed the winner split the reward
+
+**Privacy:** While voting is open, individual votes and stake amounts are hidden from everyone except the decision maker. This prevents herd behavior—participants vote based on their own judgment rather than following the crowd.
 
 Devnet address: `berV8jT2dwpZe4HP4PKej7z8kTXo4ziU3rt6zKSvJ8z`
 
