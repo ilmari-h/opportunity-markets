@@ -4,7 +4,8 @@ This document describes the complete lifecycle of a Conviction Market from creat
 
 ## Overview
 
-A Conviction Market enables privacy-preserving decision making where:
+Conviction Markets allow users to influence decision making by staking. Decision makers benefit from conviction markets by getting access to high-quality signals, helping them make the best choice.
+
 1. A **decision maker** creates a market with a reward pool
 2. **Participants** stake on their preferred options with encrypted votes
 3. The **decision maker** sees individual votes (disclosed to them) but others cannot
@@ -19,23 +20,22 @@ flowchart TD
     end
 
     subgraph STAKING["**STAKING PERIOD**"]
-        ST1[Users buy shares<br/>*encrypted*]
-        ST2[Decision maker<br/>can see disclosures]
+        ST1[Users stake by buying shares<br/>*encrypted*]
+        ST2[Decision maker<br/>can observe votes in real time]
     end
 
     subgraph REVEAL["**REVEAL PERIOD**"]
-        R1[Reveal & tally<br/>positions]
+        R1[Votes revealed and users claim back their stake<br/>*permissionless*]
         R2[Winner selected<br/>*if not already*]
     end
 
-    subgraph CLAIM["**CLAIM**"]
-        C1[Close & claim]
-        C2[Rewards distributed]
+    subgraph REWARDS["**REWARDS**"]
+        C1[Rewards distributed]
     end
 
     SETUP -->|open_timestamp| STAKING
     STAKING -->|stake_end| REVEAL
-    REVEAL -->|reveal_end| CLAIM
+    REVEAL -->|reveal_end| REWARDS
 ```
 
 ---
@@ -379,7 +379,7 @@ sequenceDiagram
     P->>P: 5. init_vote_token_account
     P->>P: 6. mint_vote_tokens
 
-    rect rgb(200, 220, 255)
+    rect rgb(4, 41, 14)
         Note over DM,P: STAKING PERIOD
         DM-->>P: (reads disclosed votes)
         P->>P: 7. init_share_account
@@ -388,7 +388,7 @@ sequenceDiagram
 
     DM->>DM: 9. select_option
 
-    rect rgb(220, 255, 220)
+    rect rgb(24, 4, 41)
         Note over DM,P: REVEAL PERIOD
         P->>P: 10. reveal_shares
         P->>P: 11. increment_option_tally
