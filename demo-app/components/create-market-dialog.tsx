@@ -9,6 +9,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +24,14 @@ import { Loader2, Plus } from "lucide-react";
 import { useCreateMarket } from "@/hooks/use-create-market";
 import { useToast } from "@/hooks/use-toast";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+
+const DURATION_OPTIONS = [
+  { label: "5 minutes", value: 5 * 60 },
+  { label: "10 minutes", value: 10 * 60 },
+  { label: "1 hour", value: 60 * 60 },
+  { label: "1 day", value: 24 * 60 * 60 },
+  { label: "1 week", value: 7 * 24 * 60 * 60 },
+] as const;
 
 // Use fixed high values
 const MAX_SHARES = Number.MAX_SAFE_INTEGER;
@@ -27,8 +42,8 @@ export function CreateMarketDialog() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [rewardSol, setRewardSol] = useState("10");
-  const [timeToStakeDays, setTimeToStakeDays] = useState("7");
-  const [timeToRevealDays, setTimeToRevealDays] = useState("3");
+  const [timeToStake, setTimeToStake] = useState<number>(DURATION_OPTIONS[4].value); // 1 week
+  const [timeToReveal, setTimeToReveal] = useState<number>(DURATION_OPTIONS[3].value); // 1 day
 
   const { createMarket, isPending } = useCreateMarket();
   const { toast } = useToast();
@@ -37,8 +52,6 @@ export function CreateMarketDialog() {
     e.preventDefault();
 
     const rewardSolNum = parseFloat(rewardSol);
-    const timeToStakeDaysNum = parseFloat(timeToStakeDays);
-    const timeToRevealDaysNum = parseFloat(timeToRevealDays);
 
     // Validation
     if (!name.trim() || !description.trim()) {
@@ -50,11 +63,7 @@ export function CreateMarketDialog() {
       return;
     }
 
-    if (
-      rewardSolNum <= 0 ||
-      timeToStakeDaysNum <= 0 ||
-      timeToRevealDaysNum <= 0
-    ) {
+    if (rewardSolNum <= 0) {
       toast({
         title: "Invalid input",
         description: "Please check your input values",
@@ -70,8 +79,8 @@ export function CreateMarketDialog() {
         maxOptions: MAX_OPTIONS,
         maxShares: MAX_SHARES,
         rewardLamports: Math.floor(rewardSolNum * LAMPORTS_PER_SOL),
-        timeToStake: Math.floor(timeToStakeDaysNum * 24 * 60 * 60), // Convert days to seconds
-        timeToReveal: Math.floor(timeToRevealDaysNum * 24 * 60 * 60), // Convert days to seconds
+        timeToStake,
+        timeToReveal,
       },
       {
         onSuccess: (data) => {
@@ -84,8 +93,8 @@ export function CreateMarketDialog() {
           setName("");
           setDescription("");
           setRewardSol("10");
-          setTimeToStakeDays("7");
-          setTimeToRevealDays("3");
+          setTimeToStake(DURATION_OPTIONS[4].value);
+          setTimeToReveal(DURATION_OPTIONS[3].value);
         },
         onError: (error) => {
           toast({
@@ -164,36 +173,47 @@ export function CreateMarketDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="timeToStake">Staking Period (days)</Label>
-            <Input
-              id="timeToStake"
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={timeToStakeDays}
-              onChange={(e) => setTimeToStakeDays(e.target.value)}
-              placeholder="Duration for staking (e.g., 7)"
-              required
-            />
+            <Label htmlFor="timeToStake">Staking Period</Label>
+            <Select
+              value={timeToStake.toString()}
+              onValueChange={(value) => setTimeToStake(Number(value))}
+            >
+              <SelectTrigger id="timeToStake">
+                <SelectValue placeholder="Select duration" />
+              </SelectTrigger>
+              <SelectContent>
+                {DURATION_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value.toString()}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <p className="text-xs text-muted-foreground">
-              How long users can buy shares and stake
+              How long users have to choose and place their stake.
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="timeToReveal">Reveal Period (days)</Label>
-            <Input
-              id="timeToReveal"
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={timeToRevealDays}
-              onChange={(e) => setTimeToRevealDays(e.target.value)}
-              placeholder="Duration for reveal (e.g., 3)"
-              required
-            />
+            <Label htmlFor="timeToReveal">Reveal Period</Label>
+            <Select
+              value={timeToReveal.toString()}
+              onValueChange={(value) => setTimeToReveal(Number(value))}
+            >
+              <SelectTrigger id="timeToReveal">
+                <SelectValue placeholder="Select duration" />
+              </SelectTrigger>
+              <SelectContent>
+                {DURATION_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value.toString()}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <p className="text-xs text-muted-foreground">
-              Time window for revealing votes after staking ends
+              Time window for revealing votes after staking ends.
+              Temporary thing: permissionless operation that we can automate later instead of users having to do it themselves.
             </p>
           </div>
 

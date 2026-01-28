@@ -34,6 +34,7 @@ import { useUserShare } from "@/hooks/use-user-share";
 import { useVoteTokensBalance } from "@/hooks/use-vote-tokens-balance";
 import { AddOptionDialog } from "@/components/add-option-dialog";
 import { VoteDialog } from "@/components/vote-dialog";
+import { CloseMarketDialog } from "@/components/close-market-dialog";
 import { PublicKey } from "@solana/web3.js";
 
 interface MarketDetailProps {
@@ -180,9 +181,22 @@ export function MarketDetail({ market }: MarketDetailProps) {
                     <p className="text-muted-foreground">{market.description}</p>
                   )}
                 </div>
-                <Badge variant="outline" className={statusConfig.className}>
-                  {statusConfig.label}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className={statusConfig.className}>
+                    {statusConfig.label}
+                  </Badge>
+                  {isCreator && market.status === "open" && (
+                    <CloseMarketDialog
+                      marketAddress={market.address}
+                      options={market.options}
+                      onSuccess={() => router.refresh()}
+                    >
+                      <Button variant="destructive" size="sm">
+                        Close Market
+                      </Button>
+                    </CloseMarketDialog>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -343,7 +357,9 @@ export function MarketDetail({ market }: MarketDetailProps) {
                       Page {currentPage + 1} of {totalPages}
                     </span>
                   )}
-                  <AddOptionDialog marketAddress={market.address} totalOptions={market.totalOptions} />
+                  {(market.status === "not_funded" || market.status === "open") && (
+                    <AddOptionDialog marketAddress={market.address} totalOptions={market.totalOptions} />
+                  )}
                 </div>
               </div>
 
