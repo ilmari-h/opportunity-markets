@@ -4,7 +4,7 @@ import { PublicKey } from "@solana/web3.js";
  * Program ID for the Conviction Markets program on Solana devnet
  */
 export const PROGRAM_ID = new PublicKey(
-  "bnchXx34qGANGyEL6MxTYdG8iXmUmSPyQFAGhxj1VKn"
+  "berV8jT2dwpZe4HP4PKej7z8kTXo4ziU3rt6zKSvJ8z"
 );
 
 /**
