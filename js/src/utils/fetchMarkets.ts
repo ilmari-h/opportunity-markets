@@ -54,3 +54,30 @@ export async function fetchAllMarkets(provider: AnchorProvider) {
   const accounts = await program.account.convictionMarket.all();
   return accounts;
 }
+
+/**
+ * Fetches a single conviction market by its address
+ *
+ * @param provider - Anchor provider for connection
+ * @param marketAddress - Public key of the market account
+ * @returns Market account data or null if not found
+ */
+export async function fetchMarket(
+  provider: AnchorProvider,
+  marketAddress: PublicKey
+) {
+  const program = new Program(
+    IDL as ConvictionMarket,
+    provider
+  ) as Program<ConvictionMarket>;
+
+  try {
+    const account = await program.account.convictionMarket.fetch(marketAddress);
+    return {
+      publicKey: marketAddress,
+      account,
+    };
+  } catch {
+    return null;
+  }
+}
