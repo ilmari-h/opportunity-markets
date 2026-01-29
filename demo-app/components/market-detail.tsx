@@ -93,7 +93,7 @@ export function MarketDetail({ market }: MarketDetailProps) {
   const [countdown, setCountdown] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    if (market.status !== "revealing" || !market.openTimestamp) return;
+    if ((market.status !== "revealing" && market.status !== "open") || !market.openTimestamp) return;
 
     const revealEndTs =
       parseInt(market.openTimestamp) +
