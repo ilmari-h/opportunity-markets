@@ -18,7 +18,7 @@ const STATUS_CONFIG: Record<
     className: "border-purple-500/50 text-purple-500",
   },
   not_funded: {
-    label: "Not Funded",
+    label: "Pending",
     className: "border-muted-foreground/50 text-muted-foreground",
   },
   open: {

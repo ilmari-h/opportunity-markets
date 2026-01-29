@@ -49,7 +49,7 @@ const STATUS_CONFIG: Record<
   { label: string; className: string }
 > = {
   not_funded: {
-    label: "Not Funded",
+    label: "Pending",
     className: "border-muted-foreground/50 text-muted-foreground bg-muted/30",
   },
   open: {
