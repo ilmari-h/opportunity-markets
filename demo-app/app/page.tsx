@@ -74,7 +74,8 @@ export default function LoginPage() {
                   </Button>
                   <Button
                     onClick={() => router.push("/app")}
-                    className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90"
+                    variant="accent"
+                    className="flex-1"
                   >
                     Go to App
                     <ArrowRight className="w-4 h-4 ml-2" />

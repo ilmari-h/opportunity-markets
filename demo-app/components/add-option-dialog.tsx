@@ -133,7 +133,8 @@ export function AddOptionDialog({ marketAddress, totalOptions }: AddOptionDialog
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90"
+              variant="accent"
+              className="flex-1"
               disabled={isPending}
             >
               {isPending ? (

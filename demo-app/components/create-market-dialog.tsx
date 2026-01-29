@@ -110,7 +110,7 @@ export function CreateMarketDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
+        <Button variant="accent">
           <Plus className="w-4 h-4 mr-2" />
           Create New Market
         </Button>
@@ -229,7 +229,8 @@ export function CreateMarketDialog() {
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90"
+              variant="accent"
+              className="flex-1"
               disabled={isPending}
             >
               {isPending ? (

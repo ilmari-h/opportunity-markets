@@ -232,15 +232,21 @@ export function MarketDetail({ market }: MarketDetailProps) {
                   <Badge variant="outline" className={statusConfig.className}>
                     {statusConfig.label}
                   </Badge>
-                  {isCreator && market.status === "open" && (
+                  {/* Creator can choose option while voting ongoing, closing the market. OR after voting period is over (revealing)*/}
+                  {(isCreator &&
+                  (market.status === "open" || market.status === "revealing" && market.selectedOption === null ) ) && (
                     <CloseMarketDialog
                       marketAddress={market.address}
                       options={market.options}
                       onSuccess={() => router.refresh()}
                     >
-                      <Button variant="destructive" size="sm">
+                      {market.status === "open" ?
+                      <Button variant={"destructive"} size="sm">
                         Close Market
-                      </Button>
+                      </Button>:
+                      <Button variant={"accent"} size="sm">
+                        Choose Winning Option
+                      </Button>}
                     </CloseMarketDialog>
                   )}
                 </div>
@@ -383,7 +389,7 @@ export function MarketDetail({ market }: MarketDetailProps) {
                         </p>
                       </div>
                       <Button
-                        className="bg-accent text-accent-foreground hover:bg-accent/90"
+                        variant="accent"
                         onClick={handleOpenMarket}
                         disabled={isOpeningMarket}
                       >
@@ -426,7 +432,8 @@ export function MarketDetail({ market }: MarketDetailProps) {
                       </p>
                       <p className="text-xs text-muted-foreground mt-2 italic">
                         NOTE: This process is permissionless and will be automated in future iterations of the app.<br/>
-                        Users won't have to come to the site to do this manually.
+                        Users won't have to come to the site to do this manually.<br/>
+                        Revealing late dequalifies a user from earning yield, but will still always get their stake back.
                       </p>
                     </div>
                     <Button
@@ -507,10 +514,9 @@ export function MarketDetail({ market }: MarketDetailProps) {
                             onSuccess={() => refetchUserShare()}
                           >
                             <Button
-                              variant="default"
+                              variant="accent"
                               size="sm"
                               disabled={!voteTokenBalance || voteTokenBalance <= BigInt(0)}
-                              className="bg-accent text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
                             >
                               Vote
                             </Button>
@@ -521,10 +527,9 @@ export function MarketDetail({ market }: MarketDetailProps) {
                               <TooltipTrigger asChild>
                                 <div>
                                   <Button
-                                    variant="default"
+                                    variant="accent"
                                     size="sm"
                                     disabled
-                                    className="bg-accent text-accent-foreground hover:bg-accent/90 disabled:opacity-50"
                                   >
                                     Vote
                                   </Button>

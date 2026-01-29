@@ -101,8 +101,7 @@ export function CloseMarketDialog({
           <div className="flex gap-3 p-3 rounded-lg border border-amber-500/30 bg-amber-500/5">
             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             <p className="text-xs leading-relaxed text-muted-foreground">
-              This action is irreversible. Once you select an option and close the market,
-              participants who voted for this option will be able to claim their share of the reward.
+              This action is irreversible. Your choice cannot be changed later.
             </p>
           </div>
 

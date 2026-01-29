@@ -20,8 +20,11 @@ export function computeMarketStatus(market: {
   const stakeEndTs = openTs + parseInt(market.timeToStake);
   const revealEndTs = stakeEndTs + parseInt(market.timeToReveal);
 
-  // If selected option exists and reveal period is over, it's resolved
-  if (market.selectedOption !== null && now >= revealEndTs) return "resolved";
+  // If selected option exists, it's resolved
+  if (market.selectedOption !== null) return "resolved";
+
+  // If reveal period ended but waiting on market creator to select, keep as revealing
+  if ( now >= revealEndTs && market.selectedOption === null) return "revealing"
 
   // If stake period is over but reveal period is still active
   if (now >= stakeEndTs && now < revealEndTs) return "revealing";

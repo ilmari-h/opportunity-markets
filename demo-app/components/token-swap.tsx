@@ -247,7 +247,8 @@ export function TokenSwap() {
       {/* Swap Action Button */}
       <div className="pt-2">
         <Button
-          className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+          variant="accent"
+          className="w-full"
           disabled={!inputAmount || parseFloat(inputAmount) <= 0 || isPending || !connected}
           onClick={handleSwap}
         >
