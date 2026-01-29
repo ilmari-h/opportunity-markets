@@ -91,6 +91,8 @@ await program.methods
   .rpc();
 ```
 
+**Note:** Anyone can add new options. Options can be added also after the market is open, until a winning option is selected.
+
 ### Step 1.3: Fund & Open Market
 
 **Instruction:** [`open_market`](./ixs/open-market.md)

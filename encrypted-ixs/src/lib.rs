@@ -155,11 +155,11 @@ mod circuits {
     #[instruction]
     pub fn reveal_shares(
         share_account_ctx: Enc<Shared, SharePurchase>,
-        user_vta_ctx: Enc<Mxe, VoteTokenBalance>,
+        user_vta_ctx: Enc<Shared, VoteTokenBalance>,
     ) -> (
-        u64,                            // revealed_amount
-        u16,                            // revealed_option
-        Enc<Mxe, VoteTokenBalance>,     // updated VTA balance
+        u64,                               // revealed_amount
+        u16,                               // revealed_option
+        Enc<Shared, VoteTokenBalance>,     // updated VTA balance
     ) {
         let share_data = share_account_ctx.to_arcis();
         let mut user_balance = user_vta_ctx.to_arcis();

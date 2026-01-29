@@ -20,4 +20,5 @@ Adds a named voting option to a market.
 
 ## Description
 
-Adds a new voting option to a market. Options must be added sequentially (1, 2, 3, etc.) before the market is opened. Only the market creator can add options, and the total cannot exceed `max_options`.
+Adds a new voting option to a market.
+Options can be added by anyone while the market has not selected a winning option yet.

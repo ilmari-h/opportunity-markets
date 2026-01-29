@@ -107,7 +107,8 @@ pub fn reveal_shares(
         .plaintext_u128(share_account_nonce)
         .account(share_account_key, 8, 32 * 2)
 
-        // User VTA encrypted state (Enc<Mxe, VoteTokenBalance>)
+        // User VTA encrypted state (Enc<Shared, VoteTokenBalance>)
+        .x25519_pubkey(user_pubkey)
         .plaintext_u128(user_vta_nonce)
         .account(user_vta_key, 8, 32 * 1)
         .build();
