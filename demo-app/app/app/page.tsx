@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { db } from "@/db/client";
 import { MarketsDashboard } from "@/components/markets-dashboard";
 import { fetchAllMarkets } from "@bench.games/conviction-markets";
@@ -33,10 +35,28 @@ export default async function AppPage() {
   );
   const onChainMarkets = await fetchAllMarkets(provider);
 
-  // Merge on-chain data with DB metadata
-  const mergedMarkets: MergedMarket[] = onChainMarkets.map((onChain) => {
+  // Create a set of on-chain market addresses
+  const onChainAddresses = new Set(
+    onChainMarkets.map((m) => m.publicKey.toBase58())
+  );
+
+  // Find pending markets (in DB but not yet on-chain)
+  const pendingMarkets = dbMarkets
+    .filter((m) => !onChainAddresses.has(m.address))
+    .map((m) => ({
+      address: m.address,
+      name: m.name,
+      description: m.description,
+      creatorPubkey: m.creatorPubkey,
+      createdAt: m.createdAt,
+    }));
+
+  // Merge on-chain data with DB metadata (only markets that exist in both)
+  const mergedMarkets: MergedMarket[] = onChainMarkets
+    .filter((onChain) => dbMarketMap.has(onChain.publicKey.toBase58()))
+    .map((onChain) => {
     const address = onChain.publicKey.toBase58();
-    const dbData = dbMarketMap.get(address);
+    const dbData = dbMarketMap.get(address)!;
 
     const openTimestamp = onChain.account.openTimestamp?.toString() ?? null;
     const timeToStake = onChain.account.timeToStake.toString();
@@ -52,8 +72,8 @@ export default async function AppPage() {
 
     return {
       address,
-      name: dbData?.name ?? `Market #${onChain.account.index.toString()}`,
-      description: dbData?.description ?? "",
+      name: dbData.name,
+      description: dbData.description,
       creatorPubkey: onChain.account.creator.toBase58(),
       rewardSol: Number(onChain.account.rewardLamports) / LAMPORTS_PER_SOL,
       marketIndex: onChain.account.index.toString(),
@@ -65,7 +85,8 @@ export default async function AppPage() {
       timeToReveal,
       selectedOption,
       status,
-      options: (dbData?.options ?? []).map((opt) => ({
+      createdAt: dbData.createdAt,
+      options: dbData.options.map((opt) => ({
         address: opt.address,
         name: opt.name,
         description: opt.description,
@@ -73,5 +94,5 @@ export default async function AppPage() {
     };
   });
 
-  return <MarketsDashboard markets={mergedMarkets} />;
+  return <MarketsDashboard markets={mergedMarkets} pendingMarkets={pendingMarkets} />;
 }

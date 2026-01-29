@@ -17,13 +17,15 @@ import { Loader2, Plus } from "lucide-react";
 import { PublicKey } from "@solana/web3.js";
 import { useAddMarketOption } from "@/hooks/use-add-market-option";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/router";
 
 interface AddOptionDialogProps {
   marketAddress: string;
   totalOptions: number;
+  onSubmit: () => void
 }
 
-export function AddOptionDialog({ marketAddress, totalOptions }: AddOptionDialogProps) {
+export function AddOptionDialog({ marketAddress, totalOptions, onSubmit }: AddOptionDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -54,14 +56,13 @@ export function AddOptionDialog({ marketAddress, totalOptions }: AddOptionDialog
         description: description.trim(),
       },
       {
-        onSuccess: (data) => {
+        onSuccess: () => {
           toast({
             title: "Option added!",
             description: `Option "${name.trim()}" created successfully`,
           });
           setOpen(false);
-          setName("");
-          setDescription("");
+          onSubmit()
         },
         onError: (error) => {
           toast({

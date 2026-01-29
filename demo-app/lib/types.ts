@@ -21,6 +21,7 @@ export interface MergedMarket {
   timeToReveal: string;
   selectedOption: number | null;
   status: MarketStatus;
+  createdAt: Date;
   options: MarketOption[];
 }
 

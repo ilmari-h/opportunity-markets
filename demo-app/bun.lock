@@ -5,7 +5,7 @@
     "": {
       "name": "my-v0-project",
       "dependencies": {
-        "@bench.games/conviction-markets": "0.1.12",
+        "@bench.games/conviction-markets": "0.1.13",
         "@hookform/resolvers": "^3.10.0",
         "@radix-ui/react-accordion": "1.2.2",
         "@radix-ui/react-alert-dialog": "1.1.4",
@@ -152,7 +152,7 @@
 
     "@babel/types": ["@babel/types@7.28.6", "", { "dependencies": { "@babel/helper-string-parser": "^7.27.1", "@babel/helper-validator-identifier": "^7.28.5" } }, "sha512-0ZrskXVEHSWIqZM/sQZ4EV3jZJXRkio/WCxaqKZP1g//CEWEPSfeZFcms4XeKBCHU0ZKnIkdJeU/kF+eRp5lBg=="],
 
-    "@bench.games/conviction-markets": ["@bench.games/conviction-markets@0.1.12", "", { "dependencies": { "@bench.games/conviction-markets": "0.1.8" }, "peerDependencies": { "@arcium-hq/client": "^0.6.0", "@coral-xyz/anchor": "^0.30.0", "@solana/web3.js": "^1.87.0" } }, "sha512-uvL0x6ApwfG6LsVjfsi5yoOViPdsoytxVie3Aqx03PhrEEIPpPOIgHhMAuLtSThrPKWjBQV6+C3N2HiR7VTL7Q=="],
+    "@bench.games/conviction-markets": ["@bench.games/conviction-markets@0.1.13", "", { "dependencies": { "@bench.games/conviction-markets": "0.1.8" }, "peerDependencies": { "@arcium-hq/client": "^0.6.0", "@coral-xyz/anchor": "^0.30.0", "@solana/web3.js": "^1.87.0" } }, "sha512-yl0URNQNMEFfXECbQjzSpApR9ZNXS4oR22B1DHFJ+TF5Z7Kr1UFvIXyC11F/iin/Kpztp+sV5xBkYt3VBpO+Fg=="],
 
     "@coral-xyz/anchor": ["@coral-xyz/anchor@0.30.1", "", { "dependencies": { "@coral-xyz/anchor-errors": "^0.30.1", "@coral-xyz/borsh": "^0.30.1", "@noble/hashes": "^1.3.1", "@solana/web3.js": "^1.68.0", "bn.js": "^5.1.2", "bs58": "^4.0.1", "buffer-layout": "^1.2.2", "camelcase": "^6.3.0", "cross-fetch": "^3.1.5", "crypto-hash": "^1.3.0", "eventemitter3": "^4.0.7", "pako": "^2.0.3", "snake-case": "^3.0.4", "superstruct": "^0.15.4", "toml": "^3.0.0" } }, "sha512-gDXFoF5oHgpriXAaLpxyWBHdCs8Awgf/gLHIo6crv7Aqm937CNdY+x+6hoj7QR5vaJV7MxWSQ0NGFzL3kPbWEQ=="],
 

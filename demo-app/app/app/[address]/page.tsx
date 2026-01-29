@@ -1,11 +1,13 @@
+export const dynamic = 'force-dynamic';
+
 import { db } from "@/db/client";
 import { MarketDetail } from "@/components/market-detail";
-import { fetchAllMarkets } from "@bench.games/conviction-markets";
+import { MarketInitializing } from "@/components/market-initializing";
+import { fetchMarket } from "@bench.games/conviction-markets";
 import { AnchorProvider } from "@coral-xyz/anchor";
-import { Connection, Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import { computeMarketStatus } from "@/lib/utils";
 import type { MergedMarket } from "@/lib/types";
-import { notFound } from "next/navigation";
 
 interface MarketDetailPageProps {
   params: Promise<{ address: string }>;
@@ -22,7 +24,7 @@ export default async function MarketDetailPage({ params }: MarketDetailPageProps
     },
   });
 
-  // Fetch on-chain markets
+  // Fetch on-chain market
   const connection = new Connection(process.env.SOLANA_RPC_URL!);
   const provider = new AnchorProvider(
     connection,
@@ -33,15 +35,10 @@ export default async function MarketDetailPage({ params }: MarketDetailPageProps
     },
     { commitment: "confirmed" }
   );
-  const onChainMarkets = await fetchAllMarkets(provider);
-
-  // Find the specific market
-  const onChainMarket = onChainMarkets.find(
-    (m) => m.publicKey.toBase58() === address
-  );
+  const onChainMarket = await fetchMarket(provider, new PublicKey(address));
 
   if (!onChainMarket) {
-    notFound();
+    return <MarketInitializing marketName={dbMarket?.name} />;
   }
 
   const openTimestamp = onChainMarket.account.openTimestamp?.toString() ?? null;
@@ -58,12 +55,13 @@ export default async function MarketDetailPage({ params }: MarketDetailPageProps
 
   const market: MergedMarket = {
     address,
+    createdAt: dbMarket?.createdAt ?? new Date(),
     name: dbMarket?.name ?? `Market #${onChainMarket.account.index.toString()}`,
     description: dbMarket?.description ?? "",
     creatorPubkey: onChainMarket.account.creator.toBase58(),
     rewardSol: Number(onChainMarket.account.rewardLamports) / LAMPORTS_PER_SOL,
     marketIndex: onChainMarket.account.index.toString(),
-    totalOptions: onChainMarket.account.totalOptions,
+    totalOptions: dbMarket?.options.length ?? 0,
     maxOptions: onChainMarket.account.maxOptions,
     maxShares: onChainMarket.account.maxShares.toString(),
     openTimestamp,

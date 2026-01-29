@@ -468,7 +468,7 @@ export function MarketDetail({ market }: MarketDetailProps) {
                     </span>
                   )}
                   {(market.status === "not_funded" || market.status === "open") && (
-                    <AddOptionDialog marketAddress={market.address} totalOptions={market.totalOptions} />
+                    <AddOptionDialog marketAddress={market.address} totalOptions={market.totalOptions} onSubmit={router.refresh} />
                   )}
                 </div>
               </div>

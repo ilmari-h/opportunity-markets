@@ -89,12 +89,6 @@ export function CreateMarketDialog() {
             description: `Market #${data.marketIndex} created successfully`,
           });
           setOpen(false);
-          // Reset form
-          setName("");
-          setDescription("");
-          setRewardSol("10");
-          setTimeToStake(DURATION_OPTIONS[4].value);
-          setTimeToReveal(DURATION_OPTIONS[3].value);
         },
         onError: (error) => {
           toast({
