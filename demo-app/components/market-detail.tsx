@@ -253,14 +253,14 @@ export function MarketDetail({ market }: MarketDetailProps) {
               </div>
 
               {/* Selected/Winning option display */}
-              {market.selectedOption !== null && market.options[market.selectedOption] && (
+              {market.selectedOption !== null && market.options[market.selectedOption - 1] && (
                 <div className="flex items-center gap-2">
                   <Badge
                     variant="outline"
                     className="border-blue-500/50 text-blue-500 bg-blue-500/10 px-3 py-1"
                   >
                     <Trophy className="w-3.5 h-3.5 mr-1.5" />
-                    Winner: {market.options[market.selectedOption].name}
+                    Winner: {market.options[market.selectedOption - 1].name}
                   </Badge>
                 </div>
               )}
