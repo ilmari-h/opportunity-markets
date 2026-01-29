@@ -17,9 +17,9 @@ pub struct SelectOption<'info> {
 pub fn select_option(ctx: Context<SelectOption>, option_index: u16) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
-    // Enforce option exists: option_index must be less than total_options
+    // Enforce option exists
     require!(
-        option_index < market.total_options,
+        option_index >= 1 && option_index <= market.total_options,
         ErrorCode::InvalidOptionIndex
     );
 
