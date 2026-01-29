@@ -86,7 +86,7 @@ export function CreateMarketDialog() {
         onSuccess: (data) => {
           toast({
             title: "Market created!",
-            description: `Market #${data.marketIndex} created successfully`,
+            description: `Market created successfully`,
           });
           setOpen(false);
         },
