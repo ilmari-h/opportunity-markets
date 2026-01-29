@@ -1,5 +1,5 @@
 {
-  "address": "berV8jT2dwpZe4HP4PKej7z8kTXo4ziU3rt6zKSvJ8z",
+  "address": "bnchws5HhuD2tHCZmr4Qz57VSGXfWorsoYvhr3jS72b",
   "metadata": {
     "name": "conviction_market",
     "version": "0.1.0",
@@ -23,10 +23,7 @@
         {
           "name": "creator",
           "writable": true,
-          "signer": true,
-          "relations": [
-            "market"
-          ]
+          "signer": true
         },
         {
           "name": "market",
@@ -3378,7 +3375,7 @@
             "name": "field_2",
             "type": {
               "defined": {
-                "name": "MXEEncryptedStruct",
+                "name": "SharedEncryptedStruct",
                 "generics": [
                   {
                     "kind": "const",
