@@ -116,7 +116,7 @@ export function CreateMarketDialog() {
           Create New Market
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Conviction Market</DialogTitle>
           <DialogDescription>

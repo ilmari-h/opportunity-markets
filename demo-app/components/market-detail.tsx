@@ -27,6 +27,7 @@ import {
   Loader2,
   Clock,
   Trophy,
+  LogOut,
 } from "lucide-react";
 import type { MergedMarket, MarketStatus } from "@/lib/types";
 import { useSolBalance } from "@/hooks/use-sol-balance";
@@ -71,7 +72,7 @@ const STATUS_CONFIG: Record<
 const OPTIONS_PER_PAGE = 5;
 
 export function MarketDetail({ market }: MarketDetailProps) {
-  const { publicKey } = useWallet();
+  const { publicKey, disconnect } = useWallet();
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -299,6 +300,17 @@ export function MarketDetail({ market }: MarketDetailProps) {
               <span className="text-xs bg-secondary px-2 py-1 rounded">
                 {truncateAddress(publicKey.toBase58())}
               </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  disconnect();
+                  router.push("/");
+                }}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </Button>
             </div>
           )}
         </div>

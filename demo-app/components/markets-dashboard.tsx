@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
-import { Coins, ExternalLink, ListChecks, Loader2 } from "lucide-react";
+import { Coins, ExternalLink, ListChecks, Loader2, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CreateMarketDialog } from "@/components/create-market-dialog";
 import type { MergedMarket, MarketStatus } from "@/lib/types";
@@ -53,7 +54,7 @@ interface MarketsDashboardProps {
 }
 
 export function MarketsDashboard({ markets, pendingMarkets = [] }: MarketsDashboardProps) {
-  const { publicKey } = useWallet();
+  const { publicKey, disconnect } = useWallet();
   const router = useRouter();
 
   const truncateAddress = (address: string) => {
@@ -88,6 +89,17 @@ export function MarketsDashboard({ markets, pendingMarkets = [] }: MarketsDashbo
               <span className="text-xs bg-secondary px-2 py-1 rounded">
                 {truncateAddress(publicKey.toBase58())}
               </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  disconnect();
+                  router.push("/");
+                }}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </Button>
             </div>
           )}
         </div>
