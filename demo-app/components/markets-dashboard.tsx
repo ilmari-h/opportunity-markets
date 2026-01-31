@@ -77,11 +77,9 @@ export function MarketsDashboard({ markets, pendingMarkets = [] }: MarketsDashbo
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card/50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-light tracking-tight text-foreground">
-              <span>Conviction Markets</span>
-            </h1>
+            <img src="/logo-text.png" alt="Bench" className="h-6" />
           </div>
           {publicKey && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -105,7 +103,7 @@ export function MarketsDashboard({ markets, pendingMarkets = [] }: MarketsDashbo
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium text-foreground">
@@ -114,7 +112,7 @@ export function MarketsDashboard({ markets, pendingMarkets = [] }: MarketsDashbo
             <CreateMarketDialog />
           </div>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {allMarkets.map((item) => {
               if (item.type === "pending") {
                 const market = item.data;

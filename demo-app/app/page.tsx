@@ -19,10 +19,7 @@ export default function LoginPage() {
     <main className="min-h-screen bg-background flex flex-col">
       {/* Header with stylized title and GitHub link */}
       <header className="pt-16 px-8 md:px-16 lg:px-24 flex items-center justify-between">
-        <h1 className="text-2xl md:text-3xl font-light tracking-tight text-foreground">
-          <span className="text-muted-foreground">Conviction Markets</span>
-          <span className="text-xl"> (devnet)</span>
-        </h1>
+        <img src="/logo-text.png" alt="Bench" className="h-10" />
         <a
           href="https://github.com/ilmari-h/solana-conviction-markets"
           target="_blank"
