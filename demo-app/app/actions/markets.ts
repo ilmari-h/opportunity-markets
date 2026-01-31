@@ -320,3 +320,31 @@ export async function markShareYieldClaimed(data: {
     };
   }
 }
+
+/**
+ * Set the openTimestamp for a market
+ * Called AFTER successful openMarket transaction
+ */
+export async function setMarketOpenTimestamp(data: {
+  marketAddress: string;
+  openTimestamp: number;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    new PublicKey(data.marketAddress);
+
+    await db
+      .update(markets)
+      .set({ openTimestamp: new Date(data.openTimestamp * 1000) })
+      .where(eq(markets.address, data.marketAddress));
+
+    revalidatePath(`/app/${data.marketAddress}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error setting market open timestamp:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to set open timestamp",
+    };
+  }
+}

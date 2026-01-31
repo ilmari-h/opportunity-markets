@@ -7,18 +7,18 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function computeMarketStatus(market: {
-  openTimestamp: string | null;
-  timeToStake: string;
-  timeToReveal: string;
+  openTimestamp: number | null;
+  timeToStake: number;
+  timeToReveal: number;
   selectedOption: number | null;
 }): MarketStatus {
   const now = Math.floor(Date.now() / 1000);
 
   if (!market.openTimestamp) return "not_funded";
 
-  const openTs = parseInt(market.openTimestamp);
-  const stakeEndTs = openTs + parseInt(market.timeToStake);
-  const revealEndTs = stakeEndTs + parseInt(market.timeToReveal);
+  const openTs = market.openTimestamp;
+  const stakeEndTs = openTs + market.timeToStake;
+  const revealEndTs = stakeEndTs + market.timeToReveal;
 
   // If selected option exists, it's resolved
   if (market.selectedOption !== null) return "resolved";

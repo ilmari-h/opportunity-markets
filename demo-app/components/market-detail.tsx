@@ -40,7 +40,7 @@ import { CloseMarketDialog } from "@/components/close-market-dialog";
 import { useRevealShares } from "@/hooks/use-reveal-shares";
 import { useClaimReward } from "@/hooks/use-claim-reward";
 import { PublicKey } from "@solana/web3.js";
-import { markShareRevealed, markShareYieldClaimed } from "@/app/actions/markets";
+import { markShareRevealed, markShareYieldClaimed, setMarketOpenTimestamp } from "@/app/actions/markets";
 
 interface MarketDetailProps {
   market: MergedMarket;
@@ -97,13 +97,13 @@ export function MarketDetail({ market }: MarketDetailProps) {
   // Countdown timer for reveal period
   const [countdown, setCountdown] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
+  // Track when market has been closed (for loading state)
+  const [marketClosed, setMarketClosed] = useState(false);
+
   useEffect(() => {
     if ((market.status !== "revealing" && market.status !== "resolved") || !market.openTimestamp) return;
 
-    const revealEndTs =
-      parseInt(market.openTimestamp) +
-      parseInt(market.timeToStake) +
-      parseInt(market.timeToReveal);
+    const revealEndTs = market.openTimestamp + market.timeToStake + market.timeToReveal;
 
     const updateCountdown = () => {
       const now = Math.floor(Date.now() / 1000);
@@ -122,12 +122,39 @@ export function MarketDetail({ market }: MarketDetailProps) {
     return () => clearInterval(interval);
   }, [market.status, market.openTimestamp, market.timeToStake, market.timeToReveal]);
 
+  // Auto-refresh when market opening countdown ends
+  useEffect(() => {
+    if (!market.openTimestamp) return;
+
+    const now = Math.floor(Date.now() / 1000);
+    const remaining = market.openTimestamp - now;
+
+    if (remaining <= 0) return;
+
+    const timeout = setTimeout(() => {
+      router.refresh();
+    }, remaining * 1000);
+
+    return () => clearTimeout(timeout);
+  }, [market.openTimestamp, router]);
+
+  // Auto-refresh after market is closed
+  useEffect(() => {
+    if (!marketClosed) return;
+
+    const timeout = setTimeout(() => {
+      router.refresh();
+    }, 10000);
+
+    return () => clearTimeout(timeout);
+  }, [marketClosed, router]);
+
   const handleRevealVote = async () => {
     // Calculate if revealing in time
     const revealEndTs = market.openTimestamp
-      ? parseInt(market.openTimestamp) +
-        parseInt(market.timeToStake) +
-        parseInt(market.timeToReveal)
+      ? market.openTimestamp +
+        market.timeToStake +
+        market.timeToReveal
       : 0;
     const now = Math.floor(Date.now() / 1000);
     const revealedInTime = now < revealEndTs;
@@ -207,11 +234,19 @@ export function MarketDetail({ market }: MarketDetailProps) {
     );
   };
 
-  const handleOpenMarket = () => {
+  const handleOpenMarket = async () => {
+    const openTimestamp = Math.floor(Date.now() / 1000) + 10;
+
     openMarket(
-      { market: new PublicKey(market.address) },
+      { market: new PublicKey(market.address), openTimestamp },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          // Save openTimestamp to database
+          await setMarketOpenTimestamp({
+            marketAddress: market.address,
+            openTimestamp,
+          });
+
           toast({
             title: "Market opened!",
             description: "The market is now open for staking",
@@ -305,7 +340,7 @@ export function MarketDetail({ market }: MarketDetailProps) {
                     <CloseMarketDialog
                       marketAddress={market.address}
                       options={market.options}
-                      onSuccess={() => router.refresh()}
+                      onSuccess={() => setMarketClosed(true)}
                     >
                       {market.status === "open" ?
                       <Button variant={"destructive"} size="sm">
@@ -392,8 +427,46 @@ export function MarketDetail({ market }: MarketDetailProps) {
               </div>
             </Card>
 
+            {/* Opening market section - shown when openTimestamp is set but still in the future */}
+            {market.openTimestamp && market.openTimestamp > Math.floor(Date.now() / 1000) && (
+              <Card className="p-5 border-amber-500/50 bg-amber-500/5">
+                <div className="flex items-start gap-4">
+                  <div className="p-2 rounded-full bg-amber-500/10 shrink-0">
+                    <Loader2 className="w-5 h-5 text-amber-500 animate-spin" />
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <h3 className="text-sm font-medium text-foreground">
+                      Opening market...
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      The market is being opened for staking. This will take a few seconds.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Closing market section - shown when market has just been closed */}
+            {marketClosed && (
+              <Card className="p-5 border-blue-500/50 bg-blue-500/5">
+                <div className="flex items-start gap-4">
+                  <div className="p-2 rounded-full bg-blue-500/10 shrink-0">
+                    <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                  </div>
+                  <div className="space-y-2 flex-1">
+                    <h3 className="text-sm font-medium text-foreground">
+                      Closing market...
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      The winning option is being recorded on-chain. This will take a few seconds.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            )}
+
             {/* Creator action section - only shown if user is creator and market is not funded */}
-            {isCreator && market.status === "not_funded" && (
+            {isCreator && market.status === "not_funded" && !market.openTimestamp && (
               <Card className="p-5 border-border overflow-hidden">
                 {marketBalanceLoading ? (
                   <div className="flex items-center justify-center py-4">
@@ -537,9 +610,9 @@ export function MarketDetail({ market }: MarketDetailProps) {
              market.selectedOption !== null &&
              userShare.optionAddress === market.options[market.selectedOption - 1]?.address &&
              userShare.revealedInTime === true && (() => {
-               const revealEndTs = parseInt(market.openTimestamp) +
-                 parseInt(market.timeToStake) +
-                 parseInt(market.timeToReveal);
+               const revealEndTs = market.openTimestamp +
+                 market.timeToStake +
+                 market.timeToReveal;
                const now = Math.floor(Date.now() / 1000);
                const remaining = revealEndTs - now;
 
@@ -581,9 +654,9 @@ export function MarketDetail({ market }: MarketDetailProps) {
              userShare.revealedInTime &&
              userShare.optionAddress === market.options[market.selectedOption - 1]?.address &&
              (() => {
-               const revealEndTs = parseInt(market.openTimestamp) +
-                 parseInt(market.timeToStake) +
-                 parseInt(market.timeToReveal);
+               const revealEndTs = market.openTimestamp +
+                 market.timeToStake +
+                 market.timeToReveal;
                const now = Math.floor(Date.now() / 1000);
 
                // Only show if reveal period has ended

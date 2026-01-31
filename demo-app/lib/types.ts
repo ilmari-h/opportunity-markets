@@ -16,9 +16,9 @@ export interface MergedMarket {
   totalOptions: number;
   maxOptions: number;
   maxShares: string;
-  openTimestamp: string | null;
-  timeToStake: string;
-  timeToReveal: string;
+  openTimestamp: number | null;
+  timeToStake: number;
+  timeToReveal: number;
   selectedOption: number | null;
   status: MarketStatus;
   createdAt: Date;

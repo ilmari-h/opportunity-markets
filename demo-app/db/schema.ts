@@ -11,6 +11,7 @@ export const markets = pgTable(
     rewardSol: numeric("reward_sol", { precision: 20, scale: 9 }).notNull(),
     marketIndex: numeric("market_index").notNull(),
     signature: text("signature").notNull(),
+    openTimestamp: timestamp("open_timestamp"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },

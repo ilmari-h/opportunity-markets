@@ -41,9 +41,11 @@ export default async function MarketDetailPage({ params }: MarketDetailPageProps
     return <MarketInitializing marketName={dbMarket?.name} />;
   }
 
-  const openTimestamp = onChainMarket.account.openTimestamp?.toString() ?? null;
-  const timeToStake = onChainMarket.account.timeToStake.toString();
-  const timeToReveal = onChainMarket.account.timeToReveal.toString();
+  const openTimestamp =
+    (dbMarket?.openTimestamp?.getTime() ? dbMarket.openTimestamp.getTime() / 1000 : undefined) ??
+    onChainMarket.account.openTimestamp?.toNumber() ?? null;
+  const timeToStake = onChainMarket.account.timeToStake.toNumber();
+  const timeToReveal = onChainMarket.account.timeToReveal.toNumber();
   const selectedOption = onChainMarket.account.selectedOption ?? null;
 
   const status = computeMarketStatus({
