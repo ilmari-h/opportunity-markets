@@ -70,10 +70,10 @@ Participants prepare to stake by setting up their accounts.
 **Instruction:** [`init_vote_token_account`](../programs/conviction_market/src/instructions/init_vote_token_account.rs)
 
 Each participant needs a vote token account (VTA) to hold their encrypted balance.
-The VTA is tied to a user's wallet, not any specific market, and is used for staking across different conviction markets.
+The VTA is tied to a participant wallet address, not any specific market, and is used for staking across different conviction markets.
 
 **What happens:**
-- Creates VoteTokenAccount PDA for the user
+- Creates VoteTokenAccount PDA for the participant
 - MPC initializes encrypted balance to 0
 
 ### Step 2.2: Purchase Vote Tokens
@@ -83,9 +83,9 @@ The VTA is tied to a user's wallet, not any specific market, and is used for sta
 Convert SOL to vote tokens at a constant price. Vote tokens are essentially just a privacy-enabling wrapper around SOL.
 
 **What happens:**
-- SOL transfers from user to VTA PDA
+- SOL transfers from participant's wallet to VTA PDA
 - MPC adds tokens to encrypted balance
-- User can now purchase market shares
+- Participant can now purchase market shares
 
 ---
 
@@ -99,20 +99,20 @@ During the staking period (`open_timestamp` to `open_timestamp + time_to_stake`)
 
 Creates a share account for the specific market.
 
-This account keeps track of user's purchased shares and which option the user voted for.
-These values are encrypted and only visible to the user and the decision maker.
+This account keeps track of the participant's purchased shares and which option they voted for.
+These values are encrypted and only visible to the participant and the decision maker.
 
 ### Step 3.2: Buy Market Shares
 
 **Instruction:** [`buy_market_shares`](../programs/conviction_market/src/instructions/buy_market_shares.rs)
 
-This is the core voting action. The user encrypts their vote client-side and passes it to the instruction.
+This is the core voting action. The participant encrypts their vote client-side and passes it to the instruction.
 
 **What happens:**
 - MPC decrypts inputs, validates balances
-- Deducts from user's vote token balance
+- Deducts from  participant's vote token balance
 - Deducts from market's available shares
-- Stores encrypted position in share account (only decryptable by user and decision maker)
+- Stores encrypted position in share account (only decryptable by participant and decision maker)
 - Records `bought_at_timestamp` for conviction scoring
 
 ---
@@ -149,9 +149,10 @@ This instruciton is permissionless; anyone can reveal anyone else's shares.
 **What happens:**
 - MPC decrypts share position
 - Writes plaintext `revealed_amount` and `revealed_option` to share account
-- Credits vote tokens back to user's VTA (encrypted)
+- Credits vote tokens back to participant's VTA (encrypted)
 
-**Note:** Because the instruction is permissionless, this step can be automated. User's don't have to come back to the application to manually reveal their vote.
+**Note:** Because the instruction is permissionless, this step can be automated.
+Participants don't have to come back to the application to manually reveal their vote.
 
 ### Step 5.2: Increment Option Tally
 
@@ -169,27 +170,27 @@ Adds revealed shares to the option's total (also permissionless).
 
 ## Phase 6: Claim Rewards
 
-After the reveal period ends, users can close their accounts and claim rewards.
+After the reveal period ends, participants can close their accounts and claim rewards.
 
 ### Step 6.1: Close Share Account & Claim Reward
 
 **Instruction:** [`close_share_account`](../programs/conviction_market/src/instructions/close_share_account.rs)
 
 **What happens:**
-- If user voted for winning option AND incremented tally:
-  - Calculates proportional reward: `(user_score / total_score) * reward_lamports`
-  - Transfers reward from market to user
+- If participant voted for winning option AND incremented tally:
+  - Calculates proportional reward: `(participant_score / total_score) * reward_lamports`
+  - Transfers reward from market to participant wallet
 - Closes share account (rent returned to owner)
 
 ### Step 6.2: Claim Vote Tokens (Optional)
 
 **Instruction:** [`claim_vote_tokens`](../programs/conviction_market/src/instructions/claim_vote_tokens.rs)
 
-Users can sell remaining vote tokens back for SOL.
+Participants can sell remaining vote tokens back for SOL.
 
 **What happens:**
 - MPC validates balance and deducts tokens
-- SOL transferred from VTA to user
+- SOL transferred from VTA to participant wallet
 
 ---
 
