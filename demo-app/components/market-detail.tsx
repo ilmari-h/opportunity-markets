@@ -782,7 +782,7 @@ export function MarketDetail({ market }: MarketDetailProps) {
                               size="sm"
                               disabled={!voteTokenBalance || voteTokenBalance <= BigInt(0)}
                             >
-                              Vote
+                              Stake
                             </Button>
                           </VoteDialog>
                         ) : (
@@ -795,12 +795,12 @@ export function MarketDetail({ market }: MarketDetailProps) {
                                     size="sm"
                                     disabled
                                   >
-                                    Vote
+                                    Stake
                                   </Button>
                                 </div>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Voting is only available when the market is open</p>
+                                <p>Staking is only available when the market is open</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>

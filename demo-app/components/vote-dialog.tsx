@@ -91,7 +91,7 @@ export function VoteDialog({
       {
         onSuccess: () => {
           toast({
-            title: "Vote successful!",
+            title: "Staking successful!",
             description: `You purchased ${numAmount} shares for "${optionName}"`,
           });
           setOpen(false);
@@ -115,7 +115,7 @@ export function VoteDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Vote for {optionName}</DialogTitle>
+          <DialogTitle>Stake in {optionName}</DialogTitle>
           <DialogDescription>
             Stake VOTE to vote for this option.<br/>
             Your vote is confidential until the market resolves.<br/>
@@ -182,10 +182,10 @@ export function VoteDialog({
               {isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Voting...
+                  Staking...
                 </>
               ) : (
-                "Vote"
+                "Stake"
               )}
             </Button>
           </div>
