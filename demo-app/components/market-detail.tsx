@@ -139,17 +139,6 @@ export function MarketDetail({ market }: MarketDetailProps) {
     return () => clearTimeout(timeout);
   }, [market.openTimestamp, router]);
 
-  // Auto-refresh after market is closed
-  useEffect(() => {
-    if (!marketClosed) return;
-
-    const timeout = setTimeout(() => {
-      router.refresh();
-    }, 10000);
-
-    return () => clearTimeout(timeout);
-  }, [marketClosed, router]);
-
   const handleRevealVote = async () => {
     // Calculate if revealing in time
     const revealEndTs = market.openTimestamp
@@ -350,7 +339,10 @@ export function MarketDetail({ market }: MarketDetailProps) {
                     <CloseMarketDialog
                       marketAddress={market.address}
                       options={market.options}
-                      onSuccess={() => setMarketClosed(true)}
+                      onSuccess={() => {
+                        setMarketClosed(true)
+                        setTimeout(() => window.location.reload(), 12_000)
+                      }}
                     >
                       {market.status === "open" ?
                       <Button variant={"destructive"} size="sm">
