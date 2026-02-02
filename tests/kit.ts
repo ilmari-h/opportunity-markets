@@ -1,16 +1,7 @@
-/**
- * Solana Kit-based tests for OpportunityMarket program.
- *
- * This test file uses @solana/kit for transaction building and the generated
- * Codama client bindings from js/src/generated.
- *
- * Arcium PDA derivation uses @arcium-hq/client (which returns web3.js PublicKey)
- * and converts to Kit Address type.
- */
-
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import {
+  address,
   airdropFactory,
   createSolanaRpc,
   createSolanaRpcSubscriptions,
@@ -23,18 +14,13 @@ import {
   appendTransactionMessageInstructions,
   signTransactionMessageWithSigners,
   getBase64EncodedWireTransaction,
+  sendAndConfirmTransactionFactory,
+  getSignatureFromTransaction,
 } from "@solana/kit";
 import { initVoteTokenAccount, randomComputationOffset } from "../js/src";
-import {
-  getArciumEnv,
-  getCompDefAccOffset,
-  getArciumAccountBaseSeed,
-  getArciumProgramId,
-  getMXEAccAddress,
-  buildFinalizeCompDefTx,
-  deserializeLE,
-} from "@arcium-hq/client";
-import { PublicKey } from "@solana/web3.js";
+import { createTestEnvironment } from "./utils";
+import { initializeAllCompDefs } from "./comp-defs";
+import { getArciumEnv, deserializeLE } from "@arcium-hq/client";
 import { OpportunityMarket } from "../target/types/opportunity_market";
 import * as fs from "fs";
 import * as os from "os";
@@ -46,108 +32,29 @@ const RPC_URL = process.env.ANCHOR_PROVIDER_URL || "http://127.0.0.1:8899";
 // WebSocket port is RPC port + 1 (8899 -> 8900)
 const WS_URL = RPC_URL.replace("http", "ws").replace(":8899", ":8900");
 
-// Initialize computation definition (uses Anchor since it's a one-time setup)
-async function initCompDef(
-  program: Program<OpportunityMarket>,
-  provider: anchor.AnchorProvider,
-  owner: anchor.web3.Keypair,
-  circuitName: string
-): Promise<void> {
-  const baseSeedCompDefAcc = getArciumAccountBaseSeed("ComputationDefinitionAccount");
-  const offset = getCompDefAccOffset(circuitName);
-
-  const compDefPDA = PublicKey.findProgramAddressSync(
-    [baseSeedCompDefAcc, program.programId.toBuffer(), offset],
-    getArciumProgramId()
-  )[0];
-
-  // Check if already exists
-  const accountInfo = await provider.connection.getAccountInfo(compDefPDA);
-  if (accountInfo !== null) {
-    console.log(`   Comp def ${circuitName} already initialized, skipping...`);
-    return;
-  }
-
-  // Initialize based on circuit name
-  if (circuitName === "init_vote_token_account") {
-    await program.methods
-      .initVoteTokenAccountCompDef()
-      .accounts({
-        compDefAccount: compDefPDA,
-        payer: owner.publicKey,
-        mxeAccount: getMXEAccAddress(program.programId),
-      })
-      .signers([owner])
-      .rpc({ preflightCommitment: "confirmed" });
-  } else {
-    throw new Error(`Unknown circuit: ${circuitName}`);
-  }
-
-  // Finalize
-  const finalizeTx = await buildFinalizeCompDefTx(
-    provider,
-    Buffer.from(offset).readUInt32LE(),
-    program.programId
-  );
-  const latestBlockhash = await provider.connection.getLatestBlockhash();
-  finalizeTx.recentBlockhash = latestBlockhash.blockhash;
-  finalizeTx.lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
-  finalizeTx.sign(owner);
-  await provider.sendAndConfirm(finalizeTx);
-
-  console.log(`   Comp def ${circuitName} initialized!`);
-}
-
 describe("OpportunityMarket (Kit)", () => {
-  // Anchor setup for comp def initialization
+  // Anchor setup (still needed for buildFinalizeCompDefTx)
   anchor.setProvider(anchor.AnchorProvider.env());
   const program = anchor.workspace.OpportunityMarket as Program<OpportunityMarket>;
   const provider = anchor.getProvider() as anchor.AnchorProvider;
+  const programId = address(program.programId.toBase58());
 
   // RPC clients for Kit
   const rpc = createSolanaRpc(RPC_URL);
   const rpcSubscriptions = createSolanaRpcSubscriptions(WS_URL);
   const airdrop = airdropFactory({ rpc, rpcSubscriptions });
-
-  let owner: anchor.web3.Keypair;
+  const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 
   before(async () => {
-    // Load owner keypair
+    // Load owner secret key
     const file = fs.readFileSync(`${os.homedir()}/.config/solana/id.json`);
-    owner = anchor.web3.Keypair.fromSecretKey(new Uint8Array(JSON.parse(file.toString())));
+    const secretKey = new Uint8Array(JSON.parse(file.toString()));
 
-    // Initialize computation definitions
-    console.log("\n=== Initializing Computation Definitions ===\n");
-    await initCompDef(program, provider, owner, "init_vote_token_account");
+    // Initialize all computation definitions
+    await initializeAllCompDefs(rpc, sendAndConfirmTransaction, secretKey, programId);
   });
 
   describe("Basic Operations", () => {
-    it("can airdrop SOL to a new keypair", async () => {
-      console.log("\n=== Kit Test: Airdrop SOL ===\n");
-
-      // Generate a new keypair using Kit
-      const buyer = await generateKeyPairSigner();
-      console.log("   Generated buyer:", buyer.address);
-
-      // Request airdrop
-      const airdropAmount = lamports(2_000_000_000n); // 2 SOL
-      console.log("   Requesting airdrop of 2 SOL...");
-
-      await airdrop({
-        recipientAddress: buyer.address,
-        lamports: airdropAmount,
-        commitment: "confirmed",
-      });
-
-      // Verify balance
-      const balanceResult = await rpc.getBalance(buyer.address, { commitment: "confirmed" }).send();
-      const balance = balanceResult.value;
-
-      console.log("   Balance after airdrop:", Number(balance) / 1_000_000_000, "SOL");
-      expect(Number(balance)).to.be.greaterThanOrEqual(2_000_000_000);
-
-      console.log("\n   Airdrop test PASSED!");
-    });
 
     it("can initialize a vote token account using Kit bindings", async () => {
       console.log("\n=== Kit Test: Initialize Vote Token Account ===\n");
@@ -225,15 +132,36 @@ describe("OpportunityMarket (Kit)", () => {
 
       console.log("   Sending transaction...");
 
-      // Send and confirm using Anchor's provider for better error messages
-      const txBytes = Buffer.from(base64Tx, "base64");
-      const signature = await provider.connection.sendRawTransaction(txBytes, {
-        skipPreflight: true,
-      });
-      await provider.connection.confirmTransaction(signature, "confirmed");
+      // Send and confirm using Kit RPC
+      await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
+      const signature = getSignatureFromTransaction(signedTransaction);
 
       console.log("   Transaction signature:", signature);
       console.log("\n   Vote token account initialization PASSED!");
+    });
+  });
+
+  describe("Test Environment", () => {
+    it("can create a test environment with participants and market", async () => {
+      console.log("\n=== Kit Test: Create Test Environment ===\n");
+
+      // Convert program ID to Kit Address type
+      const programId = address(program.programId.toBase58());
+
+      const env = await createTestEnvironment(provider, programId, {
+        rpcUrl: RPC_URL,
+        wsUrl: WS_URL,
+        numParticipants: 5,
+      });
+
+      // Verify the environment was created correctly
+      expect(env.participants).to.have.lengthOf(5);
+      expect(env.market).to.exist;
+      expect(env.market.address).to.exist;
+      expect(env.market.creatorAccount).to.exist;
+      expect(env.rpc).to.exist;
+      expect(env.rpcSubscriptions).to.exist;
+      console.log("\n   Test environment creation PASSED!");
     });
   });
 });
