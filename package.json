@@ -7,6 +7,7 @@
   "dependencies": {
     "@arcium-hq/client": "0.6.3",
     "@coral-xyz/anchor": "^0.32.1",
+    "@solana-program/system": "^0.10.0",
     "@solana/kit": "^2.1.0",
     "@solana/spl-token": "^0.4.14"
   },

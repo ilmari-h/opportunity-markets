@@ -17,7 +17,7 @@ import {
   getCompDefOffsetNumber,
   type CompDefCircuitName,
   ALL_COMP_DEF_CIRCUITS,
-} from "../js/src";
+} from "../../js/src";
 import { buildFinalizeCompDefTx } from "@arcium-hq/client";
 import { PublicKey } from "@solana/web3.js";
 

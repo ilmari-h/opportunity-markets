@@ -3,7 +3,7 @@ import {
   rootNodeFromAnchorWithoutDefaultVisitor,
 } from "@codama/nodes-from-anchor";
 import { renderVisitor } from "@codama/renderers-js";
-import { visit, Visitor } from "@codama/visitors-core";
+import { visit } from "@codama/visitors-core";
 import anchorIdl from "./idl/opportunity_market.json";
 
 async function generateClient() {

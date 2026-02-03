@@ -29,7 +29,7 @@ import {
   createMarket,
   fetchOpportunityMarket,
   randomComputationOffset,
-} from "../js/src";
+} from "../../js/src";
 import { randomBytes } from "crypto";
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
