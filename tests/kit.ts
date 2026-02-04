@@ -11,7 +11,27 @@ import {
   some
 } from "@solana/kit";
 import { getTransferSolInstruction } from "@solana-program/system";
-import { awaitComputationFinalization, initVoteTokenAccount, openMarket, randomComputationOffset, mintVoteTokens, addMarketOption, fetchVoteTokenAccount, getVoteTokenAccountAddress, initShareAccount, buyMarketShares, selectOption, fetchOpportunityMarket } from "../js/src";
+import {
+  awaitComputationFinalization,
+  initVoteTokenAccount,
+  openMarket,
+  randomComputationOffset,
+  mintVoteTokens,
+  addMarketOption,
+  fetchVoteTokenAccount,
+  getVoteTokenAccountAddress,
+  initShareAccount,
+  buyMarketShares,
+  selectOption,
+  fetchOpportunityMarket,
+  revealShares,
+  incrementOptionTally,
+  closeShareAccount,
+  fetchShareAccount,
+  getShareAccountAddress,
+  fetchOpportunityMarketOption,
+  getOpportunityMarketOptionAddress,
+} from "../js/src";
 import { createTestEnvironment } from "./utils/environment";
 import { initializeAllCompDefs } from "./utils/comp-defs";
 import { sendTransaction } from "./utils/transaction";
@@ -26,6 +46,7 @@ import { expect } from "chai";
 import { sleepUntilOnChainTimestamp } from "./utils/sleep";
 
 const ONCHAIN_TIMESTAMP_BUFFER_SECONDS = 6;
+const ESTIMATED_MAX_ACCOUNT_RENT = BigInt(3_000_000)
 
 // Environment setup
 const RPC_URL = process.env.ANCHOR_PROVIDER_URL || "http://127.0.0.1:8899";
@@ -112,11 +133,11 @@ describe("OpportunityMarket", () => {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 5,
-      airdropLamports: 2_000_000_000n, // 2 SOL for creator
+      airdropLamports: 2_000_000_000n, // 2 SOL
       marketConfig: {
         rewardLamports: marketFundingLamports,
         timeToStake: 120n,
-        timeToReveal: 60n,
+        timeToReveal: 15n, // Reasonable reliability for tests
       },
     });
 
@@ -301,6 +322,88 @@ describe("OpportunityMarket", () => {
       label: "Select winning option",
     });
     const resolvedMarket = await fetchOpportunityMarket(rpc, env.market.address);
-    expect(resolvedMarket.data.selectedOption).to.deep.equal(some(winningOptionIndex))
+    expect(resolvedMarket.data.selectedOption).to.deep.equal(some(winningOptionIndex));
+
+    // User reveals shares
+    const revealComputationOffset = randomComputationOffset();
+    const revealSharesIx = await revealShares(
+      {
+        signer: participant.keypair,
+        owner: participant.keypair.address,
+        market: env.market.address,
+        userPubkey: participant.x25519Keypair.publicKey,
+      },
+      {
+        clusterOffset: arciumEnv.arciumClusterOffset,
+        computationOffset: revealComputationOffset,
+      }
+    );
+    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [revealSharesIx], {
+      label: "Reveal shares",
+    });
+    await awaitComputationFinalization(rpc, revealComputationOffset);
+
+    // Verify revealed shares
+    const [shareAccountAddress] = await getShareAccountAddress(participant.keypair.address, env.market.address);
+    const revealedShareAccount = await fetchShareAccount(rpc, shareAccountAddress);
+
+    expect(revealedShareAccount.data.revealedAmount).to.deep.equal(some(buySharesAmount));
+    expect(revealedShareAccount.data.revealedOption).to.deep.equal(some(Number(selectedOption)));
+
+    // User increments option tally
+    const incrementTallyIx = await incrementOptionTally({
+      signer: participant.keypair,
+      owner: participant.keypair.address,
+      market: env.market.address,
+      optionIndex: winningOptionIndex,
+    });
+
+    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [incrementTallyIx], {
+      label: "Increment option tally",
+    });
+
+    // Verify option tally was updated
+    const [optionAddress] = await getOpportunityMarketOptionAddress(env.market.address, winningOptionIndex);
+    const optionAccount = await fetchOpportunityMarketOption(rpc, optionAddress);
+
+    expect(optionAccount.data.totalShares).to.deep.equal(some(buySharesAmount));
+
+    // Wait for reveal period to end
+    const timeToReveal = Number(env.market.timeToReveal);
+    await sleepUntilOnChainTimestamp((new Date().getTime() / 1000) + timeToReveal)
+
+    // Get balances before closing
+    const participantBalanceBefore = await rpc.getBalance(participant.keypair.address).send();
+    const marketBalanceBefore = await rpc.getBalance(env.market.address).send();
+
+    // User closes share account and claims rewards
+    const closeShareAccountIx = await closeShareAccount({
+      owner: participant.keypair,
+      market: env.market.address,
+      optionIndex: winningOptionIndex,
+    });
+
+    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [closeShareAccountIx], {
+      label: "Close share account",
+    });
+
+    // Verify share account was closed
+    const shareAccountAfterClose = await rpc.getAccountInfo(shareAccountAddress).send();
+    expect(shareAccountAfterClose.value).to.be.null;
+
+    // Verify participant received reward
+    const participantBalanceAfter = await rpc.getBalance(participant.keypair.address).send();
+    const marketBalanceAfter = await rpc.getBalance(env.market.address).send();
+
+    const participantGain = participantBalanceAfter.value - participantBalanceBefore.value;
+    const marketLoss = marketBalanceBefore.value - marketBalanceAfter.value;
+
+    // Participant should have gained funds (reward + rent refund) and market should have lost lamports
+    expect(participantGain > 0n).to.be.true;
+    expect(
+      participantGain > marketFundingLamports &&
+        participantGain < marketFundingLamports + ESTIMATED_MAX_ACCOUNT_RENT
+    ).to.be.true;
+    expect(marketLoss).to.equal(marketFundingLamports);
   });
 });
