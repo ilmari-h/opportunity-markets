@@ -8,9 +8,10 @@ import {
   generateKeyPairSigner,
   lamports,
   sendAndConfirmTransactionFactory,
+  some
 } from "@solana/kit";
 import { getTransferSolInstruction } from "@solana-program/system";
-import { awaitComputationFinalization, initVoteTokenAccount, openMarket, randomComputationOffset, mintVoteTokens, addMarketOption, fetchVoteTokenAccount, getVoteTokenAccountAddress } from "../js/src";
+import { awaitComputationFinalization, initVoteTokenAccount, openMarket, randomComputationOffset, mintVoteTokens, addMarketOption, fetchVoteTokenAccount, getVoteTokenAccountAddress, initShareAccount, buyMarketShares, selectOption, fetchOpportunityMarket } from "../js/src";
 import { createTestEnvironment } from "./utils/environment";
 import { initializeAllCompDefs } from "./utils/comp-defs";
 import { sendTransaction } from "./utils/transaction";
@@ -22,6 +23,7 @@ import * as os from "os";
 import { randomBytes } from "crypto";
 import { generateX25519Keypair, createCipher } from "../js/src/x25519/keypair";
 import { expect } from "chai";
+import { sleepUntilOnChainTimestamp } from "./utils/sleep";
 
 const ONCHAIN_TIMESTAMP_BUFFER_SECONDS = 6;
 
@@ -78,7 +80,7 @@ describe("OpportunityMarket", () => {
 
       const initVoteTokenAccountIx = await initVoteTokenAccount({
         signer: buyer,
-        userPubkey: Array.from(keypair.publicKey),
+        userPubkey: keypair.publicKey,
         nonce,
         },
          {
@@ -134,12 +136,12 @@ describe("OpportunityMarket", () => {
     );
 
     // Set open timestamp to now + small buffer
-    const openTimestamp = BigInt(Math.floor(Date.now() / 1000) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+    const openTimestamp = Math.floor(Date.now() / 1000) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS;
 
     const openMarketIx = openMarket({
       creator: env.market.creatorAccount.keypair,
       market: env.market.address,
-      openTimestamp,
+      openTimestamp: BigInt(openTimestamp),
     });
 
     await sendTransaction(
@@ -159,7 +161,7 @@ describe("OpportunityMarket", () => {
     const initVtaIx = await initVoteTokenAccount(
       {
         signer: participant.keypair,
-        userPubkey: Array.from(participant.x25519Keypair.publicKey),
+        userPubkey: participant.x25519Keypair.publicKey,
         nonce: initVtaNonce,
       },
       {
@@ -174,14 +176,14 @@ describe("OpportunityMarket", () => {
 
     await awaitComputationFinalization(rpc, initVtaOffset);
 
-    // In parallel: mint vote tokens + add market option
+    // In parallel: mint vote tokens + add market options
     const mintComputationOffset = randomComputationOffset();
     const mintAmount = 100_000_000n;
 
     const mintIx = await mintVoteTokens(
       {
         signer: participant.keypair,
-        userPubkey: Array.from(participant.x25519Keypair.publicKey),
+        userPubkey: participant.x25519Keypair.publicKey,
         amount: mintAmount,
       },
       {
@@ -190,7 +192,7 @@ describe("OpportunityMarket", () => {
       }
     );
 
-    const addOptionIx = await addMarketOption({
+    const addOptionAIx = await addMarketOption({
       creator: env.market.creatorAccount.keypair,
       market: env.market.address,
       optionIndex: 1,
@@ -205,8 +207,8 @@ describe("OpportunityMarket", () => {
         });
         await awaitComputationFinalization(rpc, mintComputationOffset);
       })(),
-      sendTransaction(rpc, sendAndConfirmTransaction, env.market.creatorAccount.keypair, [addOptionIx], {
-        label: "Add market option",
+      sendTransaction(rpc, sendAndConfirmTransaction, env.market.creatorAccount.keypair, [addOptionAIx], {
+        label: "Add market option A",
       }),
     ]);
 
@@ -219,5 +221,86 @@ describe("OpportunityMarket", () => {
       nonceToBytes(vta.data.stateNonce)
     );
     expect(decryptedBalance[0]).to.equal(mintAmount);
+
+    // Add more options as participant
+    const addOptionBIx = await addMarketOption({
+      creator: participant.keypair,
+      market: env.market.address,
+      optionIndex: 2,
+      name: "Option B",
+    });
+    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [addOptionBIx], {
+      label: "Add market option B",
+    })
+
+    const addOptionCIx = await addMarketOption({
+      creator: participant.keypair,
+      market: env.market.address,
+      optionIndex: 3,
+      name: "Option C",
+    });
+    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [addOptionCIx], {
+      label: "Add market option C"
+    })
+
+    // Wait for market to be open
+    await sleepUntilOnChainTimestamp(openTimestamp + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    // Initialize share account for participant
+    const shareAccountNonce = deserializeLE(randomBytes(16));
+    const initShareAccountIx = await initShareAccount({
+      signer: participant.keypair,
+      market: env.market.address,
+      stateNonce: shareAccountNonce,
+    });
+
+    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [initShareAccountIx], {
+      label: "Init share account",
+    });
+
+    // Buy market shares with encrypted inputs
+    const buySharesAmount = 50n;
+    const selectedOption = 1n; // Option A
+
+    // Encrypt the inputs
+    const inputNonce = randomBytes(16);
+    const ciphertexts = cipher.encrypt([buySharesAmount, selectedOption], inputNonce);
+
+    const buySharesComputationOffset = randomComputationOffset();
+    const disclosureNonce = deserializeLE(randomBytes(16));
+    const buySharesIx = await buyMarketShares(
+      {
+        signer: participant.keypair,
+        market: env.market.address,
+        amountCiphertext: ciphertexts[0],
+        selectedOptionCiphertext: ciphertexts[1],
+        userPubkey: participant.x25519Keypair.publicKey,
+        inputNonce: deserializeLE(inputNonce),
+        authorizedReaderPubkey: participant.x25519Keypair.publicKey,
+        authorizedReaderNonce: disclosureNonce,
+      },
+      {
+        clusterOffset: arciumEnv.arciumClusterOffset,
+        computationOffset: buySharesComputationOffset,
+      }
+    );
+    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [buySharesIx], {
+      label: "Buy market shares",
+    });
+
+    await awaitComputationFinalization(rpc, buySharesComputationOffset);
+
+    //  Market creator selects winning option
+    const winningOptionIndex = 1; // Option A (same as participant chose)
+    const selectOptionIx = selectOption({
+      authority: env.market.creatorAccount.keypair,
+      market: env.market.address,
+      optionIndex: winningOptionIndex,
+    });
+    await sendTransaction(rpc, sendAndConfirmTransaction, env.market.creatorAccount.keypair, [selectOptionIx], {
+      label: "Select winning option",
+    });
+    const resolvedMarket = await fetchOpportunityMarket(rpc, env.market.address);
+    expect(resolvedMarket.data.selectedOption).to.deep.equal(some(winningOptionIndex))
   });
 });

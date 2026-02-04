@@ -4,15 +4,16 @@ import {
   type BuyMarketSharesInstruction,
 } from "../generated";
 import { type ArciumConfig, getComputeAccounts } from "../arcium/computeAccounts";
+import { type ByteArray, toNumberArray } from "../utils";
 
 export interface BuyMarketSharesParams {
   signer: TransactionSigner;
   market: Address;
-  amountCiphertext: number[];
-  selectedOptionCiphertext: number[];
-  userPubkey: number[];
+  amountCiphertext: ByteArray;
+  selectedOptionCiphertext: ByteArray;
+  userPubkey: ByteArray;
   inputNonce: bigint;
-  authorizedReaderPubkey: number[];
+  authorizedReaderPubkey: ByteArray;
   authorizedReaderNonce: bigint;
 }
 
@@ -35,11 +36,11 @@ export async function buyMarketShares(
     ...getComputeAccounts("buy_opportunity_market_shares", config),
     signer,
     market,
-    amountCiphertext,
-    selectedOptionCiphertext,
-    userPubkey,
+    amountCiphertext: toNumberArray(amountCiphertext),
+    selectedOptionCiphertext: toNumberArray(selectedOptionCiphertext),
+    userPubkey: toNumberArray(userPubkey),
     inputNonce,
-    authorizedReaderPubkey,
+    authorizedReaderPubkey: toNumberArray(authorizedReaderPubkey),
     authorizedReaderNonce,
   });
 }

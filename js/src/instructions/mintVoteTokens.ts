@@ -4,10 +4,11 @@ import {
   type MintVoteTokensInstruction,
 } from "../generated";
 import { type ArciumConfig, getComputeAccounts } from "../arcium/computeAccounts";
+import { type ByteArray, toNumberArray } from "../utils";
 
 export interface MintVoteTokensParams {
   signer: TransactionSigner;
-  userPubkey: number[];
+  userPubkey: ByteArray;
   amount: bigint;
 }
 
@@ -20,7 +21,7 @@ export async function mintVoteTokens(
   return getMintVoteTokensInstructionAsync({
     ...getComputeAccounts("buy_vote_tokens", config),
     signer,
-    userPubkey,
+    userPubkey: toNumberArray(userPubkey),
     amount,
   });
 }

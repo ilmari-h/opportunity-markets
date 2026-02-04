@@ -4,12 +4,13 @@ import {
   type RevealSharesInstruction,
 } from "../generated";
 import { type ArciumConfig, getComputeAccounts } from "../arcium/computeAccounts";
+import { type ByteArray, toNumberArray } from "../utils";
 
 export interface RevealSharesParams {
   signer: TransactionSigner;
   owner: Address;
   market: Address;
-  userPubkey: number[];
+  userPubkey: ByteArray;
 }
 
 export async function revealShares(
@@ -23,6 +24,6 @@ export async function revealShares(
     signer,
     owner,
     market,
-    userPubkey,
+    userPubkey: toNumberArray(userPubkey),
   });
 }

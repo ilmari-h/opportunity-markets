@@ -14,6 +14,11 @@ import {
   sendAndConfirmTransactionFactory,
 } from "@solana/kit";
 
+/** JSON.stringify replacer that handles BigInt values */
+function bigIntReplacer(_key: string, value: unknown): unknown {
+  return typeof value === "bigint" ? value.toString() : value;
+}
+
 export type RpcClient = ReturnType<typeof createSolanaRpc>;
 export type SendAndConfirmFn = ReturnType<typeof sendAndConfirmTransactionFactory>;
 
@@ -85,17 +90,18 @@ export async function sendTransaction(
 
   const logs = simResult.value.logs;
 
-  if (printLogs) {
-    console.log(`${logPrefix}Simulation error:`, simResult.value.err);
+  if (printLogs || simResult.value.err) {
+    const logFunc = simResult.value.err ? console.error : console.log
+      logFunc(`${logPrefix}Simulation:`, simResult.value.err);
     if (logs) {
-      console.log(`${logPrefix}Logs:`);
-      logs.forEach((log) => console.log(`${logPrefix}  ${log}`));
+      logFunc(`${logPrefix}Logs:`);
+      logs.forEach((log) => logFunc(`${logPrefix}  ${log}`));
     }
   }
 
   if (simResult.value.err) {
     throw new Error(
-      `${label ? `${label}: ` : ""}Simulation failed: ${JSON.stringify(simResult.value.err)}`
+      `${label ? `${label}: ` : ""}Simulation failed: ${JSON.stringify(simResult.value.err, bigIntReplacer)}`
     );
   }
 
