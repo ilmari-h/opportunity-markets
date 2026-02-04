@@ -6,13 +6,11 @@ import {
   createSolanaRpc,
   createSolanaRpcSubscriptions,
   generateKeyPairSigner,
-  getAddressEncoder,
-  getProgramDerivedAddress,
   lamports,
   sendAndConfirmTransactionFactory,
 } from "@solana/kit";
 import { getTransferSolInstruction } from "@solana-program/system";
-import { awaitComputationFinalization, initVoteTokenAccount, openMarket, randomComputationOffset, mintVoteTokens, addMarketOption, fetchVoteTokenAccount } from "../js/src";
+import { awaitComputationFinalization, initVoteTokenAccount, openMarket, randomComputationOffset, mintVoteTokens, addMarketOption, fetchVoteTokenAccount, getVoteTokenAccountAddress } from "../js/src";
 import { createTestEnvironment } from "./utils/environment";
 import { initializeAllCompDefs } from "./utils/comp-defs";
 import { sendTransaction } from "./utils/transaction";
@@ -22,7 +20,7 @@ import { OpportunityMarket } from "../target/types/opportunity_market";
 import * as fs from "fs";
 import * as os from "os";
 import { randomBytes } from "crypto";
-import { generateX25519Keypair } from "../js/src/x25519/keypair";
+import { generateX25519Keypair, createCipher } from "../js/src/x25519/keypair";
 import { expect } from "chai";
 
 const ONCHAIN_TIMESTAMP_BUFFER_SECONDS = 6;
@@ -65,7 +63,6 @@ describe("OpportunityMarket", () => {
 
       // Airdrop SOL for transaction fees
       const airdropAmount = lamports(2_000_000_000n);
-      console.log("   Airdropping 2 SOL...");
       await airdrop({
         recipientAddress: buyer.address,
         lamports: airdropAmount,
@@ -77,7 +74,7 @@ describe("OpportunityMarket", () => {
       const nonce = deserializeLE(randomBytes(16));
 
       // Generate real x25519 keypair for encryption
-      const keypair = generateX25519Keypair()
+      const keypair = generateX25519Keypair();
 
       const initVoteTokenAccountIx = await initVoteTokenAccount({
         signer: buyer,
@@ -89,8 +86,6 @@ describe("OpportunityMarket", () => {
           computationOffset,
         },
       );
-
-      console.log("   Built initVoteTokenAccount instruction");
 
       await sendTransaction(
         rpc,
@@ -123,9 +118,7 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    // ========== Fund the market by transferring SOL from creator ==========
-    console.log("\n   Funding market with", Number(marketFundingLamports) / 1_000_000_000, "SOL...");
-
+    // Fund the market by transferring SOL from creator
     const fundingIx = getTransferSolInstruction({
       amount: lamports(marketFundingLamports),
       destination: env.market.address,
@@ -180,7 +173,6 @@ describe("OpportunityMarket", () => {
     });
 
     await awaitComputationFinalization(rpc, initVtaOffset);
-    console.log("   Vote token account initialized for participant 0");
 
     // In parallel: mint vote tokens + add market option
     const mintComputationOffset = randomComputationOffset();
@@ -219,13 +211,10 @@ describe("OpportunityMarket", () => {
     ]);
 
     // Fetch and verify vote token balance
-    const vtaAddress = await getProgramDerivedAddress({
-      programAddress: programId,
-      seeds: ["vote_token_account", getAddressEncoder().encode(participant.keypair.address)],
-    });
-
-    const vta = await fetchVoteTokenAccount(rpc, vtaAddress[0]);
-    const decryptedBalance = participant.x25519Keypair.cipher.decrypt(
+    const [vtaAddress] = await getVoteTokenAccountAddress(participant.keypair.address)
+    const vta = await fetchVoteTokenAccount(rpc, vtaAddress);
+    const cipher = createCipher(participant.x25519Keypair.secretKey, env.mxePublicKey);
+    const decryptedBalance = cipher.decrypt(
       vta.data.encryptedState,
       nonceToBytes(vta.data.stateNonce)
     );

@@ -55,6 +55,7 @@ export interface TestEnvironment {
     options: WithAddress<OpportunityMarketOption>[];
   };
   participants: Account[];
+  mxePublicKey: Uint8Array;
   rpc: ReturnType<typeof createSolanaRpc>;
   rpcSubscriptions: ReturnType<typeof createSolanaRpcSubscriptions>;
 }
@@ -113,13 +114,13 @@ async function getMXEPublicKeyWithRetry(
 }
 
 /**
- * Creates a test account with x25519 keypair and cipher for encryption.
+ * Creates a test account with x25519 keypair for encryption.
  */
-async function createAccount(mxePublicKey: Uint8Array): Promise<Omit<Account, "initialAirdroppedLamports">> {
+async function createAccount(): Promise<Omit<Account, "initialAirdroppedLamports">> {
   const keypair = await generateKeyPairSigner();
 
   // Generate x25519 keypair for encryption
-  const x25519Keypair = generateX25519Keypair()
+  const x25519Keypair = generateX25519Keypair();
 
   return { keypair, x25519Keypair };
 }
@@ -149,8 +150,6 @@ export async function createTestEnvironment(
 
   const { rpcUrl, wsUrl, numParticipants, airdropLamports, marketConfig } = mergedConfig;
 
-  console.log("\n=== Creating Test Environment ===\n");
-
   // Initialize RPC clients
   const rpc = createSolanaRpc(rpcUrl);
   const rpcSubscriptions = createSolanaRpcSubscriptions(wsUrl);
@@ -158,24 +157,18 @@ export async function createTestEnvironment(
   const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 
   // Fetch MXE public key (requires web3.js PublicKey for @arcium-hq/client)
-  console.log("Fetching MXE public key...");
   const programIdLegacy = new PublicKey(programId);
   const mxePublicKey = await getMXEPublicKeyWithRetry(provider, programIdLegacy);
-  console.log("  MXE public key fetched successfully");
 
   // Create all accounts (participants + market creator)
-  console.log(`\nCreating ${numParticipants + 1} accounts...`);
   const accountPromises = Array.from({ length: numParticipants + 1 }, () =>
-    createAccount(mxePublicKey)
+    createAccount()
   );
   const accounts = await Promise.all(accountPromises);
 
   // Split into participants and creator
   const participantAccounts = accounts.slice(0, numParticipants);
   const creatorAccountBase = accounts[numParticipants];
-
-  console.log(`  Created ${numParticipants} participant accounts`);
-  console.log(`  Created market creator account: ${creatorAccountBase.keypair.address}`);
 
   // Airdrop to all accounts in parallel
   console.log(`\nAirdropping ${Number(airdropLamports) / 1_000_000_000} SOL to all accounts...`);
@@ -187,7 +180,6 @@ export async function createTestEnvironment(
     })
   );
   await Promise.all(airdropPromises);
-  console.log("  Airdrops complete");
 
   // Build the final account objects with airdrop amounts
   const participants: Account[] = participantAccounts.map((account) => ({
@@ -201,7 +193,6 @@ export async function createTestEnvironment(
   };
 
   // Create the market
-  console.log("\nCreating market...");
   const arciumEnv = getArciumEnv();
   const marketIndex = BigInt(Math.floor(Math.random() * 1000000));
   const nonce = deserializeLE(randomBytes(16));
@@ -240,7 +231,6 @@ export async function createTestEnvironment(
   const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
 
   // Simulate first to see any errors
-  console.log("  Simulating createMarket transaction...");
   const base64Tx = getBase64EncodedWireTransaction(signedTransaction);
   const simResult = await rpc.simulateTransaction(base64Tx, {
     commitment: "confirmed",
@@ -257,21 +247,11 @@ export async function createTestEnvironment(
   }
 
   // Send and confirm transaction using Kit RPC
-  console.log("  Sending createMarket transaction...");
   await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
-  const signature = getSignatureFromTransaction(signedTransaction);
-  console.log("  Market created! Signature:", signature.slice(0, 20) + "...");
-
   // Get market address from the instruction accounts and fetch from chain
   const marketAddress = createMarketIx.accounts[1].address as Address;
   const marketAccount = await fetchOpportunityMarket(rpc, marketAddress, { commitment: "confirmed" });
 
-  console.log("\n=== Test Environment Ready ===\n");
-  console.log(`  Market address: ${marketAddress}`);
-  console.log(`  Market creator: ${creatorAccount.keypair.address}`);
-  console.log(`  Participants: ${participants.length}`);
-
-  // Return environment with fetched market data
   return {
     market: {
       ...marketAccount.data,
@@ -280,6 +260,7 @@ export async function createTestEnvironment(
       options: [], // Options need to be added separately via addMarketOption
     },
     participants,
+    mxePublicKey,
     rpc,
     rpcSubscriptions,
   };

@@ -4,6 +4,9 @@ export * from "./generated";
 // Export convenience helpers
 export * from "./instructions";
 
+// Export account PDA helpers
+export * from "./accounts";
+
 // Export utilities
 export * from "./utils";
 
