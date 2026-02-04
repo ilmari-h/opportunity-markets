@@ -37,27 +37,16 @@ function bytesEqual(a: ArrayLike<number>, b: ArrayLike<number>): boolean {
 /**
  * Waits for a computation to be finalized on the Arcium network.
  *
- * This function polls for the FinalizeComputationEvent by checking transaction signatures
- * and their logs for the specific computation offset and MXE program ID.
- *
- * The event discriminator from Arcium IDL: [27, 75, 117, 221, 191, 213, 253, 249]
- * Event structure:
- * - discriminator: 8 bytes
- * - computation_offset: u64 (8 bytes, little-endian)
- * - mxe_program_id: pubkey (32 bytes)
- *
- * @param rpc - The Solana RPC client created with createSolanaRpc
- * @param computationOffset - The computation offset as a bigint
- * @param mxeProgramId - The MXE program ID as an Address
- * @param commitment - Commitment level (default: "confirmed")
- * @returns Promise resolving to the transaction signature when finalized
  */
 export const awaitComputationFinalization = async (
   rpc: Rpc<SolanaRpcApi>,
   computationOffset: bigint,
   options?: {
     commitment?: "processed" | "confirmed" | "finalized"
-    mxeProgramId?: Address
+    mxeProgramId?: Address,
+    signaturesToCheck?: number,
+    pollInterval: number,
+    maxAttempts: number
   }
 ): Promise<string> => {
   const mxeProgramId = options?.mxeProgramId ?? OPPORTUNITY_MARKET_PROGRAM_ADDRESS;
@@ -65,14 +54,15 @@ export const awaitComputationFinalization = async (
   const offsetBytes = serializeLE(computationOffset, 8);
   const mxeProgramIdBytes = getAddressEncoder().encode(mxeProgramId);
 
-  const pollInterval = 1000;
-  const maxAttempts = 120;
+  const signaturesToCheck = options?.signaturesToCheck ?? 50;
+  const pollInterval = options?.pollInterval ?? 1000;
+  const maxAttempts = options?.maxAttempts ?? 120;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       const signatures = await rpc.getSignaturesForAddress(
         ARCIUM_PROGRAM_ID,
-        { limit: 10 }
+        { limit: signaturesToCheck }
       ).send();
 
       for (const sigInfo of signatures) {

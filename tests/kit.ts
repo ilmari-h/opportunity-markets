@@ -19,8 +19,9 @@ import { OpportunityMarket } from "../target/types/opportunity_market";
 import * as fs from "fs";
 import * as os from "os";
 import { randomBytes } from "crypto";
-import { expect } from "chai";
 import { generateX25519Keypair } from "../js/src/x25519/keypair";
+
+const ONCHAIN_TIMESTAMP_BUFFER_SECONDS = 6;
 
 // Environment setup
 const RPC_URL = process.env.ANCHOR_PROVIDER_URL || "http://127.0.0.1:8899";
@@ -135,8 +136,8 @@ describe("OpportunityMarket", () => {
       { label: "Fund market" }
     );
 
-    // Set open timestamp to now (current unix timestamp)
-    const openTimestamp = BigInt(Math.floor(Date.now() / 1000));
+    // Set open timestamp to now + small buffer
+    const openTimestamp = BigInt(Math.floor(Date.now() / 1000) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     const openMarketIx = openMarket({
       creator: env.market.creatorAccount.keypair,
@@ -151,7 +152,5 @@ describe("OpportunityMarket", () => {
       [openMarketIx],
       { label: "Open market" }
     );
-
-    console.log("\n   Test environment creation, funding & opening PASSED!");
   });
 });
