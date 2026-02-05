@@ -113,6 +113,23 @@ export async function sendTransaction(
   await sendAndConfirm(signedTransaction, { commitment });
   const signature = getSignatureFromTransaction(signedTransaction);
 
+  // Fetch transaction to verify instruction succeeded (not just tx confirmed)
+  const txResult = await rpc.getTransaction(signature, {
+    commitment,
+    maxSupportedTransactionVersion: 0,
+    encoding: "jsonParsed"
+  }).send();
+
+  if (txResult?.meta?.err) {
+    const txLogs = txResult.meta.logMessages || [];
+    console.error(`${logPrefix}Transaction confirmed but instruction failed!`);
+    console.error(`${logPrefix}Error:`, txResult.meta.err);
+    txLogs.forEach((log) => console.error(`${logPrefix}  ${log}`));
+    throw new Error(
+      `${label ? `${label}: ` : ""}Instruction failed: ${JSON.stringify(txResult.meta.err, bigIntReplacer)}`
+    );
+  }
+
   if (printLogs) {
     console.log(`${logPrefix}Confirmed: ${signature.slice(0, 20)}...`);
   }

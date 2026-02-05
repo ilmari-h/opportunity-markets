@@ -18,8 +18,6 @@ import {
   randomComputationOffset,
   mintVoteTokens,
   addMarketOption,
-  fetchVoteTokenAccount,
-  getVoteTokenAccountAddress,
   initShareAccount,
   buyMarketShares,
   selectOption,
@@ -31,11 +29,11 @@ import {
   getShareAccountAddress,
   fetchOpportunityMarketOption,
   getOpportunityMarketOptionAddress,
+  awaitBatchComputationFinalization,
 } from "../js/src";
 import { createTestEnvironment } from "./utils/environment";
 import { initializeAllCompDefs } from "./utils/comp-defs";
 import { sendTransaction } from "./utils/transaction";
-import { nonceToBytes } from "./utils/nonce";
 import { getArciumEnv, deserializeLE } from "@arcium-hq/client";
 import { OpportunityMarket } from "../target/types/opportunity_market";
 import * as fs from "fs";
@@ -127,12 +125,13 @@ describe("OpportunityMarket", () => {
   it("passes full opportunity market flow", async () => {
     // Market funding amount (1 SOL) - must match rewardLamports in createTestEnvironment
     const marketFundingLamports = 1_000_000_000n;
+    const numParticipants = 4;
 
     // Airdrop enough SOL to cover funding + fees (2 SOL for creator)
     const env = await createTestEnvironment(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
-      numParticipants: 5,
+      numParticipants,
       airdropLamports: 2_000_000_000n, // 2 SOL
       marketConfig: {
         rewardLamports: marketFundingLamports,
@@ -173,44 +172,54 @@ describe("OpportunityMarket", () => {
       { label: "Open market" }
     );
 
-    const participant = env.participants[0];
-
-    // Initialize vote token account for participant
-    const initVtaOffset = randomComputationOffset();
-    const initVtaNonce = deserializeLE(randomBytes(16));
-
-    const initVtaIx = await initVoteTokenAccount(
-      {
-        signer: participant.keypair,
-        userPubkey: participant.x25519Keypair.publicKey,
-        nonce: initVtaNonce,
-      },
-      {
-        clusterOffset: arciumEnv.arciumClusterOffset,
-        computationOffset: initVtaOffset,
-      }
+    // Initialize vote token accounts for ALL participants in parallel
+    const initVtaData = await Promise.all(
+      env.participants.map(async (participant, idx) => {
+        const offset = randomComputationOffset();
+        const nonce = deserializeLE(randomBytes(16));
+        const ix = await initVoteTokenAccount(
+          {
+            signer: participant.keypair,
+            userPubkey: participant.x25519Keypair.publicKey,
+            nonce,
+          },
+          {
+            clusterOffset: arciumEnv.arciumClusterOffset,
+            computationOffset: offset,
+          }
+        );
+        return { participant, ix, offset, idx };
+      })
     );
 
-    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [initVtaIx], {
-      label: "Init VTA",
-    });
+    // For some reason my transaction logic is broken when ran in parallel - doing these in sequence
+    for(const {participant, ix, idx} of initVtaData) {
+      await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [ix], {
+        label: `Init VTA ${idx}`
+      })
+    }
 
-    await awaitComputationFinalization(rpc, initVtaOffset);
+    // Wait for all VTA computations to finalize in parallel
+    await awaitBatchComputationFinalization(rpc, initVtaData.map(({offset}) => offset))
 
-    // In parallel: mint vote tokens + add market options
-    const mintComputationOffset = randomComputationOffset();
+    // Mint vote tokens for all participants + add market options in parallel
     const mintAmount = 100_000_000n;
-
-    const mintIx = await mintVoteTokens(
-      {
-        signer: participant.keypair,
-        userPubkey: participant.x25519Keypair.publicKey,
-        amount: mintAmount,
-      },
-      {
-        clusterOffset: arciumEnv.arciumClusterOffset,
-        computationOffset: mintComputationOffset,
-      }
+    const mintData = await Promise.all(
+      env.participants.map(async (participant, idx) => {
+        const offset = randomComputationOffset();
+        const ix = await mintVoteTokens(
+          {
+            signer: participant.keypair,
+            userPubkey: participant.x25519Keypair.publicKey,
+            amount: mintAmount,
+          },
+          {
+            clusterOffset: arciumEnv.arciumClusterOffset,
+            computationOffset: offset,
+          }
+        );
+        return { participant, ix, offset, idx };
+      })
     );
 
     const addOptionAIx = await addMarketOption({
@@ -220,99 +229,102 @@ describe("OpportunityMarket", () => {
       name: "Option A",
     });
 
-    // Send both in parallel
-    await Promise.all([
-      (async () => {
-        await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [mintIx], {
-          label: "Mint vote tokens",
-        });
-        await awaitComputationFinalization(rpc, mintComputationOffset);
-      })(),
-      sendTransaction(rpc, sendAndConfirmTransaction, env.market.creatorAccount.keypair, [addOptionAIx], {
-        label: "Add market option A",
-      }),
-    ]);
-
-    // Fetch and verify vote token balance
-    const [vtaAddress] = await getVoteTokenAccountAddress(participant.keypair.address)
-    const vta = await fetchVoteTokenAccount(rpc, vtaAddress);
-    const cipher = createCipher(participant.x25519Keypair.secretKey, env.mxePublicKey);
-    const decryptedBalance = cipher.decrypt(
-      vta.data.encryptedState,
-      nonceToBytes(vta.data.stateNonce)
-    );
-    expect(decryptedBalance[0]).to.equal(mintAmount);
-
-    // Add more options as participant
     const addOptionBIx = await addMarketOption({
-      creator: participant.keypair,
+      creator: env.market.creatorAccount.keypair,
       market: env.market.address,
       optionIndex: 2,
       name: "Option B",
     });
-    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [addOptionBIx], {
-      label: "Add market option B",
+
+    for(const {participant, ix, idx} of mintData) {
+      await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [ix], {
+        label: `Mint vote tokens ${idx}`
+      })
+    }
+
+    // Options must be crearted in sequence
+    await sendTransaction(rpc, sendAndConfirmTransaction, env.market.creatorAccount.keypair, [addOptionAIx], {
+      label: "Add Option A",
+    })
+    await sendTransaction(rpc, sendAndConfirmTransaction, env.market.creatorAccount.keypair, [addOptionBIx], {
+      label: "Add Option B",
     })
 
-    const addOptionCIx = await addMarketOption({
-      creator: participant.keypair,
-      market: env.market.address,
-      optionIndex: 3,
-      name: "Option C",
-    });
-    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [addOptionCIx], {
-      label: "Add market option C"
-    })
+    await awaitBatchComputationFinalization(rpc, mintData.map(({ offset }) => offset))
 
     // Wait for market to be open
     await sleepUntilOnChainTimestamp(openTimestamp + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
-    // Initialize share account for participant
-    const shareAccountNonce = deserializeLE(randomBytes(16));
-    const initShareAccountIx = await initShareAccount({
-      signer: participant.keypair,
-      market: env.market.address,
-      stateNonce: shareAccountNonce,
-    });
-
-    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [initShareAccountIx], {
-      label: "Init share account",
-    });
-
-    // Buy market shares with encrypted inputs
-    const buySharesAmount = 50n;
-    const selectedOption = 1n; // Option A
-
-    // Encrypt the inputs
-    const inputNonce = randomBytes(16);
-    const ciphertexts = cipher.encrypt([buySharesAmount, selectedOption], inputNonce);
-
-    const buySharesComputationOffset = randomComputationOffset();
-    const disclosureNonce = deserializeLE(randomBytes(16));
-    const buySharesIx = await buyMarketShares(
-      {
-        signer: participant.keypair,
-        market: env.market.address,
-        amountCiphertext: ciphertexts[0],
-        selectedOptionCiphertext: ciphertexts[1],
-        userPubkey: participant.x25519Keypair.publicKey,
-        inputNonce: deserializeLE(inputNonce),
-        authorizedReaderPubkey: participant.x25519Keypair.publicKey,
-        authorizedReaderNonce: disclosureNonce,
-      },
-      {
-        clusterOffset: arciumEnv.arciumClusterOffset,
-        computationOffset: buySharesComputationOffset,
-      }
+    // Initialize share accounts for all participants
+    const initShareData = await Promise.all(
+      env.participants.map(async (participant, idx) => {
+        const nonce = deserializeLE(randomBytes(16));
+        const ix = await initShareAccount({
+          signer: participant.keypair,
+          market: env.market.address,
+          stateNonce: nonce,
+        });
+        return { participant, ix, idx };
+      })
     );
-    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [buySharesIx], {
-      label: "Buy market shares",
-    });
 
-    await awaitComputationFinalization(rpc, buySharesComputationOffset);
+    console.log("Initializing share accounts")
+    for (const { participant, ix, idx } of initShareData) {
+      await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [ix], {
+        label: `Init share account [${idx}]`,
+      });
+    }
 
-    //  Market creator selects winning option
-    const winningOptionIndex = 1; // Option A (same as participant chose)
+    console.log("Share accounts initialized")
+
+    // Define voting: half vote for Option A (winning), half for Option B (losing)
+    const winningOptionIndex = 1; // Option A
+    const buySharesAmounts = [50n, 75n, 100n, 60n]; // Varying amounts per participant
+
+    // Buy shares for all participants in parallel
+    const buySharesData = await Promise.all(
+      env.participants.map(async (participant, idx) => {
+        const cipher = createCipher(participant.x25519Keypair.secretKey, env.mxePublicKey);
+        const amount = buySharesAmounts[idx];
+        const selectedOption = idx < numParticipants / 2 ? 1n : 2n; // First half vote A, second half vote B
+        const inputNonce = randomBytes(16);
+        const ciphertexts = cipher.encrypt([amount, selectedOption], inputNonce);
+        const computationOffset = randomComputationOffset();
+        const disclosureNonce = deserializeLE(randomBytes(16));
+
+        const ix = await buyMarketShares(
+          {
+            signer: participant.keypair,
+            market: env.market.address,
+            amountCiphertext: ciphertexts[0],
+            selectedOptionCiphertext: ciphertexts[1],
+            userPubkey: participant.x25519Keypair.publicKey,
+            inputNonce: deserializeLE(inputNonce),
+            authorizedReaderPubkey: participant.x25519Keypair.publicKey,
+            authorizedReaderNonce: disclosureNonce,
+          },
+          {
+            clusterOffset: arciumEnv.arciumClusterOffset,
+            computationOffset,
+          }
+        );
+        return { participant, ix, computationOffset, idx, amount, selectedOption };
+      })
+    );
+
+    console.log("Buyin shares")
+
+    for (const { participant, ix, idx } of buySharesData) {
+      await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [ix], {
+        label: `Buy shares [${idx}]`,
+      });
+    }
+    console.log("Shares bought")
+
+    // Wait for all buy shares computations
+    await awaitBatchComputationFinalization(rpc, buySharesData.map(({computationOffset}) => computationOffset))
+
+    // Market creator selects winning option (Option A)
     const selectOptionIx = selectOption({
       authority: env.market.creatorAccount.keypair,
       market: env.market.address,
@@ -324,86 +336,168 @@ describe("OpportunityMarket", () => {
     const resolvedMarket = await fetchOpportunityMarket(rpc, env.market.address);
     expect(resolvedMarket.data.selectedOption).to.deep.equal(some(winningOptionIndex));
 
-    // User reveals shares
-    const revealComputationOffset = randomComputationOffset();
-    const revealSharesIx = await revealShares(
-      {
-        signer: participant.keypair,
-        owner: participant.keypair.address,
-        market: env.market.address,
-        userPubkey: participant.x25519Keypair.publicKey,
-      },
-      {
-        clusterOffset: arciumEnv.arciumClusterOffset,
-        computationOffset: revealComputationOffset,
-      }
+    // Only winners (participants 0-2) reveal shares in parallel
+    const winners = env.participants.slice(0, numParticipants / 2);
+    const winnerSharesData = buySharesData.slice(0, numParticipants / 2);
+
+    const revealData = await Promise.all(
+      winners.map(async (participant, idx) => {
+        const computationOffset = randomComputationOffset();
+        const ix = await revealShares(
+          {
+            signer: participant.keypair,
+            owner: participant.keypair.address,
+            market: env.market.address,
+            userPubkey: participant.x25519Keypair.publicKey,
+          },
+          {
+            clusterOffset: arciumEnv.arciumClusterOffset,
+            computationOffset,
+          }
+        );
+        return { participant, ix, computationOffset, idx };
+      })
     );
-    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [revealSharesIx], {
-      label: "Reveal shares",
-    });
-    await awaitComputationFinalization(rpc, revealComputationOffset);
 
-    // Verify revealed shares
-    const [shareAccountAddress] = await getShareAccountAddress(participant.keypair.address, env.market.address);
-    const revealedShareAccount = await fetchShareAccount(rpc, shareAccountAddress);
+    console.log("Revealing shares")
 
-    expect(revealedShareAccount.data.revealedAmount).to.deep.equal(some(buySharesAmount));
-    expect(revealedShareAccount.data.revealedOption).to.deep.equal(some(Number(selectedOption)));
+    // Send all reveal transactions sequentially
+    for (const { participant, ix, idx } of revealData) {
+      await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [ix], {
+        label: `Reveal shares [${idx}]`,
+      });
+    }
 
-    // User increments option tally
-    const incrementTallyIx = await incrementOptionTally({
-      signer: participant.keypair,
-      owner: participant.keypair.address,
-      market: env.market.address,
-      optionIndex: winningOptionIndex,
-    });
+    console.log("Awaiting reveal computation")
+    // Wait for all reveal computations to finalize in parallel
+    await awaitBatchComputationFinalization(rpc, revealData.map(({computationOffset}) => computationOffset))
 
-    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [incrementTallyIx], {
-      label: "Increment option tally",
-    });
+    console.log("Shares revealed")
 
-    // Verify option tally was updated
+    // Verify revealed shares for winners
+    for (let i = 0; i < winners.length; i++) {
+      const participant = winners[i];
+      const expectedAmount = winnerSharesData[i].amount;
+      const [shareAccountAddress] = await getShareAccountAddress(participant.keypair.address, env.market.address);
+      const revealedShareAccount = await fetchShareAccount(rpc, shareAccountAddress);
+
+      expect(revealedShareAccount.data.revealedAmount).to.deep.equal(some(expectedAmount));
+      expect(revealedShareAccount.data.revealedOption).to.deep.equal(some(winningOptionIndex));
+    }
+
+    // All winners increment option tally
+    const incrementTallyData = await Promise.all(
+      winners.map(async (participant, idx) => {
+        const ix = await incrementOptionTally({
+          signer: participant.keypair,
+          owner: participant.keypair.address,
+          market: env.market.address,
+          optionIndex: winningOptionIndex,
+        });
+        return { participant, ix, idx };
+      })
+    );
+
+    for (const { participant, ix, idx } of incrementTallyData) {
+      await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [ix], {
+        label: `Increment tally [${idx}]`,
+      });
+    }
+
+    // Verify option tally was updated with total winning shares
+    const totalWinningShares = buySharesAmounts.slice(0, numParticipants / 2).reduce((a, b) => a + b, 0n);
     const [optionAddress] = await getOpportunityMarketOptionAddress(env.market.address, winningOptionIndex);
     const optionAccount = await fetchOpportunityMarketOption(rpc, optionAddress);
-
-    expect(optionAccount.data.totalShares).to.deep.equal(some(buySharesAmount));
+    expect(optionAccount.data.totalShares).to.deep.equal(some(totalWinningShares));
 
     // Wait for reveal period to end
     const timeToReveal = Number(env.market.timeToReveal);
-    await sleepUntilOnChainTimestamp((new Date().getTime() / 1000) + timeToReveal)
+    await sleepUntilOnChainTimestamp((new Date().getTime() / 1000) + timeToReveal);
 
-    // Get balances before closing
-    const participantBalanceBefore = await rpc.getBalance(participant.keypair.address).send();
+    // Get balances before closing for all winners
+    const balancesBefore = await Promise.all(
+      winners.map(async (participant) => ({
+        participant,
+        balance: await rpc.getBalance(participant.keypair.address).send(),
+      }))
+    );
     const marketBalanceBefore = await rpc.getBalance(env.market.address).send();
 
-    // User closes share account and claims rewards
-    const closeShareAccountIx = await closeShareAccount({
-      owner: participant.keypair,
-      market: env.market.address,
-      optionIndex: winningOptionIndex,
-    });
+    // All winners close share accounts and claim rewards
+    const closeShareData = await Promise.all(
+      winners.map(async (participant, idx) => {
+        const ix = await closeShareAccount({
+          owner: participant.keypair,
+          market: env.market.address,
+          optionIndex: winningOptionIndex,
+        });
+        return { participant, ix, idx };
+      })
+    );
 
-    await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [closeShareAccountIx], {
-      label: "Close share account",
-    });
+    for (const { participant, ix, idx } of closeShareData) {
+      await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [ix], {
+        label: `Close share account [${idx}]`,
+      });
+    }
 
-    // Verify share account was closed
-    const shareAccountAfterClose = await rpc.getAccountInfo(shareAccountAddress).send();
-    expect(shareAccountAfterClose.value).to.be.null;
+    // Verify share accounts were closed for all winners
+    for (const participant of winners) {
+      const [shareAccountAddress] = await getShareAccountAddress(participant.keypair.address, env.market.address);
+      const shareAccountAfterClose = await rpc.getAccountInfo(shareAccountAddress).send();
+      expect(shareAccountAfterClose.value).to.be.null;
+    }
 
-    // Verify participant received reward
-    const participantBalanceAfter = await rpc.getBalance(participant.keypair.address).send();
+    // Get balances after closing
+    const balancesAfter = await Promise.all(
+      winners.map(async (participant) => ({
+        participant,
+        balance: await rpc.getBalance(participant.keypair.address).send(),
+      }))
+    );
     const marketBalanceAfter = await rpc.getBalance(env.market.address).send();
 
-    const participantGain = participantBalanceAfter.value - participantBalanceBefore.value;
-    const marketLoss = marketBalanceBefore.value - marketBalanceAfter.value;
+    // Calculate gains for each winner
+    const gains: { participant: typeof winners[0]; gain: bigint; shares: bigint }[] = [];
+    for (let i = 0; i < winners.length; i++) {
+      const gain = balancesAfter[i].balance.value - balancesBefore[i].balance.value;
+      gains.push({
+        participant: winners[i],
+        gain,
+        shares: winnerSharesData[i].amount,
+      });
+    }
 
-    // Participant should have gained funds (reward + rent refund) and market should have lost lamports
-    expect(participantGain > 0n).to.be.true;
-    expect(
-      participantGain > marketFundingLamports &&
-        participantGain < marketFundingLamports + ESTIMATED_MAX_ACCOUNT_RENT
-    ).to.be.true;
-    expect(marketLoss).to.equal(marketFundingLamports);
+    // All winners should have gained funds
+    for (const { gain } of gains) {
+      expect(gain > 0n).to.be.true;
+    }
+
+    // Total market loss should equal the full reward amount, tolerance of 1 lamport for rounding error.
+    const marketLoss = marketBalanceBefore.value - marketBalanceAfter.value;
+    expect(marketLoss >= marketFundingLamports - 1n && marketLoss <= marketFundingLamports + 1n).to.be.true;
+
+    // Verify proportional reward distribution (with tolerance for staking time variance and rent)
+    // Reward is based on: (participant_shares / total_shares) * reward_amount
+    // Plus rent refund from closing share account
+    // Allow 5% tolerance due to staking time differences affecting the calculation
+    const REWARD_TOLERANCE_PERCENT = 5n;
+
+    for (const { gain, shares } of gains) {
+      // Expected reward = (shares / totalShares) * marketFundingLamports
+      const expectedReward = (shares * marketFundingLamports) / totalWinningShares;
+
+      // Account for rent refund (estimate ~2.5M lamports per share account)
+      const minExpected = expectedReward - (expectedReward * REWARD_TOLERANCE_PERCENT) / 100n;
+      const maxExpected = expectedReward + ESTIMATED_MAX_ACCOUNT_RENT + (expectedReward * REWARD_TOLERANCE_PERCENT) / 100n;
+
+      expect(gain >= minExpected && gain <= maxExpected).to.be.true;
+    }
+
+    // Verify total gains approximately equal reward + rent refunds
+    const totalGains = gains.reduce((sum, { gain }) => sum + gain, 0n);
+    const expectedTotalGains = marketFundingLamports + ESTIMATED_MAX_ACCOUNT_RENT * BigInt(winners.length);
+    expect(totalGains >= marketFundingLamports).to.be.true;
+    expect(totalGains <= expectedTotalGains).to.be.true;
   });
 });

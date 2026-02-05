@@ -34,35 +34,50 @@ function bytesEqual(a: ArrayLike<number>, b: ArrayLike<number>): boolean {
 }
 
 
+export interface AwaitComputationOptions {
+  commitment?: "processed" | "confirmed" | "finalized";
+  mxeProgramId?: Address;
+  transactionCountLimit?: number;
+  pollInterval?: number;
+  maxAttempts?: number;
+}
+
 /**
- * Waits for a computation to be finalized on the Arcium network.
- *
+ * Waits for multiple computations to be finalized on the Arcium network.
+ * Returns a map of computationOffset -> signature for all found computations.
  */
-export const awaitComputationFinalization = async (
+export const awaitBatchComputationFinalization = async (
   rpc: Rpc<SolanaRpcApi>,
-  computationOffset: bigint,
-  options?: {
-    commitment?: "processed" | "confirmed" | "finalized"
-    mxeProgramId?: Address,
-    signaturesToCheck?: number,
-    pollInterval: number,
-    maxAttempts: number
+  computationOffsets: bigint[],
+  options?: AwaitComputationOptions
+): Promise<Map<bigint, string>> => {
+  if (computationOffsets.length === 0) {
+    return new Map();
   }
-): Promise<string> => {
+
   const mxeProgramId = options?.mxeProgramId ?? OPPORTUNITY_MARKET_PROGRAM_ADDRESS;
   const commitment = options?.commitment ?? "confirmed";
-  const offsetBytes = serializeLE(computationOffset, 8);
   const mxeProgramIdBytes = getAddressEncoder().encode(mxeProgramId);
 
-  const signaturesToCheck = options?.signaturesToCheck ?? 50;
+  const transactionCountLimit = options?.transactionCountLimit ?? 100;
   const pollInterval = options?.pollInterval ?? 1000;
   const maxAttempts = options?.maxAttempts ?? 120;
+
+  // Pre-compute offset bytes for all offsets
+  const offsetBytesMap = new Map<bigint, Uint8Array>();
+  for (const offset of computationOffsets) {
+    offsetBytesMap.set(offset, serializeLE(offset, 8));
+  }
+
+  // Track which offsets we've found
+  const foundSignatures = new Map<bigint, string>();
+  const remainingOffsets = new Set(computationOffsets);
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       const signatures = await rpc.getSignaturesForAddress(
         ARCIUM_PROGRAM_ID,
-        { limit: signaturesToCheck }
+        { limit: transactionCountLimit }
       ).send();
 
       for (const sigInfo of signatures) {
@@ -72,9 +87,7 @@ export const awaitComputationFinalization = async (
           maxSupportedTransactionVersion: 0,
         }).send();
 
-        if (!tx) {
-          continue;
-        };
+        if (!tx) continue;
 
         const logs = tx.meta?.logMessages || [];
 
@@ -86,16 +99,22 @@ export const awaitComputationFinalization = async (
             try {
               const eventData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
 
-              // Check minimum length: discriminator (8) + offset (8) + pubkey (32) = 48 bytes
               if (eventData.length >= 48 &&
                   bytesEqual(eventData.subarray(0, 8), FINALIZE_COMPUTATION_EVENT_DISCRIMINATOR)) {
 
                 const eventOffsetBytes = eventData.subarray(8, 16);
                 const eventMxeProgramId = eventData.subarray(16, 48);
 
-                if (bytesEqual(eventOffsetBytes, offsetBytes) &&
-                    bytesEqual(eventMxeProgramId, mxeProgramIdBytes)) {
-                  return sigInfo.signature;
+                if (!bytesEqual(eventMxeProgramId, mxeProgramIdBytes)) continue;
+
+                // Check against all remaining offsets
+                for (const offset of remainingOffsets) {
+                  const expectedBytes = offsetBytesMap.get(offset)!;
+                  if (bytesEqual(eventOffsetBytes, expectedBytes)) {
+                    foundSignatures.set(offset, sigInfo.signature);
+                    remainingOffsets.delete(offset);
+                    break;
+                  }
                 }
               }
             } catch {
@@ -103,6 +122,16 @@ export const awaitComputationFinalization = async (
             }
           }
         }
+
+        // Early exit if all found
+        if (remainingOffsets.size === 0) {
+          return foundSignatures;
+        }
+      }
+
+      // Check if done
+      if (remainingOffsets.size === 0) {
+        return foundSignatures;
       }
 
       await new Promise(resolve => setTimeout(resolve, pollInterval));
@@ -111,7 +140,20 @@ export const awaitComputationFinalization = async (
     }
   }
 
+  const missingOffsets = Array.from(remainingOffsets).join(', ');
   throw new Error(
-    `Computation finalization timed out after ${maxAttempts} attempts for offset ${computationOffset}`
+    `Computation finalization timed out after ${maxAttempts} attempts. Missing offsets: ${missingOffsets}`
   );
+};
+
+/**
+ * Waits for a single computation to be finalized on the Arcium network.
+ */
+export const awaitComputationFinalization = async (
+  rpc: Rpc<SolanaRpcApi>,
+  computationOffset: bigint,
+  options?: AwaitComputationOptions
+): Promise<string> => {
+  const results = await awaitBatchComputationFinalization(rpc, [computationOffset], options);
+  return results.get(computationOffset)!;
 };
