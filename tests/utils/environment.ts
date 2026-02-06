@@ -1,6 +1,4 @@
 import {
-  RescueCipher,
-  x25519,
   getArciumEnv,
   getMXEPublicKey,
   deserializeLE,
@@ -34,11 +32,13 @@ import { randomBytes } from "crypto";
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { generateX25519Keypair, X25519Keypair } from "../../js/src/x25519/keypair";
+import { createTokenMint, createAta, mintTokensTo, TOKEN_PROGRAM_ADDRESS } from "./spl-token";
 
 export interface Account {
   keypair: KeyPairSigner;
   x25519Keypair: X25519Keypair;
   initialAirdroppedLamports: bigint;
+  tokenAccount: Address;
 }
 
 export interface AccountWithVTA extends Account {
@@ -53,9 +53,12 @@ export interface TestEnvironment {
   market: WithAddress<OpportunityMarket> & {
     creatorAccount: Account;
     options: WithAddress<OpportunityMarketOption>[];
+    timeToReveal: bigint;
   };
   participants: Account[];
   mxePublicKey: Uint8Array;
+  mint: KeyPairSigner;
+  tokenProgram: Address;
   rpc: ReturnType<typeof createSolanaRpc>;
   rpcSubscriptions: ReturnType<typeof createSolanaRpcSubscriptions>;
 }
@@ -65,9 +68,10 @@ export interface CreateTestEnvironmentConfig {
   wsUrl?: string;
   numParticipants?: number;
   airdropLamports?: bigint;
+  initialTokenAmount?: bigint;
   marketConfig?: {
     maxShares?: bigint;
-    rewardLamports?: bigint;
+    rewardAmount?: bigint;
     timeToStake?: bigint;
     timeToReveal?: bigint;
   };
@@ -78,9 +82,10 @@ const DEFAULT_CONFIG: Required<CreateTestEnvironmentConfig> = {
   wsUrl: "ws://127.0.0.1:8900",
   numParticipants: 5,
   airdropLamports: 2_000_000_000n, // 2 SOL
+  initialTokenAmount: 1_000_000_000n, // 1 billion tokens per account
   marketConfig: {
     maxShares: 1000n,
-    rewardLamports: 1_000_000_000n, // 1 SOL
+    rewardAmount: 1_000_000_000n, // 1 billion tokens
     timeToStake: 120n, // 2 minutes
     timeToReveal: 60n, // 1 minute
   },
@@ -115,8 +120,9 @@ async function getMXEPublicKeyWithRetry(
 
 /**
  * Creates a test account with x25519 keypair for encryption.
+ * Note: tokenAccount is set later after mint creation.
  */
-async function createAccount(): Promise<Omit<Account, "initialAirdroppedLamports">> {
+async function createAccount(): Promise<Omit<Account, "initialAirdroppedLamports" | "tokenAccount">> {
   const keypair = await generateKeyPairSigner();
 
   // Generate x25519 keypair for encryption
@@ -148,7 +154,7 @@ export async function createTestEnvironment(
     marketConfig: { ...DEFAULT_CONFIG.marketConfig, ...config.marketConfig },
   };
 
-  const { rpcUrl, wsUrl, numParticipants, airdropLamports, marketConfig } = mergedConfig;
+  const { rpcUrl, wsUrl, numParticipants, airdropLamports, initialTokenAmount, marketConfig } = mergedConfig;
 
   // Initialize RPC clients
   const rpc = createSolanaRpc(rpcUrl);
@@ -181,14 +187,59 @@ export async function createTestEnvironment(
   );
   await Promise.all(airdropPromises);
 
-  // Build the final account objects with airdrop amounts
-  const participants: Account[] = participantAccounts.map((account) => ({
+  // Create SPL token mint (creator is mint authority)
+  console.log("\nCreating SPL token mint...");
+  const mint = await createTokenMint(
+    rpc,
+    sendAndConfirmTransaction,
+    creatorAccountBase.keypair,
+    creatorAccountBase.keypair.address
+  );
+  console.log(`  Mint created: ${mint.address}`);
+
+  // Create ATAs and mint tokens for all accounts
+  console.log("\nCreating ATAs and minting tokens...");
+  const accountsWithTokens: Array<{
+    keypair: KeyPairSigner;
+    x25519Keypair: X25519Keypair;
+    tokenAccount: Address;
+  }> = [];
+
+  for (const account of accounts) {
+    const ata = await createAta(
+      rpc,
+      sendAndConfirmTransaction,
+      creatorAccountBase.keypair,
+      mint.address,
+      account.keypair.address
+    );
+    await mintTokensTo(
+      rpc,
+      sendAndConfirmTransaction,
+      creatorAccountBase.keypair,
+      mint.address,
+      ata,
+      initialTokenAmount
+    );
+    accountsWithTokens.push({
+      keypair: account.keypair,
+      x25519Keypair: account.x25519Keypair,
+      tokenAccount: ata,
+    });
+  }
+
+  // Split into participants and creator with full Account type
+  const participantsWithTokens = accountsWithTokens.slice(0, numParticipants);
+  const creatorAccountWithTokens = accountsWithTokens[numParticipants];
+
+  // Build the final account objects
+  const participants: Account[] = participantsWithTokens.map((account) => ({
     ...account,
     initialAirdroppedLamports: airdropLamports,
   }));
 
   const creatorAccount: Account = {
-    ...creatorAccountBase,
+    ...creatorAccountWithTokens,
     initialAirdroppedLamports: airdropLamports,
   };
 
@@ -201,9 +252,11 @@ export async function createTestEnvironment(
   const createMarketIx = await createMarket(
     {
       creator: creatorAccount.keypair,
+      tokenMint: mint.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
       marketIndex,
       maxShares: marketConfig.maxShares,
-      rewardLamports: marketConfig.rewardLamports,
+      rewardAmount: marketConfig.rewardAmount,
       timeToStake: marketConfig.timeToStake,
       timeToReveal: marketConfig.timeToReveal,
       marketAuthority: null,
@@ -249,7 +302,7 @@ export async function createTestEnvironment(
   // Send and confirm transaction using Kit RPC
   await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
   // Get market address from the instruction accounts and fetch from chain
-  const marketAddress = createMarketIx.accounts[1].address as Address;
+  const marketAddress = createMarketIx.accounts[2].address as Address;
   const marketAccount = await fetchOpportunityMarket(rpc, marketAddress, { commitment: "confirmed" });
 
   return {
@@ -258,9 +311,12 @@ export async function createTestEnvironment(
       address: marketAddress,
       creatorAccount,
       options: [], // Options need to be added separately via addMarketOption
+      timeToReveal: marketConfig.timeToReveal,
     },
     participants,
     mxePublicKey,
+    mint,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
     rpc,
     rpcSubscriptions,
   };

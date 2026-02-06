@@ -76,7 +76,7 @@ pub fn reveal_shares(
     user_pubkey: [u8; 32],
 ) -> Result<()> {
 
-    require!(ctx.accounts.user_vta.key().eq(&ctx.accounts.owner.key()), ErrorCode::Unauthorized);
+    require!(ctx.accounts.user_vta.owner.key().eq(&ctx.accounts.owner.key()), ErrorCode::Unauthorized);
     require!(ctx.accounts.market.mint.eq(&ctx.accounts.user_vta.token_mint.key()), ErrorCode::InvalidMint);
 
     let market = &ctx.accounts.market;

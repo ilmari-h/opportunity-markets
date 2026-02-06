@@ -2,15 +2,17 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import {
   address,
-  airdropFactory,
   createSolanaRpc,
   createSolanaRpcSubscriptions,
-  generateKeyPairSigner,
-  lamports,
   sendAndConfirmTransactionFactory,
   some
 } from "@solana/kit";
-import { getTransferSolInstruction } from "@solana-program/system";
+import {
+  getTransferInstruction,
+  findAssociatedTokenPda,
+  TOKEN_PROGRAM_ADDRESS,
+  fetchToken,
+} from "@solana-program/token";
 import {
   awaitComputationFinalization,
   initVoteTokenAccount,
@@ -30,6 +32,7 @@ import {
   fetchOpportunityMarketOption,
   getOpportunityMarketOptionAddress,
   awaitBatchComputationFinalization,
+  getVoteTokenAccountAddress,
 } from "../js/src";
 import { createTestEnvironment } from "./utils/environment";
 import { initializeAllCompDefs } from "./utils/comp-defs";
@@ -44,7 +47,6 @@ import { expect } from "chai";
 import { sleepUntilOnChainTimestamp } from "./utils/sleep";
 
 const ONCHAIN_TIMESTAMP_BUFFER_SECONDS = 6;
-const ESTIMATED_MAX_ACCOUNT_RENT = BigInt(3_000_000)
 
 // Environment setup
 const RPC_URL = process.env.ANCHOR_PROVIDER_URL || "http://127.0.0.1:8899";
@@ -62,7 +64,6 @@ describe("OpportunityMarket", () => {
   // RPC clients for Kit
   const rpc = createSolanaRpc(RPC_URL);
   const rpcSubscriptions = createSolanaRpcSubscriptions(WS_URL);
-  const airdrop = airdropFactory({ rpc, rpcSubscriptions });
   const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 
   before(async () => {
@@ -75,28 +76,36 @@ describe("OpportunityMarket", () => {
   });
 
   it("passes full opportunity market flow", async () => {
-    // Market funding amount (1 SOL) - must match rewardLamports in createTestEnvironment
-    const marketFundingLamports = 1_000_000_000n;
+    // Market funding amount (SPL tokens) - must match rewardAmount in createTestEnvironment
+    const marketFundingAmount = 1_000_000_000n;
     const numParticipants = 4;
 
-    // Airdrop enough SOL to cover funding + fees (2 SOL for creator)
+    // Airdrop enough SOL to cover tx fees (2 SOL per account)
     const env = await createTestEnvironment(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants,
-      airdropLamports: 2_000_000_000n, // 2 SOL
+      airdropLamports: 2_000_000_000n, // 2 SOL for fees
+      initialTokenAmount: 2_000_000_000n, // 2 billion tokens per account
       marketConfig: {
-        rewardLamports: marketFundingLamports,
+        rewardAmount: marketFundingAmount,
         timeToStake: 120n,
         timeToReveal: 15n, // Reasonable reliability for tests
       },
     });
 
-    // Fund the market by transferring SOL from creator
-    const fundingIx = getTransferSolInstruction({
-      amount: lamports(marketFundingLamports),
-      destination: env.market.address,
-      source: env.market.creatorAccount.keypair,
+    // Fund the market by transferring SPL tokens to market's ATA
+    const [marketAta] = await findAssociatedTokenPda({
+      mint: env.mint.address,
+      owner: env.market.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    });
+
+    const fundingIx = getTransferInstruction({
+      source: env.market.creatorAccount.tokenAccount,
+      destination: marketAta,
+      authority: env.market.creatorAccount.keypair,
+      amount: marketFundingAmount,
     });
 
     await sendTransaction(
@@ -113,6 +122,9 @@ describe("OpportunityMarket", () => {
     const openMarketIx = openMarket({
       creator: env.market.creatorAccount.keypair,
       market: env.market.address,
+      tokenMint: env.mint.address,
+      marketTokenAta: marketAta,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
       openTimestamp: BigInt(openTimestamp),
     });
 
@@ -132,6 +144,8 @@ describe("OpportunityMarket", () => {
         const ix = await initVoteTokenAccount(
           {
             signer: participant.keypair,
+            tokenMint: env.mint.address,
+            tokenProgram: TOKEN_PROGRAM_ADDRESS,
             userPubkey: participant.x25519Keypair.publicKey,
             nonce,
           },
@@ -162,6 +176,9 @@ describe("OpportunityMarket", () => {
         const ix = await mintVoteTokens(
           {
             signer: participant.keypair,
+            tokenMint: env.mint.address,
+            signerTokenAccount: participant.tokenAccount,
+            tokenProgram: TOKEN_PROGRAM_ADDRESS,
             userPubkey: participant.x25519Keypair.publicKey,
             amount: mintAmount,
           },
@@ -241,10 +258,16 @@ describe("OpportunityMarket", () => {
         const computationOffset = randomComputationOffset();
         const disclosureNonce = deserializeLE(randomBytes(16));
 
+        const [userVta] = await getVoteTokenAccountAddress(
+          env.mint.address,
+          participant.keypair.address
+        );
+
         const ix = await buyMarketShares(
           {
             signer: participant.keypair,
             market: env.market.address,
+            userVta,
             amountCiphertext: ciphertexts[0],
             selectedOptionCiphertext: ciphertexts[1],
             userPubkey: participant.x25519Keypair.publicKey,
@@ -283,18 +306,22 @@ describe("OpportunityMarket", () => {
     const resolvedMarket = await fetchOpportunityMarket(rpc, env.market.address);
     expect(resolvedMarket.data.selectedOption).to.deep.equal(some(winningOptionIndex));
 
-    // Only winners (participants 0-2) reveal shares in parallel
-    const winners = env.participants.slice(0, numParticipants / 2);
-    const winnerSharesData = buySharesData.slice(0, numParticipants / 2);
-
+    // Reveal shares for winners
+    const winners = env.participants.slice(0, 2);
+    const winnerSharesData = buySharesData.slice(0, 2);
     const revealData = await Promise.all(
       winners.map(async (participant, idx) => {
         const computationOffset = randomComputationOffset();
+        const [userVta] = await getVoteTokenAccountAddress(
+          env.mint.address,
+          participant.keypair.address
+        );
         const ix = await revealShares(
           {
             signer: participant.keypair,
             owner: participant.keypair.address,
             market: env.market.address,
+            userVta,
             userPubkey: participant.x25519Keypair.publicKey,
           },
           {
@@ -305,8 +332,6 @@ describe("OpportunityMarket", () => {
         return { participant, ix, computationOffset, idx };
       })
     );
-
-    // Send all reveal transactions sequentially
     for (const { participant, ix, idx } of revealData) {
       await sendTransaction(rpc, sendAndConfirmTransaction, participant.keypair, [ix], {
         label: `Reveal shares [${idx}]`,
@@ -369,14 +394,14 @@ describe("OpportunityMarket", () => {
     const timeToReveal = Number(env.market.timeToReveal);
     await sleepUntilOnChainTimestamp((new Date().getTime() / 1000) + timeToReveal);
 
-    // Get balances before closing for all winners
+    // Get token balances before closing for all winners
     const balancesBefore = await Promise.all(
       winners.map(async (participant) => ({
         participant,
-        balance: await rpc.getBalance(participant.keypair.address).send(),
+        balance: (await fetchToken(rpc, participant.tokenAccount)).data.amount,
       }))
     );
-    const marketBalanceBefore = await rpc.getBalance(env.market.address).send();
+    const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
 
     // All winners close share accounts and claim rewards
     const closeShareData = await Promise.all(
@@ -384,6 +409,9 @@ describe("OpportunityMarket", () => {
         const ix = await closeShareAccount({
           owner: participant.keypair,
           market: env.market.address,
+          tokenMint: env.mint.address,
+          ownerTokenAccount: participant.tokenAccount,
+          tokenProgram: TOKEN_PROGRAM_ADDRESS,
           optionIndex: winningOptionIndex,
         });
         return { participant, ix, idx };
@@ -403,19 +431,19 @@ describe("OpportunityMarket", () => {
       expect(shareAccountAfterClose.value).to.be.null;
     }
 
-    // Get balances after closing
+    // Get token balances after closing
     const balancesAfter = await Promise.all(
       winners.map(async (participant) => ({
         participant,
-        balance: await rpc.getBalance(participant.keypair.address).send(),
+        balance: (await fetchToken(rpc, participant.tokenAccount)).data.amount,
       }))
     );
-    const marketBalanceAfter = await rpc.getBalance(env.market.address).send();
+    const marketBalanceAfter = (await fetchToken(rpc, marketAta)).data.amount;
 
     // Calculate gains for each winner
     const gains: { participant: typeof winners[0]; gain: bigint; shares: bigint }[] = [];
     for (let i = 0; i < winners.length; i++) {
-      const gain = balancesAfter[i].balance.value - balancesBefore[i].balance.value;
+      const gain = balancesAfter[i].balance - balancesBefore[i].balance;
       gains.push({
         participant: winners[i],
         gain,
@@ -428,9 +456,9 @@ describe("OpportunityMarket", () => {
       expect(gain > 0n).to.be.true;
     }
 
-    // Total market loss should equal the full reward amount, tolerance of 1 lamport for rounding error.
-    const marketLoss = marketBalanceBefore.value - marketBalanceAfter.value;
-    expect(marketLoss >= marketFundingLamports - 1n && marketLoss <= marketFundingLamports + 1n).to.be.true;
+    // Total market loss should equal the full reward amount, tolerance of 1 token for rounding error.
+    const marketLoss = marketBalanceBefore - marketBalanceAfter;
+    expect(marketLoss >= marketFundingAmount - 1n && marketLoss <= marketFundingAmount + 1n).to.be.true;
 
     // Verify proportional reward distribution:
     // gainA / gainB ~= scoreA / scoreB (where score = shares * timeInMarket)
@@ -452,10 +480,9 @@ describe("OpportunityMarket", () => {
       })
     );
 
-    // Verify total gains approximately equal reward + rent refunds
+    // Verify total gains equal the reward amount
     const totalGains = gains.reduce((sum, { gain }) => sum + gain, 0n);
-    const expectedTotalGains = marketFundingLamports + ESTIMATED_MAX_ACCOUNT_RENT * BigInt(winners.length);
-    expect(totalGains >= marketFundingLamports).to.be.true;
-    expect(totalGains <= expectedTotalGains).to.be.true;
+    expect(totalGains >= marketFundingAmount - 1n).to.be.true; // Allow for rounding
+    expect(totalGains <= marketFundingAmount + 1n).to.be.true;
   });
 });
