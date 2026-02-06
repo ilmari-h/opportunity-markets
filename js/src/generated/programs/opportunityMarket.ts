@@ -20,6 +20,7 @@ import {
   type ParsedBuyOpportunityMarketSharesCompDefInstruction,
   type ParsedBuyVoteTokensCallbackInstruction,
   type ParsedBuyVoteTokensCompDefInstruction,
+  type ParsedClaimPendingDepositInstruction,
   type ParsedClaimVoteTokensCallbackInstruction,
   type ParsedClaimVoteTokensCompDefInstruction,
   type ParsedClaimVoteTokensInstruction,
@@ -183,6 +184,7 @@ export enum OpportunityMarketInstruction {
   BuyOpportunityMarketSharesCompDef,
   BuyVoteTokensCallback,
   BuyVoteTokensCompDef,
+  ClaimPendingDeposit,
   ClaimVoteTokens,
   ClaimVoteTokensCallback,
   ClaimVoteTokensCompDef,
@@ -273,6 +275,17 @@ export function identifyOpportunityMarketInstruction(
     )
   ) {
     return OpportunityMarketInstruction.BuyVoteTokensCompDef;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([236, 140, 88, 225, 51, 46, 77, 249])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.ClaimPendingDeposit;
   }
   if (
     containsBytes(
@@ -509,6 +522,9 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.BuyVoteTokensCompDef;
     } & ParsedBuyVoteTokensCompDefInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.ClaimPendingDeposit;
+    } & ParsedClaimPendingDepositInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.ClaimVoteTokens;
     } & ParsedClaimVoteTokensInstruction<TProgram>)

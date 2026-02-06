@@ -12,6 +12,7 @@ export * from './buyOpportunityMarketSharesCallback';
 export * from './buyOpportunityMarketSharesCompDef';
 export * from './buyVoteTokensCallback';
 export * from './buyVoteTokensCompDef';
+export * from './claimPendingDeposit';
 export * from './claimVoteTokens';
 export * from './claimVoteTokensCallback';
 export * from './claimVoteTokensCompDef';

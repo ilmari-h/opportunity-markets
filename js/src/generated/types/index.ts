@@ -11,6 +11,7 @@ export * from './bN254G2BLSPublicKey';
 export * from './buyOpportunityMarketSharesOutput';
 export * from './buyOpportunityMarketSharesOutputStruct0';
 export * from './buyVoteTokensOutput';
+export * from './buyVoteTokensOutputStruct0';
 export * from './circuitSource';
 export * from './claimVoteTokensOutput';
 export * from './claimVoteTokensOutputStruct0';

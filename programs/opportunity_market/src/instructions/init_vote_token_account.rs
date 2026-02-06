@@ -89,6 +89,7 @@ pub fn init_vote_token_account(
     vote_token.owner = ctx.accounts.signer.key();
     vote_token.token_mint = ctx.accounts.token_mint.key();
     vote_token.state_nonce = 0;
+    vote_token.pending_deposit = 0;
 
     // Build args for encrypted computation
     let args = ArgBuilder::new()

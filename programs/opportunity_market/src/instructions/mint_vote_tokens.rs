@@ -9,7 +9,7 @@ use crate::error::ErrorCode;
 use crate::instructions::init_vote_token_account::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::VoteTokenAccount;
 use crate::COMP_DEF_OFFSET_BUY_VOTE_TOKENS;
-use crate::{ID, ID_CONST, ArciumSignerAccount};
+use crate::{ArciumSignerAccount, ID, ID_CONST};
 
 #[queue_computation_accounts("buy_vote_tokens", signer)]
 #[derive(Accounts)]
@@ -89,10 +89,6 @@ pub fn mint_vote_tokens(
     let vta_pubkey = vta.key();
 
     // Transfer SPL tokens from signer's token account to VTA's ATA
-    // TODO:
-    // This can go terribly wrong if callback for some reason fails to execute
-    // Lets first transfer to ephemeral deposit account and in callback, transfer from there to VTA
-    // User can close to ephemeral deposit account manually and reclaim tokens if something goes wrong.
     transfer_checked(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
@@ -106,6 +102,12 @@ pub fn mint_vote_tokens(
         amount,
         ctx.accounts.token_mint.decimals,
     )?;
+
+    // Track the pending deposit for safety (can be reclaimed if callback fails)
+    vta.pending_deposit = vta
+        .pending_deposit
+        .checked_add(amount)
+        .ok_or(ErrorCode::Overflow)?;
 
     // Build args for encrypted computation
     // Circuit signature: buy_vote_tokens(balance_ctx, amount)
@@ -164,9 +166,10 @@ pub fn buy_vote_tokens_callback(
     ctx: Context<BuyVoteTokensCallback>,
     output: SignedComputationOutputs<BuyVoteTokensOutput>,
 ) -> Result<()> {
-    // Output is Enc<Mxe, VoteTokenBalance>
-    // Verify the computation and extract the encrypted balance
-    let encrypted_balance = match output.verify_output(
+    // Output is (u64, Enc<Shared, VoteTokenBalance>)
+    // field_0 = amount bought (plaintext)
+    // field_1 = updated encrypted balance
+    let res = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
@@ -174,7 +177,19 @@ pub fn buy_vote_tokens_callback(
         Err(_) => return Err(ErrorCode::AbortedComputation.into()),
     };
 
+    let amount_bought = res.field_0;
+    let encrypted_balance = res.field_1;
+
     let vta = &mut ctx.accounts.vote_token_account;
+
+    // Verify amount_bought doesn't exceed pending_deposit
+    require!(
+        amount_bought <= vta.pending_deposit,
+        ErrorCode::InsufficientBalance
+    );
+
+    // Deduct from pending_deposit (tokens already in VTA ATA)
+    vta.pending_deposit = vta.pending_deposit - amount_bought;
 
     // Update encrypted state
     vta.state_nonce = encrypted_balance.nonce;

@@ -1,11 +1,9 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::Mint;
 use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
 use crate::events::SharesPurchasedEvent;
-use crate::instructions::init_vote_token_account::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, ShareAccount, VoteTokenAccount};
 use crate::COMP_DEF_OFFSET_BUY_OPPORTUNITY_MARKET_SHARES;
 use crate::{ID, ID_CONST, ArciumSignerAccount};

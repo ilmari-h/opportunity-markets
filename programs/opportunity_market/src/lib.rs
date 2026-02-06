@@ -106,6 +106,10 @@ pub mod opportunity_market {
         instructions::close_share_account(ctx, option_index)
     }
 
+    pub fn claim_pending_deposit(ctx: Context<ClaimPendingDeposit>) -> Result<()> {
+        instructions::claim_pending_deposit(ctx)
+    }
+
     pub fn init_share_account(
         ctx: Context<InitShareAccount>,
         state_nonce: u128,

@@ -54,14 +54,15 @@ mod circuits {
     }
 
     // Buy vote tokens: add to balance
+    // Returns (amount_bought, new_encrypted_balance) where amount_bought is plaintext for token transfer
     #[instruction]
     pub fn buy_vote_tokens(
         balance_ctx: Enc<Shared, VoteTokenBalance>,
         amount: u64,
-    ) -> Enc<Shared, VoteTokenBalance> {
+    ) -> (u64, Enc<Shared, VoteTokenBalance>) {
         let mut balance = balance_ctx.to_arcis();
         balance.amount = balance.amount + amount;
-        balance_ctx.owner.from_arcis(balance)
+        (amount.reveal(), balance_ctx.owner.from_arcis(balance))
     }
 
     // Claim vote tokens (sell): subtract from balance

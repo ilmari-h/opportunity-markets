@@ -14,90 +14,18 @@ import {
 } from '@solana/kit';
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 
-/** AbortedComputation: Computation aborted */
-export const OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION = 0x1770; // 6000
-/** ClusterNotSet: Cluster not set */
-export const OPPORTUNITY_MARKET_ERROR__CLUSTER_NOT_SET = 0x1771; // 6001
-/** Unauthorized: Unauthorized */
-export const OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED = 0x1772; // 6002
-/** InsufficientBalance: Insufficient balance */
-export const OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_BALANCE = 0x1773; // 6003
-/** InsufficientRewardFunding: Insufficient reward funding */
-export const OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING = 0x1774; // 6004
-/** InvalidTimestamp: Timestamp must be in the future */
-export const OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP = 0x1775; // 6005
-/** MarketAlreadyOpen: Market is already open */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN = 0x1776; // 6006
-/** InvalidOptionIndex: Invalid option index */
-export const OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_INDEX = 0x1777; // 6007
-/** MarketNotOpen: Market is not open */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN = 0x1778; // 6008
-/** SharePurchaseFailed: Invalid option or not enough balance */
-export const OPPORTUNITY_MARKET_ERROR__SHARE_PURCHASE_FAILED = 0x1779; // 6009
-/** StakingNotActive: Staking period is not active */
-export const OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE = 0x177a; // 6010
-/** WinnerAlreadySelected: Market winner already selected */
-export const OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED = 0x177b; // 6011
-/** AlreadyRevealed: Shares already revealed */
-export const OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED = 0x177c; // 6012
-/** MarketNotResolved: Staking period not over */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED = 0x177d; // 6013
-/** NotRevealed: Shares not yet revealed */
-export const OPPORTUNITY_MARKET_ERROR__NOT_REVEALED = 0x177e; // 6014
-/** TallyAlreadyIncremented: Tally already incremented for this share account */
-export const OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED = 0x177f; // 6015
-/** Overflow: Arithmetic overflow */
-export const OPPORTUNITY_MARKET_ERROR__OVERFLOW = 0x1780; // 6016
-/** RevealPeriodEnded: Reveal period has already ended */
-export const OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED = 0x1781; // 6017
-/** InvalidMint: Token mint does not match market mint */
-export const OPPORTUNITY_MARKET_ERROR__INVALID_MINT = 0x1782; // 6018
+/** InvalidCallbackTx: Invalid callback transaction */
+export const OPPORTUNITY_MARKET_ERROR__INVALID_CALLBACK_TX = 0x1770; // 6000
 
 export type OpportunityMarketError =
-  | typeof OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION
-  | typeof OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED
-  | typeof OPPORTUNITY_MARKET_ERROR__CLUSTER_NOT_SET
-  | typeof OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_BALANCE
-  | typeof OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING
-  | typeof OPPORTUNITY_MARKET_ERROR__INVALID_MINT
-  | typeof OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_INDEX
-  | typeof OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP
-  | typeof OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN
-  | typeof OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN
-  | typeof OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED
-  | typeof OPPORTUNITY_MARKET_ERROR__NOT_REVEALED
-  | typeof OPPORTUNITY_MARKET_ERROR__OVERFLOW
-  | typeof OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED
-  | typeof OPPORTUNITY_MARKET_ERROR__SHARE_PURCHASE_FAILED
-  | typeof OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE
-  | typeof OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED
-  | typeof OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED
-  | typeof OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED;
+  typeof OPPORTUNITY_MARKET_ERROR__INVALID_CALLBACK_TX;
 
 let opportunityMarketErrorMessages:
   | Record<OpportunityMarketError, string>
   | undefined;
 if (process.env.NODE_ENV !== 'production') {
   opportunityMarketErrorMessages = {
-    [OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION]: `Computation aborted`,
-    [OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED]: `Shares already revealed`,
-    [OPPORTUNITY_MARKET_ERROR__CLUSTER_NOT_SET]: `Cluster not set`,
-    [OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_BALANCE]: `Insufficient balance`,
-    [OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING]: `Insufficient reward funding`,
-    [OPPORTUNITY_MARKET_ERROR__INVALID_MINT]: `Token mint does not match market mint`,
-    [OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_INDEX]: `Invalid option index`,
-    [OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP]: `Timestamp must be in the future`,
-    [OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN]: `Market is already open`,
-    [OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN]: `Market is not open`,
-    [OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED]: `Staking period not over`,
-    [OPPORTUNITY_MARKET_ERROR__NOT_REVEALED]: `Shares not yet revealed`,
-    [OPPORTUNITY_MARKET_ERROR__OVERFLOW]: `Arithmetic overflow`,
-    [OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED]: `Reveal period has already ended`,
-    [OPPORTUNITY_MARKET_ERROR__SHARE_PURCHASE_FAILED]: `Invalid option or not enough balance`,
-    [OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE]: `Staking period is not active`,
-    [OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED]: `Tally already incremented for this share account`,
-    [OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED]: `Unauthorized`,
-    [OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED]: `Market winner already selected`,
+    [OPPORTUNITY_MARKET_ERROR__INVALID_CALLBACK_TX]: `Invalid callback transaction`,
   };
 }
 

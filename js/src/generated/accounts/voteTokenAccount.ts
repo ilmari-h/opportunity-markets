@@ -25,6 +25,8 @@ import {
   getStructEncoder,
   getU128Decoder,
   getU128Encoder,
+  getU64Decoder,
+  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -58,6 +60,7 @@ export type VoteTokenAccount = {
   owner: Address;
   stateNonce: bigint;
   tokenMint: Address;
+  pendingDeposit: bigint;
 };
 
 export type VoteTokenAccountArgs = {
@@ -66,6 +69,7 @@ export type VoteTokenAccountArgs = {
   owner: Address;
   stateNonce: number | bigint;
   tokenMint: Address;
+  pendingDeposit: number | bigint;
 };
 
 export function getVoteTokenAccountEncoder(): FixedSizeEncoder<VoteTokenAccountArgs> {
@@ -82,6 +86,7 @@ export function getVoteTokenAccountEncoder(): FixedSizeEncoder<VoteTokenAccountA
       ['owner', getAddressEncoder()],
       ['stateNonce', getU128Encoder()],
       ['tokenMint', getAddressEncoder()],
+      ['pendingDeposit', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: VOTE_TOKEN_ACCOUNT_DISCRIMINATOR })
   );
@@ -100,6 +105,7 @@ export function getVoteTokenAccountDecoder(): FixedSizeDecoder<VoteTokenAccount>
     ['owner', getAddressDecoder()],
     ['stateNonce', getU128Decoder()],
     ['tokenMint', getAddressDecoder()],
+    ['pendingDeposit', getU64Decoder()],
   ]);
 }
 
