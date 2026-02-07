@@ -92,7 +92,7 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake: 120n,
-        timeToReveal: 15n, // Reasonable reliability for tests
+        timeToReveal: 10n, // 10 secs seems long enough for tests
       },
     });
 
