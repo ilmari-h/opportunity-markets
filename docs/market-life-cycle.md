@@ -13,7 +13,7 @@ Opportunity Markets allow users to influence decision making by staking. Decisio
 
 The protocol sets itself apart from other voting protocols with **confidential stake-to-vote mechanism** and **an arbitrary number of options**.
 
-A opportunity market progresses through distinct phases with time limits. A description of these phases follows.
+An opportunity market progresses through distinct phases with time limits. A description of these phases follows.
 
 ---
 

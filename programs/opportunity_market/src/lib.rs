@@ -20,7 +20,7 @@ pub const COMP_DEF_OFFSET_BUY_OPPORTUNITY_MARKET_SHARES: u32 = comp_def_offset("
 pub const COMP_DEF_OFFSET_INIT_MARKET_SHARES: u32 = comp_def_offset("init_market_shares");
 pub const COMP_DEF_OFFSET_REVEAL_SHARES: u32 = comp_def_offset("reveal_shares");
 
-declare_id!("6Y2SL4PG9YUN3tkF8M4z83Si4sh72X5E41Xp9RDeBXje");
+declare_id!("AFJhmrwWC4DGh88yeLTBtJRu9vKN6gnAEra4163zGHS6");
 
 #[arcium_program]
 pub mod opportunity_market {
@@ -50,25 +50,23 @@ pub mod opportunity_market {
         ctx: Context<CreateMarket>,
         market_index: u64,
         computation_offset: u64,
-        max_options: u16,
         max_shares: u64,
-        reward_lamports: u64,
+        reward_amount: u64,
         time_to_stake: u64,
         time_to_reveal: u64,
         nonce: u128,
-        select_authority: Option<Pubkey>,
+        market_authority: Option<Pubkey>,
     ) -> Result<()> {
         instructions::create_market(
             ctx,
             market_index,
             computation_offset,
-            max_options,
             max_shares,
-            reward_lamports,
+            reward_amount,
             time_to_stake,
             time_to_reveal,
             nonce,
-            select_authority
+            market_authority
         )
     }
 
@@ -96,12 +94,20 @@ pub mod opportunity_market {
         instructions::select_option(ctx, option_index)
     }
 
+    pub fn extend_reveal_period(ctx: Context<ExtendRevealPeriod>, new_time_to_reveal: u64) -> Result<()> {
+        instructions::extend_reveal_period(ctx, new_time_to_reveal)
+    }
+
     pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: u16) -> Result<()> {
         instructions::increment_option_tally(ctx, option_index)
     }
 
     pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16) -> Result<()> {
         instructions::close_share_account(ctx, option_index)
+    }
+
+    pub fn claim_pending_deposit(ctx: Context<ClaimPendingDeposit>) -> Result<()> {
+        instructions::claim_pending_deposit(ctx)
     }
 
     pub fn init_share_account(

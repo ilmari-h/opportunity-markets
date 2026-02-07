@@ -16,6 +16,12 @@ pub struct InitVoteTokenAccountCompDef<'info> {
     #[account(mut)]
     /// CHECK: comp_def_account, checked by arcium program.
     pub comp_def_account: UncheckedAccount<'info>,
+    /// CHECK: address_lookup_table, checked by arcium program.
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    pub address_lookup_table: UncheckedAccount<'info>,
+    /// CHECK: lut_program is the Address Lookup Table program.
+    #[account(address = LUT_PROGRAM_ID)]
+    pub lut_program: UncheckedAccount<'info>,
     pub arcium_program: Program<'info, Arcium>,
     pub system_program: Program<'info, System>,
 }
@@ -49,6 +55,12 @@ pub struct BuyVoteTokensCompDef<'info> {
     #[account(mut)]
     /// CHECK: comp_def_account, checked by arcium program.
     pub comp_def_account: UncheckedAccount<'info>,
+    /// CHECK: address_lookup_table, checked by arcium program.
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    pub address_lookup_table: UncheckedAccount<'info>,
+    /// CHECK: lut_program is the Address Lookup Table program.
+    #[account(address = LUT_PROGRAM_ID)]
+    pub lut_program: UncheckedAccount<'info>,
     pub arcium_program: Program<'info, Arcium>,
     pub system_program: Program<'info, System>,
 }
@@ -82,6 +94,12 @@ pub struct ClaimVoteTokensCompDef<'info> {
     #[account(mut)]
     /// CHECK: comp_def_account, checked by arcium program.
     pub comp_def_account: UncheckedAccount<'info>,
+    /// CHECK: address_lookup_table, checked by arcium program.
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    pub address_lookup_table: UncheckedAccount<'info>,
+    /// CHECK: lut_program is the Address Lookup Table program.
+    #[account(address = LUT_PROGRAM_ID)]
+    pub lut_program: UncheckedAccount<'info>,
     pub arcium_program: Program<'info, Arcium>,
     pub system_program: Program<'info, System>,
 }
@@ -115,6 +133,12 @@ pub struct BuyOpportunityMarketSharesCompDef<'info> {
     #[account(mut)]
     /// CHECK: comp_def_account, checked by arcium program.
     pub comp_def_account: UncheckedAccount<'info>,
+    /// CHECK: address_lookup_table, checked by arcium program.
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    pub address_lookup_table: UncheckedAccount<'info>,
+    /// CHECK: lut_program is the Address Lookup Table program.
+    #[account(address = LUT_PROGRAM_ID)]
+    pub lut_program: UncheckedAccount<'info>,
     pub arcium_program: Program<'info, Arcium>,
     pub system_program: Program<'info, System>,
 }
@@ -148,6 +172,12 @@ pub struct InitMarketSharesCompDef<'info> {
     #[account(mut)]
     /// CHECK: comp_def_account, checked by arcium program.
     pub comp_def_account: UncheckedAccount<'info>,
+    /// CHECK: address_lookup_table, checked by arcium program.
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    pub address_lookup_table: UncheckedAccount<'info>,
+    /// CHECK: lut_program is the Address Lookup Table program.
+    #[account(address = LUT_PROGRAM_ID)]
+    pub lut_program: UncheckedAccount<'info>,
     pub arcium_program: Program<'info, Arcium>,
     pub system_program: Program<'info, System>,
 }
@@ -181,6 +211,12 @@ pub struct RevealSharesCompDef<'info> {
     #[account(mut)]
     /// CHECK: comp_def_account, checked by arcium program.
     pub comp_def_account: UncheckedAccount<'info>,
+    /// CHECK: address_lookup_table, checked by arcium program.
+    #[account(mut, address = derive_mxe_lut_pda!(mxe_account.lut_offset_slot))]
+    pub address_lookup_table: UncheckedAccount<'info>,
+    /// CHECK: lut_program is the Address Lookup Table program.
+    #[account(address = LUT_PROGRAM_ID)]
+    pub lut_program: UncheckedAccount<'info>,
     pub arcium_program: Program<'info, Arcium>,
     pub system_program: Program<'info, System>,
 }

@@ -18,8 +18,6 @@ pub enum ErrorCode {
     MarketAlreadyOpen,
     #[msg("Invalid option index")]
     InvalidOptionIndex,
-    #[msg("Maximum options exceeded")]
-    MaxOptionsExceeded,
     #[msg("Market is not open")]
     MarketNotOpen,
     #[msg("Invalid option or not enough balance")]
@@ -38,4 +36,8 @@ pub enum ErrorCode {
     TallyAlreadyIncremented,
     #[msg("Arithmetic overflow")]
     Overflow,
+    #[msg("Reveal period has already ended")]
+    RevealPeriodEnded,
+    #[msg("Token mint does not match market mint")]
+    InvalidMint,
 }

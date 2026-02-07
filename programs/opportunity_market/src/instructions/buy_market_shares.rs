@@ -4,7 +4,6 @@ use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
 use crate::events::SharesPurchasedEvent;
-use crate::instructions::mint_vote_tokens::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, ShareAccount, VoteTokenAccount};
 use crate::COMP_DEF_OFFSET_BUY_OPPORTUNITY_MARKET_SHARES;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
@@ -22,11 +21,10 @@ pub struct BuyMarketShares<'info> {
         constraint = market.open_timestamp.is_some() @ ErrorCode::MarketNotOpen,
         constraint = market.selected_option.is_none() @ ErrorCode::WinnerAlreadySelected,
     )]
-    pub market: Account<'info, OpportunityMarket>,
+    pub market: Box<Account<'info, OpportunityMarket>>,
 
     #[account(
-        seeds = [VOTE_TOKEN_ACCOUNT_SEED, signer.key().as_ref()],
-        bump
+        constraint = user_vta.owner == signer.key() @ ErrorCode::Unauthorized,
     )]
     pub user_vta: Box<Account<'info, VoteTokenAccount>>,
 
@@ -85,6 +83,8 @@ pub fn buy_market_shares(
     authorized_reader_nonce: u128,
 ) -> Result<()> {
 
+    require!(ctx.accounts.market.mint.eq(&ctx.accounts.user_vta.token_mint), ErrorCode::InvalidMint);
+
     // Enforce staking period is active
     let market = &ctx.accounts.market;
     let open_timestamp = market.open_timestamp.ok_or_else(|| ErrorCode::MarketNotOpen)?;
@@ -139,7 +139,6 @@ pub fn buy_market_shares(
         ctx.accounts,
         computation_offset,
         args,
-        None,
         vec![BuyOpportunityMarketSharesCallback::callback_ix(
             computation_offset,
             &ctx.accounts.mxe_account,
@@ -156,7 +155,7 @@ pub fn buy_market_shares(
                     pubkey: ctx.accounts.share_account.key(),
                     is_writable: true,
                 },
-            ],  
+            ],
         )?],
         1,
         0,

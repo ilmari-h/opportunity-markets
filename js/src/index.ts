@@ -1,8 +1,14 @@
-// Core exports
-export * from "./types";
-export * from "./utils";
-export * from "./instructions";
-export * from "./constants";
+// Re-export all generated Codama types
+export * from "./generated";
 
-// IDL type export
-export type { ConvictionMarket } from "./idl/conviction_market";
+// Export convenience helpers
+export * from "./instructions";
+
+// Export account PDA helpers
+export * from "./accounts";
+
+// Export utilities
+export * from "./utils";
+
+// Export Arcium utilities
+export * from "./arcium/awaitFinalizeComputation";

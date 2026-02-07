@@ -5,7 +5,6 @@ use arcium_client::idl::arcium::types::CallbackAccount;
 use crate::error::ErrorCode;
 use crate::events::SharesRevealedEvent;
 use crate::instructions::buy_market_shares::SHARE_ACCOUNT_SEED;
-use crate::instructions::mint_vote_tokens::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, ShareAccount, VoteTokenAccount};
 use crate::COMP_DEF_OFFSET_REVEAL_SHARES;
 use crate::{ArciumSignerAccount, ID, ID_CONST};
@@ -30,11 +29,7 @@ pub struct RevealShares<'info> {
     )]
     pub share_account: Box<Account<'info, ShareAccount>>,
 
-    #[account(
-        mut,
-        seeds = [VOTE_TOKEN_ACCOUNT_SEED, owner.key().as_ref()],
-        bump = user_vta.bump,
-    )]
+    #[account(mut)]
     pub user_vta: Box<Account<'info, VoteTokenAccount>>,
 
     // Arcium accounts
@@ -46,9 +41,9 @@ pub struct RevealShares<'info> {
         bump,
         address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
     #[account(address = derive_mxe_pda!())]
-    pub mxe_account: Account<'info, MXEAccount>,
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
     #[account(mut, address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet))]
     /// CHECK: mempool_account
     pub mempool_account: UncheckedAccount<'info>,
@@ -79,6 +74,9 @@ pub fn reveal_shares(
     user_pubkey: [u8; 32],
 ) -> Result<()> {
 
+    require!(ctx.accounts.user_vta.owner.key().eq(&ctx.accounts.owner.key()), ErrorCode::Unauthorized);
+    require!(ctx.accounts.market.mint.eq(&ctx.accounts.user_vta.token_mint.key()), ErrorCode::InvalidMint);
+
     let market = &ctx.accounts.market;
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
@@ -99,7 +97,7 @@ pub fn reveal_shares(
 
     // Build args for encrypted computation
     let args = ArgBuilder::new()
-        
+
         // Share account encrypted state (Enc<Shared, SharePurchase>)
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(share_account_nonce)
@@ -118,7 +116,6 @@ pub fn reveal_shares(
         ctx.accounts,
         computation_offset,
         args,
-        None,
         vec![RevealSharesCallback::callback_ix(
             computation_offset,
             &ctx.accounts.mxe_account,

@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-opportunity_market = "6Y2SL4PG9YUN3tkF8M4z83Si4sh72X5E41Xp9RDeBXje"
+opportunity_market = "AFJhmrwWC4DGh88yeLTBtJRu9vKN6gnAEra4163zGHS6"
 
 [registry]
 url = "https://api.apr.dev"
@@ -16,7 +16,7 @@ cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\""
+test = "bun run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.test.ts\""
 
 [test]
 startup_wait = 9000000

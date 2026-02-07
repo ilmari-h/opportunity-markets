@@ -37,12 +37,6 @@ pub fn add_market_option(
         ErrorCode::InvalidOptionIndex
     );
 
-    // Cannot exceed max_options
-    require!(
-        option_index <= market.max_options,
-        ErrorCode::MaxOptionsExceeded
-    );
-
     // Increment total options
     market.total_options = option_index;
 

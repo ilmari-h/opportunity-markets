@@ -1,8 +1,10 @@
 pub mod add_market_option;
 pub mod buy_market_shares;
+pub mod claim_pending_deposit;
 pub mod claim_vote_tokens;
 pub mod close_share_account;
 pub mod create_market;
+pub mod extend_reveal_period;
 pub mod init_comp_defs;
 pub mod increment_option_tally;
 pub mod init_share_account;
@@ -14,9 +16,11 @@ pub mod select_option;
 
 pub use add_market_option::*;
 pub use buy_market_shares::*;
+pub use claim_pending_deposit::*;
 pub use claim_vote_tokens::*;
 pub use close_share_account::*;
 pub use create_market::*;
+pub use extend_reveal_period::*;
 pub use init_comp_defs::*;
 pub use increment_option_tally::*;
 pub use init_share_account::*;

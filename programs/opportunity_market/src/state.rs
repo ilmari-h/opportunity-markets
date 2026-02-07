@@ -8,7 +8,6 @@ pub struct OpportunityMarket {
     pub creator: Pubkey,      // part of PDA seed
     pub index: u64,           // part of PDA seed
     pub total_options: u16,
-    pub max_options: u16,
 
     // If set, means market is funded and ready to be opened for staking.
     // What actions are possible depends on current timestamp in relation to
@@ -28,11 +27,14 @@ pub struct OpportunityMarket {
     // Max available shares. 1 shares = 1 vote token
     pub max_shares: u64,
 
-    // Reward to be shared with stakers
-    pub reward_lamports: u64,
+    // Reward to be shared with stakers (in SPL token base units)
+    pub reward_amount: u64,
 
-    // Optional authority that can select the winning option (same rights as creator)
-    pub select_authority: Option<Pubkey>,
+    // Optional authority that can manage the market (select winning option, extend reveal period)
+    pub market_authority: Option<Pubkey>,
+
+    // SPL token mint for this market (vote tokens and rewards)
+    pub mint: Pubkey,
 }
 
 #[account]
@@ -42,6 +44,8 @@ pub struct VoteTokenAccount {
     pub bump: u8,
     pub owner: Pubkey,
     pub state_nonce: u128,
+    pub token_mint: Pubkey,
+    pub pending_deposit: u64,  // tracks unconfirmed deposits for safety
 }
 
 #[account]

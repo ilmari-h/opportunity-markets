@@ -1,27 +1,39 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 use crate::error::ErrorCode;
 use crate::state::OpportunityMarket;
 
 #[derive(Accounts)]
 pub struct OpenMarket<'info> {
     pub creator: Signer<'info>,
+
     #[account(
         mut,
         has_one = creator @ ErrorCode::Unauthorized,
         constraint = market.open_timestamp.is_none() @ ErrorCode::MarketAlreadyOpen,
     )]
     pub market: Account<'info, OpportunityMarket>,
+
+    #[account(address = market.mint)]
+    pub token_mint: InterfaceAccount<'info, Mint>,
+
+    /// Market's ATA holding reward tokens
+    #[account(
+        associated_token::mint = token_mint,
+        associated_token::authority = market,
+        associated_token::token_program = token_program,
+    )]
+    pub market_token_ata: InterfaceAccount<'info, TokenAccount>,
+
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 pub fn open_market(ctx: Context<OpenMarket>, open_timestamp: u64) -> Result<()> {
     let market = &mut ctx.accounts.market;
-    let market_lamports = market.to_account_info().lamports();
-    let rent = Rent::get()?;
-    let min_rent = rent.minimum_balance(market.to_account_info().data_len());
-    let available_lamports = market_lamports.saturating_sub(min_rent);
-    
+
+    // Check that market ATA has enough tokens for rewards
     require!(
-        available_lamports >= market.reward_lamports,
+        ctx.accounts.market_token_ata.amount >= market.reward_amount,
         ErrorCode::InsufficientRewardFunding
     );
 

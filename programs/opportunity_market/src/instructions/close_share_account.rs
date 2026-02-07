@@ -1,4 +1,7 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{
+    transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
+};
 
 use crate::error::ErrorCode;
 use crate::instructions::buy_market_shares::SHARE_ACCOUNT_SEED;
@@ -27,6 +30,28 @@ pub struct CloseShareAccount<'info> {
     )]
     pub option: Account<'info, OpportunityMarketOption>,
 
+    #[account(address = market.mint)]
+    pub token_mint: InterfaceAccount<'info, Mint>,
+
+    /// Market's ATA holding reward tokens
+    #[account(
+        mut,
+        associated_token::mint = token_mint,
+        associated_token::authority = market,
+        associated_token::token_program = token_program,
+    )]
+    pub market_token_ata: InterfaceAccount<'info, TokenAccount>,
+
+    /// Owner's token account to receive rewards
+    #[account(
+        mut,
+        token::mint = token_mint,
+        token::authority = owner,
+        token::token_program = token_program,
+    )]
+    pub owner_token_account: InterfaceAccount<'info, TokenAccount>,
+
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 
@@ -73,30 +98,41 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16) -
             let user_score = share_account.revealed_score.ok_or(ErrorCode::NotRevealed)?;
             let total_score = option.total_score.ok_or(ErrorCode::NotRevealed)?;
 
-            // Calculate proportional reward: (user_score / total_score) * reward_lamports
+            // Calculate proportional reward: (user_score / total_score) * reward_amount
             // Use u128 to prevent overflow during multiplication
-            let reward_lamports = market.reward_lamports as u128;
+            let reward_amount = market.reward_amount as u128;
             let user_reward = (user_score as u128)
-                .checked_mul(reward_lamports)
+                .checked_mul(reward_amount)
                 .ok_or(ErrorCode::Overflow)?
                 .checked_div(total_score as u128)
                 .ok_or(ErrorCode::Overflow)? as u64; // Round down
 
-            // Transfer lamports from market to owner
+            // Transfer SPL tokens from market ATA to owner's token account
             if user_reward > 0 {
-                **market.to_account_info().try_borrow_mut_lamports()? = market
-                    .to_account_info()
-                    .lamports()
-                    .checked_sub(user_reward)
-                    .ok_or(ErrorCode::InsufficientRewardFunding)?;
+                let creator_key = market.creator;
+                let index_bytes = market.index.to_le_bytes();
+                let bump = market.bump;
+                let signer_seeds: &[&[&[u8]]] = &[&[
+                    b"opportunity_market",
+                    creator_key.as_ref(),
+                    &index_bytes,
+                    &[bump],
+                ]];
 
-                **ctx.accounts.owner.to_account_info().try_borrow_mut_lamports()? = ctx
-                    .accounts
-                    .owner
-                    .to_account_info()
-                    .lamports()
-                    .checked_add(user_reward)
-                    .ok_or(ErrorCode::Overflow)?;
+                transfer_checked(
+                    CpiContext::new_with_signer(
+                        ctx.accounts.token_program.to_account_info(),
+                        TransferChecked {
+                            from: ctx.accounts.market_token_ata.to_account_info(),
+                            mint: ctx.accounts.token_mint.to_account_info(),
+                            to: ctx.accounts.owner_token_account.to_account_info(),
+                            authority: market.to_account_info(),
+                        },
+                        signer_seeds,
+                    ),
+                    user_reward,
+                    ctx.accounts.token_mint.decimals,
+                )?;
             }
         }
     }

@@ -9,7 +9,7 @@ pub struct SelectOption<'info> {
     #[account(
         mut,
         constraint = market.creator == authority.key()
-            || market.select_authority == Some(authority.key()) @ ErrorCode::Unauthorized,
+            || market.market_authority == Some(authority.key()) @ ErrorCode::Unauthorized,
     )]
     pub market: Account<'info, OpportunityMarket>,
 }

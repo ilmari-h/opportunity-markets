@@ -1,4 +1,8 @@
 use anchor_lang::prelude::*;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenAccount, TokenInterface},
+};
 use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
@@ -7,7 +11,7 @@ use crate::state::VoteTokenAccount;
 use crate::COMP_DEF_OFFSET_INIT_VOTE_TOKEN_ACCOUNT;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
 
-pub const VOTE_TOKEN_VAULT_SEED: &[u8] = b"vote_token_vault";
+pub const VOTE_TOKEN_ACCOUNT_SEED: &[u8] = b"vote_token_account";
 
 #[queue_computation_accounts("init_vote_token_account", signer)]
 #[derive(Accounts)]
@@ -16,14 +20,29 @@ pub struct InitVoteTokenAccount<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
+    pub token_mint: Box<InterfaceAccount<'info, Mint>>,
+
     #[account(
         init,
         payer = signer,
         space = 8 + VoteTokenAccount::INIT_SPACE,
-        seeds = [b"vote_token_account", signer.key().as_ref()],
+        seeds = [VOTE_TOKEN_ACCOUNT_SEED, token_mint.key().as_ref(), signer.key().as_ref()],
         bump,
     )]
-    pub vote_token_account: Account<'info, VoteTokenAccount>,
+    pub vote_token_account: Box<Account<'info, VoteTokenAccount>>,
+
+    /// ATA owned by the VTA PDA, holding the actual SPL tokens
+    #[account(
+        init,
+        payer = signer,
+        associated_token::mint = token_mint,
+        associated_token::authority = vote_token_account,
+        associated_token::token_program = token_program,
+    )]
+    pub vote_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    pub token_program: Interface<'info, TokenInterface>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
 
     // Arcium accounts
     #[account(
@@ -68,7 +87,9 @@ pub fn init_vote_token_account(
     let vote_token = &mut ctx.accounts.vote_token_account;
     vote_token.bump = ctx.bumps.vote_token_account;
     vote_token.owner = ctx.accounts.signer.key();
+    vote_token.token_mint = ctx.accounts.token_mint.key();
     vote_token.state_nonce = 0;
+    vote_token.pending_deposit = 0;
 
     // Build args for encrypted computation
     let args = ArgBuilder::new()
@@ -83,7 +104,6 @@ pub fn init_vote_token_account(
         ctx.accounts,
         computation_offset,
         args,
-        None,
         vec![InitVoteTokenAccountCallback::callback_ix(
             computation_offset,
             &ctx.accounts.mxe_account,

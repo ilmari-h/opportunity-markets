@@ -1,16 +1,15 @@
-use std::ops::Mul;
-
 use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{
+    transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
+};
 use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::constants::PRICE_PER_VOTE_TOKEN_LAMPORTS;
+use crate::instructions::init_vote_token_account::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::VoteTokenAccount;
 use crate::COMP_DEF_OFFSET_CLAIM_VOTE_TOKENS;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
-
-pub const VOTE_TOKEN_ACCOUNT_SEED: &[u8] = b"vote_token_account";
 
 #[queue_computation_accounts("claim_vote_tokens", signer)]
 #[derive(Accounts)]
@@ -19,12 +18,32 @@ pub struct ClaimVoteTokens<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
+    pub token_mint: Box<InterfaceAccount<'info, Mint>>,
+
     #[account(
         mut,
-        seeds = [VOTE_TOKEN_ACCOUNT_SEED, signer.key().as_ref()],
+        seeds = [VOTE_TOKEN_ACCOUNT_SEED, token_mint.key().as_ref(), signer.key().as_ref()],
         bump = vote_token_account.bump,
     )]
-    pub vote_token_account: Account<'info, VoteTokenAccount>,
+    pub vote_token_account: Box<Account<'info, VoteTokenAccount>>,
+
+    /// ATA owned by VTA PDA (source of SPL tokens for withdrawal)
+    #[account(
+        mut,
+        associated_token::mint = token_mint,
+        associated_token::authority = vote_token_account,
+        associated_token::token_program = token_program,
+    )]
+    pub vote_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// Signer's token account (destination for claimed tokens)
+    #[account(
+        mut,
+        token::mint = token_mint,
+        token::authority = signer,
+        token::token_program = token_program,
+    )]
+    pub user_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     // Arcium accounts
     #[account(
@@ -35,9 +54,9 @@ pub struct ClaimVoteTokens<'info> {
         bump,
         address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
     #[account(address = derive_mxe_pda!())]
-    pub mxe_account: Account<'info, MXEAccount>,
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
     #[account(mut, address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet))]
     /// CHECK: mempool_account
     pub mempool_account: UncheckedAccount<'info>,
@@ -56,6 +75,7 @@ pub struct ClaimVoteTokens<'info> {
     #[account(mut, address = ARCIUM_CLOCK_ACCOUNT_ADDRESS)]
     pub clock_account: Account<'info, ClockAccount>,
     pub system_program: Program<'info, System>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub arcium_program: Program<'info, Arcium>,
 }
 
@@ -67,7 +87,6 @@ pub fn claim_vote_tokens(
 ) -> Result<()> {
     let vta = &mut ctx.accounts.vote_token_account;
     let vta_pubkey = vta.key();
-    let signer = &ctx.accounts.signer;
 
     // Build args for encrypted computation
     // Circuit signature: claim_vote_tokens(balance_ctx, amount)
@@ -81,12 +100,11 @@ pub fn claim_vote_tokens(
     ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
 
     // Queue computation with callback
-    // Pass both vote_token_account and user account for callback
+    // Pass VTA, user_token_account, vote_token_ata, token_mint, token_program as callback accounts
     queue_computation(
         ctx.accounts,
         computation_offset,
         args,
-        None,
         vec![ClaimVoteTokensCallback::callback_ix(
             computation_offset,
             &ctx.accounts.mxe_account,
@@ -96,8 +114,20 @@ pub fn claim_vote_tokens(
                     is_writable: true,
                 },
                 CallbackAccount {
-                    pubkey: signer.key(),
+                    pubkey: ctx.accounts.user_token_account.key(),
                     is_writable: true,
+                },
+                CallbackAccount {
+                    pubkey: ctx.accounts.vote_token_ata.key(),
+                    is_writable: true,
+                },
+                CallbackAccount {
+                    pubkey: ctx.accounts.token_mint.key(),
+                    is_writable: false,
+                },
+                CallbackAccount {
+                    pubkey: ctx.accounts.token_program.key(),
+                    is_writable: false,
                 },
             ],
         )?],
@@ -124,13 +154,23 @@ pub struct ClaimVoteTokensCallback<'info> {
     /// CHECK: instructions_sysvar
     pub instructions_sysvar: AccountInfo<'info>,
 
-    // Callback accounts
+    // Callback accounts (order must match CallbackAccount vec above)
     #[account(mut)]
     pub vote_token_account: Account<'info, VoteTokenAccount>,
 
-    /// CHECK: User account to receive SOL on sell, validated against vote_token_account.owner
-    #[account(mut, address = vote_token_account.owner)]
-    pub user: AccountInfo<'info>,
+    /// User's token account to receive claimed SPL tokens
+    #[account(mut)]
+    pub user_token_account: InterfaceAccount<'info, TokenAccount>,
+
+    /// VTA's ATA holding SPL tokens (source for withdrawal)
+    #[account(mut)]
+    pub vote_token_ata: InterfaceAccount<'info, TokenAccount>,
+
+    /// Token mint for transfer_checked
+    pub token_mint: InterfaceAccount<'info, Mint>,
+
+    /// Token program for CPI
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 pub fn claim_vote_tokens_callback(
@@ -158,22 +198,32 @@ pub fn claim_vote_tokens_callback(
         return Err(ErrorCode::InsufficientBalance.into());
     }
 
-    // If tokens were sold, transfer SOL to user
+    // If tokens were sold, transfer SPL tokens from VTA's ATA to user's token account
     if amount_sold > 0 {
-        // Transfer SOL from vote_token_account PDA to user
-        let vta_lamports = vta.to_account_info().lamports();
-        let rent = Rent::get()?;
-        let min_rent = rent.minimum_balance(vta.to_account_info().data_len());
+        let mint_key = vta.token_mint;
+        let owner_key = vta.owner;
+        let bump = vta.bump;
+        let signer_seeds: &[&[&[u8]]] = &[&[
+            VOTE_TOKEN_ACCOUNT_SEED,
+            mint_key.as_ref(),
+            owner_key.as_ref(),
+            &[bump],
+        ]];
 
-        // Ensure we don't go below rent-exempt minimum
-        let available = vta_lamports.saturating_sub(min_rent);
-        let amount_sold_lamports = amount_sold.mul(PRICE_PER_VOTE_TOKEN_LAMPORTS);
-        let transfer_amount = amount_sold_lamports.min(available);
-
-        if transfer_amount > 0 {
-            **vta.to_account_info().try_borrow_mut_lamports()? -= transfer_amount;
-            **ctx.accounts.user.try_borrow_mut_lamports()? += transfer_amount;
-        }
+        transfer_checked(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                TransferChecked {
+                    from: ctx.accounts.vote_token_ata.to_account_info(),
+                    mint: ctx.accounts.token_mint.to_account_info(),
+                    to: ctx.accounts.user_token_account.to_account_info(),
+                    authority: vta.to_account_info(),
+                },
+                signer_seeds,
+            ),
+            amount_sold,
+            ctx.accounts.token_mint.decimals,
+        )?;
     }
 
     // Update encrypted state

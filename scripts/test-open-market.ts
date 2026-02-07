@@ -32,7 +32,6 @@ const KEYPAIR_PATH = process.env.KEYPAIR_PATH;
 
 // Market configuration
 const MARKET_CONFIG = {
-  maxOptions: 5,
   maxShares: new anchor.BN(1000),
   fundingLamports: new anchor.BN(0.001 * LAMPORTS_PER_SOL), // 0.001 SOL
   timeToStake: new anchor.BN(120), // 120 seconds
@@ -221,7 +220,6 @@ async function main() {
         .createMarket(
           marketIndex,
           marketComputationOffset,
-          MARKET_CONFIG.maxOptions,
           MARKET_CONFIG.maxShares,
           MARKET_CONFIG.fundingLamports,
           MARKET_CONFIG.timeToStake,
@@ -353,12 +351,11 @@ async function main() {
   // Step 5: Verify market state
   console.log("\nStep 5: Verifying market state...");
   try {
-    const marketAccount = await program.account.convictionMarket.fetch(marketPDA);
+    const marketAccount = await program.account.opportunityMarket.fetch(marketPDA);
 
     console.log("\n  Market Details:");
     console.log(`    Creator: ${marketAccount.creator.toBase58()}`);
     console.log(`    Market Index: ${marketAccount.index.toString()}`);
-    console.log(`    Max Options: ${marketAccount.maxOptions}`);
     console.log(`    Max Shares: ${marketAccount.maxShares.toString()}`);
     console.log(`    Open Timestamp: ${marketAccount.openTimestamp.toNumber()}`);
     console.log(`    Time to Stake: ${marketAccount.timeToStake.toNumber()} seconds`);

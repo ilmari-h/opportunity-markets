@@ -1,2 +1,0 @@
-
-pub const PRICE_PER_VOTE_TOKEN_LAMPORTS: u64 = 1_000_000; // 0.001 SOL per vote token
