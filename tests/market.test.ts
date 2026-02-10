@@ -34,7 +34,6 @@ import {
   awaitBatchComputationFinalization,
   awaitComputationFinalization,
   getVoteTokenAccountAddress,
-  getLockedVoteTokenAccountAddress,
 } from "../js/src";
 import { createTestEnvironment } from "./utils/environment";
 import { initializeAllCompDefs } from "./utils/comp-defs";
@@ -60,7 +59,7 @@ describe("OpportunityMarket", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
   const program = anchor.workspace.OpportunityMarket as Program<OpportunityMarket>;
   const provider = anchor.getProvider() as anchor.AnchorProvider;
-    const arciumProgram = getArciumProgram(provider as anchor.AnchorProvider);
+  const arciumProgram = getArciumProgram(provider as anchor.AnchorProvider);
 
   const programId = address(program.programId.toBase58());
   const arciumEnv = getArciumEnv();
@@ -94,7 +93,7 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake: 120n,
-        timeToReveal: 10n, // 10 secs seems long enough for tests
+        timeToReveal: 25n,
       },
     });
 
@@ -247,32 +246,35 @@ describe("OpportunityMarket", () => {
 
     await awaitBatchComputationFinalization(rpc, [...mintData.map(({ offset }) => offset), creatorMintOffset]);
 
-    // Add options (must be in sequence, each requires MPC deposit)
+    // Wait for market staking period to be active (add_market_option requires active staking)
+    await sleepUntilOnChainTimestamp(openTimestamp + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    // Add options (must be during staking period; each creates a share account for the creator)
     const [creatorVtaAddress] = await getVoteTokenAccountAddress(
       env.mint.address,
       creatorAccount.keypair.address,
     );
     const minDeposit = 1n;
+    const creatorCipher = createCipher(creatorX25519.secretKey, env.mxePublicKey);
 
-    // Option A
+    // Option A (creator's shareAccountId = 0)
     const optionAOffset = randomComputationOffset();
-    const [lockedVtaA] = await getLockedVoteTokenAccountAddress(
-      env.mint.address,
-      creatorAccount.keypair.address,
-      env.market.address,
-      1,
-    );
+    const inputNonceA = randomBytes(16);
+    const amountCiphertextA = creatorCipher.encrypt([minDeposit], inputNonceA);
     const addOptionAIx = await addMarketOption(
       {
         creator: creatorAccount.keypair,
         market: env.market.address,
         sourceVta: creatorVtaAddress,
-        lockedVta: lockedVtaA,
         optionIndex: 1,
+        shareAccountId: 0,
         name: "Option A",
-        amount: minDeposit,
+        amountCiphertext: amountCiphertextA[0],
         userPubkey: creatorX25519.publicKey,
-        lockedVtaNonce: deserializeLE(randomBytes(16)),
+        inputNonce: deserializeLE(inputNonceA),
+        authorizedReaderPubkey: creatorX25519.publicKey,
+        authorizedReaderNonce: deserializeLE(randomBytes(16)),
+        shareAccountNonce: deserializeLE(randomBytes(16)),
       },
       {
         clusterOffset: arciumEnv.arciumClusterOffset,
@@ -284,25 +286,24 @@ describe("OpportunityMarket", () => {
     });
     await awaitComputationFinalization(rpc, optionAOffset);
 
-    // Option B
+    // Option B (creator's shareAccountId = 1)
     const optionBOffset = randomComputationOffset();
-    const [lockedVtaB] = await getLockedVoteTokenAccountAddress(
-      env.mint.address,
-      creatorAccount.keypair.address,
-      env.market.address,
-      2,
-    );
+    const inputNonceB = randomBytes(16);
+    const amountCiphertextB = creatorCipher.encrypt([minDeposit], inputNonceB);
     const addOptionBIx = await addMarketOption(
       {
         creator: creatorAccount.keypair,
         market: env.market.address,
         sourceVta: creatorVtaAddress,
-        lockedVta: lockedVtaB,
         optionIndex: 2,
+        shareAccountId: 1,
         name: "Option B",
-        amount: minDeposit,
+        amountCiphertext: amountCiphertextB[0],
         userPubkey: creatorX25519.publicKey,
-        lockedVtaNonce: deserializeLE(randomBytes(16)),
+        inputNonce: deserializeLE(inputNonceB),
+        authorizedReaderPubkey: creatorX25519.publicKey,
+        authorizedReaderNonce: deserializeLE(randomBytes(16)),
+        shareAccountNonce: deserializeLE(randomBytes(16)),
       },
       {
         clusterOffset: arciumEnv.arciumClusterOffset,
@@ -314,10 +315,7 @@ describe("OpportunityMarket", () => {
     });
     await awaitComputationFinalization(rpc, optionBOffset);
 
-    // Wait for market to be open
-    await sleepUntilOnChainTimestamp(openTimestamp + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
-    // Initialize share accounts for all participants
+    // Initialize share accounts for all participants (shareAccountId = 0 for each)
     const initShareData = await Promise.all(
       env.participants.map(async (participant, idx) => {
         const nonce = deserializeLE(randomBytes(16));
@@ -325,6 +323,7 @@ describe("OpportunityMarket", () => {
           signer: participant.keypair,
           market: env.market.address,
           stateNonce: nonce,
+          shareAccountId: 0,
         });
         return { participant, ix, idx };
       })
@@ -361,6 +360,7 @@ describe("OpportunityMarket", () => {
             signer: participant.keypair,
             market: env.market.address,
             userVta,
+            shareAccountId: 0,
             amountCiphertext: ciphertexts[0],
             selectedOptionCiphertext: ciphertexts[1],
             userPubkey: participant.x25519Keypair.publicKey,
@@ -399,7 +399,7 @@ describe("OpportunityMarket", () => {
     const resolvedMarket = await fetchOpportunityMarket(rpc, env.market.address);
     expect(resolvedMarket.data.selectedOption).to.deep.equal(some(winningOptionIndex));
 
-    // Reveal shares for winners
+    // Reveal shares for winners (participants who voted option A)
     const winners = env.participants.slice(0, 2);
     const winnerSharesData = buySharesData.slice(0, 2);
     const revealData = await Promise.all(
@@ -416,6 +416,7 @@ describe("OpportunityMarket", () => {
             market: env.market.address,
             userVta,
             userPubkey: participant.x25519Keypair.publicKey,
+            shareAccountId: 0,
           },
           {
             clusterOffset: arciumEnv.arciumClusterOffset,
@@ -434,18 +435,57 @@ describe("OpportunityMarket", () => {
     // Wait for all reveal computations to finalize in parallel
     await awaitBatchComputationFinalization(rpc, revealData.map(({computationOffset}) => computationOffset))
 
+    // Reveal creator's share accounts (option A: id=0, option B: id=1)
+    const creatorRevealData = await Promise.all(
+      [0, 1].map(async (shareAccountId) => {
+        const computationOffset = randomComputationOffset();
+        const ix = await revealShares(
+          {
+            signer: creatorAccount.keypair,
+            owner: creatorAccount.keypair.address,
+            market: env.market.address,
+            userVta: creatorVtaAddress,
+            userPubkey: creatorX25519.publicKey,
+            shareAccountId,
+          },
+          {
+            clusterOffset: arciumEnv.arciumClusterOffset,
+            computationOffset,
+          }
+        );
+        return { ix, computationOffset, shareAccountId };
+      })
+    );
+    for (const { ix, shareAccountId } of creatorRevealData) {
+      await sendTransaction(rpc, sendAndConfirmTransaction, creatorAccount.keypair, [ix], {
+        label: `Reveal creator shares [${shareAccountId}]`,
+      });
+    }
+    await awaitBatchComputationFinalization(rpc, creatorRevealData.map(({computationOffset}) => computationOffset));
+
     // Verify revealed shares for winners
     for (let i = 0; i < winners.length; i++) {
       const participant = winners[i];
       const expectedAmount = winnerSharesData[i].amount;
-      const [shareAccountAddress] = await getShareAccountAddress(participant.keypair.address, env.market.address);
+      const [shareAccountAddress] = await getShareAccountAddress(participant.keypair.address, env.market.address, 0);
       const revealedShareAccount = await fetchShareAccount(rpc, shareAccountAddress);
 
       expect(revealedShareAccount.data.revealedAmount).to.deep.equal(some(expectedAmount));
       expect(revealedShareAccount.data.revealedOption).to.deep.equal(some(winningOptionIndex));
     }
 
-    // All winners increment option tally
+    // Verify creator's revealed shares
+    const [creatorShareA] = await getShareAccountAddress(creatorAccount.keypair.address, env.market.address, 0);
+    const creatorShareAAccount = await fetchShareAccount(rpc, creatorShareA);
+    expect(creatorShareAAccount.data.revealedAmount).to.deep.equal(some(minDeposit));
+    expect(creatorShareAAccount.data.revealedOption).to.deep.equal(some(1));
+
+    const [creatorShareB] = await getShareAccountAddress(creatorAccount.keypair.address, env.market.address, 1);
+    const creatorShareBAccount = await fetchShareAccount(rpc, creatorShareB);
+    expect(creatorShareBAccount.data.revealedAmount).to.deep.equal(some(minDeposit));
+    expect(creatorShareBAccount.data.revealedOption).to.deep.equal(some(2));
+
+    // Increment option tally for all winners
     const incrementTallyData = await Promise.all(
       winners.map(async (participant, idx) => {
         const ix = await incrementOptionTally({
@@ -453,6 +493,7 @@ describe("OpportunityMarket", () => {
           owner: participant.keypair.address,
           market: env.market.address,
           optionIndex: winningOptionIndex,
+          shareAccountId: 0,
         });
         return { participant, ix, idx };
       })
@@ -464,8 +505,31 @@ describe("OpportunityMarket", () => {
       });
     }
 
-    // Verify option tally was updated with total winning shares
-    const totalWinningShares = buySharesAmounts.slice(0, numParticipants / 2).reduce((a, b) => a + b, 0n);
+    // Increment tally for creator's share accounts
+    const creatorIncrementAIx = await incrementOptionTally({
+      signer: creatorAccount.keypair,
+      owner: creatorAccount.keypair.address,
+      market: env.market.address,
+      optionIndex: 1,
+      shareAccountId: 0,
+    });
+    await sendTransaction(rpc, sendAndConfirmTransaction, creatorAccount.keypair, [creatorIncrementAIx], {
+      label: "Increment tally creator option A",
+    });
+
+    const creatorIncrementBIx = await incrementOptionTally({
+      signer: creatorAccount.keypair,
+      owner: creatorAccount.keypair.address,
+      market: env.market.address,
+      optionIndex: 2,
+      shareAccountId: 1,
+    });
+    await sendTransaction(rpc, sendAndConfirmTransaction, creatorAccount.keypair, [creatorIncrementBIx], {
+      label: "Increment tally creator option B",
+    });
+
+    // Verify option tally was updated with total winning shares (includes creator's minDeposit)
+    const totalWinningShares = buySharesAmounts.slice(0, numParticipants / 2).reduce((a, b) => a + b, 0n) + minDeposit;
     const [optionAddress] = await getOpportunityMarketOptionAddress(env.market.address, winningOptionIndex);
     const optionAccount = await fetchOpportunityMarketOption(rpc, optionAddress);
     expect(optionAccount.data.totalShares).to.deep.equal(some(totalWinningShares));
@@ -476,7 +540,7 @@ describe("OpportunityMarket", () => {
 
     const winnerTimestamps = await Promise.all(
       winners.map(async (participant) => {
-        const [shareAccountAddress] = await getShareAccountAddress(participant.keypair.address, env.market.address);
+        const [shareAccountAddress] = await getShareAccountAddress(participant.keypair.address, env.market.address, 0);
         const shareAccount = await fetchShareAccount(rpc, shareAccountAddress);
         const ts = shareAccount.data.stakedAtTimestamp;
         if (!isSome(ts)) throw new Error('stakedAtTimestamp is None');
@@ -495,6 +559,7 @@ describe("OpportunityMarket", () => {
         balance: (await fetchToken(rpc, participant.tokenAccount)).data.amount,
       }))
     );
+    const creatorBalanceBefore = (await fetchToken(rpc, creatorAccount.tokenAccount)).data.amount;
     const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
 
     // All winners close share accounts and claim rewards
@@ -507,6 +572,7 @@ describe("OpportunityMarket", () => {
           ownerTokenAccount: participant.tokenAccount,
           tokenProgram: TOKEN_PROGRAM_ADDRESS,
           optionIndex: winningOptionIndex,
+          shareAccountId: 0,
         });
         return { participant, ix, idx };
       })
@@ -518,9 +584,36 @@ describe("OpportunityMarket", () => {
       });
     }
 
+    // Close creator's share accounts
+    const closeCreatorAIx = await closeShareAccount({
+      owner: creatorAccount.keypair,
+      market: env.market.address,
+      tokenMint: env.mint.address,
+      ownerTokenAccount: creatorAccount.tokenAccount,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      optionIndex: 1,
+      shareAccountId: 0,
+    });
+    await sendTransaction(rpc, sendAndConfirmTransaction, creatorAccount.keypair, [closeCreatorAIx], {
+      label: "Close creator share account option A",
+    });
+
+    const closeCreatorBIx = await closeShareAccount({
+      owner: creatorAccount.keypair,
+      market: env.market.address,
+      tokenMint: env.mint.address,
+      ownerTokenAccount: creatorAccount.tokenAccount,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      optionIndex: 2,
+      shareAccountId: 1,
+    });
+    await sendTransaction(rpc, sendAndConfirmTransaction, creatorAccount.keypair, [closeCreatorBIx], {
+      label: "Close creator share account option B",
+    });
+
     // Verify share accounts were closed for all winners
     for (const participant of winners) {
-      const [shareAccountAddress] = await getShareAccountAddress(participant.keypair.address, env.market.address);
+      const [shareAccountAddress] = await getShareAccountAddress(participant.keypair.address, env.market.address, 0);
       const shareAccountAfterClose = await rpc.getAccountInfo(shareAccountAddress).send();
       expect(shareAccountAfterClose.value).to.be.null;
     }
@@ -532,6 +625,7 @@ describe("OpportunityMarket", () => {
         balance: (await fetchToken(rpc, participant.tokenAccount)).data.amount,
       }))
     );
+    const creatorBalanceAfter = (await fetchToken(rpc, creatorAccount.tokenAccount)).data.amount;
     const marketBalanceAfter = (await fetchToken(rpc, marketAta)).data.amount;
 
     // Calculate gains for each winner
@@ -544,17 +638,20 @@ describe("OpportunityMarket", () => {
         shares: winnerSharesData[i].amount,
       });
     }
+    const creatorGain = creatorBalanceAfter - creatorBalanceBefore;
 
     // All winners should have gained funds
     for (const { gain } of gains) {
       expect(gain > 0n).to.be.true;
     }
 
+    // TODO: this is off by 2 - also claim from those 2 share accounts that were made while creating option
     // Total market loss should equal the full reward amount, tolerance of 1 token for rounding error.
     const marketLoss = marketBalanceBefore - marketBalanceAfter;
+    console.log("MARKET BALANCES", marketBalanceBefore, marketBalanceAfter, marketLoss)
     expect(marketLoss >= marketFundingAmount - 1n && marketLoss <= marketFundingAmount + 1n).to.be.true;
 
-    // Verify proportional reward distribution:
+    // Verify proportional reward distribution among participant winners:
     // gainA / gainB ~= scoreA / scoreB (where score = shares * timeInMarket)
     // Cross-multiply to avoid division: gainA * scoreB ~= gainB * scoreA
     const winnerScores = gains.map(({ gain, shares }, i) => ({
@@ -574,8 +671,8 @@ describe("OpportunityMarket", () => {
       })
     );
 
-    // Verify total gains equal the reward amount
-    const totalGains = gains.reduce((sum, { gain }) => sum + gain, 0n);
+    // Verify total gains (participants + creator) equal the reward amount
+    const totalGains = gains.reduce((sum, { gain }) => sum + gain, 0n) + creatorGain;
     expect(totalGains >= marketFundingAmount - 1n).to.be.true; // Allow for rounding
     expect(totalGains <= marketFundingAmount + 1n).to.be.true;
   });
