@@ -7,6 +7,8 @@
  */
 
 export * from './activation';
+export * from './addOptionStakeOutput';
+export * from './addOptionStakeOutputStruct0';
 export * from './bN254G2BLSPublicKey';
 export * from './buyOpportunityMarketSharesOutput';
 export * from './buyOpportunityMarketSharesOutputStruct0';
@@ -21,8 +23,6 @@ export * from './epoch';
 export * from './initMarketSharesOutput';
 export * from './initVoteTokenAccountOutput';
 export * from './localCircuitSource';
-export * from './lockOptionDepositOutput';
-export * from './lockOptionDepositOutputStruct0';
 export * from './marketCreatedEvent';
 export * from './mxeStatus';
 export * from './nodeMetadata';

@@ -10,7 +10,6 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
-  getAddressEncoder,
   getArrayDecoder,
   getArrayEncoder,
   getBytesDecoder,
@@ -41,11 +40,7 @@ import {
   type WritableSignerAccount,
 } from '@solana/kit';
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
-import {
-  expectAddress,
-  getAccountMetaFactory,
-  type ResolvedAccount,
-} from '../shared';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const STAKE_DISCRIMINATOR = new Uint8Array([
   206, 176, 202, 18, 200, 209, 179, 108,
@@ -214,7 +209,7 @@ export type StakeAsyncInput<
   signer: TransactionSigner<TAccountSigner>;
   market: Address<TAccountMarket>;
   userVta: Address<TAccountUserVta>;
-  shareAccount?: Address<TAccountShareAccount>;
+  shareAccount: Address<TAccountShareAccount>;
   signPdaAccount?: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
   mempoolAccount: Address<TAccountMempoolAccount>;
@@ -325,20 +320,6 @@ export async function getStakeInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.shareAccount.value) {
-    accounts.shareAccount.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            115, 104, 97, 114, 101, 95, 97, 99, 99, 111, 117, 110, 116,
-          ])
-        ),
-        getAddressEncoder().encode(expectAddress(accounts.signer.value)),
-        getAddressEncoder().encode(expectAddress(accounts.market.value)),
-      ],
-    });
-  }
   if (!accounts.signPdaAccount.value) {
     accounts.signPdaAccount.value = await getProgramDerivedAddress({
       programAddress,

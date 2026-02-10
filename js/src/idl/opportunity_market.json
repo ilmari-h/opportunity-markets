@@ -85,52 +85,8 @@
           "name": "source_vta"
         },
         {
-          "name": "locked_vta",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  118,
-                  111,
-                  116,
-                  101,
-                  95,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "market.mint",
-                "account": "OpportunityMarket"
-              },
-              {
-                "kind": "account",
-                "path": "creator"
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "arg",
-                "path": "option_index"
-              }
-            ]
-          }
+          "name": "share_account",
+          "writable": true
         },
         {
           "name": "sign_pda_account",
@@ -219,8 +175,13 @@
           "type": "string"
         },
         {
-          "name": "amount",
-          "type": "u64"
+          "name": "amount_ciphertext",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
         },
         {
           "name": "user_pubkey",
@@ -232,10 +193,139 @@
           }
         },
         {
-          "name": "locked_vta_nonce",
+          "name": "input_nonce",
+          "type": "u128"
+        },
+        {
+          "name": "authorized_reader_pubkey",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "authorized_reader_nonce",
+          "type": "u128"
+        },
+        {
+          "name": "share_account_nonce",
           "type": "u128"
         }
       ]
+    },
+    {
+      "name": "add_option_stake_callback",
+      "discriminator": [
+        58,
+        174,
+        2,
+        200,
+        118,
+        153,
+        169,
+        10
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "source_vta",
+          "writable": true
+        },
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "share_account",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "AddOptionStakeOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_option_stake_comp_def",
+      "discriminator": [
+        214,
+        157,
+        74,
+        10,
+        70,
+        212,
+        4,
+        46
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     },
     {
       "name": "buy_opportunity_market_shares_callback",
@@ -963,37 +1053,7 @@
         },
         {
           "name": "share_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "owner"
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "option",
@@ -1103,6 +1163,10 @@
         {
           "name": "option_index",
           "type": "u16"
+        },
+        {
+          "name": "is_option_creator",
+          "type": "bool"
         }
       ]
     },
@@ -1423,37 +1487,7 @@
         },
         {
           "name": "share_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "owner"
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "option",
@@ -1491,6 +1525,10 @@
         {
           "name": "option_index",
           "type": "u16"
+        },
+        {
+          "name": "is_option_creator",
+          "type": "bool"
         }
       ]
     },
@@ -1681,37 +1719,7 @@
         },
         {
           "name": "share_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "system_program",
@@ -2015,114 +2023,6 @@
         96,
         65,
         172
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "mxe_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account",
-          "writable": true
-        },
-        {
-          "name": "address_lookup_table",
-          "writable": true
-        },
-        {
-          "name": "lut_program",
-          "address": "AddressLookupTab1e1111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "lock_option_deposit_callback",
-      "discriminator": [
-        81,
-        125,
-        99,
-        113,
-        240,
-        213,
-        121,
-        26
-      ],
-      "accounts": [
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "computation_account"
-        },
-        {
-          "name": "cluster_account"
-        },
-        {
-          "name": "instructions_sysvar",
-          "address": "Sysvar1nstructions1111111111111111111111111"
-        },
-        {
-          "name": "source_vta",
-          "writable": true
-        },
-        {
-          "name": "locked_vta",
-          "writable": true
-        }
-      ],
-      "args": [
-        {
-          "name": "output",
-          "type": {
-            "defined": {
-              "name": "SignedComputationOutputs",
-              "generics": [
-                {
-                  "kind": "type",
-                  "type": {
-                    "defined": {
-                      "name": "LockOptionDepositOutput"
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "lock_option_deposit_comp_def",
-      "discriminator": [
-        73,
-        43,
-        158,
-        70,
-        153,
-        88,
-        112,
-        176
       ],
       "accounts": [
         {
@@ -2503,37 +2403,7 @@
         },
         {
           "name": "share_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "owner"
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "user_vta",
@@ -2616,6 +2486,10 @@
         {
           "name": "computation_offset",
           "type": "u64"
+        },
+        {
+          "name": "is_option_creator",
+          "type": "bool"
         },
         {
           "name": "user_pubkey",
@@ -2791,37 +2665,7 @@
         },
         {
           "name": "share_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "sign_pda_account",
@@ -3024,37 +2868,7 @@
         },
         {
           "name": "share_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "sign_pda_account",
@@ -3133,6 +2947,10 @@
         {
           "name": "computation_offset",
           "type": "u64"
+        },
+        {
+          "name": "is_option_creator",
+          "type": "bool"
         },
         {
           "name": "user_pubkey",
@@ -3638,13 +3456,8 @@
     },
     {
       "code": 6022,
-      "name": "LockedVtaMarketMismatch",
-      "msg": "Locked VTA used on wrong market"
-    },
-    {
-      "code": 6023,
-      "name": "LockDepositFailed",
-      "msg": "Lock deposit failed: insufficient source balance"
+      "name": "AddOptionStakeFailed",
+      "msg": "Add option stake failed: insufficient balance, shares, or below minimum deposit"
     }
   ],
   "types": [
@@ -3666,6 +3479,94 @@
             "type": {
               "defined": {
                 "name": "Epoch"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AddOptionStakeOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "AddOptionStakeOutputStruct0"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AddOptionStakeOutputStruct0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": "bool"
+          },
+          {
+            "name": "field_1",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "1"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "field_2",
+            "type": {
+              "defined": {
+                "name": "MXEEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "1"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "field_3",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "2"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "field_4",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "2"
+                  }
+                ]
               }
             }
           }
@@ -4266,66 +4167,6 @@
           },
           {
             "name": "MxeKeyRecoveryFinalize"
-          }
-        ]
-      }
-    },
-    {
-      "name": "LockOptionDepositOutput",
-      "docs": [
-        "The output of the callback instruction. Provided as a struct with ordered fields",
-        "as anchor does not support tuples and tuple structs yet."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "LockOptionDepositOutputStruct0"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "LockOptionDepositOutputStruct0",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": "bool"
-          },
-          {
-            "name": "field_1",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "name": "field_2",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
           }
         ]
       }
@@ -5292,18 +5133,6 @@
           {
             "name": "pending_deposit",
             "type": "u64"
-          },
-          {
-            "name": "locked_option",
-            "type": {
-              "option": "u16"
-            }
-          },
-          {
-            "name": "locked_market",
-            "type": {
-              "option": "pubkey"
-            }
           }
         ]
       }

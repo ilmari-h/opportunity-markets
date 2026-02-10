@@ -33,17 +33,17 @@ import {
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const LOCK_OPTION_DEPOSIT_COMP_DEF_DISCRIMINATOR = new Uint8Array([
-  73, 43, 158, 70, 153, 88, 112, 176,
+export const ADD_OPTION_STAKE_COMP_DEF_DISCRIMINATOR = new Uint8Array([
+  214, 157, 74, 10, 70, 212, 4, 46,
 ]);
 
-export function getLockOptionDepositCompDefDiscriminatorBytes() {
+export function getAddOptionStakeCompDefDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    LOCK_OPTION_DEPOSIT_COMP_DEF_DISCRIMINATOR
+    ADD_OPTION_STAKE_COMP_DEF_DISCRIMINATOR
   );
 }
 
-export type LockOptionDepositCompDefInstruction<
+export type AddOptionStakeCompDefInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountPayer extends string | AccountMeta<string> = string,
   TAccountMxeAccount extends string | AccountMeta<string> = string,
@@ -86,39 +86,39 @@ export type LockOptionDepositCompDefInstruction<
     ]
   >;
 
-export type LockOptionDepositCompDefInstructionData = {
+export type AddOptionStakeCompDefInstructionData = {
   discriminator: ReadonlyUint8Array;
 };
 
-export type LockOptionDepositCompDefInstructionDataArgs = {};
+export type AddOptionStakeCompDefInstructionDataArgs = {};
 
-export function getLockOptionDepositCompDefInstructionDataEncoder(): FixedSizeEncoder<LockOptionDepositCompDefInstructionDataArgs> {
+export function getAddOptionStakeCompDefInstructionDataEncoder(): FixedSizeEncoder<AddOptionStakeCompDefInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
     (value) => ({
       ...value,
-      discriminator: LOCK_OPTION_DEPOSIT_COMP_DEF_DISCRIMINATOR,
+      discriminator: ADD_OPTION_STAKE_COMP_DEF_DISCRIMINATOR,
     })
   );
 }
 
-export function getLockOptionDepositCompDefInstructionDataDecoder(): FixedSizeDecoder<LockOptionDepositCompDefInstructionData> {
+export function getAddOptionStakeCompDefInstructionDataDecoder(): FixedSizeDecoder<AddOptionStakeCompDefInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
   ]);
 }
 
-export function getLockOptionDepositCompDefInstructionDataCodec(): FixedSizeCodec<
-  LockOptionDepositCompDefInstructionDataArgs,
-  LockOptionDepositCompDefInstructionData
+export function getAddOptionStakeCompDefInstructionDataCodec(): FixedSizeCodec<
+  AddOptionStakeCompDefInstructionDataArgs,
+  AddOptionStakeCompDefInstructionData
 > {
   return combineCodec(
-    getLockOptionDepositCompDefInstructionDataEncoder(),
-    getLockOptionDepositCompDefInstructionDataDecoder()
+    getAddOptionStakeCompDefInstructionDataEncoder(),
+    getAddOptionStakeCompDefInstructionDataDecoder()
   );
 }
 
-export type LockOptionDepositCompDefInput<
+export type AddOptionStakeCompDefInput<
   TAccountPayer extends string = string,
   TAccountMxeAccount extends string = string,
   TAccountCompDefAccount extends string = string,
@@ -136,7 +136,7 @@ export type LockOptionDepositCompDefInput<
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export function getLockOptionDepositCompDefInstruction<
+export function getAddOptionStakeCompDefInstruction<
   TAccountPayer extends string,
   TAccountMxeAccount extends string,
   TAccountCompDefAccount extends string,
@@ -146,7 +146,7 @@ export function getLockOptionDepositCompDefInstruction<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: LockOptionDepositCompDefInput<
+  input: AddOptionStakeCompDefInput<
     TAccountPayer,
     TAccountMxeAccount,
     TAccountCompDefAccount,
@@ -156,7 +156,7 @@ export function getLockOptionDepositCompDefInstruction<
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): LockOptionDepositCompDefInstruction<
+): AddOptionStakeCompDefInstruction<
   TProgramAddress,
   TAccountPayer,
   TAccountMxeAccount,
@@ -213,9 +213,9 @@ export function getLockOptionDepositCompDefInstruction<
       getAccountMeta(accounts.arciumProgram),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getLockOptionDepositCompDefInstructionDataEncoder().encode({}),
+    data: getAddOptionStakeCompDefInstructionDataEncoder().encode({}),
     programAddress,
-  } as LockOptionDepositCompDefInstruction<
+  } as AddOptionStakeCompDefInstruction<
     TProgramAddress,
     TAccountPayer,
     TAccountMxeAccount,
@@ -227,7 +227,7 @@ export function getLockOptionDepositCompDefInstruction<
   >);
 }
 
-export type ParsedLockOptionDepositCompDefInstruction<
+export type ParsedAddOptionStakeCompDefInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -241,17 +241,17 @@ export type ParsedLockOptionDepositCompDefInstruction<
     arciumProgram: TAccountMetas[5];
     systemProgram: TAccountMetas[6];
   };
-  data: LockOptionDepositCompDefInstructionData;
+  data: AddOptionStakeCompDefInstructionData;
 };
 
-export function parseLockOptionDepositCompDefInstruction<
+export function parseAddOptionStakeCompDefInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedLockOptionDepositCompDefInstruction<TProgram, TAccountMetas> {
+): ParsedAddOptionStakeCompDefInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -273,7 +273,7 @@ export function parseLockOptionDepositCompDefInstruction<
       arciumProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getLockOptionDepositCompDefInstructionDataDecoder().decode(
+    data: getAddOptionStakeCompDefInstructionDataDecoder().decode(
       instruction.data
     ),
   };

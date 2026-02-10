@@ -15,6 +15,8 @@ import {
 } from '@solana/kit';
 import {
   type ParsedAddMarketOptionInstruction,
+  type ParsedAddOptionStakeCallbackInstruction,
+  type ParsedAddOptionStakeCompDefInstruction,
   type ParsedBuyOpportunityMarketSharesCallbackInstruction,
   type ParsedBuyOpportunityMarketSharesCompDefInstruction,
   type ParsedBuyVoteTokensCallbackInstruction,
@@ -34,8 +36,6 @@ import {
   type ParsedInitVoteTokenAccountCallbackInstruction,
   type ParsedInitVoteTokenAccountCompDefInstruction,
   type ParsedInitVoteTokenAccountInstruction,
-  type ParsedLockOptionDepositCallbackInstruction,
-  type ParsedLockOptionDepositCompDefInstruction,
   type ParsedMintVoteTokensInstruction,
   type ParsedOpenMarketInstruction,
   type ParsedRevealSharesCallbackInstruction,
@@ -199,6 +199,8 @@ export function identifyOpportunityMarketAccount(
 
 export enum OpportunityMarketInstruction {
   AddMarketOption,
+  AddOptionStakeCallback,
+  AddOptionStakeCompDef,
   BuyOpportunityMarketSharesCallback,
   BuyOpportunityMarketSharesCompDef,
   BuyVoteTokensCallback,
@@ -218,8 +220,6 @@ export enum OpportunityMarketInstruction {
   InitVoteTokenAccount,
   InitVoteTokenAccountCallback,
   InitVoteTokenAccountCompDef,
-  LockOptionDepositCallback,
-  LockOptionDepositCompDef,
   MintVoteTokens,
   OpenMarket,
   RevealShares,
@@ -248,6 +248,28 @@ export function identifyOpportunityMarketInstruction(
     )
   ) {
     return OpportunityMarketInstruction.AddMarketOption;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([58, 174, 2, 200, 118, 153, 169, 10])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.AddOptionStakeCallback;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([214, 157, 74, 10, 70, 212, 4, 46])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.AddOptionStakeCompDef;
   }
   if (
     containsBytes(
@@ -462,28 +484,6 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([81, 125, 99, 113, 240, 213, 121, 26])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.LockOptionDepositCallback;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([73, 43, 158, 70, 153, 88, 112, 176])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.LockOptionDepositCompDef;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([131, 125, 39, 240, 75, 196, 200, 187])
       ),
       0
@@ -624,6 +624,12 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.AddMarketOption;
     } & ParsedAddMarketOptionInstruction<TProgram>)
   | ({
+      instructionType: OpportunityMarketInstruction.AddOptionStakeCallback;
+    } & ParsedAddOptionStakeCallbackInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.AddOptionStakeCompDef;
+    } & ParsedAddOptionStakeCompDefInstruction<TProgram>)
+  | ({
       instructionType: OpportunityMarketInstruction.BuyOpportunityMarketSharesCallback;
     } & ParsedBuyOpportunityMarketSharesCallbackInstruction<TProgram>)
   | ({
@@ -680,12 +686,6 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.InitVoteTokenAccountCompDef;
     } & ParsedInitVoteTokenAccountCompDefInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.LockOptionDepositCallback;
-    } & ParsedLockOptionDepositCallbackInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.LockOptionDepositCompDef;
-    } & ParsedLockOptionDepositCompDefInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.MintVoteTokens;
     } & ParsedMintVoteTokensInstruction<TProgram>)

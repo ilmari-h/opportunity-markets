@@ -40,23 +40,23 @@ import {
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 import {
-  getLockOptionDepositOutputDecoder,
-  getLockOptionDepositOutputEncoder,
-  type LockOptionDepositOutput,
-  type LockOptionDepositOutputArgs,
+  getAddOptionStakeOutputDecoder,
+  getAddOptionStakeOutputEncoder,
+  type AddOptionStakeOutput,
+  type AddOptionStakeOutputArgs,
 } from '../types';
 
-export const LOCK_OPTION_DEPOSIT_CALLBACK_DISCRIMINATOR = new Uint8Array([
-  81, 125, 99, 113, 240, 213, 121, 26,
+export const ADD_OPTION_STAKE_CALLBACK_DISCRIMINATOR = new Uint8Array([
+  58, 174, 2, 200, 118, 153, 169, 10,
 ]);
 
-export function getLockOptionDepositCallbackDiscriminatorBytes() {
+export function getAddOptionStakeCallbackDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    LOCK_OPTION_DEPOSIT_CALLBACK_DISCRIMINATOR
+    ADD_OPTION_STAKE_CALLBACK_DISCRIMINATOR
   );
 }
 
-export type LockOptionDepositCallbackInstruction<
+export type AddOptionStakeCallbackInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountArciumProgram extends string | AccountMeta<string> =
     'Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ',
@@ -67,7 +67,8 @@ export type LockOptionDepositCallbackInstruction<
   TAccountInstructionsSysvar extends string | AccountMeta<string> =
     'Sysvar1nstructions1111111111111111111111111',
   TAccountSourceVta extends string | AccountMeta<string> = string,
-  TAccountLockedVta extends string | AccountMeta<string> = string,
+  TAccountMarket extends string | AccountMeta<string> = string,
+  TAccountShareAccount extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -94,41 +95,44 @@ export type LockOptionDepositCallbackInstruction<
       TAccountSourceVta extends string
         ? WritableAccount<TAccountSourceVta>
         : TAccountSourceVta,
-      TAccountLockedVta extends string
-        ? WritableAccount<TAccountLockedVta>
-        : TAccountLockedVta,
+      TAccountMarket extends string
+        ? WritableAccount<TAccountMarket>
+        : TAccountMarket,
+      TAccountShareAccount extends string
+        ? WritableAccount<TAccountShareAccount>
+        : TAccountShareAccount,
       ...TRemainingAccounts,
     ]
   >;
 
-export type LockOptionDepositCallbackInstructionData = {
+export type AddOptionStakeCallbackInstructionData = {
   discriminator: ReadonlyUint8Array;
   output:
     | {
         __kind: 'Success';
-        fields: readonly [LockOptionDepositOutput, Array<number>];
+        fields: readonly [AddOptionStakeOutput, Array<number>];
       }
     | { __kind: 'Failure' }
     | {
         __kind: 'MarkerForIdlBuildDoNotUseThis';
-        fields: readonly [LockOptionDepositOutput];
+        fields: readonly [AddOptionStakeOutput];
       };
 };
 
-export type LockOptionDepositCallbackInstructionDataArgs = {
+export type AddOptionStakeCallbackInstructionDataArgs = {
   output:
     | {
         __kind: 'Success';
-        fields: readonly [LockOptionDepositOutputArgs, Array<number>];
+        fields: readonly [AddOptionStakeOutputArgs, Array<number>];
       }
     | { __kind: 'Failure' }
     | {
         __kind: 'MarkerForIdlBuildDoNotUseThis';
-        fields: readonly [LockOptionDepositOutputArgs];
+        fields: readonly [AddOptionStakeOutputArgs];
       };
 };
 
-export function getLockOptionDepositCallbackInstructionDataEncoder(): Encoder<LockOptionDepositCallbackInstructionDataArgs> {
+export function getAddOptionStakeCallbackInstructionDataEncoder(): Encoder<AddOptionStakeCallbackInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
@@ -141,7 +145,7 @@ export function getLockOptionDepositCallbackInstructionDataEncoder(): Encoder<Lo
               [
                 'fields',
                 getTupleEncoder([
-                  getLockOptionDepositOutputEncoder(),
+                  getAddOptionStakeOutputEncoder(),
                   getArrayEncoder(getU8Encoder(), { size: 64 }),
                 ]),
               ],
@@ -151,10 +155,7 @@ export function getLockOptionDepositCallbackInstructionDataEncoder(): Encoder<Lo
           [
             'MarkerForIdlBuildDoNotUseThis',
             getStructEncoder([
-              [
-                'fields',
-                getTupleEncoder([getLockOptionDepositOutputEncoder()]),
-              ],
+              ['fields', getTupleEncoder([getAddOptionStakeOutputEncoder()])],
             ]),
           ],
         ]),
@@ -162,12 +163,12 @@ export function getLockOptionDepositCallbackInstructionDataEncoder(): Encoder<Lo
     ]),
     (value) => ({
       ...value,
-      discriminator: LOCK_OPTION_DEPOSIT_CALLBACK_DISCRIMINATOR,
+      discriminator: ADD_OPTION_STAKE_CALLBACK_DISCRIMINATOR,
     })
   );
 }
 
-export function getLockOptionDepositCallbackInstructionDataDecoder(): Decoder<LockOptionDepositCallbackInstructionData> {
+export function getAddOptionStakeCallbackInstructionDataDecoder(): Decoder<AddOptionStakeCallbackInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     [
@@ -179,7 +180,7 @@ export function getLockOptionDepositCallbackInstructionDataDecoder(): Decoder<Lo
             [
               'fields',
               getTupleDecoder([
-                getLockOptionDepositOutputDecoder(),
+                getAddOptionStakeOutputDecoder(),
                 getArrayDecoder(getU8Decoder(), { size: 64 }),
               ]),
             ],
@@ -189,7 +190,7 @@ export function getLockOptionDepositCallbackInstructionDataDecoder(): Decoder<Lo
         [
           'MarkerForIdlBuildDoNotUseThis',
           getStructDecoder([
-            ['fields', getTupleDecoder([getLockOptionDepositOutputDecoder()])],
+            ['fields', getTupleDecoder([getAddOptionStakeOutputDecoder()])],
           ]),
         ],
       ]),
@@ -197,17 +198,17 @@ export function getLockOptionDepositCallbackInstructionDataDecoder(): Decoder<Lo
   ]);
 }
 
-export function getLockOptionDepositCallbackInstructionDataCodec(): Codec<
-  LockOptionDepositCallbackInstructionDataArgs,
-  LockOptionDepositCallbackInstructionData
+export function getAddOptionStakeCallbackInstructionDataCodec(): Codec<
+  AddOptionStakeCallbackInstructionDataArgs,
+  AddOptionStakeCallbackInstructionData
 > {
   return combineCodec(
-    getLockOptionDepositCallbackInstructionDataEncoder(),
-    getLockOptionDepositCallbackInstructionDataDecoder()
+    getAddOptionStakeCallbackInstructionDataEncoder(),
+    getAddOptionStakeCallbackInstructionDataDecoder()
   );
 }
 
-export type LockOptionDepositCallbackInput<
+export type AddOptionStakeCallbackInput<
   TAccountArciumProgram extends string = string,
   TAccountCompDefAccount extends string = string,
   TAccountMxeAccount extends string = string,
@@ -215,7 +216,8 @@ export type LockOptionDepositCallbackInput<
   TAccountClusterAccount extends string = string,
   TAccountInstructionsSysvar extends string = string,
   TAccountSourceVta extends string = string,
-  TAccountLockedVta extends string = string,
+  TAccountMarket extends string = string,
+  TAccountShareAccount extends string = string,
 > = {
   arciumProgram?: Address<TAccountArciumProgram>;
   compDefAccount: Address<TAccountCompDefAccount>;
@@ -224,11 +226,12 @@ export type LockOptionDepositCallbackInput<
   clusterAccount: Address<TAccountClusterAccount>;
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
   sourceVta: Address<TAccountSourceVta>;
-  lockedVta: Address<TAccountLockedVta>;
-  output: LockOptionDepositCallbackInstructionDataArgs['output'];
+  market: Address<TAccountMarket>;
+  shareAccount: Address<TAccountShareAccount>;
+  output: AddOptionStakeCallbackInstructionDataArgs['output'];
 };
 
-export function getLockOptionDepositCallbackInstruction<
+export function getAddOptionStakeCallbackInstruction<
   TAccountArciumProgram extends string,
   TAccountCompDefAccount extends string,
   TAccountMxeAccount extends string,
@@ -236,10 +239,11 @@ export function getLockOptionDepositCallbackInstruction<
   TAccountClusterAccount extends string,
   TAccountInstructionsSysvar extends string,
   TAccountSourceVta extends string,
-  TAccountLockedVta extends string,
+  TAccountMarket extends string,
+  TAccountShareAccount extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: LockOptionDepositCallbackInput<
+  input: AddOptionStakeCallbackInput<
     TAccountArciumProgram,
     TAccountCompDefAccount,
     TAccountMxeAccount,
@@ -247,10 +251,11 @@ export function getLockOptionDepositCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountSourceVta,
-    TAccountLockedVta
+    TAccountMarket,
+    TAccountShareAccount
   >,
   config?: { programAddress?: TProgramAddress }
-): LockOptionDepositCallbackInstruction<
+): AddOptionStakeCallbackInstruction<
   TProgramAddress,
   TAccountArciumProgram,
   TAccountCompDefAccount,
@@ -259,7 +264,8 @@ export function getLockOptionDepositCallbackInstruction<
   TAccountClusterAccount,
   TAccountInstructionsSysvar,
   TAccountSourceVta,
-  TAccountLockedVta
+  TAccountMarket,
+  TAccountShareAccount
 > {
   // Program address.
   const programAddress =
@@ -280,7 +286,8 @@ export function getLockOptionDepositCallbackInstruction<
       isWritable: false,
     },
     sourceVta: { value: input.sourceVta ?? null, isWritable: true },
-    lockedVta: { value: input.lockedVta ?? null, isWritable: true },
+    market: { value: input.market ?? null, isWritable: true },
+    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -310,13 +317,14 @@ export function getLockOptionDepositCallbackInstruction<
       getAccountMeta(accounts.clusterAccount),
       getAccountMeta(accounts.instructionsSysvar),
       getAccountMeta(accounts.sourceVta),
-      getAccountMeta(accounts.lockedVta),
+      getAccountMeta(accounts.market),
+      getAccountMeta(accounts.shareAccount),
     ],
-    data: getLockOptionDepositCallbackInstructionDataEncoder().encode(
-      args as LockOptionDepositCallbackInstructionDataArgs
+    data: getAddOptionStakeCallbackInstructionDataEncoder().encode(
+      args as AddOptionStakeCallbackInstructionDataArgs
     ),
     programAddress,
-  } as LockOptionDepositCallbackInstruction<
+  } as AddOptionStakeCallbackInstruction<
     TProgramAddress,
     TAccountArciumProgram,
     TAccountCompDefAccount,
@@ -325,11 +333,12 @@ export function getLockOptionDepositCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountSourceVta,
-    TAccountLockedVta
+    TAccountMarket,
+    TAccountShareAccount
   >);
 }
 
-export type ParsedLockOptionDepositCallbackInstruction<
+export type ParsedAddOptionStakeCallbackInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -342,20 +351,21 @@ export type ParsedLockOptionDepositCallbackInstruction<
     clusterAccount: TAccountMetas[4];
     instructionsSysvar: TAccountMetas[5];
     sourceVta: TAccountMetas[6];
-    lockedVta: TAccountMetas[7];
+    market: TAccountMetas[7];
+    shareAccount: TAccountMetas[8];
   };
-  data: LockOptionDepositCallbackInstructionData;
+  data: AddOptionStakeCallbackInstructionData;
 };
 
-export function parseLockOptionDepositCallbackInstruction<
+export function parseAddOptionStakeCallbackInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedLockOptionDepositCallbackInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+): ParsedAddOptionStakeCallbackInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -375,9 +385,10 @@ export function parseLockOptionDepositCallbackInstruction<
       clusterAccount: getNextAccount(),
       instructionsSysvar: getNextAccount(),
       sourceVta: getNextAccount(),
-      lockedVta: getNextAccount(),
+      market: getNextAccount(),
+      shareAccount: getNextAccount(),
     },
-    data: getLockOptionDepositCallbackInstructionDataDecoder().decode(
+    data: getAddOptionStakeCallbackInstructionDataDecoder().decode(
       instruction.data
     ),
   };

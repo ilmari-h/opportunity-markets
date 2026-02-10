@@ -7,6 +7,8 @@
  */
 
 export * from './addMarketOption';
+export * from './addOptionStakeCallback';
+export * from './addOptionStakeCompDef';
 export * from './buyOpportunityMarketSharesCallback';
 export * from './buyOpportunityMarketSharesCompDef';
 export * from './buyVoteTokensCallback';
@@ -26,8 +28,6 @@ export * from './initShareAccount';
 export * from './initVoteTokenAccount';
 export * from './initVoteTokenAccountCallback';
 export * from './initVoteTokenAccountCompDef';
-export * from './lockOptionDepositCallback';
-export * from './lockOptionDepositCompDef';
 export * from './mintVoteTokens';
 export * from './openMarket';
 export * from './revealShares';

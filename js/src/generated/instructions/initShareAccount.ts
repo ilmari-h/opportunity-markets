@@ -10,10 +10,8 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
-  getAddressEncoder,
   getBytesDecoder,
   getBytesEncoder,
-  getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
   getU128Decoder,
@@ -35,11 +33,7 @@ import {
   type WritableSignerAccount,
 } from '@solana/kit';
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
-import {
-  expectAddress,
-  getAccountMetaFactory,
-  type ResolvedAccount,
-} from '../shared';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const INIT_SHARE_ACCOUNT_DISCRIMINATOR = new Uint8Array([
   141, 106, 216, 55, 166, 167, 139, 141,
@@ -114,102 +108,6 @@ export function getInitShareAccountInstructionDataCodec(): FixedSizeCodec<
     getInitShareAccountInstructionDataEncoder(),
     getInitShareAccountInstructionDataDecoder()
   );
-}
-
-export type InitShareAccountAsyncInput<
-  TAccountSigner extends string = string,
-  TAccountMarket extends string = string,
-  TAccountShareAccount extends string = string,
-  TAccountSystemProgram extends string = string,
-> = {
-  signer: TransactionSigner<TAccountSigner>;
-  market: Address<TAccountMarket>;
-  shareAccount?: Address<TAccountShareAccount>;
-  systemProgram?: Address<TAccountSystemProgram>;
-  stateNonce: InitShareAccountInstructionDataArgs['stateNonce'];
-};
-
-export async function getInitShareAccountInstructionAsync<
-  TAccountSigner extends string,
-  TAccountMarket extends string,
-  TAccountShareAccount extends string,
-  TAccountSystemProgram extends string,
-  TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
->(
-  input: InitShareAccountAsyncInput<
-    TAccountSigner,
-    TAccountMarket,
-    TAccountShareAccount,
-    TAccountSystemProgram
-  >,
-  config?: { programAddress?: TProgramAddress }
-): Promise<
-  InitShareAccountInstruction<
-    TProgramAddress,
-    TAccountSigner,
-    TAccountMarket,
-    TAccountShareAccount,
-    TAccountSystemProgram
-  >
-> {
-  // Program address.
-  const programAddress =
-    config?.programAddress ?? OPPORTUNITY_MARKET_PROGRAM_ADDRESS;
-
-  // Original accounts.
-  const originalAccounts = {
-    signer: { value: input.signer ?? null, isWritable: true },
-    market: { value: input.market ?? null, isWritable: false },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
-    systemProgram: { value: input.systemProgram ?? null, isWritable: false },
-  };
-  const accounts = originalAccounts as Record<
-    keyof typeof originalAccounts,
-    ResolvedAccount
-  >;
-
-  // Original args.
-  const args = { ...input };
-
-  // Resolve default values.
-  if (!accounts.shareAccount.value) {
-    accounts.shareAccount.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            115, 104, 97, 114, 101, 95, 97, 99, 99, 111, 117, 110, 116,
-          ])
-        ),
-        getAddressEncoder().encode(expectAddress(accounts.signer.value)),
-        getAddressEncoder().encode(expectAddress(accounts.market.value)),
-      ],
-    });
-  }
-  if (!accounts.systemProgram.value) {
-    accounts.systemProgram.value =
-      '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
-  }
-
-  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
-  return Object.freeze({
-    accounts: [
-      getAccountMeta(accounts.signer),
-      getAccountMeta(accounts.market),
-      getAccountMeta(accounts.shareAccount),
-      getAccountMeta(accounts.systemProgram),
-    ],
-    data: getInitShareAccountInstructionDataEncoder().encode(
-      args as InitShareAccountInstructionDataArgs
-    ),
-    programAddress,
-  } as InitShareAccountInstruction<
-    TProgramAddress,
-    TAccountSigner,
-    TAccountMarket,
-    TAccountShareAccount,
-    TAccountSystemProgram
-  >);
 }
 
 export type InitShareAccountInput<

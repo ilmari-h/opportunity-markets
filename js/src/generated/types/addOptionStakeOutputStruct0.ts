@@ -23,35 +23,47 @@ import {
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type LockOptionDepositOutputStruct0 = {
+export type AddOptionStakeOutputStruct0 = {
   field0: boolean;
   field1: {
     encryptionKey: Array<number>;
     nonce: bigint;
     ciphertexts: Array<Array<number>>;
   };
-  field2: {
+  field2: { nonce: bigint; ciphertexts: Array<Array<number>> };
+  field3: {
+    encryptionKey: Array<number>;
+    nonce: bigint;
+    ciphertexts: Array<Array<number>>;
+  };
+  field4: {
     encryptionKey: Array<number>;
     nonce: bigint;
     ciphertexts: Array<Array<number>>;
   };
 };
 
-export type LockOptionDepositOutputStruct0Args = {
+export type AddOptionStakeOutputStruct0Args = {
   field0: boolean;
   field1: {
     encryptionKey: Array<number>;
     nonce: number | bigint;
     ciphertexts: Array<Array<number>>;
   };
-  field2: {
+  field2: { nonce: number | bigint; ciphertexts: Array<Array<number>> };
+  field3: {
+    encryptionKey: Array<number>;
+    nonce: number | bigint;
+    ciphertexts: Array<Array<number>>;
+  };
+  field4: {
     encryptionKey: Array<number>;
     nonce: number | bigint;
     ciphertexts: Array<Array<number>>;
   };
 };
 
-export function getLockOptionDepositOutputStruct0Encoder(): FixedSizeEncoder<LockOptionDepositOutputStruct0Args> {
+export function getAddOptionStakeOutputStruct0Encoder(): FixedSizeEncoder<AddOptionStakeOutputStruct0Args> {
   return getStructEncoder([
     ['field0', getBooleanEncoder()],
     [
@@ -70,7 +82,6 @@ export function getLockOptionDepositOutputStruct0Encoder(): FixedSizeEncoder<Loc
     [
       'field2',
       getStructEncoder([
-        ['encryptionKey', getArrayEncoder(getU8Encoder(), { size: 32 })],
         ['nonce', getU128Encoder()],
         [
           'ciphertexts',
@@ -80,10 +91,36 @@ export function getLockOptionDepositOutputStruct0Encoder(): FixedSizeEncoder<Loc
         ],
       ]),
     ],
+    [
+      'field3',
+      getStructEncoder([
+        ['encryptionKey', getArrayEncoder(getU8Encoder(), { size: 32 })],
+        ['nonce', getU128Encoder()],
+        [
+          'ciphertexts',
+          getArrayEncoder(getArrayEncoder(getU8Encoder(), { size: 32 }), {
+            size: 2,
+          }),
+        ],
+      ]),
+    ],
+    [
+      'field4',
+      getStructEncoder([
+        ['encryptionKey', getArrayEncoder(getU8Encoder(), { size: 32 })],
+        ['nonce', getU128Encoder()],
+        [
+          'ciphertexts',
+          getArrayEncoder(getArrayEncoder(getU8Encoder(), { size: 32 }), {
+            size: 2,
+          }),
+        ],
+      ]),
+    ],
   ]);
 }
 
-export function getLockOptionDepositOutputStruct0Decoder(): FixedSizeDecoder<LockOptionDepositOutputStruct0> {
+export function getAddOptionStakeOutputStruct0Decoder(): FixedSizeDecoder<AddOptionStakeOutputStruct0> {
   return getStructDecoder([
     ['field0', getBooleanDecoder()],
     [
@@ -102,7 +139,6 @@ export function getLockOptionDepositOutputStruct0Decoder(): FixedSizeDecoder<Loc
     [
       'field2',
       getStructDecoder([
-        ['encryptionKey', getArrayDecoder(getU8Decoder(), { size: 32 })],
         ['nonce', getU128Decoder()],
         [
           'ciphertexts',
@@ -112,15 +148,41 @@ export function getLockOptionDepositOutputStruct0Decoder(): FixedSizeDecoder<Loc
         ],
       ]),
     ],
+    [
+      'field3',
+      getStructDecoder([
+        ['encryptionKey', getArrayDecoder(getU8Decoder(), { size: 32 })],
+        ['nonce', getU128Decoder()],
+        [
+          'ciphertexts',
+          getArrayDecoder(getArrayDecoder(getU8Decoder(), { size: 32 }), {
+            size: 2,
+          }),
+        ],
+      ]),
+    ],
+    [
+      'field4',
+      getStructDecoder([
+        ['encryptionKey', getArrayDecoder(getU8Decoder(), { size: 32 })],
+        ['nonce', getU128Decoder()],
+        [
+          'ciphertexts',
+          getArrayDecoder(getArrayDecoder(getU8Decoder(), { size: 32 }), {
+            size: 2,
+          }),
+        ],
+      ]),
+    ],
   ]);
 }
 
-export function getLockOptionDepositOutputStruct0Codec(): FixedSizeCodec<
-  LockOptionDepositOutputStruct0Args,
-  LockOptionDepositOutputStruct0
+export function getAddOptionStakeOutputStruct0Codec(): FixedSizeCodec<
+  AddOptionStakeOutputStruct0Args,
+  AddOptionStakeOutputStruct0
 > {
   return combineCodec(
-    getLockOptionDepositOutputStruct0Encoder(),
-    getLockOptionDepositOutputStruct0Decoder()
+    getAddOptionStakeOutputStruct0Encoder(),
+    getAddOptionStakeOutputStruct0Decoder()
   );
 }

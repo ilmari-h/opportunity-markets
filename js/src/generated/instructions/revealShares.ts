@@ -10,9 +10,10 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
-  getAddressEncoder,
   getArrayDecoder,
   getArrayEncoder,
+  getBooleanDecoder,
+  getBooleanEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getProgramDerivedAddress,
@@ -39,11 +40,7 @@ import {
   type WritableSignerAccount,
 } from '@solana/kit';
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
-import {
-  expectAddress,
-  getAccountMetaFactory,
-  type ResolvedAccount,
-} from '../shared';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const REVEAL_SHARES_DISCRIMINATOR = new Uint8Array([
   35, 237, 35, 4, 200, 197, 110, 118,
@@ -138,11 +135,13 @@ export type RevealSharesInstruction<
 export type RevealSharesInstructionData = {
   discriminator: ReadonlyUint8Array;
   computationOffset: bigint;
+  isOptionCreator: boolean;
   userPubkey: Array<number>;
 };
 
 export type RevealSharesInstructionDataArgs = {
   computationOffset: number | bigint;
+  isOptionCreator: boolean;
   userPubkey: Array<number>;
 };
 
@@ -151,6 +150,7 @@ export function getRevealSharesInstructionDataEncoder(): FixedSizeEncoder<Reveal
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['computationOffset', getU64Encoder()],
+      ['isOptionCreator', getBooleanEncoder()],
       ['userPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
     ]),
     (value) => ({ ...value, discriminator: REVEAL_SHARES_DISCRIMINATOR })
@@ -161,6 +161,7 @@ export function getRevealSharesInstructionDataDecoder(): FixedSizeDecoder<Reveal
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['computationOffset', getU64Decoder()],
+    ['isOptionCreator', getBooleanDecoder()],
     ['userPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
   ]);
 }
@@ -196,7 +197,7 @@ export type RevealSharesAsyncInput<
   signer: TransactionSigner<TAccountSigner>;
   owner: Address<TAccountOwner>;
   market: Address<TAccountMarket>;
-  shareAccount?: Address<TAccountShareAccount>;
+  shareAccount: Address<TAccountShareAccount>;
   userVta: Address<TAccountUserVta>;
   signPdaAccount?: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
@@ -210,6 +211,7 @@ export type RevealSharesAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
   computationOffset: RevealSharesInstructionDataArgs['computationOffset'];
+  isOptionCreator: RevealSharesInstructionDataArgs['isOptionCreator'];
   userPubkey: RevealSharesInstructionDataArgs['userPubkey'];
 };
 
@@ -307,20 +309,6 @@ export async function getRevealSharesInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.shareAccount.value) {
-    accounts.shareAccount.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            115, 104, 97, 114, 101, 95, 97, 99, 99, 111, 117, 110, 116,
-          ])
-        ),
-        getAddressEncoder().encode(expectAddress(accounts.owner.value)),
-        getAddressEncoder().encode(expectAddress(accounts.market.value)),
-      ],
-    });
-  }
   if (!accounts.signPdaAccount.value) {
     accounts.signPdaAccount.value = await getProgramDerivedAddress({
       programAddress,
@@ -431,6 +419,7 @@ export type RevealSharesInput<
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
   computationOffset: RevealSharesInstructionDataArgs['computationOffset'];
+  isOptionCreator: RevealSharesInstructionDataArgs['isOptionCreator'];
   userPubkey: RevealSharesInstructionDataArgs['userPubkey'];
 };
 

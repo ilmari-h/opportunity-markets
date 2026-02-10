@@ -11,6 +11,8 @@ import {
   fixDecoderSize,
   fixEncoderSize,
   getAddressEncoder,
+  getBooleanDecoder,
+  getBooleanEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getProgramDerivedAddress,
@@ -104,15 +106,20 @@ export type CloseShareAccountInstruction<
 export type CloseShareAccountInstructionData = {
   discriminator: ReadonlyUint8Array;
   optionIndex: number;
+  isOptionCreator: boolean;
 };
 
-export type CloseShareAccountInstructionDataArgs = { optionIndex: number };
+export type CloseShareAccountInstructionDataArgs = {
+  optionIndex: number;
+  isOptionCreator: boolean;
+};
 
 export function getCloseShareAccountInstructionDataEncoder(): FixedSizeEncoder<CloseShareAccountInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['optionIndex', getU16Encoder()],
+      ['isOptionCreator', getBooleanEncoder()],
     ]),
     (value) => ({ ...value, discriminator: CLOSE_SHARE_ACCOUNT_DISCRIMINATOR })
   );
@@ -122,6 +129,7 @@ export function getCloseShareAccountInstructionDataDecoder(): FixedSizeDecoder<C
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['optionIndex', getU16Decoder()],
+    ['isOptionCreator', getBooleanDecoder()],
   ]);
 }
 
@@ -148,7 +156,7 @@ export type CloseShareAccountAsyncInput<
 > = {
   owner: TransactionSigner<TAccountOwner>;
   market: Address<TAccountMarket>;
-  shareAccount?: Address<TAccountShareAccount>;
+  shareAccount: Address<TAccountShareAccount>;
   option?: Address<TAccountOption>;
   tokenMint: Address<TAccountTokenMint>;
   /** Market's ATA holding reward tokens */
@@ -158,6 +166,7 @@ export type CloseShareAccountAsyncInput<
   tokenProgram: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   optionIndex: CloseShareAccountInstructionDataArgs['optionIndex'];
+  isOptionCreator: CloseShareAccountInstructionDataArgs['isOptionCreator'];
 };
 
 export async function getCloseShareAccountInstructionAsync<
@@ -226,20 +235,6 @@ export async function getCloseShareAccountInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.shareAccount.value) {
-    accounts.shareAccount.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            115, 104, 97, 114, 101, 95, 97, 99, 99, 111, 117, 110, 116,
-          ])
-        ),
-        getAddressEncoder().encode(expectAddress(accounts.owner.value)),
-        getAddressEncoder().encode(expectAddress(accounts.market.value)),
-      ],
-    });
-  }
   if (!accounts.option.value) {
     accounts.option.value = await getProgramDerivedAddress({
       programAddress,
@@ -322,6 +317,7 @@ export type CloseShareAccountInput<
   tokenProgram: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   optionIndex: CloseShareAccountInstructionDataArgs['optionIndex'];
+  isOptionCreator: CloseShareAccountInstructionDataArgs['isOptionCreator'];
 };
 
 export function getCloseShareAccountInstruction<

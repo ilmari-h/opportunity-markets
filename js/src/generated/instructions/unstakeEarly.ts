@@ -10,9 +10,10 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
-  getAddressEncoder,
   getArrayDecoder,
   getArrayEncoder,
+  getBooleanDecoder,
+  getBooleanEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getProgramDerivedAddress,
@@ -39,11 +40,7 @@ import {
   type WritableSignerAccount,
 } from '@solana/kit';
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
-import {
-  expectAddress,
-  getAccountMetaFactory,
-  type ResolvedAccount,
-} from '../shared';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const UNSTAKE_EARLY_DISCRIMINATOR = new Uint8Array([
   246, 212, 81, 180, 65, 2, 126, 125,
@@ -134,11 +131,13 @@ export type UnstakeEarlyInstruction<
 export type UnstakeEarlyInstructionData = {
   discriminator: ReadonlyUint8Array;
   computationOffset: bigint;
+  isOptionCreator: boolean;
   userPubkey: Array<number>;
 };
 
 export type UnstakeEarlyInstructionDataArgs = {
   computationOffset: number | bigint;
+  isOptionCreator: boolean;
   userPubkey: Array<number>;
 };
 
@@ -147,6 +146,7 @@ export function getUnstakeEarlyInstructionDataEncoder(): FixedSizeEncoder<Unstak
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['computationOffset', getU64Encoder()],
+      ['isOptionCreator', getBooleanEncoder()],
       ['userPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
     ]),
     (value) => ({ ...value, discriminator: UNSTAKE_EARLY_DISCRIMINATOR })
@@ -157,6 +157,7 @@ export function getUnstakeEarlyInstructionDataDecoder(): FixedSizeDecoder<Unstak
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['computationOffset', getU64Decoder()],
+    ['isOptionCreator', getBooleanDecoder()],
     ['userPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
   ]);
 }
@@ -191,7 +192,7 @@ export type UnstakeEarlyAsyncInput<
   signer: TransactionSigner<TAccountSigner>;
   market: Address<TAccountMarket>;
   userVta: Address<TAccountUserVta>;
-  shareAccount?: Address<TAccountShareAccount>;
+  shareAccount: Address<TAccountShareAccount>;
   signPdaAccount?: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
   mempoolAccount: Address<TAccountMempoolAccount>;
@@ -204,6 +205,7 @@ export type UnstakeEarlyAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
   computationOffset: UnstakeEarlyInstructionDataArgs['computationOffset'];
+  isOptionCreator: UnstakeEarlyInstructionDataArgs['isOptionCreator'];
   userPubkey: UnstakeEarlyInstructionDataArgs['userPubkey'];
 };
 
@@ -297,20 +299,6 @@ export async function getUnstakeEarlyInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.shareAccount.value) {
-    accounts.shareAccount.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            115, 104, 97, 114, 101, 95, 97, 99, 99, 111, 117, 110, 116,
-          ])
-        ),
-        getAddressEncoder().encode(expectAddress(accounts.signer.value)),
-        getAddressEncoder().encode(expectAddress(accounts.market.value)),
-      ],
-    });
-  }
   if (!accounts.signPdaAccount.value) {
     accounts.signPdaAccount.value = await getProgramDerivedAddress({
       programAddress,
@@ -417,6 +405,7 @@ export type UnstakeEarlyInput<
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
   computationOffset: UnstakeEarlyInstructionDataArgs['computationOffset'];
+  isOptionCreator: UnstakeEarlyInstructionDataArgs['isOptionCreator'];
   userPubkey: UnstakeEarlyInstructionDataArgs['userPubkey'];
 };
 
