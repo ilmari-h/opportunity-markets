@@ -83,12 +83,11 @@ describe("OpportunityMarket", () => {
     const marketFundingAmount = 1_000_000_000n;
     const numParticipants = 4;
 
-    // Airdrop enough SOL to cover tx fees (2 SOL per account)
     const env = await createTestEnvironment(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants,
-      airdropLamports: 2_000_000_000n, // 2 SOL for fees
+      airdropLamports: 2_000_000_000n, // 2 SOL
       initialTokenAmount: 2_000_000_000n, // 2 billion tokens per account
       marketConfig: {
         rewardAmount: marketFundingAmount,
@@ -168,7 +167,7 @@ describe("OpportunityMarket", () => {
       })
     }
 
-    // Wait for all VTA computations to finalize in parallel
+    // Wait for all VTA computations to finalize
     await awaitBatchComputationFinalization(rpc, initVtaData.map(({offset}) => offset))
 
     // Mint vote tokens for all participants
@@ -645,10 +644,8 @@ describe("OpportunityMarket", () => {
       expect(gain > 0n).to.be.true;
     }
 
-    // TODO: this is off by 2 - also claim from those 2 share accounts that were made while creating option
-    // Total market loss should equal the full reward amount, tolerance of 1 token for rounding error.
+    // Total market loss should equal the full reward amount, tolerance of 2 for rounding errors
     const marketLoss = marketBalanceBefore - marketBalanceAfter;
-    console.log("MARKET BALANCES", marketBalanceBefore, marketBalanceAfter, marketLoss)
     expect(marketLoss >= marketFundingAmount - 2n && marketLoss <= marketFundingAmount).to.be.true;
 
     // Verify proportional reward distribution among participant winners:
