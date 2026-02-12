@@ -26,6 +26,7 @@ pub struct RevealShares<'info> {
         seeds = [SHARE_ACCOUNT_SEED, owner.key().as_ref(), market.key().as_ref(), &share_account_id.to_le_bytes()],
         bump = share_account.bump,
         constraint = share_account.revealed_amount.is_none() @ ErrorCode::AlreadyRevealed,
+        constraint = !share_account.locked @ ErrorCode::Locked,
     )]
     pub share_account: Box<Account<'info, ShareAccount>>,
 
@@ -99,6 +100,9 @@ pub fn reveal_shares(
     let user_vta_key = ctx.accounts.user_vta.key();
     let user_vta_nonce = ctx.accounts.user_vta.state_nonce;
     
+    // Lock ShareAccount while MPC computation is pending
+    ctx.accounts.share_account.locked = true;
+
     // Lock VTA if going to be modified by callback
     if ctx.accounts.share_account.unstaked_at_timestamp.is_none() {
         ctx.accounts.user_vta.locked = true;
@@ -188,6 +192,7 @@ pub fn reveal_shares_callback(
     // Update share account with revealed values
     ctx.accounts.share_account.revealed_amount = Some(revealed_amount);
     ctx.accounts.share_account.revealed_option = Some(revealed_option);
+    ctx.accounts.share_account.locked = false;
 
     // Only credit VTA if shares were not already unstaked
     if ctx.accounts.share_account.unstaked_at_timestamp.is_none() {

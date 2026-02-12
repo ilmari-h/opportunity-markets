@@ -76,6 +76,7 @@ export type ShareAccount = {
   revealedOption: Option<number>;
   revealedScore: Option<bigint>;
   totalIncremented: boolean;
+  locked: boolean;
 };
 
 export type ShareAccountArgs = {
@@ -92,6 +93,7 @@ export type ShareAccountArgs = {
   revealedOption: OptionOrNullable<number>;
   revealedScore: OptionOrNullable<number | bigint>;
   totalIncremented: boolean;
+  locked: boolean;
 };
 
 export function getShareAccountEncoder(): Encoder<ShareAccountArgs> {
@@ -121,6 +123,7 @@ export function getShareAccountEncoder(): Encoder<ShareAccountArgs> {
       ['revealedOption', getOptionEncoder(getU16Encoder())],
       ['revealedScore', getOptionEncoder(getU64Encoder())],
       ['totalIncremented', getBooleanEncoder()],
+      ['locked', getBooleanEncoder()],
     ]),
     (value) => ({ ...value, discriminator: SHARE_ACCOUNT_DISCRIMINATOR })
   );
@@ -152,6 +155,7 @@ export function getShareAccountDecoder(): Decoder<ShareAccount> {
     ['revealedOption', getOptionDecoder(getU16Decoder())],
     ['revealedScore', getOptionDecoder(getU64Decoder())],
     ['totalIncremented', getBooleanDecoder()],
+    ['locked', getBooleanDecoder()],
   ]);
 }
 

@@ -54,7 +54,7 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake: 120n,
-        timeToReveal: 25n,
+        timeToReveal: 20n,
       },
     });
 
@@ -90,7 +90,7 @@ describe("OpportunityMarket", () => {
       amount: buySharesAmounts[idx],
       optionIndex: idx < numParticipants / 2 ? optionA : optionB,
     }));
-    await runner.buySharesBatch(purchases);
+    await runner.stakeOnOptionBatch(purchases);
 
     // Market creator selects winning option
     await runner.selectOption(winningOptionIndex);
@@ -113,13 +113,10 @@ describe("OpportunityMarket", () => {
     );
 
     // Reveal creator's share accounts
-    console.log("REVEALING?")
     const creatorShareAccounts = runner.getUserShareAccounts(runner.creator);
     await runner.revealSharesBatch(
       creatorShareAccounts.map((sa) => ({ userId: runner.creator, shareAccountId: sa.id }))
     );
-
-    console.log("REVALED?")
 
     // Verify revealed shares for winners
     for (let i = 0; i < winners.length; i++) {
@@ -128,7 +125,6 @@ describe("OpportunityMarket", () => {
       expect(shareAccount.data.revealedAmount).to.deep.equal(some(sa.amount));
       expect(shareAccount.data.revealedOption).to.deep.equal(some(winningOptionIndex));
     }
-    console.log("Winners verified")
 
     // Verify creator's revealed shares
     for (const sa of creatorShareAccounts) {
@@ -136,7 +132,6 @@ describe("OpportunityMarket", () => {
       expect(shareAccount.data.revealedAmount).to.deep.equal(some(sa.amount));
       expect(shareAccount.data.revealedOption).to.deep.equal(some(sa.optionIndex));
     }
-    console.log("Creator verified")
 
     // Increment option tally for winners
     await runner.incrementOptionTallyBatch(
@@ -146,7 +141,6 @@ describe("OpportunityMarket", () => {
         shareAccountId: winnerShareAccounts[i].id,
       }))
     );
-    console.log("Winners incremented")
 
     // Increment tally for creator's share accounts
     await runner.incrementOptionTallyBatch(
@@ -156,15 +150,11 @@ describe("OpportunityMarket", () => {
         shareAccountId: sa.id,
       }))
     );
-    console.log("Creator incremented")
 
     // Verify option tally
     const totalWinningShares = winnerShareAccounts.reduce((sum, sa) => sum + sa.amount, 0n) + minDeposit;
     const optionAccount = await runner.fetchOptionData(winningOptionIndex);
     expect(optionAccount.data.totalShares).to.deep.equal(some(totalWinningShares));
-
-
-    console.log("Options ok")
 
     // Get timestamps for reward calculation
     const updatedMarket = await runner.fetchMarket();
@@ -202,7 +192,6 @@ describe("OpportunityMarket", () => {
       .data.amount;
     const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
 
-    console.log("Balances calculated")
     // Close share accounts for winners
     await runner.closeShareAccountBatch(
       winners.map((userId, i) => ({
@@ -211,7 +200,6 @@ describe("OpportunityMarket", () => {
         shareAccountId: winnerShareAccounts[i].id,
       }))
     );
-    console.log("Winners shares closed")
 
     // Close creator's share accounts
     await runner.closeShareAccountBatch(
@@ -221,8 +209,6 @@ describe("OpportunityMarket", () => {
         shareAccountId: sa.id,
       }))
     );
-
-    console.log("Creator shares closed")
 
     // Verify share accounts were closed
     for (let i = 0; i < winners.length; i++) {
@@ -296,8 +282,9 @@ describe("OpportunityMarket", () => {
       initialTokenAmount: 2_000_000_000n,
       marketConfig: {
         rewardAmount: marketFundingAmount,
+        maxShares: 100_000_000n, // Must accommodate stake amounts (quarterAmount = 25M each)
         timeToStake: 120n,
-        timeToReveal: 15n,
+        timeToReveal: 20n,
       },
     });
 
@@ -326,14 +313,13 @@ describe("OpportunityMarket", () => {
 
     // User explicitly stakes more shares for both options (1/4 each)
     // This creates share accounts 2 and 3
-    await runner.buySharesBatch([
+    await runner.stakeOnOptionBatch([
       { userId: user, amount: quarterAmount, optionIndex: optionA },
       { userId: user, amount: quarterAmount, optionIndex: optionB },
     ]);
 
     // User now has 4 share accounts, with all vote tokens staked
     const userShareAccounts = runner.getUserShareAccounts(user);
-    console.log("SHARE ACCOUNTS",userShareAccounts)
     expect(userShareAccounts.length).to.equal(4);
 
     // Market creator selects winning option (Option A)
@@ -345,16 +331,12 @@ describe("OpportunityMarket", () => {
       await runner.revealShares(user, sa.id);
     }
 
-
     // Verify all shares are revealed
     for (const sa of userShareAccounts) {
       const shareAccount = await runner.fetchShareAccountData(user, sa.id);
-      console.log("SHARE ACCOUNT", shareAccount.data)
-      // expect(shareAccount.data.revealedAmount).to.deep.equal(some(sa.amount));
-      // expect(shareAccount.data.revealedOption).to.deep.equal(some(sa.optionIndex));
+      expect(shareAccount.data.revealedAmount).to.deep.equal(some(sa.amount));
+      expect(shareAccount.data.revealedOption).to.deep.equal(some(sa.optionIndex));
     }
-
-    throw new Error("OK")
 
     // Increment tally for winning option share accounts
     const winningShareAccounts = runner.getUserShareAccountsForOption(user, winningOptionIndex);
@@ -370,9 +352,11 @@ describe("OpportunityMarket", () => {
     const timeToReveal = Number(runner.getTimeToReveal());
     await sleepUntilOnChainTimestamp(new Date().getTime() / 1000 + timeToReveal);
 
-    // Get token balance before closing
+    // Get balances before closing
     const rpc = runner.getRpc();
-    const balanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
+    const userBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
+    const marketAta = await runner.getMarketAta();
+    const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
 
     // Close ALL share accounts (both winning and losing)
     await runner.closeShareAccountBatch(
@@ -390,15 +374,27 @@ describe("OpportunityMarket", () => {
       expect(exists).to.be.false;
     }
 
-    // Get token balance after closing
-    const balanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
+    // Get balances after closing
+    const userBalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
+    const marketBalanceAfter = (await fetchToken(rpc, marketAta)).data.amount;
 
-    // User should receive back at least their full stake
-    // (plus rewards for winning shares since user is only participant)
-    const totalStaked = voteTokenMintAmount; // All 4 quarters were staked
-    const gained = balanceAfter - balanceBefore;
+    // Calculate gains and losses
+    const userGained = userBalanceAfter - userBalanceBefore;
+    const marketPaidOut = marketBalanceBefore - marketBalanceAfter;
 
-    // User should receive back ALL their stake plus rewards from winning option
-    expect(gained >= totalStaked).to.be.true;
+    // User is the only participant, so they should receive the entire market reward
+    expect(
+      userGained >= marketFundingAmount - 1n && userGained <= marketFundingAmount,
+      `User should gain ~${marketFundingAmount}, got ${userGained}`
+    ).to.be.true;
+
+    // Market should have paid out the full reward amount
+    expect(
+      marketPaidOut >= marketFundingAmount - 1n && marketPaidOut <= marketFundingAmount,
+      `Market should pay out ~${marketFundingAmount}, paid ${marketPaidOut}`
+    ).to.be.true;
+
+    // Market ATA should be empty (or nearly empty due to rounding)
+    expect(marketBalanceAfter <= 1n, `Market ATA should be empty, has ${marketBalanceAfter}`).to.be.true;
   })
 });

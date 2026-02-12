@@ -39,6 +39,7 @@ pub fn init_share_account(
     share_account.encrypted_state_disclosure = [[0u8; 32]; 2];
     share_account.revealed_amount = None;
     share_account.revealed_option = None;
+    share_account.locked = false;
 
     Ok(())
 }

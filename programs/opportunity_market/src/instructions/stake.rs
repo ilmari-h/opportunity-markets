@@ -24,6 +24,7 @@ pub struct Stake<'info> {
     pub market: Box<Account<'info, OpportunityMarket>>,
 
     #[account(
+        mut,
         constraint = user_vta.owner == signer.key() @ ErrorCode::Unauthorized,
         constraint = !user_vta.locked @ ErrorCode::Locked,
     )]
@@ -35,6 +36,7 @@ pub struct Stake<'info> {
         bump,
         constraint = share_account.staked_at_timestamp.is_none() @ ErrorCode::AlreadyPurchased,
         constraint = share_account.unstaked_at_timestamp.is_none() @ ErrorCode::AlreadyUnstaked,
+        constraint = !share_account.locked @ ErrorCode::Locked,
     )]
     pub share_account: Box<Account<'info, ShareAccount>>,
 
@@ -102,6 +104,10 @@ pub fn stake(
 
     // Capture timestamp when the buy is queued, not when callback runs
     ctx.accounts.share_account.staked_at_timestamp = Some(current_timestamp);
+
+    // Lock both accounts while MPC computation is pending
+    ctx.accounts.user_vta.locked = true;
+    ctx.accounts.share_account.locked = true;
 
     let user_vta_key = ctx.accounts.user_vta.key();
     let user_vta_nonce = ctx.accounts.user_vta.state_nonce;
@@ -229,6 +235,10 @@ pub fn buy_opportunity_market_shares_callback(
     ctx.accounts.share_account.encrypted_state = bought_shares_mxe.ciphertexts;
     ctx.accounts.share_account.state_nonce_disclosure = bought_shares_shared.nonce;
     ctx.accounts.share_account.encrypted_state_disclosure = bought_shares_shared.ciphertexts;
+
+    // Unlock both accounts
+    ctx.accounts.user_vote_token_account.locked = false;
+    ctx.accounts.share_account.locked = false;
 
     emit!(SharesPurchasedEvent{
         buyer: ctx.accounts.user_vote_token_account.owner,

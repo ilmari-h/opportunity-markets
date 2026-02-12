@@ -40,6 +40,7 @@ import {
   openMarket as openMarketIx,
   awaitComputationFinalization,
   awaitBatchComputationFinalization,
+  type ComputationResult,
   getVoteTokenAccountAddress,
   getShareAccountAddress as getShareAccountAddressPda,
   fetchShareAccount,
@@ -432,6 +433,12 @@ export class TestRunner {
     }
   }
 
+  private assertComputationSucceeded(result: ComputationResult, operation: string): void {
+    if (result.error) {
+      throw new Error(`${operation} computation callback failed: ${result.error}`);
+    }
+  }
+
   // ============================================================================
   // Market Operations
   // ============================================================================
@@ -519,7 +526,8 @@ export class TestRunner {
       label: `Init VTA for ${userId.toString().slice(0, 8)}...`,
     });
 
-    await awaitComputationFinalization(this.rpc, offset);
+    const result = await awaitComputationFinalization(this.rpc, offset);
+    this.assertComputationSucceeded(result, "initVoteTokenAccount");
 
     const [vtaAddress] = await getVoteTokenAccountAddress(this.mint.address, userId);
     user.voteTokenAccount = vtaAddress;
@@ -547,7 +555,8 @@ export class TestRunner {
       label: `Mint ${amount} vote tokens`,
     });
 
-    await awaitComputationFinalization(this.rpc, offset);
+    const result = await awaitComputationFinalization(this.rpc, offset);
+    this.assertComputationSucceeded(result, "mintVoteTokens");
   }
 
   // ============================================================================
@@ -592,7 +601,8 @@ export class TestRunner {
       label: `Add option "${name}"`,
     });
 
-    await awaitComputationFinalization(this.rpc, offset);
+    const result = await awaitComputationFinalization(this.rpc, offset);
+    this.assertComputationSucceeded(result, `addMarketOption("${name}")`);
 
     // Store share account info
     this.addShareAccount(user, { id: shareAccountId, amount: depositAmount, optionIndex });
@@ -604,100 +614,98 @@ export class TestRunner {
   // Share Operations - Batch First
   // ============================================================================
 
-  async buySharesBatch(purchases: SharePurchase[]): Promise<number[]> {
-    // Pre-allocate share account IDs to avoid conflicts when same user has multiple purchases
-    const userShareAccountOffsets = new Map<string, number>();
-    const preAllocatedIds = purchases.map((p) => {
-      const userKey = p.userId.toString();
-      const user = this.getUser(p.userId);
-      const baseId = this.getNextShareAccountId(user);
-      const offset = userShareAccountOffsets.get(userKey) ?? 0;
-      userShareAccountOffsets.set(userKey, offset + 1);
-      return baseId + offset;
-    });
+  async stakeOnOptionBatch(purchases: SharePurchase[]): Promise<number[]> {
+    // Group purchases by user to handle VTA locking correctly
+    // Each stake locks the VTA until callback completes, so same-user stakes must be sequential
+    const purchasesByUser = new Map<string, { purchase: SharePurchase; originalIndex: number }[]>();
+    for (let i = 0; i < purchases.length; i++) {
+      const p = purchases[i];
+      const key = p.userId.toString();
+      if (!purchasesByUser.has(key)) {
+        purchasesByUser.set(key, []);
+      }
+      purchasesByUser.get(key)!.push({ purchase: p, originalIndex: i });
+    }
 
-    // Build all instruction data in parallel
-    const purchaseData = await Promise.all(
-      purchases.map(async (p, idx) => {
-        const user = this.getUser(p.userId);
-        this.assertVtaInitialized(user);
+    // Results array to maintain original order
+    const results: { shareAccountId: number; originalIndex: number }[] = [];
 
-        const cipher = createCipher(user.x25519Keypair.secretKey, this.mxePublicKey);
-        const shareAccountId = preAllocatedIds[idx];
+    // Process users in parallel, but each user's purchases sequentially
+    await Promise.all(
+      Array.from(purchasesByUser.entries()).map(async ([_userId, userPurchases]) => {
+        for (const { purchase: p, originalIndex } of userPurchases) {
+          const user = this.getUser(p.userId);
+          this.assertVtaInitialized(user);
 
-        // Init share account instruction
-        const initIx = await initShareAccount({
-          signer: user.solanaKeypair,
-          market: this.marketAddress,
-          stateNonce: deserializeLE(randomBytes(16)),
-          shareAccountId,
-        });
+          const cipher = createCipher(user.x25519Keypair.secretKey, this.mxePublicKey);
+          const shareAccountId = this.getNextShareAccountId(user);
 
-        // Stake instruction
-        const inputNonce = randomBytes(16);
-        const ciphertexts = cipher.encrypt([p.amount, BigInt(p.optionIndex)], inputNonce);
-        const computationOffset = randomComputationOffset();
-
-        const [userVta] = await getVoteTokenAccountAddress(this.mint.address, p.userId);
-
-        const stakeIx = await stake(
-          {
+          // Init share account
+          const initIx = await initShareAccount({
             signer: user.solanaKeypair,
             market: this.marketAddress,
-            userVta,
+            stateNonce: deserializeLE(randomBytes(16)),
             shareAccountId,
-            amountCiphertext: ciphertexts[0],
-            selectedOptionCiphertext: ciphertexts[1],
-            userPubkey: user.x25519Keypair.publicKey,
-            inputNonce: deserializeLE(inputNonce),
-            authorizedReaderPubkey: user.x25519Keypair.publicKey,
-            authorizedReaderNonce: deserializeLE(randomBytes(16)),
-          },
-          this.getArciumConfig(computationOffset)
-        );
+          });
 
-        return { user, initIx, stakeIx, computationOffset, shareAccountId, amount: p.amount, optionIndex: p.optionIndex };
+          await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [initIx], {
+            label: `Init share account`,
+          });
+
+          // Stake instruction
+          const inputNonce = randomBytes(16);
+          const ciphertexts = cipher.encrypt([p.amount, BigInt(p.optionIndex)], inputNonce);
+          const computationOffset = randomComputationOffset();
+
+          const [userVta] = await getVoteTokenAccountAddress(this.mint.address, p.userId);
+
+          const stakeIx = await stake(
+            {
+              signer: user.solanaKeypair,
+              market: this.marketAddress,
+              userVta,
+              shareAccountId,
+              amountCiphertext: ciphertexts[0],
+              selectedOptionCiphertext: ciphertexts[1],
+              userPubkey: user.x25519Keypair.publicKey,
+              inputNonce: deserializeLE(inputNonce),
+              authorizedReaderPubkey: user.x25519Keypair.publicKey,
+              authorizedReaderNonce: deserializeLE(randomBytes(16)),
+            },
+            this.getArciumConfig(computationOffset)
+          );
+
+          await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [stakeIx], {
+            label: `Stake on option`,
+          });
+
+          // Wait for this computation to finalize before next stake for this user
+          // This ensures the VTA is unlocked by the callback
+          const result = await awaitComputationFinalization(this.rpc, computationOffset);
+          this.assertComputationSucceeded(result, "stakeOnOption");
+
+          // Store share account info
+          this.addShareAccount(user, {
+            id: shareAccountId,
+            amount: p.amount,
+            optionIndex: p.optionIndex,
+          });
+
+          results.push({ shareAccountId, originalIndex });
+        }
       })
     );
 
-    // Send init share account transactions sequentially
-    for (const data of purchaseData) {
-      await sendTransaction(this.rpc, this.sendAndConfirm, data.user.solanaKeypair, [data.initIx], {
-        label: `Init share account`,
-      });
-    }
-
-    // Send stake transactions sequentially
-    for (const data of purchaseData) {
-      await sendTransaction(this.rpc, this.sendAndConfirm, data.user.solanaKeypair, [data.stakeIx], {
-        label: `Buy shares`,
-      });
-    }
-
-    // Await all computations in batch
-    await awaitBatchComputationFinalization(
-      this.rpc,
-      purchaseData.map((d) => d.computationOffset)
-    );
-
-    // Store share account info for each user
-    for (const data of purchaseData) {
-      this.addShareAccount(data.user, {
-        id: data.shareAccountId,
-        amount: data.amount,
-        optionIndex: data.optionIndex,
-      });
-    }
-
-    return purchaseData.map((d) => d.shareAccountId);
+    // Sort by original index to maintain input order
+    results.sort((a, b) => a.originalIndex - b.originalIndex);
+    return results.map((r) => r.shareAccountId);
   }
 
-  async buyShares(userId: Address, amount: bigint, optionIndex: number): Promise<number> {
-    const [shareAccountId] = await this.buySharesBatch([{ userId, amount, optionIndex }]);
+  async stakeOnOption(userId: Address, amount: bigint, optionIndex: number): Promise<number> {
+    const [shareAccountId] = await this.stakeOnOptionBatch([{ userId, amount, optionIndex }]);
     return shareAccountId;
   }
 
-  // TODO: this is very slow due to sequential computatio nfinalization awaits.
   async revealSharesBatch(reveals: RevealRequest[]): Promise<void> {
     // Group reveals by user to handle VTA locking correctly
     // Each reveal locks the VTA until callback completes, so same-user reveals must be sequential
@@ -710,35 +718,37 @@ export class TestRunner {
       revealsByUser.get(key)!.push(r);
     }
 
-    // Process each user's reveals sequentially (await finalization between each)
-    // Different users can't be parallelized either since we need to await each computation
-    for (const [_userId, userReveals] of revealsByUser) {
-      for (const r of userReveals) {
-        const user = this.getUser(r.userId);
-        const computationOffset = randomComputationOffset();
-        const [userVta] = await getVoteTokenAccountAddress(this.mint.address, r.userId);
+    // Process users in parallel, but each user's reveals sequentially
+    await Promise.all(
+      Array.from(revealsByUser.entries()).map(async ([_userId, userReveals]) => {
+        for (const r of userReveals) {
+          const user = this.getUser(r.userId);
+          const computationOffset = randomComputationOffset();
+          const [userVta] = await getVoteTokenAccountAddress(this.mint.address, r.userId);
 
-        const ix = await revealShares(
-          {
-            signer: user.solanaKeypair,
-            owner: user.solanaKeypair.address,
-            market: this.marketAddress,
-            userVta,
-            userPubkey: user.x25519Keypair.publicKey,
-            shareAccountId: r.shareAccountId,
-          },
-          this.getArciumConfig(computationOffset)
-        );
+          const ix = await revealShares(
+            {
+              signer: user.solanaKeypair,
+              owner: user.solanaKeypair.address,
+              market: this.marketAddress,
+              userVta,
+              userPubkey: user.x25519Keypair.publicKey,
+              shareAccountId: r.shareAccountId,
+            },
+            this.getArciumConfig(computationOffset)
+          );
 
-        await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [ix], {
-          label: `Reveal shares`,
-        });
+          await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [ix], {
+            label: `Reveal shares`,
+          });
 
-        // Wait for this computation to finalize before next reveal
-        // This ensures the VTA is unlocked by the callback
-        await awaitComputationFinalization(this.rpc, computationOffset);
-      }
-    }
+          // Wait for this computation to finalize before next reveal for this user
+          // This ensures the VTA is unlocked by the callback
+          const result = await awaitComputationFinalization(this.rpc, computationOffset);
+          this.assertComputationSucceeded(result, "revealShares");
+        }
+      })
+    );
   }
 
   async revealShares(userId: Address, shareAccountId: number): Promise<void> {

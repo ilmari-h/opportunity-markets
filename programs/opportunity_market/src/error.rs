@@ -48,6 +48,6 @@ pub enum ErrorCode {
     DepositBelowMinimum,
     #[msg("Add option stake failed: insufficient balance, shares, or below minimum deposit")]
     AddOptionStakeFailed,
-    #[msg("Cannot perform this operation at this time")]
+    #[msg("Account is locked")]
     Locked,
 }

@@ -34,6 +34,7 @@ pub struct UnstakeEarly<'info> {
         seeds = [SHARE_ACCOUNT_SEED, signer.key().as_ref(), market.key().as_ref(), &share_account_id.to_le_bytes()],
         bump = share_account.bump,
         constraint = share_account.unstaked_at_timestamp.is_none() @ ErrorCode::AlreadyUnstaked,
+        constraint = !share_account.locked @ ErrorCode::Locked,
     )]
     pub share_account: Box<Account<'info, ShareAccount>>,
 
@@ -99,7 +100,9 @@ pub fn unstake_early(
     let market_key = ctx.accounts.market.key();
     let market_state_nonce = ctx.accounts.market.state_nonce;
 
+    // Lock both accounts while MPC computation is pending
     ctx.accounts.user_vta.locked = true;
+    ctx.accounts.share_account.locked = true;
 
     // Build args for encrypted computation
     let args = ArgBuilder::new()
@@ -197,7 +200,10 @@ pub fn unstake_early_callback(
     // Update user VTA with refunded balance
     ctx.accounts.user_vta.state_nonce = new_user_balance.nonce;
     ctx.accounts.user_vta.encrypted_state = new_user_balance.ciphertexts;
+
+    // Unlock both accounts
     ctx.accounts.user_vta.locked = false;
+    ctx.accounts.share_account.locked = false;
 
     // Update market with returned shares
     ctx.accounts.market.state_nonce = new_market_shares.nonce;

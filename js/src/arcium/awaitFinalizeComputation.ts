@@ -42,15 +42,21 @@ export interface AwaitComputationOptions {
   maxAttempts?: number;
 }
 
+export interface ComputationResult {
+  signature: string;
+  error?: string;
+}
+
 /**
  * Waits for multiple computations to be finalized on the Arcium network.
- * Returns a map of computationOffset -> signature for all found computations.
+ * Returns a map of computationOffset -> ComputationResult for all found computations.
+ * If a computation's callback transaction failed, the error field will be populated.
  */
 export const awaitBatchComputationFinalization = async (
   rpc: Rpc<SolanaRpcApi>,
   computationOffsets: bigint[],
   options?: AwaitComputationOptions
-): Promise<Map<bigint, string>> => {
+): Promise<Map<bigint, ComputationResult>> => {
   if (computationOffsets.length === 0) {
     return new Map();
   }
@@ -70,7 +76,7 @@ export const awaitBatchComputationFinalization = async (
   }
 
   // Track which offsets we've found
-  const foundSignatures = new Map<bigint, string>();
+  const foundResults = new Map<bigint, ComputationResult>();
   const remainingOffsets = new Set(computationOffsets);
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -111,7 +117,20 @@ export const awaitBatchComputationFinalization = async (
                 for (const offset of remainingOffsets) {
                   const expectedBytes = offsetBytesMap.get(offset)!;
                   if (bytesEqual(eventOffsetBytes, expectedBytes)) {
-                    foundSignatures.set(offset, sigInfo.signature);
+                    // Check if transaction failed (callback error)
+                    const txError = tx.meta?.err;
+                    let errorMessage: string | undefined;
+
+                    if (txError) {
+                      // Extract error message from logs if available
+                      const errorLog = logs.find(l => l.includes('Error') || l.includes('failed'));
+                      errorMessage = errorLog || JSON.stringify(txError);
+                    }
+
+                    foundResults.set(offset, {
+                      signature: sigInfo.signature,
+                      error: errorMessage,
+                    });
                     remainingOffsets.delete(offset);
                     break;
                   }
@@ -125,13 +144,13 @@ export const awaitBatchComputationFinalization = async (
 
         // Early exit if all found
         if (remainingOffsets.size === 0) {
-          return foundSignatures;
+          return foundResults;
         }
       }
 
       // Check if done
       if (remainingOffsets.size === 0) {
-        return foundSignatures;
+        return foundResults;
       }
 
       await new Promise(resolve => setTimeout(resolve, pollInterval));
@@ -148,12 +167,13 @@ export const awaitBatchComputationFinalization = async (
 
 /**
  * Waits for a single computation to be finalized on the Arcium network.
+ * Returns a ComputationResult with the signature and an optional error if the callback failed.
  */
 export const awaitComputationFinalization = async (
   rpc: Rpc<SolanaRpcApi>,
   computationOffset: bigint,
   options?: AwaitComputationOptions
-): Promise<string> => {
+): Promise<ComputationResult> => {
   const results = await awaitBatchComputationFinalization(rpc, [computationOffset], options);
   return results.get(computationOffset)!;
 };

@@ -2840,7 +2840,8 @@
           "name": "market"
         },
         {
-          "name": "user_vta"
+          "name": "user_vta",
+          "writable": true
         },
         {
           "name": "share_account",
@@ -3714,7 +3715,7 @@
     {
       "code": 6023,
       "name": "Locked",
-      "msg": "Cannot perform this operation at this time"
+      "msg": "Account is locked"
     }
   ],
   "types": [
@@ -5071,6 +5072,10 @@
           },
           {
             "name": "total_incremented",
+            "type": "bool"
+          },
+          {
+            "name": "locked",
             "type": "bool"
           }
         ]

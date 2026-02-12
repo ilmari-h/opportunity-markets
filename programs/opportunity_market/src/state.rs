@@ -64,6 +64,7 @@ pub struct VoteTokenAccount {
     pub state_nonce: u128,
     pub token_mint: Pubkey,
 
+    // Locked while waiting for Arcium MPC callback
     pub locked: bool,
     pub pending_deposit: u64,  // tracks unconfirmed deposits for safety
 }
@@ -88,7 +89,10 @@ pub struct ShareAccount {
     // Amount that scales by time-in-market.
     pub revealed_score: Option<u64>,
 
-    pub total_incremented: bool
+    pub total_incremented: bool,
+
+    // Locked while waiting for Arcium MPC callback
+    pub locked: bool,
 }
 
 #[account]

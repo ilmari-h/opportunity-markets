@@ -92,7 +92,7 @@ export type StakeInstruction<
         ? ReadonlyAccount<TAccountMarket>
         : TAccountMarket,
       TAccountUserVta extends string
-        ? ReadonlyAccount<TAccountUserVta>
+        ? WritableAccount<TAccountUserVta>
         : TAccountUserVta,
       TAccountShareAccount extends string
         ? WritableAccount<TAccountShareAccount>
@@ -307,7 +307,7 @@ export async function getStakeInstructionAsync<
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
-    userVta: { value: input.userVta ?? null, isWritable: false },
+    userVta: { value: input.userVta ?? null, isWritable: true },
     shareAccount: { value: input.shareAccount ?? null, isWritable: true },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },
@@ -525,7 +525,7 @@ export function getStakeInstruction<
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
-    userVta: { value: input.userVta ?? null, isWritable: false },
+    userVta: { value: input.userVta ?? null, isWritable: true },
     shareAccount: { value: input.shareAccount ?? null, isWritable: true },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },

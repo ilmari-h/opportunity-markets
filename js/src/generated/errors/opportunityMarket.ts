@@ -60,7 +60,7 @@ export const OPPORTUNITY_MARKET_ERROR__ALREADY_PURCHASED = 0x1784; // 6020
 export const OPPORTUNITY_MARKET_ERROR__DEPOSIT_BELOW_MINIMUM = 0x1785; // 6021
 /** AddOptionStakeFailed: Add option stake failed: insufficient balance, shares, or below minimum deposit */
 export const OPPORTUNITY_MARKET_ERROR__ADD_OPTION_STAKE_FAILED = 0x1786; // 6022
-/** Locked: Cannot perform this operation at this time */
+/** Locked: Account is locked */
 export const OPPORTUNITY_MARKET_ERROR__LOCKED = 0x1787; // 6023
 
 export type OpportunityMarketError =
@@ -106,7 +106,7 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__INVALID_MINT]: `Token mint does not match market mint`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_INDEX]: `Invalid option index`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP]: `Timestamp must be in the future`,
-    [OPPORTUNITY_MARKET_ERROR__LOCKED]: `Cannot perform this operation at this time`,
+    [OPPORTUNITY_MARKET_ERROR__LOCKED]: `Account is locked`,
     [OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN]: `Market is already open`,
     [OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN]: `Market is not open`,
     [OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED]: `Staking period not over`,
