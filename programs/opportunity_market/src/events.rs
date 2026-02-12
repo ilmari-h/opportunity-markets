@@ -33,3 +33,23 @@ pub struct SharesUnstakedEvent {
     pub buyer: Pubkey,
     pub market: Pubkey,
 }
+
+#[event]
+pub struct SharesRevealedError {
+    pub user: Pubkey,
+}
+
+#[event]
+pub struct SharesPurchasedError {
+    pub user: Pubkey,
+}
+
+#[event]
+pub struct SharesUnstakedError {
+    pub user: Pubkey,
+}
+
+#[event]
+pub struct VoteTokensClaimedError {
+    pub user: Pubkey,
+}

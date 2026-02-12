@@ -3,7 +3,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::events::SharesPurchasedEvent;
+use crate::events::{SharesPurchasedError, SharesPurchasedEvent};
 use crate::state::{CentralState, OpportunityMarket, OpportunityMarketOption, ShareAccount, VoteTokenAccount};
 use crate::instructions::stake::SHARE_ACCOUNT_SEED;
 use crate::COMP_DEF_OFFSET_ADD_OPTION_STAKE;
@@ -47,11 +47,11 @@ pub struct AddMarketOption<'info> {
     pub source_vta: Box<Account<'info, VoteTokenAccount>>,
 
     #[account(
-        init,
-        payer = creator,
-        space = 8 + ShareAccount::INIT_SPACE,
+        mut,
         seeds = [SHARE_ACCOUNT_SEED, creator.key().as_ref(), market.key().as_ref(), &share_account_id.to_le_bytes()],
         bump,
+        constraint = share_account.staked_at_timestamp.is_none() @ ErrorCode::AlreadyPurchased,
+        constraint = !share_account.locked @ ErrorCode::Locked,
     )]
     pub share_account: Box<Account<'info, ShareAccount>>,
 
@@ -99,7 +99,6 @@ pub fn add_market_option(
     input_nonce: u128,
     authorized_reader_pubkey: [u8; 32],
     authorized_reader_nonce: u128,
-    share_account_nonce: u128,
 ) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
@@ -131,21 +130,9 @@ pub fn add_market_option(
     option.total_score = None;
     option.creator = ctx.accounts.creator.key();
 
-    // Initialize the share account
-    let share_account = &mut ctx.accounts.share_account;
-    share_account.bump = ctx.bumps.share_account;
-    share_account.owner = ctx.accounts.creator.key();
-    share_account.market = market.key();
-    share_account.state_nonce = share_account_nonce;
-    share_account.state_nonce_disclosure = 0;
-    share_account.encrypted_state = [[0u8; 32]; 2];
-    share_account.encrypted_state_disclosure = [[0u8; 32]; 2];
-    share_account.revealed_amount = None;
-    share_account.revealed_option = None;
-    share_account.revealed_score = None;
-    share_account.total_incremented = false;
-    share_account.staked_at_timestamp = Some(current_timestamp);
-    share_account.unstaked_at_timestamp = None;
+    // Lock share account and set staked timestamp
+    ctx.accounts.share_account.staked_at_timestamp = Some(current_timestamp);
+    ctx.accounts.share_account.locked = true;
 
     let source_vta_key = ctx.accounts.source_vta.key();
     let source_vta_nonce = ctx.accounts.source_vta.state_nonce;
@@ -172,7 +159,7 @@ pub fn add_market_option(
 
         // Share account context (Shared)
         .x25519_pubkey(user_pubkey)
-        .plaintext_u128(share_account_nonce)
+        .plaintext_u128(ctx.accounts.share_account.state_nonce)
 
         // Plaintext: min_deposit from central_state
         .plaintext_u64(ctx.accounts.central_state.min_option_deposit)
@@ -181,9 +168,8 @@ pub fn add_market_option(
         .plaintext_u64(option_index as u64)
         .build();
 
-    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
-
     // Queue computation with callback
+    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
     queue_computation(
         ctx.accounts,
         computation_offset,
@@ -237,27 +223,42 @@ pub fn add_market_option_callback(
     ctx: Context<AddOptionStakeCallback>,
     output: SignedComputationOutputs<AddOptionStakeOutput>,
 ) -> Result<()> {
+    // Unlock
+    ctx.accounts.source_vta.locked = false;
+    ctx.accounts.share_account.locked = false;
+
+    // Verify output - on error, rollback and return Ok so mutations persist
     let res = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
         Ok(AddOptionStakeOutput { field_0 }) => field_0,
-        Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+        Err(_) => {
+            // Rollback
+            ctx.accounts.share_account.staked_at_timestamp = None;
+            emit!(SharesPurchasedError {
+                user: ctx.accounts.source_vta.owner,
+            });
+            return Ok(());
+        }
     };
 
-    let has_error = res.field_0;
+    if res.field_0 {
+        // Rollback
+        ctx.accounts.share_account.staked_at_timestamp = None;
+        emit!(SharesPurchasedError {
+            user: ctx.accounts.source_vta.owner,
+        });
+        return Ok(());
+    }
+
     let new_user_balance = res.field_1;
     let bought_shares_mxe = res.field_2;
     let bought_shares_shared = res.field_3;
 
-    if has_error {
-        return Err(ErrorCode::AddOptionStakeFailed.into());
-    }
-
     // Update source VTA balance
     ctx.accounts.source_vta.state_nonce = new_user_balance.nonce;
     ctx.accounts.source_vta.encrypted_state = new_user_balance.ciphertexts;
-    ctx.accounts.source_vta.locked = false;
 
     // Update share account encrypted state
     ctx.accounts.share_account.state_nonce = bought_shares_mxe.nonce;

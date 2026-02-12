@@ -103,7 +103,6 @@ pub mod opportunity_market {
         input_nonce: u128,
         authorized_reader_pubkey: [u8; 32],
         authorized_reader_nonce: u128,
-        share_account_nonce: u128,
     ) -> Result<()> {
         instructions::add_market_option(
             ctx,
@@ -116,7 +115,6 @@ pub mod opportunity_market {
             input_nonce,
             authorized_reader_pubkey,
             authorized_reader_nonce,
-            share_account_nonce,
         )
     }
 

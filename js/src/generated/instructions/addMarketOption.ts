@@ -161,7 +161,6 @@ export type AddMarketOptionInstructionData = {
   inputNonce: bigint;
   authorizedReaderPubkey: Array<number>;
   authorizedReaderNonce: bigint;
-  shareAccountNonce: bigint;
 };
 
 export type AddMarketOptionInstructionDataArgs = {
@@ -174,7 +173,6 @@ export type AddMarketOptionInstructionDataArgs = {
   inputNonce: number | bigint;
   authorizedReaderPubkey: Array<number>;
   authorizedReaderNonce: number | bigint;
-  shareAccountNonce: number | bigint;
 };
 
 export function getAddMarketOptionInstructionDataEncoder(): Encoder<AddMarketOptionInstructionDataArgs> {
@@ -190,7 +188,6 @@ export function getAddMarketOptionInstructionDataEncoder(): Encoder<AddMarketOpt
       ['inputNonce', getU128Encoder()],
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['authorizedReaderNonce', getU128Encoder()],
-      ['shareAccountNonce', getU128Encoder()],
     ]),
     (value) => ({ ...value, discriminator: ADD_MARKET_OPTION_DISCRIMINATOR })
   );
@@ -208,7 +205,6 @@ export function getAddMarketOptionInstructionDataDecoder(): Decoder<AddMarketOpt
     ['inputNonce', getU128Decoder()],
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['authorizedReaderNonce', getU128Decoder()],
-    ['shareAccountNonce', getU128Decoder()],
   ]);
 }
 
@@ -267,7 +263,6 @@ export type AddMarketOptionAsyncInput<
   inputNonce: AddMarketOptionInstructionDataArgs['inputNonce'];
   authorizedReaderPubkey: AddMarketOptionInstructionDataArgs['authorizedReaderPubkey'];
   authorizedReaderNonce: AddMarketOptionInstructionDataArgs['authorizedReaderNonce'];
-  shareAccountNonce: AddMarketOptionInstructionDataArgs['shareAccountNonce'];
 };
 
 export async function getAddMarketOptionInstructionAsync<
@@ -529,7 +524,6 @@ export type AddMarketOptionInput<
   inputNonce: AddMarketOptionInstructionDataArgs['inputNonce'];
   authorizedReaderPubkey: AddMarketOptionInstructionDataArgs['authorizedReaderPubkey'];
   authorizedReaderNonce: AddMarketOptionInstructionDataArgs['authorizedReaderNonce'];
-  shareAccountNonce: AddMarketOptionInstructionDataArgs['shareAccountNonce'];
 };
 
 export function getAddMarketOptionInstruction<

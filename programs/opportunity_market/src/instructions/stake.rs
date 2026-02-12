@@ -3,7 +3,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::events::SharesPurchasedEvent;
+use crate::events::{SharesPurchasedError, SharesPurchasedEvent};
 use crate::state::{OpportunityMarket, ShareAccount, VoteTokenAccount};
 use crate::COMP_DEF_OFFSET_BUY_OPPORTUNITY_MARKET_SHARES;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
@@ -134,9 +134,8 @@ pub fn stake(
         .plaintext_u128(ctx.accounts.share_account.state_nonce)
         .build();
 
-    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
-
     // Queue computation with callback
+    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
     queue_computation(
         ctx.accounts,
         computation_offset,
@@ -190,41 +189,53 @@ pub fn buy_opportunity_market_shares_callback(
     ctx: Context<BuyOpportunityMarketSharesCallback>,
     output: SignedComputationOutputs<BuyOpportunityMarketSharesOutput>,
 ) -> Result<()> {
+    // Unlock accounts
+    ctx.accounts.user_vote_token_account.locked = false;
+    ctx.accounts.share_account.locked = false;
 
+    // Verify output - on error, rollback and return Ok so mutations persist
     let res = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
         Ok(BuyOpportunityMarketSharesOutput { field_0 }) => field_0,
-        Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+        Err(_) => {
+            // Rollback
+            ctx.accounts.share_account.staked_at_timestamp = None;
+            emit!(SharesPurchasedError {
+                user: ctx.accounts.user_vote_token_account.owner,
+            });
+            return Ok(());
+        }
     };
-    let has_error = res.field_0;
+
+    if res.field_0 {
+        // Rollback
+        ctx.accounts.share_account.staked_at_timestamp = None;
+        emit!(SharesPurchasedError {
+            user: ctx.accounts.user_vote_token_account.owner,
+        });
+        return Ok(());
+    }
+
     let new_user_balance = res.field_1;
     let bought_shares_mxe = res.field_2;
     let bought_shares_shared = res.field_3;
-
-    if has_error {
-        return Err(ErrorCode::SharePurchaseFailed.into());
-    }
 
     // Update user balance to <previous balance> - <bought shares>
     ctx.accounts.user_vote_token_account.state_nonce = new_user_balance.nonce;
     ctx.accounts.user_vote_token_account.encrypted_state = new_user_balance.ciphertexts;
 
-    // Update share account to the value of bought shares.
+    // Update share account to the value of bought shares
     ctx.accounts.share_account.state_nonce = bought_shares_mxe.nonce;
     ctx.accounts.share_account.encrypted_state = bought_shares_mxe.ciphertexts;
     ctx.accounts.share_account.state_nonce_disclosure = bought_shares_shared.nonce;
     ctx.accounts.share_account.encrypted_state_disclosure = bought_shares_shared.ciphertexts;
 
-    // Unlock both accounts
-    ctx.accounts.user_vote_token_account.locked = false;
-    ctx.accounts.share_account.locked = false;
-
-    emit!(SharesPurchasedEvent{
+    emit!(SharesPurchasedEvent {
         buyer: ctx.accounts.user_vote_token_account.owner,
         encrypted_disclosed_amount: bought_shares_shared.ciphertexts[0],
-        nonce: bought_shares_shared.nonce
+        nonce: bought_shares_shared.nonce,
     });
 
     Ok(())

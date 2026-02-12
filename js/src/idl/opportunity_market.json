@@ -247,10 +247,6 @@
         {
           "name": "authorized_reader_nonce",
           "type": "u128"
-        },
-        {
-          "name": "share_account_nonce",
-          "type": "u128"
         }
       ]
     },
@@ -3348,6 +3344,19 @@
       ]
     },
     {
+      "name": "SharesPurchasedError",
+      "discriminator": [
+        94,
+        28,
+        131,
+        3,
+        30,
+        140,
+        188,
+        119
+      ]
+    },
+    {
       "name": "SharesPurchasedEvent",
       "discriminator": [
         226,
@@ -3361,6 +3370,19 @@
       ]
     },
     {
+      "name": "SharesRevealedError",
+      "discriminator": [
+        30,
+        253,
+        212,
+        117,
+        156,
+        93,
+        221,
+        42
+      ]
+    },
+    {
       "name": "SharesRevealedEvent",
       "discriminator": [
         103,
@@ -3371,6 +3393,19 @@
         96,
         61,
         81
+      ]
+    },
+    {
+      "name": "SharesUnstakedError",
+      "discriminator": [
+        237,
+        68,
+        70,
+        188,
+        33,
+        97,
+        250,
+        31
       ]
     },
     {
@@ -3397,6 +3432,19 @@
         175,
         250,
         100
+      ]
+    },
+    {
+      "name": "VoteTokensClaimedError",
+      "discriminator": [
+        73,
+        94,
+        214,
+        150,
+        224,
+        254,
+        58,
+        243
       ]
     }
   ],
@@ -3448,76 +3496,71 @@
     },
     {
       "code": 6009,
-      "name": "SharePurchaseFailed",
-      "msg": "Invalid option or not enough balance"
-    },
-    {
-      "code": 6010,
       "name": "StakingNotActive",
       "msg": "Staking period is not active"
     },
     {
-      "code": 6011,
+      "code": 6010,
       "name": "WinnerAlreadySelected",
       "msg": "Market winner already selected"
     },
     {
-      "code": 6012,
+      "code": 6011,
       "name": "AlreadyRevealed",
       "msg": "Shares already revealed"
     },
     {
-      "code": 6013,
+      "code": 6012,
       "name": "MarketNotResolved",
       "msg": "Staking period not over"
     },
     {
-      "code": 6014,
+      "code": 6013,
       "name": "NotRevealed",
       "msg": "Shares not yet revealed"
     },
     {
-      "code": 6015,
+      "code": 6014,
       "name": "TallyAlreadyIncremented",
       "msg": "Tally already incremented for this share account"
     },
     {
-      "code": 6016,
+      "code": 6015,
       "name": "Overflow",
       "msg": "Arithmetic overflow"
     },
     {
-      "code": 6017,
+      "code": 6016,
       "name": "RevealPeriodEnded",
       "msg": "Reveal period has already ended"
     },
     {
-      "code": 6018,
+      "code": 6017,
       "name": "InvalidMint",
       "msg": "Token mint does not match market mint"
     },
     {
-      "code": 6019,
+      "code": 6018,
       "name": "AlreadyUnstaked",
       "msg": "Shares already unstaked"
     },
     {
-      "code": 6020,
+      "code": 6019,
       "name": "AlreadyPurchased",
       "msg": "Shares already purchased for this share account"
     },
     {
-      "code": 6021,
+      "code": 6020,
       "name": "DepositBelowMinimum",
       "msg": "Deposit amount below minimum required for option creation"
     },
     {
-      "code": 6022,
+      "code": 6021,
       "name": "AddOptionStakeFailed",
       "msg": "Add option stake failed: insufficient balance, shares, or below minimum deposit"
     },
     {
-      "code": 6023,
+      "code": 6022,
       "name": "Locked",
       "msg": "Account is locked"
     }
@@ -4815,6 +4858,18 @@
       }
     },
     {
+      "name": "SharesPurchasedError",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
       "name": "SharesPurchasedEvent",
       "type": {
         "kind": "struct",
@@ -4840,6 +4895,18 @@
       }
     },
     {
+      "name": "SharesRevealedError",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
       "name": "SharesRevealedEvent",
       "type": {
         "kind": "struct",
@@ -4855,6 +4922,18 @@
           {
             "name": "selected_option",
             "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SharesUnstakedError",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
           }
         ]
       }
@@ -5058,6 +5137,18 @@
           {
             "name": "lamports_spent",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VoteTokensClaimedError",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
           }
         ]
       }

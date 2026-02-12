@@ -3,7 +3,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::events::SharesRevealedEvent;
+use crate::events::{SharesRevealedError, SharesRevealedEvent};
 use crate::instructions::stake::SHARE_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, ShareAccount, VoteTokenAccount};
 use crate::COMP_DEF_OFFSET_REVEAL_SHARES;
@@ -122,9 +122,8 @@ pub fn reveal_shares(
         .account(user_vta_key, 8, 32 * 1)
         .build();
 
-    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
-
     // Queue computation with callback
+    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
     queue_computation(
         ctx.accounts,
         computation_offset,
@@ -177,12 +176,24 @@ pub fn reveal_shares_callback(
     ctx: Context<RevealSharesCallback>,
     output: SignedComputationOutputs<RevealSharesOutput>,
 ) -> Result<()> {
+    // Unlock accounts
+    ctx.accounts.share_account.locked = false;
+    if ctx.accounts.share_account.unstaked_at_timestamp.is_none() {
+        ctx.accounts.user_vta.locked = false;
+    }
+
+    // Verify output - on error, emit event and return Ok so unlocks persist
     let res = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
         Ok(RevealSharesOutput { field_0 }) => field_0,
-        Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+        Err(_) => {
+            emit!(SharesRevealedError {
+                user: ctx.accounts.user_vta.owner,
+            });
+            return Ok(());
+        }
     };
 
     let revealed_amount = res.field_0;
@@ -192,19 +203,17 @@ pub fn reveal_shares_callback(
     // Update share account with revealed values
     ctx.accounts.share_account.revealed_amount = Some(revealed_amount);
     ctx.accounts.share_account.revealed_option = Some(revealed_option);
-    ctx.accounts.share_account.locked = false;
 
     // Only credit VTA if shares were not already unstaked
     if ctx.accounts.share_account.unstaked_at_timestamp.is_none() {
         ctx.accounts.user_vta.state_nonce = new_user_balance.nonce;
         ctx.accounts.user_vta.encrypted_state = new_user_balance.ciphertexts;
-        ctx.accounts.user_vta.locked = false;
     }
 
-    emit!(SharesRevealedEvent{
+    emit!(SharesRevealedEvent {
         buyer: ctx.accounts.user_vta.owner,
         shares_amount: revealed_amount,
-        selected_option: revealed_option
+        selected_option: revealed_option,
     });
 
     Ok(())

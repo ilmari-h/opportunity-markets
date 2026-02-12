@@ -3,7 +3,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::events::SharesUnstakedEvent;
+use crate::events::{SharesUnstakedError, SharesUnstakedEvent};
 use crate::instructions::stake::SHARE_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, ShareAccount, VoteTokenAccount};
 use crate::COMP_DEF_OFFSET_UNSTAKE_EARLY;
@@ -114,9 +114,8 @@ pub fn unstake_early(
         .account(user_vta_key, 8, 32 * 1)
         .build();
 
-    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
-
     // Queue computation with callback
+    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
     queue_computation(
         ctx.accounts,
         computation_offset,
@@ -169,12 +168,22 @@ pub fn unstake_early_callback(
     ctx: Context<UnstakeEarlyCallback>,
     output: SignedComputationOutputs<UnstakeEarlyOutput>,
 ) -> Result<()> {
+    // Unlock accounts
+    ctx.accounts.user_vta.locked = false;
+    ctx.accounts.share_account.locked = false;
+
+    // Verify output - on error, emit event and return Ok so unlocks persist
     let new_user_balance = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
         Ok(UnstakeEarlyOutput { field_0 }) => field_0,
-        Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+        Err(_) => {
+            emit!(SharesUnstakedError {
+                user: ctx.accounts.user_vta.owner,
+            });
+            return Ok(());
+        }
     };
 
     // Mark share account as unstaked
@@ -184,10 +193,6 @@ pub fn unstake_early_callback(
     // Update user VTA with refunded balance
     ctx.accounts.user_vta.state_nonce = new_user_balance.nonce;
     ctx.accounts.user_vta.encrypted_state = new_user_balance.ciphertexts;
-
-    // Unlock both accounts
-    ctx.accounts.user_vta.locked = false;
-    ctx.accounts.share_account.locked = false;
 
     emit!(SharesUnstakedEvent {
         buyer: ctx.accounts.user_vta.owner,

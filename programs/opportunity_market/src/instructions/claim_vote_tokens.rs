@@ -6,6 +6,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
+use crate::events::VoteTokensClaimedError;
 use crate::instructions::init_vote_token_account::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::VoteTokenAccount;
 use crate::COMP_DEF_OFFSET_CLAIM_VOTE_TOKENS;
@@ -98,12 +99,10 @@ pub fn claim_vote_tokens(
         .plaintext_u64(amount)
         .build();
 
-    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
-
     vta.locked = true;
 
     // Queue computation with callback
-    // Pass VTA, user_token_account, vote_token_ata, token_mint, token_program as callback accounts
+    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
     queue_computation(
         ctx.accounts,
         computation_offset,
@@ -180,6 +179,11 @@ pub fn claim_vote_tokens_callback(
     ctx: Context<ClaimVoteTokensCallback>,
     output: SignedComputationOutputs<ClaimVoteTokensOutput>,
 ) -> Result<()> {
+    let vta = &mut ctx.accounts.vote_token_account;
+
+    // Unlock account
+    vta.locked = false;
+
     // Output is (bool, u64, Enc<Mxe, VoteTokenBalance>)
     // field_0 = error boolean (true = insufficient balance)
     // field_1 = how many vote tokens were sold
@@ -189,17 +193,23 @@ pub fn claim_vote_tokens_callback(
         &ctx.accounts.computation_account,
     ) {
         Ok(ClaimVoteTokensOutput { field_0 }) => field_0,
-        Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+        Err(_) => {
+            emit!(VoteTokensClaimedError {
+                user: vta.owner,
+            });
+            return Ok(());
+        }
     };
 
-    let vta = &mut ctx.accounts.vote_token_account;
-    let error = res.field_0;
+    if res.field_0 {
+        emit!(VoteTokensClaimedError {
+            user: vta.owner,
+        });
+        return Ok(());
+    }
+
     let amount_sold = res.field_1;
     let encrypted_balance = res.field_2;
-
-    if error {
-        return Err(ErrorCode::InsufficientBalance.into());
-    }
 
     // If tokens were sold, transfer SPL tokens from VTA's ATA to user's token account
     if amount_sold > 0 {
@@ -212,7 +222,6 @@ pub fn claim_vote_tokens_callback(
             owner_key.as_ref(),
             &[bump],
         ]];
-
 
         transfer_checked(
             CpiContext::new_with_signer(
@@ -233,7 +242,6 @@ pub fn claim_vote_tokens_callback(
     // Update encrypted state
     vta.state_nonce = encrypted_balance.nonce;
     vta.encrypted_state = encrypted_balance.ciphertexts;
-    vta.locked = false;
 
     Ok(())
 }

@@ -10,6 +10,7 @@ export interface AddMarketOptionParams {
   creator: TransactionSigner;
   market: Address;
   sourceVta: Address;
+  shareAccount: Address;
   optionIndex: number;
   shareAccountId: number;
   name: string;
@@ -18,7 +19,6 @@ export interface AddMarketOptionParams {
   inputNonce: bigint;
   authorizedReaderPubkey: ByteArray;
   authorizedReaderNonce: bigint;
-  shareAccountNonce: bigint;
 }
 
 export async function addMarketOption(
@@ -29,6 +29,7 @@ export async function addMarketOption(
     creator,
     market,
     sourceVta,
+    shareAccount,
     optionIndex,
     shareAccountId,
     name,
@@ -37,7 +38,6 @@ export async function addMarketOption(
     inputNonce,
     authorizedReaderPubkey,
     authorizedReaderNonce,
-    shareAccountNonce,
   } = input;
 
   return getAddMarketOptionInstructionAsync({
@@ -45,6 +45,7 @@ export async function addMarketOption(
     creator,
     market,
     sourceVta,
+    shareAccount,
     optionIndex,
     shareAccountId,
     name,
@@ -53,6 +54,5 @@ export async function addMarketOption(
     inputNonce,
     authorizedReaderPubkey: toNumberArray(authorizedReaderPubkey),
     authorizedReaderNonce,
-    shareAccountNonce,
   });
 }

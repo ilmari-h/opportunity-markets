@@ -20,8 +20,6 @@ pub enum ErrorCode {
     InvalidOptionIndex,
     #[msg("Market is not open")]
     MarketNotOpen,
-    #[msg("Invalid option or not enough balance")]
-    SharePurchaseFailed,
     #[msg("Staking period is not active")]
     StakingNotActive,
     #[msg("Market winner already selected")]

@@ -561,16 +561,30 @@ export class TestRunner {
     const cipher = createCipher(user.x25519Keypair.secretKey, this.mxePublicKey);
     const optionIndex = ++this.optionCount;
     const shareAccountId = this.getNextShareAccountId(user);
+    const shareAccountNonce = deserializeLE(randomBytes(16));
+
+    // Get share account address first
+    const [shareAccountAddress] = await getShareAccountAddressPda(userId, this.marketAddress, shareAccountId);
+
+    // Init share account instruction
+    const initIx = await initShareAccount({
+      signer: user.solanaKeypair,
+      market: this.marketAddress,
+      stateNonce: shareAccountNonce,
+      shareAccountId,
+    });
 
     const inputNonce = randomBytes(16);
     const amountCiphertext = cipher.encrypt([depositAmount], inputNonce);
     const offset = randomComputationOffset();
 
-    const ix = await addMarketOption(
+    // Add market option instruction
+    const addOptionIx = await addMarketOption(
       {
         creator: user.solanaKeypair,
         market: this.marketAddress,
         sourceVta: user.voteTokenAccount!,
+        shareAccount: shareAccountAddress,
         optionIndex,
         shareAccountId,
         name,
@@ -579,12 +593,12 @@ export class TestRunner {
         inputNonce: deserializeLE(inputNonce),
         authorizedReaderPubkey: user.x25519Keypair.publicKey,
         authorizedReaderNonce: deserializeLE(randomBytes(16)),
-        shareAccountNonce: deserializeLE(randomBytes(16)),
       },
       this.getArciumConfig(offset)
     );
 
-    await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [ix], {
+    // Send both instructions in one transaction
+    await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [initIx, addOptionIx], {
       label: `Add option "${name}"`,
     });
 
