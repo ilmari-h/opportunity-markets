@@ -11,11 +11,6 @@ mod circuits {
         pub amount: u64,
     }
 
-    // Vote token state - tracks encrypted token amount
-    pub struct MarketShareState {
-        pub shares: u64,
-    }
-
     // User input for buying market shares (encrypted)
     pub struct BuySharesInput {
         pub amount: u64,
@@ -27,21 +22,6 @@ mod circuits {
     pub struct SharePurchase {
         pub amount: u64,
         pub selected_option: u16
-    }
-
-    // Market available shares state
-    pub struct MarketAvailableShares {
-        pub available_shares: u64,
-    }
-
-    // Initialize market available shares with total_shares
-    #[instruction]
-    pub fn init_market_shares(
-        mxe: Mxe,
-        total_shares: u64,
-    ) -> Enc<Mxe, MarketAvailableShares> {
-        let state = MarketAvailableShares { available_shares: total_shares };
-        mxe.from_arcis(state)
     }
 
     // Initialize empty vote token balance for user
@@ -95,27 +75,24 @@ mod circuits {
         pub amount: u64,
     }
 
-    // Add option + stake: deduct from user's VTA and market shares, create share purchase
+    // Add option + stake: deduct from user's VTA, create share purchase
     // selected_option passed as plaintext u64 (no plaintext_u16 in ArgBuilder)
     #[instruction]
     pub fn add_option_stake(
         input_ctx: Enc<Shared, AddOptionStakeInput>,
         shares_recipient_ctx: Shared,
         user_vta_ctx: Enc<Shared, VoteTokenBalance>,
-        market_shares_ctx: Enc<Mxe, MarketShareState>,
         share_account_ctx: Shared,
         min_deposit: u64,
         selected_option: u64,
     ) -> (
         bool,
         Enc<Shared, VoteTokenBalance>,
-        Enc<Mxe, MarketShareState>,
         Enc<Shared, SharePurchase>,
         Enc<Shared, SharePurchase>
     ) {
         let input = input_ctx.to_arcis();
         let mut user_balance = user_vta_ctx.to_arcis();
-        let mut market_shares = market_shares_ctx.to_arcis();
 
         let amount = input.amount;
 
@@ -125,10 +102,7 @@ mod circuits {
         // Check if user has sufficient vote token balance
         let insufficient_user_balance = amount > user_balance.amount;
 
-        // Check if market has sufficient shares available
-        let insufficient_market_shares = amount > market_shares.shares;
-
-        let error = below_min || insufficient_user_balance || insufficient_market_shares;
+        let error = below_min || insufficient_user_balance;
 
         let bought_amount = if error { 0 } else { amount };
         let bought_shares = SharePurchase {
@@ -142,50 +116,37 @@ mod circuits {
             user_balance.amount - amount
         };
 
-        market_shares.shares = if error {
-            market_shares.shares
-        } else {
-            market_shares.shares - amount
-        };
-
         (
             error.reveal(),
             user_vta_ctx.owner.from_arcis(user_balance),
-            market_shares_ctx.owner.from_arcis(market_shares),
             share_account_ctx.from_arcis(bought_shares),
             shares_recipient_ctx.from_arcis(bought_shares),
         )
     }
 
-    // Buy shares: deduct from user's vote token balance and market's available shares
-    // Returns: (error, new_user_balance, new_market_shares, bought_shares_mxe, bought_shares_shared)
+    // Buy shares: deduct from user's vote token balance
+    // Returns: (error, new_user_balance, bought_shares_mxe, bought_shares_shared)
     #[instruction]
     pub fn buy_opportunity_market_shares(
         input_ctx: Enc<Shared, BuySharesInput>,
         shares_recipient_ctx: Shared,
         user_vta_ctx: Enc<Shared, VoteTokenBalance>,
-        market_shares_ctx: Enc<Mxe, MarketShareState>,
         share_account_ctx: Shared,
     ) -> (
         bool,
         Enc<Shared, VoteTokenBalance>,
-        Enc<Mxe, MarketShareState>,
         Enc<Shared, SharePurchase>,
         Enc<Shared, SharePurchase>
     ) {
         let input = input_ctx.to_arcis();
         let mut user_balance = user_vta_ctx.to_arcis();
-        let mut market_shares = market_shares_ctx.to_arcis();
 
         let amount = input.amount;
 
         // Check if user has sufficient vote token balance
         let insufficient_user_balance = amount > user_balance.amount;
 
-        // Check if market has sufficient shares available
-        let insufficient_market_shares = amount > market_shares.shares;
-
-        let error = insufficient_user_balance || insufficient_market_shares;
+        let error = insufficient_user_balance;
 
         // Calculate bought shares (0 on error)
         let bought_amount = if error { 0 } else { amount };
@@ -201,17 +162,9 @@ mod circuits {
             user_balance.amount - amount
         };
 
-        // Deduct from market shares (keep unchanged on error)
-        market_shares.shares = if error {
-            market_shares.shares
-        } else {
-            market_shares.shares - amount
-        };
-
         (
             error.reveal(),
             user_vta_ctx.owner.from_arcis(user_balance),
-            market_shares_ctx.owner.from_arcis(market_shares),
             share_account_ctx.from_arcis(bought_shares),
             shares_recipient_ctx.from_arcis(bought_shares)
         )
@@ -241,26 +194,17 @@ mod circuits {
         )
     }
 
-    // Unstake early: refund VTA and return shares to market
+    // Unstake early: refund VTA
     #[instruction]
     pub fn unstake_early(
         share_account_ctx: Enc<Shared, SharePurchase>,
         user_vta_ctx: Enc<Shared, VoteTokenBalance>,
-        market_shares_ctx: Enc<Mxe, MarketShareState>,
-    ) -> (
-        Enc<Shared, VoteTokenBalance>,     // refunded VTA balance
-        Enc<Mxe, MarketShareState>,        // updated market available shares
-    ) {
+    ) -> Enc<Shared, VoteTokenBalance> {
         let share_data = share_account_ctx.to_arcis();
         let mut user_balance = user_vta_ctx.to_arcis();
-        let mut market_shares = market_shares_ctx.to_arcis();
 
         user_balance.amount = user_balance.amount + share_data.amount;
-        market_shares.shares = market_shares.shares + share_data.amount;
 
-        (
-            user_vta_ctx.owner.from_arcis(user_balance),
-            market_shares_ctx.owner.from_arcis(market_shares),
-        )
+        user_vta_ctx.owner.from_arcis(user_balance)
     }
 }

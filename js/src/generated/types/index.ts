@@ -36,6 +36,5 @@ export * from './sharesRevealedEvent';
 export * from './sharesUnstakedEvent';
 export * from './timestamp';
 export * from './unstakeEarlyOutput';
-export * from './unstakeEarlyOutputStruct0';
 export * from './utilityPubkeys';
 export * from './voteTokenPurchasedEvent';

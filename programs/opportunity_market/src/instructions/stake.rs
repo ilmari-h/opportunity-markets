@@ -112,9 +112,6 @@ pub fn stake(
     let user_vta_key = ctx.accounts.user_vta.key();
     let user_vta_nonce = ctx.accounts.user_vta.state_nonce;
 
-    let market_key = ctx.accounts.market.key();
-    let market_state_nonce = ctx.accounts.market.state_nonce;
-
     // Build args for encrypted computation
     let args = ArgBuilder::new()
         // User's trade input (Enc<Shared, BuySharesInput>)
@@ -131,10 +128,6 @@ pub fn stake(
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(user_vta_nonce)
         .account(user_vta_key, 8, 32 * 1)
-
-        // Available market shares (Enc<Mxe, MarketShareState>)
-        .plaintext_u128(market_state_nonce)
-        .account(market_key, 8, 32 * 1)
 
         // Share account context (Mxe for output encryption)
         .x25519_pubkey(user_pubkey)
@@ -154,10 +147,6 @@ pub fn stake(
             &[
                 CallbackAccount {
                     pubkey: user_vta_key,
-                    is_writable: true,
-                },
-                CallbackAccount {
-                    pubkey: market_key,
                     is_writable: true,
                 },
                 CallbackAccount {
@@ -194,9 +183,6 @@ pub struct BuyOpportunityMarketSharesCallback<'info> {
     pub user_vote_token_account: Account<'info, VoteTokenAccount>,
 
     #[account(mut)]
-    pub market: Account<'info, OpportunityMarket>,
-
-    #[account(mut)]
     pub share_account: Account<'info, ShareAccount>,
 }
 
@@ -214,9 +200,8 @@ pub fn buy_opportunity_market_shares_callback(
     };
     let has_error = res.field_0;
     let new_user_balance = res.field_1;
-    let new_market_shares = res.field_2;
-    let bought_shares_mxe = res.field_3;
-    let bought_shares_shared = res.field_4;
+    let bought_shares_mxe = res.field_2;
+    let bought_shares_shared = res.field_3;
 
     if has_error {
         return Err(ErrorCode::SharePurchaseFailed.into());
@@ -225,9 +210,6 @@ pub fn buy_opportunity_market_shares_callback(
     // Update user balance to <previous balance> - <bought shares>
     ctx.accounts.user_vote_token_account.state_nonce = new_user_balance.nonce;
     ctx.accounts.user_vote_token_account.encrypted_state = new_user_balance.ciphertexts;
-
-    // Update market state nonce
-    ctx.accounts.market.state_nonce = new_market_shares.nonce;
 
     // Update share account to the value of bought shares.
     ctx.accounts.share_account.state_nonce = bought_shares_mxe.nonce;

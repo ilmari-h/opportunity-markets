@@ -66,7 +66,6 @@ export type BuyOpportunityMarketSharesCallbackInstruction<
   TAccountInstructionsSysvar extends string | AccountMeta<string> =
     'Sysvar1nstructions1111111111111111111111111',
   TAccountUserVoteTokenAccount extends string | AccountMeta<string> = string,
-  TAccountMarket extends string | AccountMeta<string> = string,
   TAccountShareAccount extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
@@ -94,9 +93,6 @@ export type BuyOpportunityMarketSharesCallbackInstruction<
       TAccountUserVoteTokenAccount extends string
         ? WritableAccount<TAccountUserVoteTokenAccount>
         : TAccountUserVoteTokenAccount,
-      TAccountMarket extends string
-        ? WritableAccount<TAccountMarket>
-        : TAccountMarket,
       TAccountShareAccount extends string
         ? WritableAccount<TAccountShareAccount>
         : TAccountShareAccount,
@@ -221,7 +217,6 @@ export type BuyOpportunityMarketSharesCallbackInput<
   TAccountClusterAccount extends string = string,
   TAccountInstructionsSysvar extends string = string,
   TAccountUserVoteTokenAccount extends string = string,
-  TAccountMarket extends string = string,
   TAccountShareAccount extends string = string,
 > = {
   arciumProgram?: Address<TAccountArciumProgram>;
@@ -231,7 +226,6 @@ export type BuyOpportunityMarketSharesCallbackInput<
   clusterAccount: Address<TAccountClusterAccount>;
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
   userVoteTokenAccount: Address<TAccountUserVoteTokenAccount>;
-  market: Address<TAccountMarket>;
   shareAccount: Address<TAccountShareAccount>;
   output: BuyOpportunityMarketSharesCallbackInstructionDataArgs['output'];
 };
@@ -244,7 +238,6 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
   TAccountClusterAccount extends string,
   TAccountInstructionsSysvar extends string,
   TAccountUserVoteTokenAccount extends string,
-  TAccountMarket extends string,
   TAccountShareAccount extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
@@ -256,7 +249,6 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountUserVoteTokenAccount,
-    TAccountMarket,
     TAccountShareAccount
   >,
   config?: { programAddress?: TProgramAddress }
@@ -269,7 +261,6 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
   TAccountClusterAccount,
   TAccountInstructionsSysvar,
   TAccountUserVoteTokenAccount,
-  TAccountMarket,
   TAccountShareAccount
 > {
   // Program address.
@@ -294,7 +285,6 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
       value: input.userVoteTokenAccount ?? null,
       isWritable: true,
     },
-    market: { value: input.market ?? null, isWritable: true },
     shareAccount: { value: input.shareAccount ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
@@ -325,7 +315,6 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
       getAccountMeta(accounts.clusterAccount),
       getAccountMeta(accounts.instructionsSysvar),
       getAccountMeta(accounts.userVoteTokenAccount),
-      getAccountMeta(accounts.market),
       getAccountMeta(accounts.shareAccount),
     ],
     data: getBuyOpportunityMarketSharesCallbackInstructionDataEncoder().encode(
@@ -341,7 +330,6 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountUserVoteTokenAccount,
-    TAccountMarket,
     TAccountShareAccount
   >);
 }
@@ -359,8 +347,7 @@ export type ParsedBuyOpportunityMarketSharesCallbackInstruction<
     clusterAccount: TAccountMetas[4];
     instructionsSysvar: TAccountMetas[5];
     userVoteTokenAccount: TAccountMetas[6];
-    market: TAccountMetas[7];
-    shareAccount: TAccountMetas[8];
+    shareAccount: TAccountMetas[7];
   };
   data: BuyOpportunityMarketSharesCallbackInstructionData;
 };
@@ -376,7 +363,7 @@ export function parseBuyOpportunityMarketSharesCallbackInstruction<
   TProgram,
   TAccountMetas
 > {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -396,7 +383,6 @@ export function parseBuyOpportunityMarketSharesCallbackInstruction<
       clusterAccount: getNextAccount(),
       instructionsSysvar: getNextAccount(),
       userVoteTokenAccount: getNextAccount(),
-      market: getNextAccount(),
       shareAccount: getNextAccount(),
     },
     data: getBuyOpportunityMarketSharesCallbackInstructionDataDecoder().decode(

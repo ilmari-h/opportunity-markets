@@ -8,33 +8,73 @@
 
 import {
   combineCodec,
+  getArrayDecoder,
+  getArrayEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU128Decoder,
+  getU128Encoder,
+  getU8Decoder,
+  getU8Encoder,
   type FixedSizeCodec,
   type FixedSizeDecoder,
   type FixedSizeEncoder,
 } from '@solana/kit';
-import {
-  getUnstakeEarlyOutputStruct0Decoder,
-  getUnstakeEarlyOutputStruct0Encoder,
-  type UnstakeEarlyOutputStruct0,
-  type UnstakeEarlyOutputStruct0Args,
-} from '.';
 
 /**
  * The output of the callback instruction. Provided as a struct with ordered fields
  * as anchor does not support tuples and tuple structs yet.
  */
-export type UnstakeEarlyOutput = { field0: UnstakeEarlyOutputStruct0 };
+export type UnstakeEarlyOutput = {
+  field0: {
+    encryptionKey: Array<number>;
+    nonce: bigint;
+    ciphertexts: Array<Array<number>>;
+  };
+};
 
-export type UnstakeEarlyOutputArgs = { field0: UnstakeEarlyOutputStruct0Args };
+export type UnstakeEarlyOutputArgs = {
+  field0: {
+    encryptionKey: Array<number>;
+    nonce: number | bigint;
+    ciphertexts: Array<Array<number>>;
+  };
+};
 
 export function getUnstakeEarlyOutputEncoder(): FixedSizeEncoder<UnstakeEarlyOutputArgs> {
-  return getStructEncoder([['field0', getUnstakeEarlyOutputStruct0Encoder()]]);
+  return getStructEncoder([
+    [
+      'field0',
+      getStructEncoder([
+        ['encryptionKey', getArrayEncoder(getU8Encoder(), { size: 32 })],
+        ['nonce', getU128Encoder()],
+        [
+          'ciphertexts',
+          getArrayEncoder(getArrayEncoder(getU8Encoder(), { size: 32 }), {
+            size: 1,
+          }),
+        ],
+      ]),
+    ],
+  ]);
 }
 
 export function getUnstakeEarlyOutputDecoder(): FixedSizeDecoder<UnstakeEarlyOutput> {
-  return getStructDecoder([['field0', getUnstakeEarlyOutputStruct0Decoder()]]);
+  return getStructDecoder([
+    [
+      'field0',
+      getStructDecoder([
+        ['encryptionKey', getArrayDecoder(getU8Decoder(), { size: 32 })],
+        ['nonce', getU128Decoder()],
+        [
+          'ciphertexts',
+          getArrayDecoder(getArrayDecoder(getU8Decoder(), { size: 32 }), {
+            size: 1,
+          }),
+        ],
+      ]),
+    ],
+  ]);
 }
 
 export function getUnstakeEarlyOutputCodec(): FixedSizeCodec<

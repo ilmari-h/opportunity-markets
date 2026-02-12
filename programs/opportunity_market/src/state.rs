@@ -36,8 +36,6 @@ pub struct OpportunityMarket {
 
     pub selected_option: Option<u16>,
 
-    pub state_nonce: u128,
-
     // Reward to be shared with stakers (in SPL token base units)
     pub reward_amount: u64,
 

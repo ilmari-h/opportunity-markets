@@ -97,9 +97,6 @@ pub fn unstake_early(
     let user_vta_key = ctx.accounts.user_vta.key();
     let user_vta_nonce = ctx.accounts.user_vta.state_nonce;
 
-    let market_key = ctx.accounts.market.key();
-    let market_state_nonce = ctx.accounts.market.state_nonce;
-
     // Lock both accounts while MPC computation is pending
     ctx.accounts.user_vta.locked = true;
     ctx.accounts.share_account.locked = true;
@@ -115,10 +112,6 @@ pub fn unstake_early(
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(user_vta_nonce)
         .account(user_vta_key, 8, 32 * 1)
-
-        // Available market shares (Enc<Mxe, MarketShareState>)
-        .plaintext_u128(market_state_nonce)
-        .account(market_key, 8, 32 * 1)
         .build();
 
     ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
@@ -134,10 +127,6 @@ pub fn unstake_early(
             &[
                 CallbackAccount {
                     pubkey: user_vta_key,
-                    is_writable: true,
-                },
-                CallbackAccount {
-                    pubkey: market_key,
                     is_writable: true,
                 },
                 CallbackAccount {
@@ -173,8 +162,6 @@ pub struct UnstakeEarlyCallback<'info> {
     #[account(mut)]
     pub user_vta: Account<'info, VoteTokenAccount>,
     #[account(mut)]
-    pub market: Account<'info, OpportunityMarket>,
-    #[account(mut)]
     pub share_account: Account<'info, ShareAccount>,
 }
 
@@ -182,16 +169,13 @@ pub fn unstake_early_callback(
     ctx: Context<UnstakeEarlyCallback>,
     output: SignedComputationOutputs<UnstakeEarlyOutput>,
 ) -> Result<()> {
-    let res = match output.verify_output(
+    let new_user_balance = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
         Ok(UnstakeEarlyOutput { field_0 }) => field_0,
         Err(_) => return Err(ErrorCode::AbortedComputation.into()),
     };
-
-    let new_user_balance = res.field_0;
-    let new_market_shares = res.field_1;
 
     // Mark share account as unstaked
     let clock = Clock::get()?;
@@ -205,12 +189,9 @@ pub fn unstake_early_callback(
     ctx.accounts.user_vta.locked = false;
     ctx.accounts.share_account.locked = false;
 
-    // Update market state nonce
-    ctx.accounts.market.state_nonce = new_market_shares.nonce;
-
     emit!(SharesUnstakedEvent {
         buyer: ctx.accounts.user_vta.owner,
-        market: ctx.accounts.market.key(),
+        market: ctx.accounts.share_account.market,
     });
 
     Ok(())

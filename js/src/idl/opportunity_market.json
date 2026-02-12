@@ -292,10 +292,6 @@
           "writable": true
         },
         {
-          "name": "market",
-          "writable": true
-        },
-        {
           "name": "share_account",
           "writable": true
         }
@@ -401,10 +397,6 @@
         },
         {
           "name": "user_vote_token_account",
-          "writable": true
-        },
-        {
-          "name": "market",
           "writable": true
         },
         {
@@ -3070,10 +3062,6 @@
           "writable": true
         },
         {
-          "name": "market",
-          "writable": true
-        },
-        {
           "name": "share_account",
           "writable": true
         }
@@ -3606,20 +3594,6 @@
             "name": "field_2",
             "type": {
               "defined": {
-                "name": "MXEEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "name": "field_3",
-            "type": {
-              "defined": {
                 "name": "SharedEncryptedStruct",
                 "generics": [
                   {
@@ -3631,7 +3605,7 @@
             }
           },
           {
-            "name": "field_4",
+            "name": "field_3",
             "type": {
               "defined": {
                 "name": "SharedEncryptedStruct",
@@ -3720,20 +3694,6 @@
             "name": "field_2",
             "type": {
               "defined": {
-                "name": "MXEEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "name": "field_3",
-            "type": {
-              "defined": {
                 "name": "SharedEncryptedStruct",
                 "generics": [
                   {
@@ -3745,7 +3705,7 @@
             }
           },
           {
-            "name": "field_4",
+            "name": "field_3",
             "type": {
               "defined": {
                 "name": "SharedEncryptedStruct",
@@ -4275,41 +4235,6 @@
       }
     },
     {
-      "name": "MXEEncryptedStruct",
-      "generics": [
-        {
-          "kind": "const",
-          "name": "LEN",
-          "type": "usize"
-        }
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "nonce",
-            "type": "u128"
-          },
-          {
-            "name": "ciphertexts",
-            "type": {
-              "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                {
-                  "generic": "LEN"
-                }
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "MarketCreatedEvent",
       "type": {
         "kind": "struct",
@@ -4482,10 +4407,6 @@
             "type": {
               "option": "u16"
             }
-          },
-          {
-            "name": "state_nonce",
-            "type": "u128"
           },
           {
             "name": "reward_amount",
@@ -5018,37 +4939,7 @@
             "name": "field_0",
             "type": {
               "defined": {
-                "name": "UnstakeEarlyOutputStruct0"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "UnstakeEarlyOutputStruct0",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
                 "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "name": "field_1",
-            "type": {
-              "defined": {
-                "name": "MXEEncryptedStruct",
                 "generics": [
                   {
                     "kind": "const",

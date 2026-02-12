@@ -30,13 +30,12 @@ export type BuyOpportunityMarketSharesOutputStruct0 = {
     nonce: bigint;
     ciphertexts: Array<Array<number>>;
   };
-  field2: { nonce: bigint; ciphertexts: Array<Array<number>> };
-  field3: {
+  field2: {
     encryptionKey: Array<number>;
     nonce: bigint;
     ciphertexts: Array<Array<number>>;
   };
-  field4: {
+  field3: {
     encryptionKey: Array<number>;
     nonce: bigint;
     ciphertexts: Array<Array<number>>;
@@ -50,13 +49,12 @@ export type BuyOpportunityMarketSharesOutputStruct0Args = {
     nonce: number | bigint;
     ciphertexts: Array<Array<number>>;
   };
-  field2: { nonce: number | bigint; ciphertexts: Array<Array<number>> };
-  field3: {
+  field2: {
     encryptionKey: Array<number>;
     nonce: number | bigint;
     ciphertexts: Array<Array<number>>;
   };
-  field4: {
+  field3: {
     encryptionKey: Array<number>;
     nonce: number | bigint;
     ciphertexts: Array<Array<number>>;
@@ -82,18 +80,6 @@ export function getBuyOpportunityMarketSharesOutputStruct0Encoder(): FixedSizeEn
     [
       'field2',
       getStructEncoder([
-        ['nonce', getU128Encoder()],
-        [
-          'ciphertexts',
-          getArrayEncoder(getArrayEncoder(getU8Encoder(), { size: 32 }), {
-            size: 1,
-          }),
-        ],
-      ]),
-    ],
-    [
-      'field3',
-      getStructEncoder([
         ['encryptionKey', getArrayEncoder(getU8Encoder(), { size: 32 })],
         ['nonce', getU128Encoder()],
         [
@@ -105,7 +91,7 @@ export function getBuyOpportunityMarketSharesOutputStruct0Encoder(): FixedSizeEn
       ]),
     ],
     [
-      'field4',
+      'field3',
       getStructEncoder([
         ['encryptionKey', getArrayEncoder(getU8Encoder(), { size: 32 })],
         ['nonce', getU128Encoder()],
@@ -139,18 +125,6 @@ export function getBuyOpportunityMarketSharesOutputStruct0Decoder(): FixedSizeDe
     [
       'field2',
       getStructDecoder([
-        ['nonce', getU128Decoder()],
-        [
-          'ciphertexts',
-          getArrayDecoder(getArrayDecoder(getU8Decoder(), { size: 32 }), {
-            size: 1,
-          }),
-        ],
-      ]),
-    ],
-    [
-      'field3',
-      getStructDecoder([
         ['encryptionKey', getArrayDecoder(getU8Decoder(), { size: 32 })],
         ['nonce', getU128Decoder()],
         [
@@ -162,7 +136,7 @@ export function getBuyOpportunityMarketSharesOutputStruct0Decoder(): FixedSizeDe
       ]),
     ],
     [
-      'field4',
+      'field3',
       getStructDecoder([
         ['encryptionKey', getArrayDecoder(getU8Decoder(), { size: 32 })],
         ['nonce', getU128Decoder()],

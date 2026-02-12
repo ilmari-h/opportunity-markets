@@ -23,8 +23,6 @@ import {
   getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU128Decoder,
-  getU128Encoder,
   getU16Decoder,
   getU16Encoder,
   getU64Decoder,
@@ -67,7 +65,6 @@ export type OpportunityMarket = {
   timeToStake: bigint;
   timeToReveal: bigint;
   selectedOption: Option<number>;
-  stateNonce: bigint;
   rewardAmount: bigint;
   marketAuthority: Option<Address>;
   mint: Address;
@@ -83,7 +80,6 @@ export type OpportunityMarketArgs = {
   timeToStake: number | bigint;
   timeToReveal: number | bigint;
   selectedOption: OptionOrNullable<number>;
-  stateNonce: number | bigint;
   rewardAmount: number | bigint;
   marketAuthority: OptionOrNullable<Address>;
   mint: Address;
@@ -102,7 +98,6 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['timeToStake', getU64Encoder()],
       ['timeToReveal', getU64Encoder()],
       ['selectedOption', getOptionEncoder(getU16Encoder())],
-      ['stateNonce', getU128Encoder()],
       ['rewardAmount', getU64Encoder()],
       ['marketAuthority', getOptionEncoder(getAddressEncoder())],
       ['mint', getAddressEncoder()],
@@ -123,7 +118,6 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['timeToStake', getU64Decoder()],
     ['timeToReveal', getU64Decoder()],
     ['selectedOption', getOptionDecoder(getU16Decoder())],
-    ['stateNonce', getU128Decoder()],
     ['rewardAmount', getU64Decoder()],
     ['marketAuthority', getOptionDecoder(getAddressDecoder())],
     ['mint', getAddressDecoder()],

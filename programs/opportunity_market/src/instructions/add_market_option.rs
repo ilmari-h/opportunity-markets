@@ -150,9 +150,6 @@ pub fn add_market_option(
     let source_vta_key = ctx.accounts.source_vta.key();
     let source_vta_nonce = ctx.accounts.source_vta.state_nonce;
 
-    let market_key = market.key();
-    let market_state_nonce = market.state_nonce;
-
     let share_account_key = ctx.accounts.share_account.key();
 
     ctx.accounts.source_vta.locked = true;
@@ -172,10 +169,6 @@ pub fn add_market_option(
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(source_vta_nonce)
         .account(source_vta_key, 8, 32 * 1)
-
-        // Available market shares (Enc<Mxe, MarketShareState>)
-        .plaintext_u128(market_state_nonce)
-        .account(market_key, 8, 32 * 1)
 
         // Share account context (Shared)
         .x25519_pubkey(user_pubkey)
@@ -201,10 +194,6 @@ pub fn add_market_option(
             &[
                 CallbackAccount {
                     pubkey: source_vta_key,
-                    is_writable: true,
-                },
-                CallbackAccount {
-                    pubkey: market_key,
                     is_writable: true,
                 },
                 CallbackAccount {
@@ -241,9 +230,6 @@ pub struct AddOptionStakeCallback<'info> {
     pub source_vta: Account<'info, VoteTokenAccount>,
 
     #[account(mut)]
-    pub market: Account<'info, OpportunityMarket>,
-
-    #[account(mut)]
     pub share_account: Account<'info, ShareAccount>,
 }
 
@@ -261,9 +247,8 @@ pub fn add_market_option_callback(
 
     let has_error = res.field_0;
     let new_user_balance = res.field_1;
-    let new_market_shares = res.field_2;
-    let bought_shares_mxe = res.field_3;
-    let bought_shares_shared = res.field_4;
+    let bought_shares_mxe = res.field_2;
+    let bought_shares_shared = res.field_3;
 
     if has_error {
         return Err(ErrorCode::AddOptionStakeFailed.into());
@@ -273,9 +258,6 @@ pub fn add_market_option_callback(
     ctx.accounts.source_vta.state_nonce = new_user_balance.nonce;
     ctx.accounts.source_vta.encrypted_state = new_user_balance.ciphertexts;
     ctx.accounts.source_vta.locked = false;
-
-    // Update market state nonce
-    ctx.accounts.market.state_nonce = new_market_shares.nonce;
 
     // Update share account encrypted state
     ctx.accounts.share_account.state_nonce = bought_shares_mxe.nonce;
