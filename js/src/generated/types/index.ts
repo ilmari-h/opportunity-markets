@@ -19,7 +19,6 @@ export * from './claimVoteTokensOutputStruct0';
 export * from './computationDefinitionMeta';
 export * from './computationSignature';
 export * from './epoch';
-export * from './initVoteTokenAccountOutput';
 export * from './localCircuitSource';
 export * from './marketCreatedEvent';
 export * from './mxeStatus';

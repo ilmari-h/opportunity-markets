@@ -18,20 +18,20 @@ const CLUSTER_OFFSET = 456;
 const RPC_URL = process.env.RPC_URL || "https://api.devnet.solana.com";
 
 type CompDefs =
-  | "init_vote_token_account"
   | "buy_vote_tokens"
   | "claim_vote_tokens"
   | "buy_opportunity_market_shares"
-  | "init_market_shares"
-  | "reveal_shares";
+  | "reveal_shares"
+  | "unstake_early"
+  | "add_option_stake";
 
 const COMP_DEFS: CompDefs[] = [
-  "init_vote_token_account",
   "buy_vote_tokens",
   "claim_vote_tokens",
   "buy_opportunity_market_shares",
-  "init_market_shares",
   "reveal_shares",
+  "unstake_early",
+  "add_option_stake",
 ];
 
 function readKpJson(path: string): anchor.web3.Keypair {
@@ -74,17 +74,6 @@ async function initCompDef(
     // Initialize the computation definition account
     console.log(`  Creating comp def account...`);
     switch (circuitName) {
-      case "init_vote_token_account":
-        sig = await program.methods
-          .initVoteTokenAccountCompDef()
-          .accounts({
-            compDefAccount: compDefPDA,
-            payer: owner.publicKey,
-            mxeAccount: getMXEAccAddress(program.programId),
-          })
-          .signers([owner])
-          .rpc({ preflightCommitment: "confirmed" });
-        break;
       case "buy_vote_tokens":
         sig = await program.methods
           .buyVoteTokensCompDef()
@@ -118,9 +107,9 @@ async function initCompDef(
           .signers([owner])
           .rpc({ preflightCommitment: "confirmed" });
         break;
-      case "init_market_shares":
+      case "reveal_shares":
         sig = await program.methods
-          .initMarketSharesCompDef()
+          .revealSharesCompDef()
           .accounts({
             compDefAccount: compDefPDA,
             payer: owner.publicKey,
@@ -129,9 +118,20 @@ async function initCompDef(
           .signers([owner])
           .rpc({ preflightCommitment: "confirmed" });
         break;
-      case "reveal_shares":
+      case "unstake_early":
         sig = await program.methods
-          .revealSharesCompDef()
+          .unstakeEarlyCompDef()
+          .accounts({
+            compDefAccount: compDefPDA,
+            payer: owner.publicKey,
+            mxeAccount: getMXEAccAddress(program.programId),
+          })
+          .signers([owner])
+          .rpc({ preflightCommitment: "confirmed" });
+        break;
+      case "add_option_stake":
+        sig = await program.methods
+          .addOptionStakeCompDef()
           .accounts({
             compDefAccount: compDefPDA,
             payer: owner.publicKey,

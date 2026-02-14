@@ -31,8 +31,6 @@ import {
   type ParsedIncrementOptionTallyInstruction,
   type ParsedInitCentralStateInstruction,
   type ParsedInitShareAccountInstruction,
-  type ParsedInitVoteTokenAccountCallbackInstruction,
-  type ParsedInitVoteTokenAccountCompDefInstruction,
   type ParsedInitVoteTokenAccountInstruction,
   type ParsedMintVoteTokensInstruction,
   type ParsedOpenMarketInstruction,
@@ -214,8 +212,6 @@ export enum OpportunityMarketInstruction {
   InitCentralState,
   InitShareAccount,
   InitVoteTokenAccount,
-  InitVoteTokenAccountCallback,
-  InitVoteTokenAccountCompDef,
   MintVoteTokens,
   OpenMarket,
   RevealShares,
@@ -436,28 +432,6 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([188, 138, 87, 71, 58, 184, 254, 145])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.InitVoteTokenAccountCallback;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([28, 150, 158, 22, 121, 96, 65, 172])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.InitVoteTokenAccountCompDef;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([131, 125, 39, 240, 75, 196, 200, 187])
       ),
       0
@@ -648,12 +622,6 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.InitVoteTokenAccount;
     } & ParsedInitVoteTokenAccountInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.InitVoteTokenAccountCallback;
-    } & ParsedInitVoteTokenAccountCallbackInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.InitVoteTokenAccountCompDef;
-    } & ParsedInitVoteTokenAccountCompDefInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.MintVoteTokens;
     } & ParsedMintVoteTokensInstruction<TProgram>)

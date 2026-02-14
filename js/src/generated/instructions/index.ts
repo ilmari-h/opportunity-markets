@@ -24,8 +24,6 @@ export * from './incrementOptionTally';
 export * from './initCentralState';
 export * from './initShareAccount';
 export * from './initVoteTokenAccount';
-export * from './initVoteTokenAccountCallback';
-export * from './initVoteTokenAccountCompDef';
 export * from './mintVoteTokens';
 export * from './openMarket';
 export * from './revealShares';

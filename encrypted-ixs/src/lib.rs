@@ -24,23 +24,20 @@ mod circuits {
         pub selected_option: u16
     }
 
-    // Initialize empty vote token balance for user
-    #[instruction]
-    pub fn init_vote_token_account(
-        mxe: Shared
-    ) -> Enc<Shared, VoteTokenBalance> {
-        let state = VoteTokenBalance { amount: 0 };
-        mxe.from_arcis(state)
-    }
-
     // Buy vote tokens: add to balance
-    // Returns (amount_bought, new_encrypted_balance) where amount_bought is plaintext for token transfer
+    // If is_initialized is false (state_nonce == 0), creates fresh state instead of decrypting
+    // Returns new_encrypted_balance
     #[instruction]
     pub fn buy_vote_tokens(
         balance_ctx: Enc<Shared, VoteTokenBalance>,
+        is_initialized: bool,
         amount: u64,
     ) -> Enc<Shared, VoteTokenBalance> {
-        let mut balance = balance_ctx.to_arcis();
+        let mut balance = if is_initialized {
+            balance_ctx.to_arcis()
+        } else {
+            VoteTokenBalance { amount: 0 }
+        };
         balance.amount = balance.amount + amount;
         balance_ctx.owner.from_arcis(balance)
     }
@@ -170,21 +167,26 @@ mod circuits {
         )
     }
 
-    // Reveal shares: decrypt share account
+    // Reveal shares: decrypt share account and credit VTA
+    // If is_vta_initialized is false (state_nonce == 0), treat existing balance as 0
     #[instruction]
     pub fn reveal_shares(
         share_account_ctx: Enc<Shared, SharePurchase>,
         user_vta_ctx: Enc<Shared, VoteTokenBalance>,
+        is_vta_initialized: bool,
     ) -> (
         u64,                               // revealed_amount
         u16,                               // revealed_option
         Enc<Shared, VoteTokenBalance>,     // updated VTA balance
     ) {
         let share_data = share_account_ctx.to_arcis();
-        let mut user_balance = user_vta_ctx.to_arcis();
+        let mut user_balance = if is_vta_initialized {
+            user_vta_ctx.to_arcis()
+        } else {
+            VoteTokenBalance { amount: 0 }
+        };
 
-
-        // Only credit balance if option matches
+        // Credit share amount to VTA balance
         user_balance.amount = user_balance.amount + share_data.amount;
 
         (
@@ -195,13 +197,19 @@ mod circuits {
     }
 
     // Unstake early: refund VTA
+    // If is_vta_initialized is false (state_nonce == 0), treat existing balance as 0
     #[instruction]
     pub fn unstake_early(
         share_account_ctx: Enc<Shared, SharePurchase>,
         user_vta_ctx: Enc<Shared, VoteTokenBalance>,
+        is_vta_initialized: bool,
     ) -> Enc<Shared, VoteTokenBalance> {
         let share_data = share_account_ctx.to_arcis();
-        let mut user_balance = user_vta_ctx.to_arcis();
+        let mut user_balance = if is_vta_initialized {
+            user_vta_ctx.to_arcis()
+        } else {
+            VoteTokenBalance { amount: 0 }
+        };
 
         user_balance.amount = user_balance.amount + share_data.amount;
 

@@ -3,7 +3,6 @@ import {
   getInitVoteTokenAccountInstructionAsync,
   type InitVoteTokenAccountInstruction,
 } from "../generated";
-import { ArciumConfig, getComputeAccounts } from "../arcium/computeAccounts";
 import { type ByteArray, toNumberArray } from "../utils";
 
 export interface InitVoteTokenAccountParams {
@@ -13,22 +12,17 @@ export interface InitVoteTokenAccountParams {
   tokenProgram: Address;
   /** User's x25519 public key (32 bytes) for encryption */
   userPubkey: ByteArray;
-  /** Nonce for encryption (16 bytes as bigint) */
-  nonce: bigint;
 }
 
 export async function initVoteTokenAccount(
-  input: InitVoteTokenAccountParams,
-  config: ArciumConfig
+  input: InitVoteTokenAccountParams
 ): Promise<InitVoteTokenAccountInstruction> {
-  const { signer, tokenMint, tokenProgram, userPubkey, nonce } = input;
+  const { signer, tokenMint, tokenProgram, userPubkey } = input;
 
   return getInitVoteTokenAccountInstructionAsync({
     signer,
     tokenMint,
     tokenProgram,
-    ...getComputeAccounts("init_vote_token_account", config),
     userPubkey: toNumberArray(userPubkey),
-    nonce,
   });
 }

@@ -70,7 +70,7 @@ describe("Vote Token Account (SPL)", () => {
   }
 
   it("can init VTA, mint vote tokens, and claim them back", async () => {
-    // 1. Generate a user keypair and airdrop SOL for fees
+    // Generate a user keypair and airdrop SOL for fees
     const user = await generateKeyPairSigner();
     await airdrop({
       recipientAddress: user.address,
@@ -78,7 +78,7 @@ describe("Vote Token Account (SPL)", () => {
       commitment: "confirmed",
     });
 
-    // 2. Create an SPL token mint and fund the user's ATA with tokens
+    // Create an SPL token mint and fund the user's ATA with tokens
     const splAmount = 100_000_000n;
     const { mint, ata: userAta } = await createMintAndFundAccount(
       rpc,
@@ -88,43 +88,30 @@ describe("Vote Token Account (SPL)", () => {
       splAmount,
     );
 
-    // 3. Generate x25519 keypair for encryption
+    // Generate x25519 keypair for encryption
     const keypair = generateX25519Keypair();
 
-    // 4. Init vote token account (encrypted VTA on-chain)
-    const initOffset = randomComputationOffset();
-    const initNonce = deserializeLE(randomBytes(16));
-
-    const initVtaIx = await initVoteTokenAccount(
-      {
-        signer: user,
-        tokenMint: mint.address,
-        tokenProgram: TOKEN_PROGRAM_ADDRESS,
-        userPubkey: keypair.publicKey,
-        nonce: initNonce,
-      },
-      {
-        clusterOffset: arciumEnv.arciumClusterOffset,
-        computationOffset: initOffset,
-      },
-    );
+    // Init vote token account (no MPC needed - just creates empty account)
+    const initVtaIx = await initVoteTokenAccount({
+      signer: user,
+      tokenMint: mint.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      userPubkey: keypair.publicKey,
+    });
 
     await sendTransaction(rpc, sendAndConfirm, user, [initVtaIx], {
       label: "initVoteTokenAccount",
     });
-    await awaitComputationFinalization(rpc, initOffset);
 
     // Verify VTA was created with correct owner and mint
     const [vtaAddress] = await getVoteTokenAccountAddress(mint.address, user.address, programId);
     const vtaAccount = await fetchVoteTokenAccount(rpc, vtaAddress);
     expect(vtaAccount.data.owner).to.equal(user.address);
     expect(vtaAccount.data.tokenMint).to.equal(mint.address);
+    // Means not initialized
+    expect(vtaAccount.data.stateNonce).to.equal(0n);
 
-    // Verify initial encrypted balance is 0
-    const initialBalance = await decryptVtaBalance(vtaAddress, keypair.secretKey);
-    expect(initialBalance).to.equal(0n);
-
-    // 5. Mint vote tokens (transfers SPL tokens from user ATA -> VTA's ATA, updates encrypted balance)
+    // Mint vote tokens (transfers SPL tokens from user ATA -> VTA's ATA, updates encrypted balance)
     const voteTokenAmount = 50_000_000n;
     const mintOffset = randomComputationOffset();
 
@@ -151,7 +138,7 @@ describe("Vote Token Account (SPL)", () => {
     const balanceAfterMint = await decryptVtaBalance(vtaAddress, keypair.secretKey);
     expect(balanceAfterMint).to.equal(voteTokenAmount);
 
-    // 6. Claim vote tokens back (transfers SPL tokens from VTA's ATA -> user ATA, updates encrypted balance)
+    // Claim vote tokens back (transfers SPL tokens from VTA's ATA -> user ATA, updates encrypted balance)
     const claimAmount = 25_000_000n;
     const claimOffset = randomComputationOffset();
 

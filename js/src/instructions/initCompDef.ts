@@ -14,7 +14,6 @@ import {
 } from "@arcium-hq/client";
 import { PublicKey } from "@solana/web3.js";
 import {
-  getInitVoteTokenAccountCompDefInstruction,
   getBuyVoteTokensCompDefInstruction,
   getClaimVoteTokensCompDefInstruction,
   getBuyOpportunityMarketSharesCompDefInstruction,
@@ -27,7 +26,6 @@ import {
 import { BN } from "bn.js";
 
 export type CompDefCircuitName =
-  | "init_vote_token_account"
   | "buy_vote_tokens"
   | "claim_vote_tokens"
   | "buy_opportunity_market_shares"
@@ -36,7 +34,6 @@ export type CompDefCircuitName =
   | "add_option_stake";
 
 export const ALL_COMP_DEF_CIRCUITS: CompDefCircuitName[] = [
-  "init_vote_token_account",
   "buy_vote_tokens",
   "claim_vote_tokens",
   "buy_opportunity_market_shares",
@@ -101,9 +98,6 @@ export async function getInitCompDefInstruction(
   };
 
   switch (circuitName) {
-    case "init_vote_token_account":
-      return getInitVoteTokenAccountCompDefInstruction(baseInput, { programAddress: programId });
-
     case "buy_vote_tokens":
       return getBuyVoteTokensCompDefInstruction(baseInput, { programAddress: programId });
 

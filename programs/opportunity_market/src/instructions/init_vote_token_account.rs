@@ -3,19 +3,12 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
-use arcium_anchor::prelude::*;
-use arcium_client::idl::arcium::types::CallbackAccount;
 
-use crate::error::ErrorCode;
 use crate::state::VoteTokenAccount;
-use crate::COMP_DEF_OFFSET_INIT_VOTE_TOKEN_ACCOUNT;
-use crate::{ID, ID_CONST, ArciumSignerAccount};
 
 pub const VOTE_TOKEN_ACCOUNT_SEED: &[u8] = b"vote_token_account";
 
-#[queue_computation_accounts("init_vote_token_account", signer)]
 #[derive(Accounts)]
-#[instruction(computation_offset: u64)]
 pub struct InitVoteTokenAccount<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -43,124 +36,22 @@ pub struct InitVoteTokenAccount<'info> {
 
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
-
-    // Arcium accounts
-    #[account(
-        init_if_needed,
-        space = 9,
-        payer = signer,
-        seeds = [&SIGN_PDA_SEED],
-        bump,
-        address = derive_sign_pda!(),
-    )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
-    #[account(address = derive_mxe_pda!())]
-    pub mxe_account: Account<'info, MXEAccount>,
-    #[account(mut, address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet))]
-    /// CHECK: mempool_account
-    pub mempool_account: UncheckedAccount<'info>,
-    #[account(mut, address = derive_execpool_pda!(mxe_account, ErrorCode::ClusterNotSet))]
-    /// CHECK: executing_pool
-    pub executing_pool: UncheckedAccount<'info>,
-    #[account(mut, address = derive_comp_pda!(computation_offset, mxe_account, ErrorCode::ClusterNotSet))]
-    /// CHECK: computation_account
-    pub computation_account: UncheckedAccount<'info>,
-    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_INIT_VOTE_TOKEN_ACCOUNT))]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
-    #[account(mut, address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet))]
-    pub cluster_account: Account<'info, Cluster>,
-    #[account(mut, address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS)]
-    pub pool_account: Account<'info, FeePool>,
-    #[account(mut, address = ARCIUM_CLOCK_ACCOUNT_ADDRESS)]
-    pub clock_account: Account<'info, ClockAccount>,
     pub system_program: Program<'info, System>,
-    pub arcium_program: Program<'info, Arcium>,
 }
-
-// TODO: get rid of encrypted circuit similar to share account
-// just initialize empty
-// Can we actually do this?
-
-// then ephemeral version that is permissionless but we copy the pubkey from this one, which needs to be initialized
 
 pub fn init_vote_token_account(
     ctx: Context<InitVoteTokenAccount>,
-    computation_offset: u64,
     user_pubkey: [u8; 32],
-    nonce: u128
 ) -> Result<()> {
-    // Initialize vote token fields
     let vta = &mut ctx.accounts.vote_token_account;
     vta.bump = ctx.bumps.vote_token_account;
     vta.owner = ctx.accounts.signer.key();
     vta.token_mint = ctx.accounts.token_mint.key();
     vta.state_nonce = 0;
     vta.pending_deposit = 0;
-    vta.locked = true;
-    vta.user_pubkey = user_pubkey;
-
-    // Build args for encrypted computation
-    let args = ArgBuilder::new()
-        .x25519_pubkey(user_pubkey)
-        .plaintext_u128(nonce)
-        .build();
-
-    // Queue computation with callback
-    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
-    queue_computation(
-        ctx.accounts,
-        computation_offset,
-        args,
-        vec![InitVoteTokenAccountCallback::callback_ix(
-            computation_offset,
-            &ctx.accounts.mxe_account,
-            &[CallbackAccount {
-                pubkey: ctx.accounts.vote_token_account.key(),
-                is_writable: true,
-            }],
-        )?],
-        1,
-        0,
-    )?;
-
-    Ok(())
-}
-
-#[callback_accounts("init_vote_token_account")]
-#[derive(Accounts)]
-pub struct InitVoteTokenAccountCallback<'info> {
-    pub arcium_program: Program<'info, Arcium>,
-    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_INIT_VOTE_TOKEN_ACCOUNT))]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
-    #[account(address = derive_mxe_pda!())]
-    pub mxe_account: Account<'info, MXEAccount>,
-    /// CHECK: computation_account
-    pub computation_account: UncheckedAccount<'info>,
-    #[account(address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet))]
-    pub cluster_account: Account<'info, Cluster>,
-    #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
-    /// CHECK: instructions_sysvar
-    pub instructions_sysvar: AccountInfo<'info>,
-    #[account(mut)]
-    pub vote_token: Account<'info, VoteTokenAccount>,
-}
-
-pub fn init_vote_token_account_callback(
-    ctx: Context<InitVoteTokenAccountCallback>,
-    output: SignedComputationOutputs<InitVoteTokenAccountOutput>,
-) -> Result<()> {
-    let o = match output.verify_output(
-        &ctx.accounts.cluster_account,
-        &ctx.accounts.computation_account,
-    ) {
-        Ok(InitVoteTokenAccountOutput { field_0 }) => field_0,
-        Err(_) => return Err(ErrorCode::AbortedComputation.into()),
-    };
-
-    let vta = &mut ctx.accounts.vote_token;
-    vta.state_nonce = o.nonce;
-    vta.encrypted_state = o.ciphertexts;
     vta.locked = false;
+    vta.user_pubkey = user_pubkey;
+    vta.encrypted_state = [[0u8; 32]; 1];
 
     Ok(())
 }

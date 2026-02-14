@@ -500,26 +500,17 @@ export class TestRunner {
 
   async initVoteTokenAccount(userId: Address): Promise<Address> {
     const user = this.getUser(userId);
-    const offset = randomComputationOffset();
-    const nonce = deserializeLE(randomBytes(16));
 
-    const ix = await initVoteTokenAccount(
-      {
-        signer: user.solanaKeypair,
-        tokenMint: this.mint.address,
-        tokenProgram: TOKEN_PROGRAM_ADDRESS,
-        userPubkey: user.x25519Keypair.publicKey,
-        nonce,
-      },
-      this.getArciumConfig(offset)
-    );
+    const ix = await initVoteTokenAccount({
+      signer: user.solanaKeypair,
+      tokenMint: this.mint.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      userPubkey: user.x25519Keypair.publicKey,
+    });
 
     await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [ix], {
       label: `Init VTA for ${userId.toString().slice(0, 8)}...`,
     });
-
-    const result = await awaitComputationFinalization(this.rpc, offset);
-    this.assertComputationSucceeded(result, "initVoteTokenAccount");
 
     const [vtaAddress] = await getVoteTokenAccountAddress(this.mint.address, userId);
     user.voteTokenAccount = vtaAddress;

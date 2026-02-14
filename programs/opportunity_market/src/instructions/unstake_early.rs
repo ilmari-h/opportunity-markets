@@ -102,7 +102,9 @@ pub fn unstake_early(
     ctx.accounts.user_vta.locked = true;
     ctx.accounts.share_account.locked = true;
 
+
     // Build args for encrypted computation
+    let is_vta_initialized = user_vta_nonce != 0;
     let args = ArgBuilder::new()
         // Share account encrypted state (Enc<Shared, SharePurchase>)
         .x25519_pubkey(user_pubkey)
@@ -113,6 +115,9 @@ pub fn unstake_early(
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(user_vta_nonce)
         .account(user_vta_key, 8, 32 * 1)
+
+        // Is VTA initialized flag
+        .plaintext_bool(is_vta_initialized)
         .build();
 
     // Queue computation with callback

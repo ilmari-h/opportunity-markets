@@ -113,11 +113,13 @@ pub fn mint_vote_tokens(
     vta.locked = true;
 
     // Build args for encrypted computation
-    // Circuit signature: buy_vote_tokens(balance_ctx, amount)
+    // Circuit signature: buy_vote_tokens(balance_ctx, is_initialized, amount)
+    let is_initialized = vta.state_nonce != 0;
     let args = ArgBuilder::new()
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(vta.state_nonce)
         .account(vta_pubkey, 8, 32 * 1)
+        .plaintext_bool(is_initialized)
         .plaintext_u64(amount)
         .build();
 
