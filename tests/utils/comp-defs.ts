@@ -115,8 +115,6 @@ export async function initializeAllCompDefs(
   secretKey: Uint8Array,
   programId: Address
 ): Promise<void> {
-  console.log("\n=== Initializing Computation Definitions ===\n");
-
   // Create Kit keypair from secret key
   const payer = await createKeyPairSignerFromBytes(secretKey);
 
@@ -130,6 +128,4 @@ export async function initializeAllCompDefs(
   for (const circuitName of ALL_COMP_DEF_CIRCUITS) {
     await initCompDef(rpc, sendAndConfirm, provider, payer, payerLegacy, programId, circuitName);
   }
-
-  console.log("\n=== All Computation Definitions Initialized ===\n");
 }
