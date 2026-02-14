@@ -196,7 +196,7 @@ export type ClaimVoteTokensAsyncInput<
 > = {
   signer: TransactionSigner<TAccountSigner>;
   tokenMint: Address<TAccountTokenMint>;
-  voteTokenAccount?: Address<TAccountVoteTokenAccount>;
+  voteTokenAccount: Address<TAccountVoteTokenAccount>;
   /** ATA owned by VTA PDA (source of SPL tokens for withdrawal) */
   voteTokenAta?: Address<TAccountVoteTokenAta>;
   /** Signer's token account (destination for claimed tokens) */
@@ -321,21 +321,6 @@ export async function getClaimVoteTokensInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.voteTokenAccount.value) {
-    accounts.voteTokenAccount.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            118, 111, 116, 101, 95, 116, 111, 107, 101, 110, 95, 97, 99, 99,
-            111, 117, 110, 116,
-          ])
-        ),
-        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
-        getAddressEncoder().encode(expectAddress(accounts.signer.value)),
-      ],
-    });
-  }
   if (!accounts.voteTokenAta.value) {
     accounts.voteTokenAta.value = await getProgramDerivedAddress({
       programAddress:

@@ -22,6 +22,7 @@ export * from './createMarket';
 export * from './extendRevealPeriod';
 export * from './incrementOptionTally';
 export * from './initCentralState';
+export * from './initEphemeralVoteTokenAccount';
 export * from './initShareAccount';
 export * from './initVoteTokenAccount';
 export * from './mintVoteTokens';

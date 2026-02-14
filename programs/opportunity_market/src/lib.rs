@@ -158,6 +158,13 @@ pub mod opportunity_market {
         instructions::init_vote_token_account(ctx, user_pubkey)
     }
 
+    pub fn init_ephemeral_vote_token_account(
+        ctx: Context<InitEphemeralVoteTokenAccount>,
+        index: u64,
+    ) -> Result<()> {
+        instructions::init_ephemeral_vote_token_account(ctx, index)
+    }
+
     pub fn mint_vote_tokens(
         ctx: Context<MintVoteTokens>,
         computation_offset: u64,

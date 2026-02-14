@@ -119,6 +119,7 @@ describe("Vote Token Account (SPL)", () => {
       {
         signer: user,
         tokenMint: mint.address,
+        voteTokenAccount: vtaAddress,
         signerTokenAccount: userAta,
         tokenProgram: TOKEN_PROGRAM_ADDRESS,
         amount: voteTokenAmount,
@@ -146,6 +147,7 @@ describe("Vote Token Account (SPL)", () => {
       {
         signer: user,
         tokenMint: mint.address,
+        voteTokenAccount: vtaAddress,
         userTokenAccount: userAta,
         tokenProgram: TOKEN_PROGRAM_ADDRESS,
         amount: claimAmount,

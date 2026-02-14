@@ -30,6 +30,7 @@ import {
   type ParsedExtendRevealPeriodInstruction,
   type ParsedIncrementOptionTallyInstruction,
   type ParsedInitCentralStateInstruction,
+  type ParsedInitEphemeralVoteTokenAccountInstruction,
   type ParsedInitShareAccountInstruction,
   type ParsedInitVoteTokenAccountInstruction,
   type ParsedMintVoteTokensInstruction,
@@ -210,6 +211,7 @@ export enum OpportunityMarketInstruction {
   ExtendRevealPeriod,
   IncrementOptionTally,
   InitCentralState,
+  InitEphemeralVoteTokenAccount,
   InitShareAccount,
   InitVoteTokenAccount,
   MintVoteTokens,
@@ -405,6 +407,17 @@ export function identifyOpportunityMarketInstruction(
     )
   ) {
     return OpportunityMarketInstruction.InitCentralState;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([24, 238, 42, 208, 54, 182, 247, 80])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.InitEphemeralVoteTokenAccount;
   }
   if (
     containsBytes(
@@ -616,6 +629,9 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.InitCentralState;
     } & ParsedInitCentralStateInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.InitEphemeralVoteTokenAccount;
+    } & ParsedInitEphemeralVoteTokenAccountInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.InitShareAccount;
     } & ParsedInitShareAccountInstruction<TProgram>)

@@ -526,6 +526,7 @@ export class TestRunner {
       {
         signer: user.solanaKeypair,
         tokenMint: this.mint.address,
+        voteTokenAccount: user.voteTokenAccount!,
         signerTokenAccount: user.tokenAccount,
         tokenProgram: TOKEN_PROGRAM_ADDRESS,
         amount,

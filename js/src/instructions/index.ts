@@ -1,4 +1,5 @@
 export * from "./initVoteTokenAccount";
+export * from "./initEphemeralVoteTokenAccount";
 export * from "./createMarket";
 export * from "./initCompDef";
 export * from "./stake";

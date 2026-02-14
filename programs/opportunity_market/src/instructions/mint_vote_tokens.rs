@@ -6,7 +6,6 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::instructions::init_vote_token_account::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::VoteTokenAccount;
 use crate::COMP_DEF_OFFSET_BUY_VOTE_TOKENS;
 use crate::{ArciumSignerAccount, ID, ID_CONST};
@@ -22,8 +21,8 @@ pub struct MintVoteTokens<'info> {
 
     #[account(
         mut,
-        seeds = [VOTE_TOKEN_ACCOUNT_SEED, token_mint.key().as_ref(), signer.key().as_ref()],
-        bump = vote_token_account.bump,
+        constraint = vote_token_account.owner == signer.key() @ ErrorCode::Unauthorized,
+        constraint = vote_token_account.token_mint == token_mint.key() @ ErrorCode::InvalidMint,
         constraint = !vote_token_account.locked @ ErrorCode::Locked
     )]
     pub vote_token_account: Box<Account<'info, VoteTokenAccount>>,

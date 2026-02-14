@@ -19,7 +19,7 @@ pub struct InitVoteTokenAccount<'info> {
         init,
         payer = signer,
         space = 8 + VoteTokenAccount::INIT_SPACE,
-        seeds = [VOTE_TOKEN_ACCOUNT_SEED, token_mint.key().as_ref(), signer.key().as_ref()],
+        seeds = [VOTE_TOKEN_ACCOUNT_SEED, token_mint.key().as_ref(), signer.key().as_ref(), &0u64.to_le_bytes()],
         bump,
     )]
     pub vote_token_account: Box<Account<'info, VoteTokenAccount>>,
@@ -45,6 +45,7 @@ pub fn init_vote_token_account(
 ) -> Result<()> {
     let vta = &mut ctx.accounts.vote_token_account;
     vta.bump = ctx.bumps.vote_token_account;
+    vta.index = 0;
     vta.owner = ctx.accounts.signer.key();
     vta.token_mint = ctx.accounts.token_mint.key();
     vta.state_nonce = 0;

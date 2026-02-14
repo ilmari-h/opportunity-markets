@@ -2,10 +2,9 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
-use crate::error::ErrorCode;
-
 use crate::instructions::init_vote_token_account::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::VoteTokenAccount;
+use crate::error::ErrorCode;
 
 #[derive(Accounts)]
 pub struct ClaimPendingDeposit<'info> {
@@ -16,9 +15,8 @@ pub struct ClaimPendingDeposit<'info> {
 
     #[account(
         mut,
-        seeds = [VOTE_TOKEN_ACCOUNT_SEED, token_mint.key().as_ref(), signer.key().as_ref()],
-        bump = vote_token_account.bump,
-        constraint = vote_token_account.owner == signer.key(),
+        constraint = vote_token_account.owner == signer.key() @ ErrorCode::Unauthorized,
+        constraint = vote_token_account.token_mint == token_mint.key() @ ErrorCode::InvalidMint,
     )]
     pub vote_token_account: Account<'info, VoteTokenAccount>,
 
@@ -54,11 +52,13 @@ pub fn claim_pending_deposit(ctx: Context<ClaimPendingDeposit>) -> Result<()> {
     // Transfer pending tokens from VTA ATA back to signer
     let mint_key = vta.token_mint;
     let owner_key = vta.owner;
+    let index_bytes = vta.index.to_le_bytes();
     let bump = vta.bump;
     let signer_seeds: &[&[&[u8]]] = &[&[
         VOTE_TOKEN_ACCOUNT_SEED,
         mint_key.as_ref(),
         owner_key.as_ref(),
+        &index_bytes,
         &[bump],
     ]];
 

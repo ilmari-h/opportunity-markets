@@ -9,6 +9,7 @@ use crate::error::ErrorCode;
 use crate::events::VoteTokensClaimedError;
 use crate::instructions::init_vote_token_account::VOTE_TOKEN_ACCOUNT_SEED;
 use crate::state::VoteTokenAccount;
+
 use crate::COMP_DEF_OFFSET_CLAIM_VOTE_TOKENS;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
 
@@ -23,8 +24,8 @@ pub struct ClaimVoteTokens<'info> {
 
     #[account(
         mut,
-        seeds = [VOTE_TOKEN_ACCOUNT_SEED, token_mint.key().as_ref(), signer.key().as_ref()],
-        bump = vote_token_account.bump,
+        constraint = vote_token_account.owner == signer.key() @ ErrorCode::Unauthorized,
+        constraint = vote_token_account.token_mint == token_mint.key() @ ErrorCode::InvalidMint,
         constraint = !vote_token_account.locked @ ErrorCode::Locked,
     )]
     pub vote_token_account: Box<Account<'info, VoteTokenAccount>>,
@@ -215,11 +216,13 @@ pub fn claim_vote_tokens_callback(
     if amount_sold > 0 {
         let mint_key = vta.token_mint;
         let owner_key = vta.owner;
+        let index_bytes = vta.index.to_le_bytes();
         let bump = vta.bump;
         let signer_seeds: &[&[&[u8]]] = &[&[
             VOTE_TOKEN_ACCOUNT_SEED,
             mint_key.as_ref(),
             owner_key.as_ref(),
+            &index_bytes,
             &[bump],
         ]];
 
