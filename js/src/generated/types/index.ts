@@ -13,6 +13,7 @@ export * from './bN254G2BLSPublicKey';
 export * from './buyOpportunityMarketSharesOutput';
 export * from './buyOpportunityMarketSharesOutputStruct0';
 export * from './circuitSource';
+export * from './closeEphemeralEncryptedTokenAccountOutput';
 export * from './computationDefinitionMeta';
 export * from './computationSignature';
 export * from './encryptedTokensUnwrappedError';

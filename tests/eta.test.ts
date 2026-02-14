@@ -14,6 +14,7 @@ import {
   awaitComputationFinalization,
   initEncryptedTokenAccount,
   initEphemeralEncryptedTokenAccount,
+  closeEphemeralEncryptedTokenAccount,
   wrapEncryptedTokens,
   unwrapEncryptedTokens,
   randomComputationOffset,
@@ -327,5 +328,167 @@ describe("Encrypted Token Account (SPL)", () => {
       });
 
     }).to.throw;
+  });
+
+  it("can close ephemeral ETA and transfer balance", async () => {
+    // User A (owner) creates their regular ETA
+    const userA = await generateKeyPairSigner();
+    await airdrop({
+      recipientAddress: userA.address,
+      lamports: lamports(2_000_000_000n),
+      commitment: "confirmed",
+    });
+
+    // User B (payer) will create ephemeral ETA for user A
+    const userB = await generateKeyPairSigner();
+    await airdrop({
+      recipientAddress: userB.address,
+      lamports: lamports(2_000_000_000n),
+      commitment: "confirmed",
+    });
+
+    // Create SPL token mint and fund user A
+    const splAmount = 100_000_000n;
+    const { mint, ata: userAAta } = await createMintAndFundAccount(
+      rpc,
+      sendAndConfirm,
+      userA,
+      userA.address,
+      splAmount,
+    );
+
+    // Generate x25519 keypair for encryption
+    const keypair = generateX25519Keypair();
+
+    // User A creates their regular ETA
+    const initEtaIx = await initEncryptedTokenAccount({
+      signer: userA,
+      tokenMint: mint.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      userPubkey: keypair.publicKey,
+    });
+
+    await sendTransaction(rpc, sendAndConfirm, userA, [initEtaIx], {
+      label: "initEncryptedTokenAccount (user A)",
+    });
+
+    const [regularEtaAddress] = await getEncryptedTokenAccountAddress(mint.address, userA.address, programId);
+
+    // User B creates ephemeral ETA for user A
+    const ephemeralIndex = 1n;
+    const initEphemeralIx = await initEphemeralEncryptedTokenAccount({
+      signer: userB,
+      owner: userA.address,
+      tokenMint: mint.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      index: ephemeralIndex,
+    });
+
+    // Record user B's balance before creating ephemeral ETA
+    const userBBalanceBefore = await rpc.getBalance(userB.address).send();
+
+    await sendTransaction(rpc, sendAndConfirm, userB, [initEphemeralIx], {
+      label: "initEphemeralEncryptedTokenAccount (user B creates for user A)",
+    });
+
+    // Record user B's balance after creating ephemeral ETA (should be lower due to rent)
+    const userBBalanceAfterCreate = await rpc.getBalance(userB.address).send();
+    const rentPaid = userBBalanceBefore.value - userBBalanceAfterCreate.value;
+    expect(rentPaid > 0n).to.be.true;
+
+    const [ephemeralEtaAddress] = await getEphemeralEncryptedTokenAccountAddress(
+      mint.address,
+      userA.address,
+      ephemeralIndex,
+      programId,
+    );
+
+    // User A wraps tokens into BOTH ETAs
+    const wrapAmountRegular = 30_000_000n;
+    const wrapAmountEphemeral = 20_000_000n;
+
+    // Wrap into regular ETA
+    const wrapRegularOffset = randomComputationOffset();
+    const wrapRegularIx = await wrapEncryptedTokens(
+      {
+        signer: userA,
+        tokenMint: mint.address,
+        encryptedTokenAccount: regularEtaAddress,
+        signerTokenAccount: userAAta,
+        tokenProgram: TOKEN_PROGRAM_ADDRESS,
+        amount: wrapAmountRegular,
+      },
+      {
+        clusterOffset: arciumEnv.arciumClusterOffset,
+        computationOffset: wrapRegularOffset,
+      },
+    );
+
+    await sendTransaction(rpc, sendAndConfirm, userA, [wrapRegularIx], {
+      label: "wrapEncryptedTokens (to regular ETA)",
+    });
+    await awaitComputationFinalization(rpc, wrapRegularOffset);
+
+    // Wrap into ephemeral ETA
+    const wrapEphemeralOffset = randomComputationOffset();
+    const wrapEphemeralIx = await wrapEncryptedTokens(
+      {
+        signer: userA,
+        tokenMint: mint.address,
+        encryptedTokenAccount: ephemeralEtaAddress,
+        signerTokenAccount: userAAta,
+        tokenProgram: TOKEN_PROGRAM_ADDRESS,
+        amount: wrapAmountEphemeral,
+      },
+      {
+        clusterOffset: arciumEnv.arciumClusterOffset,
+        computationOffset: wrapEphemeralOffset,
+      },
+    );
+
+    await sendTransaction(rpc, sendAndConfirm, userA, [wrapEphemeralIx], {
+      label: "wrapEncryptedTokens (to ephemeral ETA)",
+    });
+    await awaitComputationFinalization(rpc, wrapEphemeralOffset);
+
+    // Verify balances before closing
+    const regularBalanceBefore = await decryptEtaBalance(regularEtaAddress, keypair.secretKey);
+    const ephemeralBalanceBefore = await decryptEtaBalance(ephemeralEtaAddress, keypair.secretKey);
+    expect(regularBalanceBefore).to.equal(wrapAmountRegular);
+    expect(ephemeralBalanceBefore).to.equal(wrapAmountEphemeral);
+
+    // User A closes ephemeral ETA
+    const closeOffset = randomComputationOffset();
+    const closeIx = await closeEphemeralEncryptedTokenAccount(
+      {
+        signer: userA,
+        tokenMint: mint.address,
+        tokenProgram: TOKEN_PROGRAM_ADDRESS,
+        index: ephemeralIndex,
+        rentRecipient: userB.address, // User B (who created it) gets the rent back
+      },
+      {
+        clusterOffset: arciumEnv.arciumClusterOffset,
+        computationOffset: closeOffset,
+      },
+    );
+
+    await sendTransaction(rpc, sendAndConfirm, userA, [closeIx], {
+      label: "closeEphemeralEncryptedTokenAccount",
+    });
+    await awaitComputationFinalization(rpc, closeOffset);
+
+    // Verify regular ETA received the combined balance
+    const regularBalanceAfter = await decryptEtaBalance(regularEtaAddress, keypair.secretKey);
+    expect(regularBalanceAfter).to.equal(wrapAmountRegular + wrapAmountEphemeral);
+
+    //Verify user B received the rent lamports back
+    const userBBalanceAfterClose = await rpc.getBalance(userB.address).send();
+    // User B's balance should have increased (rent refunded)
+    expect(userBBalanceAfterClose.value > userBBalanceAfterCreate.value).to.be.true;
+
+    // Verify ephemeral ETA no longer exists
+    const ephemeralEtaAfter = await rpc.getAccountInfo(ephemeralEtaAddress).send();
+    expect(ephemeralEtaAfter.value).to.be.null;
   });
 });

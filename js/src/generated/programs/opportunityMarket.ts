@@ -20,6 +20,9 @@ import {
   type ParsedBuyOpportunityMarketSharesCallbackInstruction,
   type ParsedBuyOpportunityMarketSharesCompDefInstruction,
   type ParsedClaimPendingDepositInstruction,
+  type ParsedCloseEphemeralEncryptedTokenAccountCallbackInstruction,
+  type ParsedCloseEphemeralEncryptedTokenAccountCompDefInstruction,
+  type ParsedCloseEphemeralEncryptedTokenAccountInstruction,
   type ParsedCloseShareAccountInstruction,
   type ParsedCreateMarketInstruction,
   type ParsedExtendRevealPeriodInstruction,
@@ -201,6 +204,9 @@ export enum OpportunityMarketInstruction {
   BuyOpportunityMarketSharesCallback,
   BuyOpportunityMarketSharesCompDef,
   ClaimPendingDeposit,
+  CloseEphemeralEncryptedTokenAccount,
+  CloseEphemeralEncryptedTokenAccountCallback,
+  CloseEphemeralEncryptedTokenAccountCompDef,
   CloseShareAccount,
   CreateMarket,
   ExtendRevealPeriod,
@@ -297,6 +303,39 @@ export function identifyOpportunityMarketInstruction(
     )
   ) {
     return OpportunityMarketInstruction.ClaimPendingDeposit;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([30, 176, 151, 78, 234, 64, 254, 63])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.CloseEphemeralEncryptedTokenAccount;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([169, 52, 248, 50, 36, 66, 181, 9])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.CloseEphemeralEncryptedTokenAccountCallback;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([162, 99, 122, 48, 158, 203, 176, 243])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.CloseEphemeralEncryptedTokenAccountCompDef;
   }
   if (
     containsBytes(
@@ -599,6 +638,15 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.ClaimPendingDeposit;
     } & ParsedClaimPendingDepositInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.CloseEphemeralEncryptedTokenAccount;
+    } & ParsedCloseEphemeralEncryptedTokenAccountInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.CloseEphemeralEncryptedTokenAccountCallback;
+    } & ParsedCloseEphemeralEncryptedTokenAccountCallbackInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.CloseEphemeralEncryptedTokenAccountCompDef;
+    } & ParsedCloseEphemeralEncryptedTokenAccountCompDefInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.CloseShareAccount;
     } & ParsedCloseShareAccountInstruction<TProgram>)

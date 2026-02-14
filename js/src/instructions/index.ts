@@ -1,5 +1,6 @@
 export * from "./initEncryptedTokenAccount";
 export * from "./initEphemeralEncryptedTokenAccount";
+export * from "./closeEphemeralEncryptedTokenAccount";
 export * from "./createMarket";
 export * from "./initCompDef";
 export * from "./stake";

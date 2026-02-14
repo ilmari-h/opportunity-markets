@@ -19,6 +19,7 @@ pub const COMP_DEF_OFFSET_BUY_OPPORTUNITY_MARKET_SHARES: u32 = comp_def_offset("
 pub const COMP_DEF_OFFSET_REVEAL_SHARES: u32 = comp_def_offset("reveal_shares");
 pub const COMP_DEF_OFFSET_UNSTAKE_EARLY: u32 = comp_def_offset("unstake_early");
 pub const COMP_DEF_OFFSET_ADD_OPTION_STAKE: u32 = comp_def_offset("add_option_stake");
+pub const COMP_DEF_OFFSET_CLOSE_EPHEMERAL_ENCRYPTED_TOKEN_ACCOUNT: u32 = comp_def_offset("close_ephemeral_encrypted_token_account");
 
 declare_id!("jsK4sUrViFZvKTCFw2ekhyTtCydyntGZ1fdY7PXtbgw");
 
@@ -261,5 +262,27 @@ pub mod opportunity_market {
         output: SignedComputationOutputs<UnstakeEarlyOutput>,
     ) -> Result<()> {
         instructions::unstake_early_callback(ctx, output)
+    }
+
+    pub fn close_ephemeral_encrypted_token_account_comp_def(
+        ctx: Context<CloseEphemeralEncryptedTokenAccountCompDef>,
+    ) -> Result<()> {
+        instructions::close_ephemeral_encrypted_token_account_comp_def(ctx)
+    }
+
+    pub fn close_ephemeral_encrypted_token_account(
+        ctx: Context<CloseEphemeralEncryptedTokenAccount>,
+        computation_offset: u64,
+        index: u64,
+    ) -> Result<()> {
+        instructions::close_ephemeral_encrypted_token_account(ctx, computation_offset, index)
+    }
+
+    #[arcium_callback(encrypted_ix = "close_ephemeral_encrypted_token_account")]
+    pub fn close_ephemeral_encrypted_token_account_callback(
+        ctx: Context<CloseEphemeralEncryptedTokenAccountCallback>,
+        output: SignedComputationOutputs<CloseEphemeralEncryptedTokenAccountOutput>,
+    ) -> Result<()> {
+        instructions::close_ephemeral_encrypted_token_account_callback(ctx, output)
     }
 }

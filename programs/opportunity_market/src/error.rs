@@ -48,4 +48,6 @@ pub enum ErrorCode {
     AddOptionStakeFailed,
     #[msg("Account is locked")]
     Locked,
+    #[msg("Invalid account state")]
+    InvalidAccountState,
 }

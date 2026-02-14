@@ -68,6 +68,8 @@ pub fn init_ephemeral_encrypted_token_account(
     // Copy user_pubkey from source ETA
     eta.user_pubkey = ctx.accounts.source_encrypted_token_account.user_pubkey;
     eta.encrypted_state = [[0u8; 32]; 1];
+    // Track who paid rent so they can be refunded when closing
+    eta.rent_payer = Some(ctx.accounts.signer.key());
 
     Ok(())
 }

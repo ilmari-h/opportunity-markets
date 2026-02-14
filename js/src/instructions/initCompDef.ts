@@ -20,6 +20,7 @@ import {
   getRevealSharesCompDefInstruction,
   getUnstakeEarlyCompDefInstruction,
   getAddOptionStakeCompDefInstruction,
+  getCloseEphemeralEncryptedTokenAccountCompDefInstruction,
   OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   fetchMXEAccount,
 } from "../generated";
@@ -31,7 +32,8 @@ export type CompDefCircuitName =
   | "buy_opportunity_market_shares"
   | "reveal_shares"
   | "unstake_early"
-  | "add_option_stake";
+  | "add_option_stake"
+  | "close_ephemeral_encrypted_token_account";
 
 export const ALL_COMP_DEF_CIRCUITS: CompDefCircuitName[] = [
   "wrap_encrypted_tokens",
@@ -40,6 +42,7 @@ export const ALL_COMP_DEF_CIRCUITS: CompDefCircuitName[] = [
   "reveal_shares",
   "unstake_early",
   "add_option_stake",
+  "close_ephemeral_encrypted_token_account",
 ];
 
 
@@ -115,6 +118,9 @@ export async function getInitCompDefInstruction(
 
     case "add_option_stake":
       return getAddOptionStakeCompDefInstruction(baseInput, { programAddress: programId });
+
+    case "close_ephemeral_encrypted_token_account":
+      return getCloseEphemeralEncryptedTokenAccountCompDefInstruction(baseInput, { programAddress: programId });
 
     default:
       throw new Error(`Unknown circuit: ${circuitName}`);

@@ -215,4 +215,26 @@ mod circuits {
 
         user_eta_ctx.owner.from_arcis(user_balance)
     }
+
+    // Close ephemeral ETA: transfer balance to regular ETA
+    // If is_regular_eta_initialized is false (state_nonce == 0), treat existing balance as 0
+    // Returns new regular ETA balance
+    #[instruction]
+    pub fn close_ephemeral_encrypted_token_account(
+        ephemeral_eta_ctx: Enc<Shared, EncryptedTokenBalance>,
+        regular_eta_ctx: Enc<Shared, EncryptedTokenBalance>,
+        is_regular_eta_initialized: bool,
+    ) -> Enc<Shared, EncryptedTokenBalance> {
+        let ephemeral_balance = ephemeral_eta_ctx.to_arcis();
+        let mut regular_balance = if is_regular_eta_initialized {
+            regular_eta_ctx.to_arcis()
+        } else {
+            EncryptedTokenBalance { amount: 0 }
+        };
+
+        // Transfer entire balance from ephemeral to regular
+        regular_balance.amount = regular_balance.amount + ephemeral_balance.amount;
+
+        regular_eta_ctx.owner.from_arcis(regular_balance)
+    }
 }

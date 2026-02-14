@@ -64,7 +64,10 @@ pub struct EncryptedTokenAccount {
     pub locked: bool,
 
     // Tracks unconfirmed deposits for safety
-    pub pending_deposit: u64,  
+    pub pending_deposit: u64,
+
+    // Who paid rent for this account (None for regular ETAs, Some for ephemeral ETAs)
+    pub rent_payer: Option<Pubkey>,
 }
 
 #[account]

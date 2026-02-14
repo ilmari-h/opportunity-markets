@@ -23,6 +23,8 @@ import {
   getBooleanEncoder,
   getBytesDecoder,
   getBytesEncoder,
+  getOptionDecoder,
+  getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
   getU128Decoder,
@@ -34,14 +36,16 @@ import {
   transformEncoder,
   type Account,
   type Address,
+  type Codec,
+  type Decoder,
   type EncodedAccount,
+  type Encoder,
   type FetchAccountConfig,
   type FetchAccountsConfig,
-  type FixedSizeCodec,
-  type FixedSizeDecoder,
-  type FixedSizeEncoder,
   type MaybeAccount,
   type MaybeEncodedAccount,
+  type Option,
+  type OptionOrNullable,
   type ReadonlyUint8Array,
 } from '@solana/kit';
 
@@ -66,6 +70,7 @@ export type EncryptedTokenAccount = {
   userPubkey: Array<number>;
   locked: boolean;
   pendingDeposit: bigint;
+  rentPayer: Option<Address>;
 };
 
 export type EncryptedTokenAccountArgs = {
@@ -78,9 +83,10 @@ export type EncryptedTokenAccountArgs = {
   userPubkey: Array<number>;
   locked: boolean;
   pendingDeposit: number | bigint;
+  rentPayer: OptionOrNullable<Address>;
 };
 
-export function getEncryptedTokenAccountEncoder(): FixedSizeEncoder<EncryptedTokenAccountArgs> {
+export function getEncryptedTokenAccountEncoder(): Encoder<EncryptedTokenAccountArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
@@ -98,6 +104,7 @@ export function getEncryptedTokenAccountEncoder(): FixedSizeEncoder<EncryptedTok
       ['userPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['locked', getBooleanEncoder()],
       ['pendingDeposit', getU64Encoder()],
+      ['rentPayer', getOptionEncoder(getAddressEncoder())],
     ]),
     (value) => ({
       ...value,
@@ -106,7 +113,7 @@ export function getEncryptedTokenAccountEncoder(): FixedSizeEncoder<EncryptedTok
   );
 }
 
-export function getEncryptedTokenAccountDecoder(): FixedSizeDecoder<EncryptedTokenAccount> {
+export function getEncryptedTokenAccountDecoder(): Decoder<EncryptedTokenAccount> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     [
@@ -123,10 +130,11 @@ export function getEncryptedTokenAccountDecoder(): FixedSizeDecoder<EncryptedTok
     ['userPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['locked', getBooleanDecoder()],
     ['pendingDeposit', getU64Decoder()],
+    ['rentPayer', getOptionDecoder(getAddressDecoder())],
   ]);
 }
 
-export function getEncryptedTokenAccountCodec(): FixedSizeCodec<
+export function getEncryptedTokenAccountCodec(): Codec<
   EncryptedTokenAccountArgs,
   EncryptedTokenAccount
 > {

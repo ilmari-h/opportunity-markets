@@ -53,6 +53,7 @@ pub fn init_encrypted_token_account(
     eta.locked = false;
     eta.user_pubkey = user_pubkey;
     eta.encrypted_state = [[0u8; 32]; 1];
+    eta.rent_payer = None;
 
     Ok(())
 }
