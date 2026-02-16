@@ -50,4 +50,8 @@ pub enum ErrorCode {
     Locked,
     #[msg("Invalid account state")]
     InvalidAccountState,
+    #[msg("Unstake delay period has not passed yet")]
+    UnstakeDelayNotMet,
+    #[msg("Unstake has not been initiated")]
+    UnstakeNotInitiated,
 }

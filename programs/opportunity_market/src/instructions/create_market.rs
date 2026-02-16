@@ -52,6 +52,7 @@ pub fn create_market(
     time_to_stake: u64,
     time_to_reveal: u64,
     market_authority: Option<Pubkey>,
+    unstake_delay_seconds: u64,
 ) -> Result<()> {
     let market = &mut ctx.accounts.market;
     market.bump = ctx.bumps.market;
@@ -65,6 +66,7 @@ pub fn create_market(
     market.mint = ctx.accounts.token_mint.key();
     market.market_authority = market_authority;
     market.earliness_cutoff_seconds = ctx.accounts.central_state.earliness_cutoff_seconds;
+    market.unstake_delay_seconds = unstake_delay_seconds;
 
     emit!(MarketCreatedEvent {
         market: ctx.accounts.market.key(),

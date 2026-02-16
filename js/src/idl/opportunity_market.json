@@ -1332,6 +1332,161 @@
           "type": {
             "option": "pubkey"
           }
+        },
+        {
+          "name": "unstake_delay_seconds",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "do_unstake_early",
+      "discriminator": [
+        23,
+        184,
+        57,
+        106,
+        191,
+        197,
+        209,
+        50
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "market"
+        },
+        {
+          "name": "user_eta",
+          "writable": true
+        },
+        {
+          "name": "share_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  104,
+                  97,
+                  114,
+                  101,
+                  95,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "share_account_owner"
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "arg",
+                "path": "share_account_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
+        },
+        {
+          "name": "clock_account",
+          "writable": true,
+          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        },
+        {
+          "name": "share_account_id",
+          "type": "u32"
+        },
+        {
+          "name": "share_account_owner",
+          "type": "pubkey"
         }
       ]
     },
@@ -2538,10 +2693,6 @@
           "name": "market"
         },
         {
-          "name": "user_eta",
-          "writable": true
-        },
-        {
           "name": "share_account",
           "writable": true,
           "pda": {
@@ -2578,85 +2729,9 @@
               }
             ]
           }
-        },
-        {
-          "name": "sign_pda_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  65,
-                  114,
-                  99,
-                  105,
-                  117,
-                  109,
-                  83,
-                  105,
-                  103,
-                  110,
-                  101,
-                  114,
-                  65,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "mempool_account",
-          "writable": true
-        },
-        {
-          "name": "executing_pool",
-          "writable": true
-        },
-        {
-          "name": "computation_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "cluster_account",
-          "writable": true
-        },
-        {
-          "name": "pool_account",
-          "writable": true,
-          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
-        },
-        {
-          "name": "clock_account",
-          "writable": true,
-          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         }
       ],
       "args": [
-        {
-          "name": "computation_offset",
-          "type": "u64"
-        },
         {
           "name": "share_account_id",
           "type": "u32"
@@ -3874,6 +3949,16 @@
       "code": 6023,
       "name": "InvalidAccountState",
       "msg": "Invalid account state"
+    },
+    {
+      "code": 6024,
+      "name": "UnstakeDelayNotMet",
+      "msg": "Unstake delay period has not passed yet"
+    },
+    {
+      "code": 6025,
+      "name": "UnstakeNotInitiated",
+      "msg": "Unstake has not been initiated"
     }
   ],
   "types": [
@@ -4800,6 +4885,10 @@
           {
             "name": "earliness_cutoff_seconds",
             "type": "u64"
+          },
+          {
+            "name": "unstake_delay_seconds",
+            "type": "u64"
           }
         ]
       }
@@ -5137,6 +5226,12 @@
           {
             "name": "total_incremented",
             "type": "bool"
+          },
+          {
+            "name": "unstakeable_at_timestamp",
+            "type": {
+              "option": "u64"
+            }
           },
           {
             "name": "locked",

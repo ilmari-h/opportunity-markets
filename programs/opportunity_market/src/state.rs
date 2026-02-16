@@ -54,6 +54,9 @@ pub struct OpportunityMarket {
 
     // Score component configuration
     pub earliness_cutoff_seconds: u64,
+
+    // Unstake delay seconds
+    pub unstake_delay_seconds: u64
 }
 
 #[account]
@@ -98,6 +101,8 @@ pub struct ShareAccount {
     pub revealed_score: Option<u64>,
 
     pub total_incremented: bool,
+
+    pub unstakeable_at_timestamp: Option<u64>,
 
     // Locked while waiting for Arcium MPC callback
     pub locked: bool,

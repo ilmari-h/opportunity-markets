@@ -16,3 +16,5 @@ export * from "./extendRevealPeriod";
 export * from "./initShareAccount";
 export * from "./closeShareAccount";
 export * from "./incrementOptionTally";
+export * from "./unstakeEarly";
+export * from "./doUnstakeEarly";

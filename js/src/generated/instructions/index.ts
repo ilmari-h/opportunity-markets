@@ -18,6 +18,7 @@ export * from './closeEphemeralEncryptedTokenAccountCallback';
 export * from './closeEphemeralEncryptedTokenAccountCompDef';
 export * from './closeShareAccount';
 export * from './createMarket';
+export * from './doUnstakeEarly';
 export * from './extendRevealPeriod';
 export * from './incrementOptionTally';
 export * from './initCentralState';

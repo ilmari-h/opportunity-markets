@@ -20,6 +20,7 @@ pub mod reveal_shares;
 pub mod select_option;
 pub mod transfer_central_state_authority;
 pub mod unstake_early;
+pub mod do_unstake_early;
 pub mod update_central_state;
 
 pub use add_market_option::*;
@@ -44,4 +45,5 @@ pub use reveal_shares::*;
 pub use select_option::*;
 pub use transfer_central_state_authority::*;
 pub use unstake_early::*;
+pub use do_unstake_early::*;
 pub use update_central_state::*;

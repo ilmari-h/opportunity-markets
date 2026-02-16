@@ -69,6 +69,7 @@ export type OpportunityMarket = {
   marketAuthority: Option<Address>;
   mint: Address;
   earlinessCutoffSeconds: bigint;
+  unstakeDelaySeconds: bigint;
 };
 
 export type OpportunityMarketArgs = {
@@ -84,6 +85,7 @@ export type OpportunityMarketArgs = {
   marketAuthority: OptionOrNullable<Address>;
   mint: Address;
   earlinessCutoffSeconds: number | bigint;
+  unstakeDelaySeconds: number | bigint;
 };
 
 export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
@@ -102,6 +104,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['marketAuthority', getOptionEncoder(getAddressEncoder())],
       ['mint', getAddressEncoder()],
       ['earlinessCutoffSeconds', getU64Encoder()],
+      ['unstakeDelaySeconds', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: OPPORTUNITY_MARKET_DISCRIMINATOR })
   );
@@ -122,6 +125,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['marketAuthority', getOptionDecoder(getAddressDecoder())],
     ['mint', getAddressDecoder()],
     ['earlinessCutoffSeconds', getU64Decoder()],
+    ['unstakeDelaySeconds', getU64Decoder()],
   ]);
 }
 

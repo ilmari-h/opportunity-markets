@@ -70,6 +70,7 @@ export interface CreateTestEnvironmentConfig {
     rewardAmount?: bigint;
     timeToStake?: bigint;
     timeToReveal?: bigint;
+    unstakeDelaySeconds?: bigint;
   };
 }
 
@@ -83,6 +84,7 @@ const DEFAULT_CONFIG: Required<CreateTestEnvironmentConfig> = {
     rewardAmount: 1_000_000_000n, // 1 billion tokens
     timeToStake: 120n, // 2 minutes
     timeToReveal: 60n, // 1 minute
+    unstakeDelaySeconds: 10n, // 10 seconds
   },
 };
 
@@ -268,6 +270,7 @@ export async function createTestEnvironment(
     timeToStake: marketConfig.timeToStake,
     timeToReveal: marketConfig.timeToReveal,
     marketAuthority: null,
+    unstakeDelaySeconds: marketConfig.unstakeDelaySeconds,
   });
 
   // Get latest blockhash

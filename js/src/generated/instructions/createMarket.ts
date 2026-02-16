@@ -110,6 +110,7 @@ export type CreateMarketInstructionData = {
   timeToStake: bigint;
   timeToReveal: bigint;
   marketAuthority: Option<Address>;
+  unstakeDelaySeconds: bigint;
 };
 
 export type CreateMarketInstructionDataArgs = {
@@ -118,6 +119,7 @@ export type CreateMarketInstructionDataArgs = {
   timeToStake: number | bigint;
   timeToReveal: number | bigint;
   marketAuthority: OptionOrNullable<Address>;
+  unstakeDelaySeconds: number | bigint;
 };
 
 export function getCreateMarketInstructionDataEncoder(): Encoder<CreateMarketInstructionDataArgs> {
@@ -129,6 +131,7 @@ export function getCreateMarketInstructionDataEncoder(): Encoder<CreateMarketIns
       ['timeToStake', getU64Encoder()],
       ['timeToReveal', getU64Encoder()],
       ['marketAuthority', getOptionEncoder(getAddressEncoder())],
+      ['unstakeDelaySeconds', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: CREATE_MARKET_DISCRIMINATOR })
   );
@@ -142,6 +145,7 @@ export function getCreateMarketInstructionDataDecoder(): Decoder<CreateMarketIns
     ['timeToStake', getU64Decoder()],
     ['timeToReveal', getU64Decoder()],
     ['marketAuthority', getOptionDecoder(getAddressDecoder())],
+    ['unstakeDelaySeconds', getU64Decoder()],
   ]);
 }
 
@@ -179,6 +183,7 @@ export type CreateMarketAsyncInput<
   timeToStake: CreateMarketInstructionDataArgs['timeToStake'];
   timeToReveal: CreateMarketInstructionDataArgs['timeToReveal'];
   marketAuthority: CreateMarketInstructionDataArgs['marketAuthority'];
+  unstakeDelaySeconds: CreateMarketInstructionDataArgs['unstakeDelaySeconds'];
 };
 
 export async function getCreateMarketInstructionAsync<
@@ -343,6 +348,7 @@ export type CreateMarketInput<
   timeToStake: CreateMarketInstructionDataArgs['timeToStake'];
   timeToReveal: CreateMarketInstructionDataArgs['timeToReveal'];
   marketAuthority: CreateMarketInstructionDataArgs['marketAuthority'];
+  unstakeDelaySeconds: CreateMarketInstructionDataArgs['unstakeDelaySeconds'];
 };
 
 export function getCreateMarketInstruction<

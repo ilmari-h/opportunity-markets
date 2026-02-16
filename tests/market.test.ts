@@ -395,6 +395,95 @@ describe("OpportunityMarket", () => {
 
     // Market ATA should be empty (or nearly empty due to rounding)
     expect(marketBalanceAfter <= 1n, `Market ATA should be empty, has ${marketBalanceAfter}`).to.be.true;
-  })
+  });
+
+  it("allows early unstaking with delay", async () => {
+    const marketFundingAmount = 1_000_000_000n;
+    const unstakeDelaySeconds = 10n;
+    const timeToStake = 30n;
+
+    const runner = await TestRunner.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 2,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketConfig: {
+        rewardAmount: marketFundingAmount,
+        timeToStake,
+        timeToReveal: 20n,
+        unstakeDelaySeconds,
+      },
+    });
+
+    // Fund and open market
+    await runner.fundMarket();
+    const openTimestamp = await runner.openMarket();
+
+    const [staker, executor] = runner.participants;
+
+    // Initialize ETAs and wrap tokens
+    await runner.initEncryptedTokenAccount(staker);
+    await runner.initEncryptedTokenAccount(executor);
+    const wrapAmount = 100_000_000n;
+    await runner.wrapEncryptedTokens(staker, wrapAmount);
+
+    // Add options
+    const { optionIndex: optionA } = await runner.addOptionAsCreator("Option A");
+    await runner.addOptionAsCreator("Option B");
+
+    // Wait for staking period and stake
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+    const stakeAmount = 50_000_000n;
+    const shareAccountId = await runner.stakeOnOption(staker, stakeAmount, optionA);
+
+    // Verify ETA balance decreased after staking
+    const balanceAfterStake = await runner.decryptEtaBalance(staker);
+    expect(balanceAfterStake).to.equal(wrapAmount - stakeAmount);
+
+    // Verify initial state
+    let shareAccount = await runner.fetchShareAccountData(staker, shareAccountId);
+    expect(isSome(shareAccount.data.unstakeableAtTimestamp)).to.be.false;
+    expect(isSome(shareAccount.data.unstakedAtTimestamp)).to.be.false;
+
+    // Initiate early unstake (sets unstakeableAtTimestamp)
+    await runner.unstakeEarly(staker, shareAccountId);
+
+    shareAccount = await runner.fetchShareAccountData(staker, shareAccountId);
+    expect(isSome(shareAccount.data.unstakeableAtTimestamp)).to.be.true;
+    expect(isSome(shareAccount.data.unstakedAtTimestamp)).to.be.false;
+
+    // Execute unstake too early, should throw
+    try {
+      await runner.doUnstakeEarly(executor, staker, shareAccountId);
+      expect(false, "Should trhow");
+    } catch { }
+
+    // Wait for unstake delay to pass
+    if (!isSome(shareAccount.data.unstakeableAtTimestamp)) throw new Error()
+    const unstakeableAt = shareAccount.data.unstakeableAtTimestamp.value;
+    await sleepUntilOnChainTimestamp(Number(unstakeableAt) + 1);
+
+    // Execute unstake (permissionless - different user can call)
+    await runner.doUnstakeEarly(executor, staker, shareAccountId);
+
+    shareAccount = await runner.fetchShareAccountData(staker, shareAccountId);
+    expect(isSome(shareAccount.data.unstakedAtTimestamp)).to.be.true;
+
+    // Verify ETA balance was refunded
+    const balanceAfterUnstake = await runner.decryptEtaBalance(staker);
+    expect(balanceAfterUnstake).to.equal(wrapAmount);
+
+    // Select winner and wait for stake period to end
+    await runner.selectOption(optionA);
+    const stakeEndTimestamp = Number(openTimestamp) + Number(timeToStake);
+    await sleepUntilOnChainTimestamp(stakeEndTimestamp + 1);
+
+    // Reveal shares.
+    await runner.revealShares(staker, shareAccountId);
+    shareAccount = await runner.fetchShareAccountData(staker, shareAccountId);
+    expect(shareAccount.data.revealedAmount).to.deep.equal(some(stakeAmount));
+    expect(shareAccount.data.revealedOption).to.deep.equal(some(optionA));
+  });
 
 });

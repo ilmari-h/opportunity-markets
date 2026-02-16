@@ -62,6 +62,10 @@ export const OPPORTUNITY_MARKET_ERROR__ADD_OPTION_STAKE_FAILED = 0x1785; // 6021
 export const OPPORTUNITY_MARKET_ERROR__LOCKED = 0x1786; // 6022
 /** InvalidAccountState: Invalid account state */
 export const OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE = 0x1787; // 6023
+/** UnstakeDelayNotMet: Unstake delay period has not passed yet */
+export const OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET = 0x1788; // 6024
+/** UnstakeNotInitiated: Unstake has not been initiated */
+export const OPPORTUNITY_MARKET_ERROR__UNSTAKE_NOT_INITIATED = 0x1789; // 6025
 
 export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION
@@ -87,6 +91,8 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE
   | typeof OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED
   | typeof OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED
+  | typeof OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET
+  | typeof OPPORTUNITY_MARKET_ERROR__UNSTAKE_NOT_INITIATED
   | typeof OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED;
 
 let opportunityMarketErrorMessages:
@@ -117,6 +123,8 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE]: `Staking period is not active`,
     [OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED]: `Tally already incremented for this share account`,
     [OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED]: `Unauthorized`,
+    [OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET]: `Unstake delay period has not passed yet`,
+    [OPPORTUNITY_MARKET_ERROR__UNSTAKE_NOT_INITIATED]: `Unstake has not been initiated`,
     [OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED]: `Market winner already selected`,
   };
 }

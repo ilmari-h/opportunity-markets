@@ -13,6 +13,7 @@ export interface CreateMarketParams {
   timeToStake: bigint;
   timeToReveal: bigint;
   marketAuthority: Address | null;
+  unstakeDelaySeconds: bigint;
 }
 
 export async function createMarket(
@@ -27,6 +28,7 @@ export async function createMarket(
     timeToReveal,
     timeToStake,
     marketAuthority,
+    unstakeDelaySeconds,
   } = input;
 
   return getCreateMarketInstructionAsync({
@@ -38,5 +40,6 @@ export async function createMarket(
     timeToStake,
     timeToReveal,
     marketAuthority,
+    unstakeDelaySeconds,
   });
 }

@@ -26,6 +26,7 @@ import {
   type ParsedCloseEphemeralEncryptedTokenAccountInstruction,
   type ParsedCloseShareAccountInstruction,
   type ParsedCreateMarketInstruction,
+  type ParsedDoUnstakeEarlyInstruction,
   type ParsedExtendRevealPeriodInstruction,
   type ParsedIncrementOptionTallyInstruction,
   type ParsedInitCentralStateInstruction,
@@ -224,6 +225,7 @@ export enum OpportunityMarketInstruction {
   CloseEphemeralEncryptedTokenAccountCompDef,
   CloseShareAccount,
   CreateMarket,
+  DoUnstakeEarly,
   ExtendRevealPeriod,
   IncrementOptionTally,
   InitCentralState,
@@ -385,6 +387,17 @@ export function identifyOpportunityMarketInstruction(
     )
   ) {
     return OpportunityMarketInstruction.CreateMarket;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([23, 184, 57, 106, 191, 197, 209, 50])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.DoUnstakeEarly;
   }
   if (
     containsBytes(
@@ -694,6 +707,9 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.CreateMarket;
     } & ParsedCreateMarketInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.DoUnstakeEarly;
+    } & ParsedDoUnstakeEarlyInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.ExtendRevealPeriod;
     } & ParsedExtendRevealPeriodInstruction<TProgram>)

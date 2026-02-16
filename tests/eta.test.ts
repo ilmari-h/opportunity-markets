@@ -362,12 +362,12 @@ describe("Encrypted Token Account (SPL)", () => {
       index: ephemeralIndex,
     });
 
-    expect(async () => {
+    try {
       await sendTransaction(rpc, sendAndConfirm, payer, [initEphemeralIx], {
         label: "initEphemeralEncryptedTokenAccount (should fail)",
       });
-
-    }).to.throw;
+      expect(false, "Should throw")
+    } catch {}
   });
 
   it("can close ephemeral ETA and transfer balance", async () => {

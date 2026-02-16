@@ -40,6 +40,8 @@ import {
   revealShares,
   incrementOptionTally,
   closeShareAccount,
+  unstakeEarly as unstakeEarlyIx,
+  doUnstakeEarly as doUnstakeEarlyIx,
   openMarket as openMarketIx,
   awaitComputationFinalization,
   awaitBatchComputationFinalization,
@@ -49,6 +51,7 @@ import {
   fetchShareAccount,
   getOpportunityMarketOptionAddress,
   fetchOpportunityMarketOption,
+  fetchEncryptedTokenAccount,
 } from "../../js/src";
 import { randomBytes } from "crypto";
 import * as anchor from "@coral-xyz/anchor";
@@ -84,6 +87,7 @@ interface MarketConfig {
   rewardAmount: bigint;
   timeToStake: bigint;
   timeToReveal: bigint;
+  unstakeDelaySeconds: bigint;
 }
 
 export interface TestRunnerConfig {
@@ -133,6 +137,7 @@ const DEFAULT_CONFIG: Required<TestRunnerConfig> = {
     rewardAmount: 1_000_000_000n,
     timeToStake: 120n, // 2 minutes
     timeToReveal: 60n, // 1 minute
+    unstakeDelaySeconds: 10n, // 10 seconds
   },
 };
 
@@ -384,6 +389,7 @@ export class TestRunner {
       timeToStake: marketConfig.timeToStake,
       timeToReveal: marketConfig.timeToReveal,
       marketAuthority: null,
+      unstakeDelaySeconds: marketConfig.unstakeDelaySeconds,
     });
 
     await sendTransaction(runner.rpc, runner.sendAndConfirm, runner.marketCreator.solanaKeypair, [createMarketIx], {
@@ -837,6 +843,51 @@ export class TestRunner {
     await this.revealSharesBatch([{ userId, shareAccountId }]);
   }
 
+  async unstakeEarly(userId: Address, shareAccountId: number): Promise<void> {
+    const user = this.getUser(userId);
+
+    const ix = await unstakeEarlyIx({
+      signer: user.solanaKeypair,
+      market: this.marketAddress,
+      shareAccountId,
+    });
+
+    await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [ix], {
+      label: `Unstake early (initiate)`,
+    });
+  }
+
+  async doUnstakeEarly(
+    executorId: Address,
+    shareOwnerId: Address,
+    shareAccountId: number
+  ): Promise<void> {
+    const executor = this.getUser(executorId);
+    const owner = this.getUser(shareOwnerId);
+    this.assertEtaInitialized(owner);
+
+    const computationOffset = randomComputationOffset();
+    const [userEta] = await getEncryptedTokenAccountAddress(this.mint.address, shareOwnerId);
+
+    const ix = await doUnstakeEarlyIx(
+      {
+        signer: executor.solanaKeypair,
+        market: this.marketAddress,
+        userEta,
+        shareAccountId,
+        shareAccountOwner: shareOwnerId,
+      },
+      this.getArciumConfig(computationOffset)
+    );
+
+    await sendTransaction(this.rpc, this.sendAndConfirm, executor.solanaKeypair, [ix], {
+      label: `Do unstake early (execute)`,
+    });
+
+    const result = await awaitComputationFinalization(this.rpc, computationOffset);
+    this.assertComputationSucceeded(result, "doUnstakeEarly");
+  }
+
   async incrementOptionTallyBatch(increments: TallyIncrement[]): Promise<void> {
     const instructions = await Promise.all(
       increments.map(async (inc) => {
@@ -984,6 +1035,21 @@ export class TestRunner {
     };
   }
 
+  /**
+   * Decrypt the user's encrypted token account balance.
+   */
+  async decryptEtaBalance(userId: Address): Promise<bigint> {
+    const user = this.getUser(userId);
+    this.assertEtaInitialized(user);
+
+    const [etaAddress] = await getEncryptedTokenAccountAddress(this.mint.address, userId);
+    const eta = await fetchEncryptedTokenAccount(this.rpc, etaAddress);
+    const cipher = createCipher(user.x25519Keypair.secretKey, this.mxePublicKey);
+    const nonceBytes = nonceToBytes(eta.data.stateNonce);
+    const decrypted = cipher.decrypt(eta.data.encryptedState, nonceBytes);
+    return decrypted[0];
+  }
+
   /** Get the open timestamp (set after openMarket is called) */
   getOpenTimestamp(): bigint {
     if (this.openTimestamp === null) {
@@ -1005,6 +1071,11 @@ export class TestRunner {
   /** Get rewardAmount from market config */
   getRewardAmount(): bigint {
     return this.marketConfig.rewardAmount;
+  }
+
+  /** Get unstakeDelaySeconds from market config */
+  getUnstakeDelaySeconds(): bigint {
+    return this.marketConfig.unstakeDelaySeconds;
   }
 
   /** Get market's token ATA address */

@@ -77,6 +77,7 @@ pub mod opportunity_market {
         time_to_stake: u64,
         time_to_reveal: u64,
         market_authority: Option<Pubkey>,
+        unstake_delay_seconds: u64,
     ) -> Result<()> {
         instructions::create_market(
             ctx,
@@ -84,7 +85,8 @@ pub mod opportunity_market {
             reward_amount,
             time_to_stake,
             time_to_reveal,
-            market_authority
+            market_authority,
+            unstake_delay_seconds,
         )
     }
 
@@ -265,10 +267,18 @@ pub mod opportunity_market {
 
     pub fn unstake_early(
         ctx: Context<UnstakeEarly>,
-        computation_offset: u64,
         share_account_id: u32,
     ) -> Result<()> {
-        instructions::unstake_early(ctx, computation_offset, share_account_id)
+        instructions::unstake_early(ctx, share_account_id)
+    }
+
+    pub fn do_unstake_early(
+        ctx: Context<DoUnstakeEarly>,
+        computation_offset: u64,
+        share_account_id: u32,
+        share_account_owner: Pubkey,
+    ) -> Result<()> {
+        instructions::do_unstake_early(ctx, computation_offset, share_account_id, share_account_owner)
     }
 
     #[arcium_callback(encrypted_ix = "unstake_early")]
