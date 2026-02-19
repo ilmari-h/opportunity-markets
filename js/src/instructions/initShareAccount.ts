@@ -3,8 +3,9 @@ import {
   getInitShareAccountInstructionAsync,
   type InitShareAccountInstruction,
 } from "../generated";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface InitShareAccountParams {
+export interface InitShareAccountParams extends BaseInstructionParams {
   signer: TransactionSigner;
   market: Address;
   stateNonce: bigint;
@@ -13,6 +14,10 @@ export interface InitShareAccountParams {
 
 export async function initShareAccount(
   input: InitShareAccountParams
-): Promise<InitShareAccountInstruction> {
-  return getInitShareAccountInstructionAsync(input);
+): Promise<InitShareAccountInstruction<string>> {
+  const { programAddress, ...params } = input;
+  return getInitShareAccountInstructionAsync(
+    params,
+    programAddress ? { programAddress } : undefined
+  );
 }

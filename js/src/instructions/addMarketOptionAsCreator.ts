@@ -3,8 +3,9 @@ import {
   getAddMarketOptionAsCreatorInstructionAsync,
   type AddMarketOptionAsCreatorInstruction,
 } from "../generated";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface AddMarketOptionAsCreatorParams {
+export interface AddMarketOptionAsCreatorParams extends BaseInstructionParams {
   creator: TransactionSigner;
   market: Address;
   optionIndex: number;
@@ -13,6 +14,10 @@ export interface AddMarketOptionAsCreatorParams {
 
 export async function addMarketOptionAsCreator(
   input: AddMarketOptionAsCreatorParams
-): Promise<AddMarketOptionAsCreatorInstruction> {
-  return getAddMarketOptionAsCreatorInstructionAsync(input);
+): Promise<AddMarketOptionAsCreatorInstruction<string>> {
+  const { programAddress, ...params } = input;
+  return getAddMarketOptionAsCreatorInstructionAsync(
+    params,
+    programAddress ? { programAddress } : undefined
+  );
 }

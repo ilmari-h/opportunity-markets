@@ -3,8 +3,9 @@ import {
   getOpenMarketInstruction,
   type OpenMarketInstruction,
 } from "../generated";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface OpenMarketParams {
+export interface OpenMarketParams extends BaseInstructionParams {
   creator: TransactionSigner;
   market: Address;
   tokenMint: Address;
@@ -13,6 +14,12 @@ export interface OpenMarketParams {
   openTimestamp: bigint;
 }
 
-export function openMarket(input: OpenMarketParams): OpenMarketInstruction {
-  return getOpenMarketInstruction(input);
+export function openMarket(
+  input: OpenMarketParams
+): OpenMarketInstruction<string> {
+  const { programAddress, ...params } = input;
+  return getOpenMarketInstruction(
+    params,
+    programAddress ? { programAddress } : undefined
+  );
 }

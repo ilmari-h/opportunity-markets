@@ -3,8 +3,9 @@ import {
   getCloseShareAccountInstructionAsync,
   type CloseShareAccountInstruction,
 } from "../generated";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface CloseShareAccountParams {
+export interface CloseShareAccountParams extends BaseInstructionParams {
   owner: TransactionSigner;
   market: Address;
   tokenMint: Address;
@@ -16,6 +17,10 @@ export interface CloseShareAccountParams {
 
 export async function closeShareAccount(
   input: CloseShareAccountParams
-): Promise<CloseShareAccountInstruction> {
-  return getCloseShareAccountInstructionAsync(input);
+): Promise<CloseShareAccountInstruction<string>> {
+  const { programAddress, ...params } = input;
+  return getCloseShareAccountInstructionAsync(
+    params,
+    programAddress ? { programAddress } : undefined
+  );
 }

@@ -3,8 +3,9 @@ import {
   getExtendRevealPeriodInstruction,
   type ExtendRevealPeriodInstruction,
 } from "../generated";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface ExtendRevealPeriodParams {
+export interface ExtendRevealPeriodParams extends BaseInstructionParams {
   authority: TransactionSigner;
   market: Address;
   newTimeToReveal: bigint;
@@ -12,6 +13,10 @@ export interface ExtendRevealPeriodParams {
 
 export function extendRevealPeriod(
   input: ExtendRevealPeriodParams
-): ExtendRevealPeriodInstruction {
-  return getExtendRevealPeriodInstruction(input);
+): ExtendRevealPeriodInstruction<string> {
+  const { programAddress, ...params } = input;
+  return getExtendRevealPeriodInstruction(
+    params,
+    programAddress ? { programAddress } : undefined
+  );
 }

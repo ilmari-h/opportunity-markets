@@ -25,6 +25,7 @@ import {
   fetchMXEAccount,
 } from "../generated";
 import { BN } from "bn.js";
+import { type BaseInstructionParams } from "./instructionParams";
 
 export type CompDefCircuitName =
   | "wrap_encrypted_tokens"
@@ -50,9 +51,7 @@ function toAddress(pubkey: { toBase58(): string }): Address {
   return address(pubkey.toBase58());
 }
 
-export interface InitCompDefConfig {
-  programId?: Address;
-}
+export interface InitCompDefConfig extends BaseInstructionParams {}
 
 export async function getMxeAccount(rpc: Rpc<SolanaRpcApi>, programId: Address = OPPORTUNITY_MARKET_PROGRAM_ADDRESS) {
   const programIdLegacy = new PublicKey(programId);
@@ -84,7 +83,7 @@ export async function getInitCompDefInstruction(
   circuitName: CompDefCircuitName,
   config: InitCompDefConfig = {}
 ): Promise<Instruction> {
-  const programId = config.programId ?? OPPORTUNITY_MARKET_PROGRAM_ADDRESS;
+  const programId = config.programAddress ?? OPPORTUNITY_MARKET_PROGRAM_ADDRESS;
   const mxeAccount = await getMxeAccount(rpc, programId);
   const compDefAccount = getCompDefAccount(circuitName, programId);
   const lutAddress = getLookupTableAddress(

@@ -4,8 +4,9 @@ import {
   type CreateMarketInstruction,
 } from "../generated";
 import { type ByteArray, toNumberArray } from "../utils";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface CreateMarketParams {
+export interface CreateMarketParams extends BaseInstructionParams {
   creator: TransactionSigner;
   tokenMint: Address;
   tokenProgram: Address;
@@ -17,12 +18,11 @@ export interface CreateMarketParams {
   unstakeDelaySeconds: bigint;
   authorizedReaderPubkey: ByteArray;
   allowClosingEarly: boolean;
-  programAddress?: Address;
 }
 
 export async function createMarket(
   input: CreateMarketParams
-): Promise<CreateMarketInstruction> {
+): Promise<CreateMarketInstruction<string>> {
   const {
     creator,
     tokenMint,

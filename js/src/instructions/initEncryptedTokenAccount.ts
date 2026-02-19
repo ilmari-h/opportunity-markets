@@ -4,8 +4,9 @@ import {
   type InitEncryptedTokenAccountInstruction,
 } from "../generated";
 import { type ByteArray, toNumberArray } from "../utils";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface InitEncryptedTokenAccountParams {
+export interface InitEncryptedTokenAccountParams extends BaseInstructionParams {
   /** The signer/payer for the transaction */
   signer: TransactionSigner;
   tokenMint: Address;
@@ -15,12 +16,15 @@ export interface InitEncryptedTokenAccountParams {
 
 export async function initEncryptedTokenAccount(
   input: InitEncryptedTokenAccountParams
-): Promise<InitEncryptedTokenAccountInstruction> {
-  const { signer, tokenMint, userPubkey } = input;
+): Promise<InitEncryptedTokenAccountInstruction<string>> {
+  const { programAddress, signer, tokenMint, userPubkey } = input;
 
-  return getInitEncryptedTokenAccountInstructionAsync({
-    signer,
-    tokenMint,
-    userPubkey: toNumberArray(userPubkey),
-  });
+  return getInitEncryptedTokenAccountInstructionAsync(
+    {
+      signer,
+      tokenMint,
+      userPubkey: toNumberArray(userPubkey),
+    },
+    programAddress ? { programAddress } : undefined
+  );
 }

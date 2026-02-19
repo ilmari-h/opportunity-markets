@@ -4,8 +4,9 @@ import {
   type UnwrapEncryptedTokensInstruction,
 } from "../generated";
 import { type ArciumConfig, getComputeAccounts } from "../arcium/computeAccounts";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface UnwrapEncryptedTokensParams {
+export interface UnwrapEncryptedTokensParams extends BaseInstructionParams {
   signer: TransactionSigner;
   tokenMint: Address;
   /** The EncryptedTokenAccount to unwrap tokens from */
@@ -18,16 +19,19 @@ export interface UnwrapEncryptedTokensParams {
 export async function unwrapEncryptedTokens(
   input: UnwrapEncryptedTokensParams,
   config: ArciumConfig
-): Promise<UnwrapEncryptedTokensInstruction> {
-  const { signer, tokenMint, encryptedTokenAccount, userTokenAccount, tokenProgram, amount } = input;
+): Promise<UnwrapEncryptedTokensInstruction<string>> {
+  const { programAddress, signer, tokenMint, encryptedTokenAccount, userTokenAccount, tokenProgram, amount } = input;
 
-  return getUnwrapEncryptedTokensInstructionAsync({
-    ...getComputeAccounts("unwrap_encrypted_tokens", config),
-    signer,
-    tokenMint,
-    encryptedTokenAccount,
-    userTokenAccount,
-    tokenProgram,
-    amount,
-  });
+  return getUnwrapEncryptedTokensInstructionAsync(
+    {
+      ...getComputeAccounts("unwrap_encrypted_tokens", config),
+      signer,
+      tokenMint,
+      encryptedTokenAccount,
+      userTokenAccount,
+      tokenProgram,
+      amount,
+    },
+    programAddress ? { programAddress } : undefined
+  );
 }

@@ -1,3 +1,4 @@
+export * from "./instructionParams";
 export * from "./initEncryptedTokenAccount";
 export * from "./initEphemeralEncryptedTokenAccount";
 export * from "./initTokenVault";

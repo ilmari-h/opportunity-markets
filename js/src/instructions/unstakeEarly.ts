@@ -3,8 +3,9 @@ import {
   getUnstakeEarlyInstructionAsync,
   type UnstakeEarlyInstruction,
 } from "../generated";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface UnstakeEarlyParams {
+export interface UnstakeEarlyParams extends BaseInstructionParams {
   signer: TransactionSigner;
   market: Address;
   shareAccountId: number;
@@ -12,12 +13,10 @@ export interface UnstakeEarlyParams {
 
 export async function unstakeEarly(
   input: UnstakeEarlyParams
-): Promise<UnstakeEarlyInstruction> {
-  const { signer, market, shareAccountId } = input;
-
-  return getUnstakeEarlyInstructionAsync({
-    signer,
-    market,
-    shareAccountId,
-  });
+): Promise<UnstakeEarlyInstruction<string>> {
+  const { programAddress, ...params } = input;
+  return getUnstakeEarlyInstructionAsync(
+    params,
+    programAddress ? { programAddress } : undefined
+  );
 }

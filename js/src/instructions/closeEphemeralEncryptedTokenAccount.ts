@@ -4,8 +4,9 @@ import {
   type CloseEphemeralEncryptedTokenAccountInstruction,
 } from "../generated";
 import { type ArciumConfig, getComputeAccounts } from "../arcium/computeAccounts";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface CloseEphemeralEncryptedTokenAccountParams {
+export interface CloseEphemeralEncryptedTokenAccountParams extends BaseInstructionParams {
   /** Signer must be the ETA owner */
   signer: TransactionSigner;
   tokenMint: Address;
@@ -19,15 +20,18 @@ export interface CloseEphemeralEncryptedTokenAccountParams {
 export async function closeEphemeralEncryptedTokenAccount(
   input: CloseEphemeralEncryptedTokenAccountParams,
   config: ArciumConfig
-): Promise<CloseEphemeralEncryptedTokenAccountInstruction> {
-  const { signer, tokenMint, tokenProgram, index, rentRecipient } = input;
+): Promise<CloseEphemeralEncryptedTokenAccountInstruction<string>> {
+  const { programAddress, signer, tokenMint, tokenProgram, index, rentRecipient } = input;
 
-  return getCloseEphemeralEncryptedTokenAccountInstructionAsync({
-    ...getComputeAccounts("close_ephemeral_encrypted_token_account", config),
-    signer,
-    tokenMint,
-    tokenProgram,
-    index,
-    rentRecipient,
-  });
+  return getCloseEphemeralEncryptedTokenAccountInstructionAsync(
+    {
+      ...getComputeAccounts("close_ephemeral_encrypted_token_account", config),
+      signer,
+      tokenMint,
+      tokenProgram,
+      index,
+      rentRecipient,
+    },
+    programAddress ? { programAddress } : undefined
+  );
 }

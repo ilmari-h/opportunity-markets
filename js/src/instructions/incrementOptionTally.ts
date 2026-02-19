@@ -3,8 +3,9 @@ import {
   getIncrementOptionTallyInstructionAsync,
   type IncrementOptionTallyInstruction,
 } from "../generated";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface IncrementOptionTallyParams {
+export interface IncrementOptionTallyParams extends BaseInstructionParams {
   signer: TransactionSigner;
   owner: Address;
   market: Address;
@@ -14,6 +15,10 @@ export interface IncrementOptionTallyParams {
 
 export async function incrementOptionTally(
   input: IncrementOptionTallyParams
-): Promise<IncrementOptionTallyInstruction> {
-  return getIncrementOptionTallyInstructionAsync(input);
+): Promise<IncrementOptionTallyInstruction<string>> {
+  const { programAddress, ...params } = input;
+  return getIncrementOptionTallyInstructionAsync(
+    params,
+    programAddress ? { programAddress } : undefined
+  );
 }

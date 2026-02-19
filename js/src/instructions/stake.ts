@@ -5,8 +5,9 @@ import {
 } from "../generated";
 import { type ArciumConfig, getComputeAccounts } from "../arcium/computeAccounts";
 import { type ByteArray, toNumberArray } from "../utils";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface StakeParams {
+export interface StakeParams extends BaseInstructionParams {
   signer: TransactionSigner;
   market: Address;
   userEta: Address;
@@ -20,8 +21,9 @@ export interface StakeParams {
 export async function stake(
   input: StakeParams,
   config: ArciumConfig
-): Promise<StakeInstruction> {
+): Promise<StakeInstruction<string>> {
   const {
+    programAddress,
     signer,
     market,
     userEta,
@@ -32,15 +34,18 @@ export async function stake(
     authorizedReaderNonce,
   } = input;
 
-  return getStakeInstructionAsync({
-    ...getComputeAccounts("buy_opportunity_market_shares", config),
-    signer,
-    market,
-    userEta,
-    shareAccountId,
-    amountCiphertext: toNumberArray(amountCiphertext),
-    selectedOptionCiphertext: toNumberArray(selectedOptionCiphertext),
-    inputNonce,
-    authorizedReaderNonce,
-  });
+  return getStakeInstructionAsync(
+    {
+      ...getComputeAccounts("buy_opportunity_market_shares", config),
+      signer,
+      market,
+      userEta,
+      shareAccountId,
+      amountCiphertext: toNumberArray(amountCiphertext),
+      selectedOptionCiphertext: toNumberArray(selectedOptionCiphertext),
+      inputNonce,
+      authorizedReaderNonce,
+    },
+    programAddress ? { programAddress } : undefined
+  );
 }

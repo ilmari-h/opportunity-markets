@@ -5,8 +5,9 @@ import {
 } from "../generated";
 import { type ArciumConfig, getComputeAccounts } from "../arcium/computeAccounts";
 import { type ByteArray, toNumberArray } from "../utils";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface AddMarketOptionParams {
+export interface AddMarketOptionParams extends BaseInstructionParams {
   creator: TransactionSigner;
   market: Address;
   sourceEta: Address;
@@ -22,8 +23,9 @@ export interface AddMarketOptionParams {
 export async function addMarketOption(
   input: AddMarketOptionParams,
   config: ArciumConfig,
-): Promise<AddMarketOptionInstruction> {
+): Promise<AddMarketOptionInstruction<string>> {
   const {
+    programAddress,
     creator,
     market,
     sourceEta,
@@ -36,17 +38,20 @@ export async function addMarketOption(
     authorizedReaderNonce,
   } = input;
 
-  return getAddMarketOptionInstructionAsync({
-    ...getComputeAccounts("add_option_stake", config),
-    creator,
-    market,
-    sourceEta,
-    shareAccount,
-    optionIndex,
-    shareAccountId,
-    name,
-    amountCiphertext: toNumberArray(amountCiphertext),
-    inputNonce,
-    authorizedReaderNonce,
-  });
+  return getAddMarketOptionInstructionAsync(
+    {
+      ...getComputeAccounts("add_option_stake", config),
+      creator,
+      market,
+      sourceEta,
+      shareAccount,
+      optionIndex,
+      shareAccountId,
+      name,
+      amountCiphertext: toNumberArray(amountCiphertext),
+      inputNonce,
+      authorizedReaderNonce,
+    },
+    programAddress ? { programAddress } : undefined
+  );
 }

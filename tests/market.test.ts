@@ -542,7 +542,7 @@ describe("OpportunityMarket", () => {
 
     // Wait for stake period to end
     const stakeEndTimestamp = Number(openTimestamp) + Number(timeToStake);
-    await sleepUntilOnChainTimestamp(stakeEndTimestamp + 1);
+    await sleepUntilOnChainTimestamp(stakeEndTimestamp + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Now selecting option should succeed
     await runner.selectOption(optionA);

@@ -3,8 +3,9 @@ import {
   getInitTokenVaultInstructionAsync,
   type InitTokenVaultInstruction,
 } from "../generated";
+import { type BaseInstructionParams } from "./instructionParams";
 
-export interface InitTokenVaultParams {
+export interface InitTokenVaultParams extends BaseInstructionParams {
   /** The signer/payer for the transaction */
   payer: TransactionSigner;
   /** Address that can withdraw tokens from the vault */
@@ -13,11 +14,14 @@ export interface InitTokenVaultParams {
 
 export async function initTokenVault(
   input: InitTokenVaultParams
-): Promise<InitTokenVaultInstruction> {
-  const { payer, fundManager } = input;
+): Promise<InitTokenVaultInstruction<string>> {
+  const { programAddress, payer, fundManager } = input;
 
-  return getInitTokenVaultInstructionAsync({
-    payer,
-    fundManager,
-  });
+  return getInitTokenVaultInstructionAsync(
+    {
+      payer,
+      fundManager,
+    },
+    programAddress ? { programAddress } : undefined
+  );
 }
