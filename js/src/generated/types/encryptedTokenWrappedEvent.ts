@@ -10,12 +10,18 @@ import {
   combineCodec,
   getAddressDecoder,
   getAddressEncoder,
+  getArrayDecoder,
+  getArrayEncoder,
   getI64Decoder,
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
+  getU128Decoder,
+  getU128Encoder,
   getU64Decoder,
   getU64Encoder,
+  getU8Decoder,
+  getU8Encoder,
   type Address,
   type FixedSizeCodec,
   type FixedSizeDecoder,
@@ -25,14 +31,18 @@ import {
 export type EncryptedTokenWrappedEvent = {
   encryptedTokenAccount: Address;
   buyer: Address;
-  lamportsSpent: bigint;
+  depositAmount: bigint;
+  encryptedNewBalance: Array<number>;
+  nonce: bigint;
   timestamp: bigint;
 };
 
 export type EncryptedTokenWrappedEventArgs = {
   encryptedTokenAccount: Address;
   buyer: Address;
-  lamportsSpent: number | bigint;
+  depositAmount: number | bigint;
+  encryptedNewBalance: Array<number>;
+  nonce: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -40,7 +50,9 @@ export function getEncryptedTokenWrappedEventEncoder(): FixedSizeEncoder<Encrypt
   return getStructEncoder([
     ['encryptedTokenAccount', getAddressEncoder()],
     ['buyer', getAddressEncoder()],
-    ['lamportsSpent', getU64Encoder()],
+    ['depositAmount', getU64Encoder()],
+    ['encryptedNewBalance', getArrayEncoder(getU8Encoder(), { size: 32 })],
+    ['nonce', getU128Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -49,7 +61,9 @@ export function getEncryptedTokenWrappedEventDecoder(): FixedSizeDecoder<Encrypt
   return getStructDecoder([
     ['encryptedTokenAccount', getAddressDecoder()],
     ['buyer', getAddressDecoder()],
-    ['lamportsSpent', getU64Decoder()],
+    ['depositAmount', getU64Decoder()],
+    ['encryptedNewBalance', getArrayDecoder(getU8Decoder(), { size: 32 })],
+    ['nonce', getU128Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

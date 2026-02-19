@@ -13,7 +13,7 @@ Opportunity Markets allow users to influence decision making by staking. Decisio
 
 **Privacy:** While voting is open, individual votes and stake amounts are hidden from everyone except the decision maker. This prevents herd behavior—participants vote based on their own judgment rather than following the crowd.
 
-Devnet address: `bnchws5HhuD2tHCZmr4Qz57VSGXfWorsoYvhr3jS72b`
+Devnet address: `42ubrtyL1uqn4bYi2ahBXAijEX3oRpykydVwYyRHPxAQ`
 
 ## Documentation
 

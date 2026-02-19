@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 use crate::error::ErrorCode;
+use crate::events::{emit_ts, MarketOpenedEvent};
 use crate::state::OpportunityMarket;
 
 #[derive(Accounts)]
@@ -48,6 +49,12 @@ pub fn open_market(ctx: Context<OpenMarket>, open_timestamp: u64) -> Result<()> 
 
     // Set open_timestamp and transition state to Funded
     market.open_timestamp = Some(open_timestamp);
+
+    emit_ts!(MarketOpenedEvent {
+        market: market.key(),
+        creator: market.creator,
+        open_timestamp: open_timestamp,
+    });
 
     Ok(())
 }

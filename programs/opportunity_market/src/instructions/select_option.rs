@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::error::ErrorCode;
+use crate::events::{emit_ts, OptionSelectedEvent};
 use crate::state::OpportunityMarket;
 
 #[derive(Accounts)]
@@ -49,6 +50,12 @@ pub fn select_option(ctx: Context<SelectOption>, option_index: u16) -> Result<()
 
     // Save the selected option
     market.selected_option = Some(option_index);
+
+    emit_ts!(OptionSelectedEvent {
+        market: market.key(),
+        authority: ctx.accounts.authority.key(),
+        selected_option: option_index,
+    });
 
     Ok(())
 }

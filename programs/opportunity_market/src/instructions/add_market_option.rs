@@ -3,7 +3,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::events::{emit_ts, SharesPurchasedError, SharesPurchasedEvent};
+use crate::events::{emit_ts, StakedError, StakedEvent};
 use crate::state::{CentralState, OpportunityMarket, OpportunityMarketOption, ShareAccount, EncryptedTokenAccount};
 use crate::instructions::stake::SHARE_ACCOUNT_SEED;
 use crate::COMP_DEF_OFFSET_ADD_OPTION_STAKE;
@@ -235,7 +235,7 @@ pub fn add_market_option_callback(
         Err(_) => {
             // Rollback
             ctx.accounts.share_account.staked_at_timestamp = None;
-            emit_ts!(SharesPurchasedError {
+            emit_ts!(StakedError {
                 user: ctx.accounts.source_eta.owner,
             });
             return Ok(());
@@ -245,30 +245,36 @@ pub fn add_market_option_callback(
     if res.field_0 {
         // Rollback
         ctx.accounts.share_account.staked_at_timestamp = None;
-        emit_ts!(SharesPurchasedError {
+        emit_ts!(StakedError {
             user: ctx.accounts.source_eta.owner,
         });
         return Ok(());
     }
 
     let new_user_balance = res.field_1;
-    let bought_shares_mxe = res.field_2;
-    let bought_shares_shared = res.field_3;
+    let bought_shares = res.field_2;
+    let bought_shares_disclosed = res.field_3;
 
     // Update source ETA balance
     ctx.accounts.source_eta.state_nonce = new_user_balance.nonce;
     ctx.accounts.source_eta.encrypted_state = new_user_balance.ciphertexts;
 
     // Update share account encrypted state
-    ctx.accounts.share_account.state_nonce = bought_shares_mxe.nonce;
-    ctx.accounts.share_account.encrypted_state = bought_shares_mxe.ciphertexts;
-    ctx.accounts.share_account.state_nonce_disclosure = bought_shares_shared.nonce;
-    ctx.accounts.share_account.encrypted_state_disclosure = bought_shares_shared.ciphertexts;
+    ctx.accounts.share_account.state_nonce = bought_shares.nonce;
+    ctx.accounts.share_account.encrypted_state = bought_shares.ciphertexts;
+    ctx.accounts.share_account.state_nonce_disclosure = bought_shares_disclosed.nonce;
+    ctx.accounts.share_account.encrypted_state_disclosure =bought_shares_disclosed.ciphertexts;
 
-    emit_ts!(SharesPurchasedEvent {
+    emit_ts!(StakedEvent {
         buyer: ctx.accounts.source_eta.owner,
-        encrypted_disclosed_amount: bought_shares_shared.ciphertexts[0],
-        nonce: bought_shares_shared.nonce,
+        encrypted_token_account: ctx.accounts.source_eta.key(),
+        share_account: ctx.accounts.share_account.key(),
+        share_encrypted_state: bought_shares.ciphertexts,
+        share_state_nonce: bought_shares.nonce,
+        share_encrypted_state_disclosure: bought_shares_disclosed.ciphertexts,
+        share_state_disclosure_nonce: bought_shares_disclosed.nonce,
+        encrypted_eta_balance: new_user_balance.ciphertexts[0],
+        eta_balance_nonce: new_user_balance.nonce,
     });
 
     Ok(())

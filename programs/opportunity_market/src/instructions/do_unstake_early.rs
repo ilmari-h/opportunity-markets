@@ -213,6 +213,10 @@ pub fn unstake_early_callback(
     emit_ts!(SharesUnstakedEvent {
         buyer: ctx.accounts.user_eta.owner,
         market: ctx.accounts.share_account.market,
+        encrypted_token_account: ctx.accounts.user_eta.key(),
+        share_account: ctx.accounts.share_account.key(),
+        encrypted_new_balance: new_user_balance.ciphertexts[0],
+        nonce: new_user_balance.nonce,
     });
 
     Ok(())

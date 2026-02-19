@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+use crate::events::{emit_ts, ShareAccountInitializedEvent};
 use crate::state::{OpportunityMarket, ShareAccount};
 use crate::instructions::stake::SHARE_ACCOUNT_SEED;
 
@@ -40,6 +41,12 @@ pub fn init_share_account(
     share_account.revealed_amount = None;
     share_account.revealed_option = None;
     share_account.locked = false;
+
+    emit_ts!(ShareAccountInitializedEvent {
+        share_account: share_account.key(),
+        owner: share_account.owner,
+        market: share_account.market,
+    });
 
     Ok(())
 }

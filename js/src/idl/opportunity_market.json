@@ -3707,6 +3707,19 @@
   ],
   "events": [
     {
+      "name": "EncryptedTokenAccountInitializedEvent",
+      "discriminator": [
+        175,
+        239,
+        246,
+        37,
+        162,
+        72,
+        220,
+        22
+      ]
+    },
+    {
       "name": "EncryptedTokenWrappedEvent",
       "discriminator": [
         7,
@@ -3733,6 +3746,58 @@
       ]
     },
     {
+      "name": "EncryptedTokensUnwrappedEvent",
+      "discriminator": [
+        234,
+        20,
+        202,
+        239,
+        55,
+        174,
+        44,
+        51
+      ]
+    },
+    {
+      "name": "EphemeralAccountClosedError",
+      "discriminator": [
+        37,
+        64,
+        137,
+        68,
+        134,
+        79,
+        95,
+        129
+      ]
+    },
+    {
+      "name": "EphemeralAccountClosedEvent",
+      "discriminator": [
+        180,
+        171,
+        6,
+        242,
+        30,
+        242,
+        142,
+        127
+      ]
+    },
+    {
+      "name": "EphemeralEncryptedTokenAccountInitializedEvent",
+      "discriminator": [
+        173,
+        82,
+        194,
+        9,
+        161,
+        82,
+        245,
+        72
+      ]
+    },
+    {
       "name": "MarketCreatedEvent",
       "discriminator": [
         130,
@@ -3746,29 +3811,81 @@
       ]
     },
     {
-      "name": "SharesPurchasedError",
+      "name": "MarketOpenedEvent",
       "discriminator": [
-        94,
-        28,
-        131,
-        3,
+        52,
+        228,
+        74,
+        246,
+        24,
         30,
-        140,
-        188,
-        119
+        191,
+        239
       ]
     },
     {
-      "name": "SharesPurchasedEvent",
+      "name": "OptionSelectedEvent",
       "discriminator": [
-        226,
-        42,
-        177,
-        214,
-        224,
-        200,
-        31,
-        48
+        159,
+        159,
+        126,
+        76,
+        111,
+        128,
+        68,
+        33
+      ]
+    },
+    {
+      "name": "PendingDepositClaimedEvent",
+      "discriminator": [
+        3,
+        237,
+        196,
+        93,
+        240,
+        14,
+        165,
+        15
+      ]
+    },
+    {
+      "name": "RevealPeriodExtendedEvent",
+      "discriminator": [
+        41,
+        74,
+        137,
+        207,
+        48,
+        102,
+        140,
+        122
+      ]
+    },
+    {
+      "name": "RewardClaimedEvent",
+      "discriminator": [
+        246,
+        43,
+        215,
+        228,
+        82,
+        49,
+        230,
+        56
+      ]
+    },
+    {
+      "name": "ShareAccountInitializedEvent",
+      "discriminator": [
+        94,
+        210,
+        7,
+        154,
+        9,
+        68,
+        108,
+        110
       ]
     },
     {
@@ -3821,6 +3938,58 @@
         75,
         241,
         235
+      ]
+    },
+    {
+      "name": "StakedError",
+      "discriminator": [
+        7,
+        66,
+        106,
+        168,
+        168,
+        100,
+        110,
+        1
+      ]
+    },
+    {
+      "name": "StakedEvent",
+      "discriminator": [
+        81,
+        221,
+        186,
+        176,
+        240,
+        160,
+        193,
+        69
+      ]
+    },
+    {
+      "name": "TallyIncrementedEvent",
+      "discriminator": [
+        201,
+        116,
+        160,
+        31,
+        237,
+        32,
+        124,
+        230
+      ]
+    },
+    {
+      "name": "UnstakeInitiatedEvent",
+      "discriminator": [
+        172,
+        30,
+        149,
+        209,
+        165,
+        12,
+        177,
+        9
       ]
     }
   ],
@@ -4547,6 +4716,30 @@
       }
     },
     {
+      "name": "EncryptedTokenAccountInitializedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "encrypted_token_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "EncryptedTokenWrappedEvent",
       "type": {
         "kind": "struct",
@@ -4560,8 +4753,21 @@
             "type": "pubkey"
           },
           {
-            "name": "lamports_spent",
+            "name": "deposit_amount",
             "type": "u64"
+          },
+          {
+            "name": "encrypted_new_balance",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": "u128"
           },
           {
             "name": "timestamp",
@@ -4577,6 +4783,124 @@
         "fields": [
           {
             "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EncryptedTokensUnwrappedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "encrypted_token_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount_withdrawn",
+            "type": "u64"
+          },
+          {
+            "name": "encrypted_new_balance",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": "u128"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EphemeralAccountClosedError",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EphemeralAccountClosedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "encrypted_token_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "encrypted_new_balance",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": "u128"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EphemeralEncryptedTokenAccountInitializedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "encrypted_token_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "index",
+            "type": "u64"
+          },
+          {
+            "name": "rent_payer",
             "type": "pubkey"
           },
           {
@@ -4717,6 +5041,30 @@
           },
           {
             "name": "index",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketOpenedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "open_timestamp",
             "type": "u64"
           },
           {
@@ -4957,6 +5305,30 @@
       }
     },
     {
+      "name": "OptionSelectedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "selected_option",
+            "type": "u16"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "Output",
       "docs": [
         "An output of a computation.",
@@ -5078,6 +5450,54 @@
       }
     },
     {
+      "name": "PendingDepositClaimedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "encrypted_token_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RevealPeriodExtendedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_time_to_reveal",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "RevealSharesOutput",
       "docs": [
         "The output of the callback instruction. Provided as a struct with ordered fields",
@@ -5123,6 +5543,38 @@
                 ]
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "RewardClaimedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "share_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "option",
+            "type": "u16"
+          },
+          {
+            "name": "reward_amount",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -5266,6 +5718,30 @@
       }
     },
     {
+      "name": "ShareAccountInitializedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "share_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "SharedEncryptedStruct",
       "generics": [
         {
@@ -5310,51 +5786,6 @@
       }
     },
     {
-      "name": "SharesPurchasedError",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "user",
-            "type": "pubkey"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "SharesPurchasedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "buyer",
-            "type": "pubkey"
-          },
-          {
-            "name": "encrypted_disclosed_amount",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "nonce",
-            "type": "u128"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
       "name": "SharesRevealedError",
       "type": {
         "kind": "struct",
@@ -5380,12 +5811,33 @@
             "type": "pubkey"
           },
           {
+            "name": "encrypted_token_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "share_account",
+            "type": "pubkey"
+          },
+          {
             "name": "shares_amount",
             "type": "u64"
           },
           {
             "name": "selected_option",
             "type": "u16"
+          },
+          {
+            "name": "encrypted_new_balance",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": "u128"
           },
           {
             "name": "timestamp",
@@ -5422,6 +5874,27 @@
           {
             "name": "market",
             "type": "pubkey"
+          },
+          {
+            "name": "encrypted_token_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "share_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "encrypted_new_balance",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": "u128"
           },
           {
             "name": "timestamp",
@@ -5465,6 +5938,131 @@
                 "generic": "O"
               }
             ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakedError",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "encrypted_token_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "share_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "share_encrypted_state",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                2
+              ]
+            }
+          },
+          {
+            "name": "share_state_nonce",
+            "type": "u128"
+          },
+          {
+            "name": "share_encrypted_state_disclosure",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                2
+              ]
+            }
+          },
+          {
+            "name": "share_state_disclosure_nonce",
+            "type": "u128"
+          },
+          {
+            "name": "encrypted_eta_balance",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "eta_balance_nonce",
+            "type": "u128"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TallyIncrementedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "share_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "option",
+            "type": "u16"
+          },
+          {
+            "name": "revealed_amount",
+            "type": "u64"
+          },
+          {
+            "name": "user_score",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }
@@ -5519,6 +6117,34 @@
                 ]
               }
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UnstakeInitiatedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "share_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "unstakeable_at_timestamp",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }

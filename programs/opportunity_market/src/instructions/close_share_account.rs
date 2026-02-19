@@ -4,6 +4,7 @@ use anchor_spl::token_interface::{
 };
 
 use crate::error::ErrorCode;
+use crate::events::{emit_ts, RewardClaimedEvent};
 use crate::instructions::stake::SHARE_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, OpportunityMarketOption, ShareAccount};
 
@@ -92,6 +93,7 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
 
     // Check if this share was bought for the winning option and user incremented the tally
     // If so, transfer proportional yield from market to user
+    let mut user_reward: u64 = 0;
     if let Some(selected_option) = market.selected_option {
         if revealed_option == selected_option && share_account.total_incremented {
             // User is eligible for yield
@@ -101,7 +103,7 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
             // Calculate proportional reward: (user_score / total_score) * reward_amount
             // Use u128 to prevent overflow during multiplication
             let reward_amount = market.reward_amount as u128;
-            let user_reward = (user_score as u128)
+            user_reward = (user_score as u128)
                 .checked_mul(reward_amount)
                 .ok_or(ErrorCode::Overflow)?
                 .checked_div(total_score as u128)
@@ -136,6 +138,14 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
             }
         }
     }
+
+    emit_ts!(RewardClaimedEvent {
+        owner: ctx.accounts.owner.key(),
+        market: market.key(),
+        share_account: ctx.accounts.share_account.key(),
+        option: option_index,
+        reward_amount: user_reward,
+    });
 
     // Account will be closed automatically via the close constraint
     Ok(())

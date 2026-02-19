@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::error::ErrorCode;
+use crate::events::{emit_ts, UnstakeInitiatedEvent};
 use crate::instructions::stake::SHARE_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, ShareAccount};
 
@@ -44,7 +45,15 @@ pub fn unstake_early(
     );
 
     // Set the timestamp when shares become unstakeable
-    ctx.accounts.share_account.unstakeable_at_timestamp = Some(current_timestamp + market.unstake_delay_seconds);
+    let unstakeable_at = current_timestamp + market.unstake_delay_seconds;
+    ctx.accounts.share_account.unstakeable_at_timestamp = Some(unstakeable_at);
+
+    emit_ts!(UnstakeInitiatedEvent {
+        buyer: ctx.accounts.signer.key(),
+        market: market.key(),
+        share_account: ctx.accounts.share_account.key(),
+        unstakeable_at_timestamp: unstakeable_at,
+    });
 
     Ok(())
 }

@@ -6,6 +6,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
+use crate::events::{emit_ts, EncryptedTokenWrappedEvent};
 use crate::state::{EncryptedTokenAccount, TokenVault};
 use crate::instructions::init_token_vault::TOKEN_VAULT_SEED;
 use crate::COMP_DEF_OFFSET_WRAP_ENCRYPTED_TOKENS;
@@ -192,6 +193,9 @@ pub fn wrap_encrypted_tokens_callback(
     // Check that pending deposit exists. User could have withdrawn funds.
     require!(eta.pending_deposit > 0 && eta.locked, ErrorCode::InsufficientBalance);
 
+    // Save deposit amount before clearing
+    let deposit_amount = eta.pending_deposit;
+
     // Set pending deposit to 0 and unlock account.
     eta.pending_deposit = 0;
     eta.locked = false;
@@ -199,6 +203,14 @@ pub fn wrap_encrypted_tokens_callback(
     // Update encrypted state
     eta.state_nonce = encrypted_balance.nonce;
     eta.encrypted_state = encrypted_balance.ciphertexts;
+
+    emit_ts!(EncryptedTokenWrappedEvent {
+        encrypted_token_account: eta.key(),
+        buyer: eta.owner,
+        deposit_amount: deposit_amount,
+        encrypted_new_balance: encrypted_balance.ciphertexts[0],
+        nonce: encrypted_balance.nonce,
+    });
 
     Ok(())
 }

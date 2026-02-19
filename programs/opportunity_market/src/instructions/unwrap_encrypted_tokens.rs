@@ -6,7 +6,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::events::{emit_ts, EncryptedTokensUnwrappedError};
+use crate::events::{emit_ts, EncryptedTokensUnwrappedError, EncryptedTokensUnwrappedEvent};
 use crate::instructions::init_token_vault::TOKEN_VAULT_SEED;
 use crate::state::{EncryptedTokenAccount, TokenVault};
 
@@ -253,6 +253,14 @@ pub fn unwrap_encrypted_tokens_callback(
     // Update encrypted state
     eta.state_nonce = encrypted_balance.nonce;
     eta.encrypted_state = encrypted_balance.ciphertexts;
+
+    emit_ts!(EncryptedTokensUnwrappedEvent {
+        user: eta.owner,
+        encrypted_token_account: eta.key(),
+        amount_withdrawn: amount_sold,
+        encrypted_new_balance: encrypted_balance.ciphertexts[0],
+        nonce: encrypted_balance.nonce,
+    });
 
     Ok(())
 }

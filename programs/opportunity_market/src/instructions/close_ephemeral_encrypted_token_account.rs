@@ -4,6 +4,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
+use crate::events::{emit_ts, EphemeralAccountClosedEvent, EphemeralAccountClosedError};
 use crate::instructions::init_encrypted_token_account::ENCRYPTED_TOKEN_ACCOUNT_SEED;
 use crate::state::EncryptedTokenAccount;
 
@@ -196,6 +197,9 @@ pub fn close_ephemeral_encrypted_token_account_callback(
         Ok(CloseEphemeralEncryptedTokenAccountOutput { field_0 }) => field_0,
         Err(_) => {
             ephemeral_eta.locked = false;
+            emit_ts!(EphemeralAccountClosedError {
+                user: regular_eta.owner,
+            });
             return Ok(());
         }
     };
@@ -204,6 +208,13 @@ pub fn close_ephemeral_encrypted_token_account_callback(
     // No SPL token transfer needed - tokens are already in the common TokenVault
     regular_eta.state_nonce = res.nonce;
     regular_eta.encrypted_state = res.ciphertexts;
+
+    emit_ts!(EphemeralAccountClosedEvent {
+        user: regular_eta.owner,
+        encrypted_token_account: regular_eta.key(),
+        encrypted_new_balance: res.ciphertexts[0],
+        nonce: res.nonce,
+    });
 
     // Close ephemeral ETA account (rent to rent_recipient)
     let ephemeral_eta_info = ephemeral_eta.to_account_info();

@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::error::ErrorCode;
+use crate::events::{emit_ts, RevealPeriodExtendedEvent};
 use crate::state::OpportunityMarket;
 
 #[derive(Accounts)]
@@ -36,6 +37,12 @@ pub fn extend_reveal_period(ctx: Context<ExtendRevealPeriod>, new_time_to_reveal
     require!(new_time_to_reveal > market.time_to_reveal, ErrorCode::InvalidTimestamp);
 
     market.time_to_reveal = new_time_to_reveal;
+
+    emit_ts!(RevealPeriodExtendedEvent {
+        market: market.key(),
+        authority: ctx.accounts.authority.key(),
+        new_time_to_reveal: new_time_to_reveal,
+    });
 
     Ok(())
 }

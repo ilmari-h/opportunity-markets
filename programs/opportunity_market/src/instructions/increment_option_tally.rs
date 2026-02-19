@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::score::calculate_user_score;
 use crate::error::ErrorCode;
+use crate::events::{emit_ts, TallyIncrementedEvent};
 use crate::instructions::stake::SHARE_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, OpportunityMarketOption, ShareAccount};
 
@@ -35,7 +36,7 @@ pub struct IncrementOptionTally<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, _option_index: u16, _share_account_id: u32) -> Result<()> {
+pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: u16, _share_account_id: u32) -> Result<()> {
     // Check that we are within the reveal window
     let market = &ctx.accounts.market;
     let open_timestamp = market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
@@ -87,5 +88,15 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, _option_index:
     // Store the user's score on their share account for yield calculation
     ctx.accounts.share_account.revealed_score = Some(user_score);
     ctx.accounts.share_account.total_incremented = true;
+
+    emit_ts!(TallyIncrementedEvent {
+        owner: ctx.accounts.owner.key(),
+        market: ctx.accounts.market.key(),
+        share_account: ctx.accounts.share_account.key(),
+        option: option_index,
+        revealed_amount: revealed_amount,
+        user_score: user_score,
+    });
+
     Ok(())
 }

@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::Mint;
 
 use crate::error::ErrorCode;
+use crate::events::{emit_ts, EphemeralEncryptedTokenAccountInitializedEvent};
 use crate::state::EncryptedTokenAccount;
 
 use super::init_encrypted_token_account::ENCRYPTED_TOKEN_ACCOUNT_SEED;
@@ -55,6 +56,14 @@ pub fn init_ephemeral_encrypted_token_account(
     eta.encrypted_state = [[0u8; 32]; 1];
     // Track who paid rent so they can be refunded when closing
     eta.rent_payer = Some(ctx.accounts.signer.key());
+
+    emit_ts!(EphemeralEncryptedTokenAccountInitializedEvent {
+        encrypted_token_account: eta.key(),
+        owner: eta.owner,
+        token_mint: eta.token_mint,
+        index: index,
+        rent_payer: ctx.accounts.signer.key(),
+    });
 
     Ok(())
 }

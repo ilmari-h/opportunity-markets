@@ -216,8 +216,12 @@ pub fn reveal_shares_callback(
 
     emit_ts!(SharesRevealedEvent {
         buyer: ctx.accounts.user_eta.owner,
+        encrypted_token_account: ctx.accounts.user_eta.key(),
+        share_account: ctx.accounts.share_account.key(),
         shares_amount: revealed_amount,
         selected_option: revealed_option,
+        encrypted_new_balance: new_user_balance.ciphertexts[0],
+        nonce: new_user_balance.nonce,
     });
 
     Ok(())

@@ -3,6 +3,7 @@ use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 use crate::instructions::init_token_vault::TOKEN_VAULT_SEED;
+use crate::events::{emit_ts, PendingDepositClaimedEvent};
 use crate::state::{EncryptedTokenAccount, TokenVault};
 use crate::error::ErrorCode;
 
@@ -56,6 +57,8 @@ pub fn claim_pending_deposit(ctx: Context<ClaimPendingDeposit>) -> Result<()> {
         return Ok(());
     }
 
+    let claimed_amount = eta.pending_deposit;
+
     // Transfer pending tokens from TokenVault ATA back to signer
     let vault_bump = ctx.accounts.token_vault.bump;
     let signer_seeds: &[&[&[u8]]] = &[&[
@@ -81,6 +84,12 @@ pub fn claim_pending_deposit(ctx: Context<ClaimPendingDeposit>) -> Result<()> {
     // Clear pending deposit
     eta.pending_deposit = 0;
     eta.locked = false;
+
+    emit_ts!(PendingDepositClaimedEvent {
+        user: eta.owner,
+        encrypted_token_account: eta.key(),
+        amount: claimed_amount,
+    });
 
     Ok(())
 }

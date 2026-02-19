@@ -10,72 +10,60 @@ import {
   combineCodec,
   getAddressDecoder,
   getAddressEncoder,
-  getArrayDecoder,
-  getArrayEncoder,
   getI64Decoder,
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
-  getU128Decoder,
-  getU128Encoder,
-  getU8Decoder,
-  getU8Encoder,
+  getU64Decoder,
+  getU64Encoder,
   type Address,
   type FixedSizeCodec,
   type FixedSizeDecoder,
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type SharesUnstakedEvent = {
+export type UnstakeInitiatedEvent = {
   buyer: Address;
   market: Address;
-  encryptedTokenAccount: Address;
   shareAccount: Address;
-  encryptedNewBalance: Array<number>;
-  nonce: bigint;
+  unstakeableAtTimestamp: bigint;
   timestamp: bigint;
 };
 
-export type SharesUnstakedEventArgs = {
+export type UnstakeInitiatedEventArgs = {
   buyer: Address;
   market: Address;
-  encryptedTokenAccount: Address;
   shareAccount: Address;
-  encryptedNewBalance: Array<number>;
-  nonce: number | bigint;
+  unstakeableAtTimestamp: number | bigint;
   timestamp: number | bigint;
 };
 
-export function getSharesUnstakedEventEncoder(): FixedSizeEncoder<SharesUnstakedEventArgs> {
+export function getUnstakeInitiatedEventEncoder(): FixedSizeEncoder<UnstakeInitiatedEventArgs> {
   return getStructEncoder([
     ['buyer', getAddressEncoder()],
     ['market', getAddressEncoder()],
-    ['encryptedTokenAccount', getAddressEncoder()],
     ['shareAccount', getAddressEncoder()],
-    ['encryptedNewBalance', getArrayEncoder(getU8Encoder(), { size: 32 })],
-    ['nonce', getU128Encoder()],
+    ['unstakeableAtTimestamp', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getSharesUnstakedEventDecoder(): FixedSizeDecoder<SharesUnstakedEvent> {
+export function getUnstakeInitiatedEventDecoder(): FixedSizeDecoder<UnstakeInitiatedEvent> {
   return getStructDecoder([
     ['buyer', getAddressDecoder()],
     ['market', getAddressDecoder()],
-    ['encryptedTokenAccount', getAddressDecoder()],
     ['shareAccount', getAddressDecoder()],
-    ['encryptedNewBalance', getArrayDecoder(getU8Decoder(), { size: 32 })],
-    ['nonce', getU128Decoder()],
+    ['unstakeableAtTimestamp', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getSharesUnstakedEventCodec(): FixedSizeCodec<
-  SharesUnstakedEventArgs,
-  SharesUnstakedEvent
+export function getUnstakeInitiatedEventCodec(): FixedSizeCodec<
+  UnstakeInitiatedEventArgs,
+  UnstakeInitiatedEvent
 > {
   return combineCodec(
-    getSharesUnstakedEventEncoder(),
-    getSharesUnstakedEventDecoder()
+    getUnstakeInitiatedEventEncoder(),
+    getUnstakeInitiatedEventDecoder()
   );
 }

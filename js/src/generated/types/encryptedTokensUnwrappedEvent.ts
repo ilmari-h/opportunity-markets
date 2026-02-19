@@ -18,8 +18,6 @@ import {
   getStructEncoder,
   getU128Decoder,
   getU128Encoder,
-  getU16Decoder,
-  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
@@ -30,60 +28,52 @@ import {
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type SharesRevealedEvent = {
-  buyer: Address;
+export type EncryptedTokensUnwrappedEvent = {
+  user: Address;
   encryptedTokenAccount: Address;
-  shareAccount: Address;
-  sharesAmount: bigint;
-  selectedOption: number;
+  amountWithdrawn: bigint;
   encryptedNewBalance: Array<number>;
   nonce: bigint;
   timestamp: bigint;
 };
 
-export type SharesRevealedEventArgs = {
-  buyer: Address;
+export type EncryptedTokensUnwrappedEventArgs = {
+  user: Address;
   encryptedTokenAccount: Address;
-  shareAccount: Address;
-  sharesAmount: number | bigint;
-  selectedOption: number;
+  amountWithdrawn: number | bigint;
   encryptedNewBalance: Array<number>;
   nonce: number | bigint;
   timestamp: number | bigint;
 };
 
-export function getSharesRevealedEventEncoder(): FixedSizeEncoder<SharesRevealedEventArgs> {
+export function getEncryptedTokensUnwrappedEventEncoder(): FixedSizeEncoder<EncryptedTokensUnwrappedEventArgs> {
   return getStructEncoder([
-    ['buyer', getAddressEncoder()],
+    ['user', getAddressEncoder()],
     ['encryptedTokenAccount', getAddressEncoder()],
-    ['shareAccount', getAddressEncoder()],
-    ['sharesAmount', getU64Encoder()],
-    ['selectedOption', getU16Encoder()],
+    ['amountWithdrawn', getU64Encoder()],
     ['encryptedNewBalance', getArrayEncoder(getU8Encoder(), { size: 32 })],
     ['nonce', getU128Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getSharesRevealedEventDecoder(): FixedSizeDecoder<SharesRevealedEvent> {
+export function getEncryptedTokensUnwrappedEventDecoder(): FixedSizeDecoder<EncryptedTokensUnwrappedEvent> {
   return getStructDecoder([
-    ['buyer', getAddressDecoder()],
+    ['user', getAddressDecoder()],
     ['encryptedTokenAccount', getAddressDecoder()],
-    ['shareAccount', getAddressDecoder()],
-    ['sharesAmount', getU64Decoder()],
-    ['selectedOption', getU16Decoder()],
+    ['amountWithdrawn', getU64Decoder()],
     ['encryptedNewBalance', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['nonce', getU128Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getSharesRevealedEventCodec(): FixedSizeCodec<
-  SharesRevealedEventArgs,
-  SharesRevealedEvent
+export function getEncryptedTokensUnwrappedEventCodec(): FixedSizeCodec<
+  EncryptedTokensUnwrappedEventArgs,
+  EncryptedTokensUnwrappedEvent
 > {
   return combineCodec(
-    getSharesRevealedEventEncoder(),
-    getSharesRevealedEventDecoder()
+    getEncryptedTokensUnwrappedEventEncoder(),
+    getEncryptedTokensUnwrappedEventDecoder()
   );
 }

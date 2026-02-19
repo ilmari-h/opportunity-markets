@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::Mint;
 
+use crate::events::{emit_ts, EncryptedTokenAccountInitializedEvent};
 use crate::state::EncryptedTokenAccount;
 
 pub const ENCRYPTED_TOKEN_ACCOUNT_SEED: &[u8] = b"encrypted_token_account";
@@ -39,6 +40,12 @@ pub fn init_encrypted_token_account(
     eta.user_pubkey = user_pubkey;
     eta.encrypted_state = [[0u8; 32]; 1];
     eta.rent_payer = None;
+
+    emit_ts!(EncryptedTokenAccountInitializedEvent {
+        encrypted_token_account: eta.key(),
+        owner: eta.owner,
+        token_mint: eta.token_mint,
+    });
 
     Ok(())
 }

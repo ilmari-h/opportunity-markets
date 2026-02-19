@@ -3,7 +3,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::events::{emit_ts, SharesPurchasedError, SharesPurchasedEvent};
+use crate::events::{emit_ts, StakedError, StakedEvent};
 use crate::state::{OpportunityMarket, ShareAccount, EncryptedTokenAccount};
 use crate::COMP_DEF_OFFSET_BUY_OPPORTUNITY_MARKET_SHARES;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
@@ -199,7 +199,7 @@ pub fn buy_opportunity_market_shares_callback(
         Err(_) => {
             // Rollback
             ctx.accounts.share_account.staked_at_timestamp = None;
-            emit_ts!(SharesPurchasedError {
+            emit_ts!(StakedError {
                 user: ctx.accounts.user_encrypted_token_account.owner,
             });
             return Ok(());
@@ -209,7 +209,7 @@ pub fn buy_opportunity_market_shares_callback(
     if res.field_0 {
         // Rollback
         ctx.accounts.share_account.staked_at_timestamp = None;
-        emit_ts!(SharesPurchasedError {
+        emit_ts!(StakedError {
             user: ctx.accounts.user_encrypted_token_account.owner,
         });
         return Ok(());
@@ -229,10 +229,16 @@ pub fn buy_opportunity_market_shares_callback(
     ctx.accounts.share_account.state_nonce_disclosure = bought_shares_shared.nonce;
     ctx.accounts.share_account.encrypted_state_disclosure = bought_shares_shared.ciphertexts;
 
-    emit_ts!(SharesPurchasedEvent {
+    emit_ts!(StakedEvent {
         buyer: ctx.accounts.user_encrypted_token_account.owner,
-        encrypted_disclosed_amount: bought_shares_shared.ciphertexts[0],
-        nonce: bought_shares_shared.nonce,
+        encrypted_token_account: ctx.accounts.user_encrypted_token_account.key(),
+        share_account: ctx.accounts.share_account.key(),
+        share_encrypted_state: bought_shares_mxe.ciphertexts,
+        share_state_nonce: bought_shares_mxe.nonce,
+        share_encrypted_state_disclosure: bought_shares_shared.ciphertexts,
+        share_state_disclosure_nonce: bought_shares_shared.nonce,
+        encrypted_eta_balance: new_user_balance.ciphertexts[0],
+        eta_balance_nonce: new_user_balance.nonce,
     });
 
     Ok(())
