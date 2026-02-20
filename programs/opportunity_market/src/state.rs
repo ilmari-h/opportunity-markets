@@ -84,6 +84,9 @@ pub struct EncryptedTokenAccount {
 
     // Who paid rent for this account (None for regular ETAs, Some for ephemeral ETAs)
     pub rent_payer: Option<Pubkey>,
+
+    // Whether this ETA has been initialized with encrypted state via a callback
+    pub is_initialized: bool,
 }
 
 #[account]

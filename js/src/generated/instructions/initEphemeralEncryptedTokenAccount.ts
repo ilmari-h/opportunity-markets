@@ -16,6 +16,8 @@ import {
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
+  getU128Decoder,
+  getU128Encoder,
   getU64Decoder,
   getU64Encoder,
   transformEncoder,
@@ -93,10 +95,12 @@ export type InitEphemeralEncryptedTokenAccountInstruction<
 export type InitEphemeralEncryptedTokenAccountInstructionData = {
   discriminator: ReadonlyUint8Array;
   index: bigint;
+  stateNonce: bigint;
 };
 
 export type InitEphemeralEncryptedTokenAccountInstructionDataArgs = {
   index: number | bigint;
+  stateNonce: number | bigint;
 };
 
 export function getInitEphemeralEncryptedTokenAccountInstructionDataEncoder(): FixedSizeEncoder<InitEphemeralEncryptedTokenAccountInstructionDataArgs> {
@@ -104,6 +108,7 @@ export function getInitEphemeralEncryptedTokenAccountInstructionDataEncoder(): F
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['index', getU64Encoder()],
+      ['stateNonce', getU128Encoder()],
     ]),
     (value) => ({
       ...value,
@@ -116,6 +121,7 @@ export function getInitEphemeralEncryptedTokenAccountInstructionDataDecoder(): F
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['index', getU64Decoder()],
+    ['stateNonce', getU128Decoder()],
   ]);
 }
 
@@ -146,6 +152,7 @@ export type InitEphemeralEncryptedTokenAccountAsyncInput<
   ephemeralEncryptedTokenAccount?: Address<TAccountEphemeralEncryptedTokenAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
   index: InitEphemeralEncryptedTokenAccountInstructionDataArgs['index'];
+  stateNonce: InitEphemeralEncryptedTokenAccountInstructionDataArgs['stateNonce'];
 };
 
 export async function getInitEphemeralEncryptedTokenAccountInstructionAsync<
@@ -287,6 +294,7 @@ export type InitEphemeralEncryptedTokenAccountInput<
   ephemeralEncryptedTokenAccount: Address<TAccountEphemeralEncryptedTokenAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
   index: InitEphemeralEncryptedTokenAccountInstructionDataArgs['index'];
+  stateNonce: InitEphemeralEncryptedTokenAccountInstructionDataArgs['stateNonce'];
 };
 
 export function getInitEphemeralEncryptedTokenAccountInstruction<

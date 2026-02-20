@@ -27,6 +27,7 @@ import {
   fetchOpportunityMarket,
   fetchMaybeCentralState,
   randomComputationOffset,
+  randomStateNonce,
   getInitCentralStateInstructionAsync,
   initEncryptedTokenAccount,
   initTokenVault,
@@ -546,6 +547,7 @@ export class TestRunner {
       signer: user.solanaKeypair,
       tokenMint: this.mint.address,
       userPubkey: user.x25519Keypair.publicKey,
+      stateNonce: randomStateNonce(),
     });
 
     await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [ix], {

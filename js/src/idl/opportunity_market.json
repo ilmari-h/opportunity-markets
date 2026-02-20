@@ -1780,6 +1780,10 @@
               32
             ]
           }
+        },
+        {
+          "name": "state_nonce",
+          "type": "u128"
         }
       ]
     },
@@ -1926,6 +1930,10 @@
         {
           "name": "index",
           "type": "u64"
+        },
+        {
+          "name": "state_nonce",
+          "type": "u128"
         }
       ]
     },
@@ -4711,6 +4719,10 @@
             "type": {
               "option": "pubkey"
             }
+          },
+          {
+            "name": "is_initialized",
+            "type": "bool"
           }
         ]
       }

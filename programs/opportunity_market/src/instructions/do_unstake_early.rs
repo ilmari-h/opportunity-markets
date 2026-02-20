@@ -114,7 +114,7 @@ pub fn do_unstake_early(
 
 
     // Build args for encrypted computation
-    let is_eta_initialized = user_eta_nonce != 0;
+    let is_eta_initialized = ctx.accounts.user_eta.is_initialized;
     let args = ArgBuilder::new()
         // Share account encrypted state (Enc<Shared, SharePurchase>)
         .x25519_pubkey(user_pubkey)
@@ -209,6 +209,7 @@ pub fn unstake_early_callback(
     // Update user ETA with refunded balance
     ctx.accounts.user_eta.state_nonce = new_user_balance.nonce;
     ctx.accounts.user_eta.encrypted_state = new_user_balance.ciphertexts;
+    ctx.accounts.user_eta.is_initialized = true;
 
     emit_ts!(SharesUnstakedEvent {
         user: ctx.accounts.user_eta.owner,

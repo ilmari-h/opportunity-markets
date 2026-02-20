@@ -42,13 +42,14 @@ pub struct InitEphemeralEncryptedTokenAccount<'info> {
 pub fn init_ephemeral_encrypted_token_account(
     ctx: Context<InitEphemeralEncryptedTokenAccount>,
     index: u64,
+    state_nonce: u128,
 ) -> Result<()> {
     let eta = &mut ctx.accounts.ephemeral_encrypted_token_account;
     eta.bump = ctx.bumps.ephemeral_encrypted_token_account;
     eta.index = index;
     eta.owner = ctx.accounts.owner.key();
     eta.token_mint = ctx.accounts.token_mint.key();
-    eta.state_nonce = 0;
+    eta.state_nonce = state_nonce;
     eta.pending_deposit = 0;
     eta.locked = false;
     // Copy user_pubkey from source ETA
@@ -56,6 +57,7 @@ pub fn init_ephemeral_encrypted_token_account(
     eta.encrypted_state = [[0u8; 32]; 1];
     // Track who paid rent so they can be refunded when closing
     eta.rent_payer = Some(ctx.accounts.signer.key());
+    eta.is_initialized = false;
 
     emit_ts!(EphemeralEncryptedTokenAccountInitializedEvent {
         encrypted_token_account: eta.key(),

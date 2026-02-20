@@ -167,8 +167,9 @@ pub mod opportunity_market {
     pub fn init_encrypted_token_account(
         ctx: Context<InitEncryptedTokenAccount>,
         user_pubkey: [u8; 32],
+        state_nonce: u128,
     ) -> Result<()> {
-        instructions::init_encrypted_token_account(ctx, user_pubkey)
+        instructions::init_encrypted_token_account(ctx, user_pubkey, state_nonce)
     }
 
     pub fn init_token_vault(
@@ -181,8 +182,9 @@ pub mod opportunity_market {
     pub fn init_ephemeral_encrypted_token_account(
         ctx: Context<InitEphemeralEncryptedTokenAccount>,
         index: u64,
+        state_nonce: u128,
     ) -> Result<()> {
-        instructions::init_ephemeral_encrypted_token_account(ctx, index)
+        instructions::init_ephemeral_encrypted_token_account(ctx, index, state_nonce)
     }
 
     pub fn wrap_encrypted_tokens(

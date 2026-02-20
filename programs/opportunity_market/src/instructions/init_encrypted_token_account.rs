@@ -28,18 +28,20 @@ pub struct InitEncryptedTokenAccount<'info> {
 pub fn init_encrypted_token_account(
     ctx: Context<InitEncryptedTokenAccount>,
     user_pubkey: [u8; 32],
+    state_nonce: u128,
 ) -> Result<()> {
     let eta = &mut ctx.accounts.encrypted_token_account;
     eta.bump = ctx.bumps.encrypted_token_account;
     eta.index = 0;
     eta.owner = ctx.accounts.signer.key();
     eta.token_mint = ctx.accounts.token_mint.key();
-    eta.state_nonce = 0;
+    eta.state_nonce = state_nonce;
     eta.pending_deposit = 0;
     eta.locked = false;
     eta.user_pubkey = user_pubkey;
     eta.encrypted_state = [[0u8; 32]; 1];
     eta.rent_payer = None;
+    eta.is_initialized = false;
 
     emit_ts!(EncryptedTokenAccountInitializedEvent {
         encrypted_token_account: eta.key(),

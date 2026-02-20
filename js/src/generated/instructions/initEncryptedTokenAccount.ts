@@ -18,6 +18,8 @@ import {
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
+  getU128Decoder,
+  getU128Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -85,10 +87,12 @@ export type InitEncryptedTokenAccountInstruction<
 export type InitEncryptedTokenAccountInstructionData = {
   discriminator: ReadonlyUint8Array;
   userPubkey: Array<number>;
+  stateNonce: bigint;
 };
 
 export type InitEncryptedTokenAccountInstructionDataArgs = {
   userPubkey: Array<number>;
+  stateNonce: number | bigint;
 };
 
 export function getInitEncryptedTokenAccountInstructionDataEncoder(): FixedSizeEncoder<InitEncryptedTokenAccountInstructionDataArgs> {
@@ -96,6 +100,7 @@ export function getInitEncryptedTokenAccountInstructionDataEncoder(): FixedSizeE
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['userPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
+      ['stateNonce', getU128Encoder()],
     ]),
     (value) => ({
       ...value,
@@ -108,6 +113,7 @@ export function getInitEncryptedTokenAccountInstructionDataDecoder(): FixedSizeD
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['userPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
+    ['stateNonce', getU128Decoder()],
   ]);
 }
 
@@ -132,6 +138,7 @@ export type InitEncryptedTokenAccountAsyncInput<
   encryptedTokenAccount?: Address<TAccountEncryptedTokenAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
   userPubkey: InitEncryptedTokenAccountInstructionDataArgs['userPubkey'];
+  stateNonce: InitEncryptedTokenAccountInstructionDataArgs['stateNonce'];
 };
 
 export async function getInitEncryptedTokenAccountInstructionAsync<
@@ -233,6 +240,7 @@ export type InitEncryptedTokenAccountInput<
   encryptedTokenAccount: Address<TAccountEncryptedTokenAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
   userPubkey: InitEncryptedTokenAccountInstructionDataArgs['userPubkey'];
+  stateNonce: InitEncryptedTokenAccountInstructionDataArgs['stateNonce'];
 };
 
 export function getInitEncryptedTokenAccountInstruction<

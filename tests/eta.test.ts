@@ -19,6 +19,7 @@ import {
   wrapEncryptedTokens,
   unwrapEncryptedTokens,
   randomComputationOffset,
+  randomStateNonce,
   fetchEncryptedTokenAccount,
   getEncryptedTokenAccountAddress,
   getEphemeralEncryptedTokenAccountAddress,
@@ -134,10 +135,12 @@ describe("Encrypted Token Account (SPL)", () => {
     const keypair = generateX25519Keypair();
 
     // Init encrypted token account (no MPC needed - just creates empty account)
+    const stateNonce = randomStateNonce();
     const initEtaIx = await initEncryptedTokenAccount({
       signer: user,
       tokenMint: mint.address,
       userPubkey: keypair.publicKey,
+      stateNonce,
     });
 
     await sendTransaction(rpc, sendAndConfirm, user, [initEtaIx], {
@@ -149,8 +152,7 @@ describe("Encrypted Token Account (SPL)", () => {
     const etaAccount = await fetchEncryptedTokenAccount(rpc, etaAddress);
     expect(etaAccount.data.owner).to.equal(user.address);
     expect(etaAccount.data.tokenMint).to.equal(mint.address);
-    // Means not initialized
-    expect(etaAccount.data.stateNonce).to.equal(0n);
+    expect(etaAccount.data.stateNonce).to.equal(stateNonce);
 
     // Create token vault ATA for this mint before wrapping
     await createTokenVaultAta(user, mint.address);
@@ -247,6 +249,7 @@ describe("Encrypted Token Account (SPL)", () => {
       signer: owner,
       tokenMint: mint.address,
       userPubkey: keypair.publicKey,
+      stateNonce: randomStateNonce(),
     });
 
     await sendTransaction(rpc, sendAndConfirm, owner, [initEtaIx], {
@@ -260,6 +263,7 @@ describe("Encrypted Token Account (SPL)", () => {
       owner: owner.address,
       tokenMint: mint.address,
       index: ephemeralIndex,
+      stateNonce: randomStateNonce(),
     });
 
     await sendTransaction(rpc, sendAndConfirm, payer, [initEphemeralIx], {
@@ -362,6 +366,7 @@ describe("Encrypted Token Account (SPL)", () => {
       owner: owner.address,
       tokenMint: mint.address,
       index: ephemeralIndex,
+      stateNonce: randomStateNonce(),
     });
     await shouldThrowCustomError(
       () =>  sendTransaction(rpc, sendAndConfirm, payer, [initEphemeralIx], {
@@ -406,6 +411,7 @@ describe("Encrypted Token Account (SPL)", () => {
       signer: userA,
       tokenMint: mint.address,
       userPubkey: keypair.publicKey,
+      stateNonce: randomStateNonce(),
     });
 
     await sendTransaction(rpc, sendAndConfirm, userA, [initEtaIx], {
@@ -421,6 +427,7 @@ describe("Encrypted Token Account (SPL)", () => {
       owner: userA.address,
       tokenMint: mint.address,
       index: ephemeralIndex,
+      stateNonce: randomStateNonce(),
     });
 
     // Record user B's balance before creating ephemeral ETA

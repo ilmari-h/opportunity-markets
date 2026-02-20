@@ -253,6 +253,7 @@ pub fn unwrap_encrypted_tokens_callback(
     // Update encrypted state
     eta.state_nonce = encrypted_balance.nonce;
     eta.encrypted_state = encrypted_balance.ciphertexts;
+    eta.is_initialized = true;
 
     emit_ts!(EncryptedTokensUnwrappedEvent {
         user: eta.owner,

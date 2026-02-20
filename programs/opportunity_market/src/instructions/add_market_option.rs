@@ -258,6 +258,7 @@ pub fn add_market_option_callback(
     // Update source ETA balance
     ctx.accounts.source_eta.state_nonce = new_user_balance.nonce;
     ctx.accounts.source_eta.encrypted_state = new_user_balance.ciphertexts;
+    ctx.accounts.source_eta.is_initialized = true;
 
     // Update share account encrypted state
     ctx.accounts.share_account.state_nonce = bought_shares.nonce;

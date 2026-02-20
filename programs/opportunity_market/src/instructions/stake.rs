@@ -222,6 +222,7 @@ pub fn buy_opportunity_market_shares_callback(
     // Update user balance to <previous balance> - <bought shares>
     ctx.accounts.user_encrypted_token_account.state_nonce = new_user_balance.nonce;
     ctx.accounts.user_encrypted_token_account.encrypted_state = new_user_balance.ciphertexts;
+    ctx.accounts.user_encrypted_token_account.is_initialized = true;
 
     // Update share account to the value of bought shares
     ctx.accounts.share_account.state_nonce = bought_shares_mxe.nonce;

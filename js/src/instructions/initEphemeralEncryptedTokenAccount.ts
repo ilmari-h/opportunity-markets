@@ -13,12 +13,14 @@ export interface InitEphemeralEncryptedTokenAccountParams extends BaseInstructio
   tokenMint: Address;
   /** The index for the ephemeral ETA (must be non-zero) */
   index: bigint;
+  /** Random u128 nonce for initial encrypted state */
+  stateNonce: bigint;
 }
 
 export async function initEphemeralEncryptedTokenAccount(
   input: InitEphemeralEncryptedTokenAccountParams
 ): Promise<InitEphemeralEncryptedTokenAccountInstruction<string>> {
-  const { programAddress, signer, owner, tokenMint, index } = input;
+  const { programAddress, signer, owner, tokenMint, index, stateNonce } = input;
 
   return getInitEphemeralEncryptedTokenAccountInstructionAsync(
     {
@@ -26,6 +28,7 @@ export async function initEphemeralEncryptedTokenAccount(
       owner,
       tokenMint,
       index,
+      stateNonce,
     },
     programAddress ? { programAddress } : undefined
   );

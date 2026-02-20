@@ -9,6 +9,14 @@ export function randomComputationOffset(): bigint {
 }
 
 /**
+ * Generates a random u128 state nonce for encrypted token account initialization.
+ * Returns a BigInt from 16 random bytes.
+ */
+export function randomStateNonce(): bigint {
+  return BigInt("0x" + randomBytes(16).toString("hex"));
+}
+
+/**
  * Type that accepts either a number[] or Uint8Array for byte array parameters.
  * Use with toNumberArray() to convert before passing to generated instructions.
  */

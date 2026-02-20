@@ -109,7 +109,7 @@ pub fn reveal_shares(
     }
 
     // Build args for encrypted computation
-    let is_eta_initialized = user_eta_nonce != 0;
+    let is_eta_initialized = ctx.accounts.user_eta.is_initialized;
     let args = ArgBuilder::new()
 
         // Share account encrypted state (Enc<Shared, SharePurchase>)
@@ -212,6 +212,7 @@ pub fn reveal_shares_callback(
     if ctx.accounts.share_account.unstaked_at_timestamp.is_none() {
         ctx.accounts.user_eta.state_nonce = new_user_balance.nonce;
         ctx.accounts.user_eta.encrypted_state = new_user_balance.ciphertexts;
+        ctx.accounts.user_eta.is_initialized = true;
     }
 
     emit_ts!(SharesRevealedEvent {

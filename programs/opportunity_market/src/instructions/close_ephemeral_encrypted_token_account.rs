@@ -106,7 +106,7 @@ pub fn close_ephemeral_encrypted_token_account(
 
     // Build args for encrypted computation
     // Circuit: close_ephemeral_encrypted_token_account(ephemeral_ctx, regular_ctx, is_regular_initialized)
-    let is_regular_eta_initialized = regular_eta_nonce != 0;
+    let is_regular_eta_initialized = ctx.accounts.regular_encrypted_token_account.is_initialized;
     let args = ArgBuilder::new()
         // Ephemeral ETA encrypted state
         .x25519_pubkey(user_pubkey)
@@ -208,6 +208,7 @@ pub fn close_ephemeral_encrypted_token_account_callback(
     // No SPL token transfer needed - tokens are already in the common TokenVault
     regular_eta.state_nonce = res.nonce;
     regular_eta.encrypted_state = res.ciphertexts;
+    regular_eta.is_initialized = true;
 
     emit_ts!(EphemeralAccountClosedEvent {
         user: regular_eta.owner,

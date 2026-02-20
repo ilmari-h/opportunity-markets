@@ -71,6 +71,7 @@ export type EncryptedTokenAccount = {
   locked: boolean;
   pendingDeposit: bigint;
   rentPayer: Option<Address>;
+  isInitialized: boolean;
 };
 
 export type EncryptedTokenAccountArgs = {
@@ -84,6 +85,7 @@ export type EncryptedTokenAccountArgs = {
   locked: boolean;
   pendingDeposit: number | bigint;
   rentPayer: OptionOrNullable<Address>;
+  isInitialized: boolean;
 };
 
 export function getEncryptedTokenAccountEncoder(): Encoder<EncryptedTokenAccountArgs> {
@@ -105,6 +107,7 @@ export function getEncryptedTokenAccountEncoder(): Encoder<EncryptedTokenAccount
       ['locked', getBooleanEncoder()],
       ['pendingDeposit', getU64Encoder()],
       ['rentPayer', getOptionEncoder(getAddressEncoder())],
+      ['isInitialized', getBooleanEncoder()],
     ]),
     (value) => ({
       ...value,
@@ -131,6 +134,7 @@ export function getEncryptedTokenAccountDecoder(): Decoder<EncryptedTokenAccount
     ['locked', getBooleanDecoder()],
     ['pendingDeposit', getU64Decoder()],
     ['rentPayer', getOptionDecoder(getAddressDecoder())],
+    ['isInitialized', getBooleanDecoder()],
   ]);
 }
 

@@ -122,7 +122,7 @@ pub fn wrap_encrypted_tokens(
 
     // Build args for encrypted computation
     // Circuit signature: wrap_encrypted_tokens(balance_ctx, is_initialized, amount)
-    let is_initialized = eta.state_nonce != 0;
+    let is_initialized = eta.is_initialized;
     let args = ArgBuilder::new()
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(eta.state_nonce)
@@ -203,6 +203,7 @@ pub fn wrap_encrypted_tokens_callback(
     // Update encrypted state
     eta.state_nonce = encrypted_balance.nonce;
     eta.encrypted_state = encrypted_balance.ciphertexts;
+    eta.is_initialized = true;
 
     emit_ts!(EncryptedTokenWrappedEvent {
         encrypted_token_account: eta.key(),
