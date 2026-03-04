@@ -14,7 +14,6 @@ import {
   OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED,
   OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET,
 } from "../js/src/generated/errors/opportunityMarket";
-
 import * as fs from "fs";
 import * as os from "os";
 
@@ -298,8 +297,9 @@ describe("OpportunityMarket", () => {
     await runner.initEncryptedTokenAccount(user);
     await runner.wrapEncryptedTokens(user, wrapAmount);
 
-    // Calculate stake amounts: 1/4 of wrapped tokens for each action
-    const quarterAmount = wrapAmount / 4n; // 25_000_000n
+    // Calculate stake amounts: 1/4 of net balance (after protocol fee) for each action
+    const netAmount = await runner.decryptEtaBalance(user);
+    const quarterAmount = netAmount / 4n;
 
     // Wait for market staking period to be active
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
@@ -451,6 +451,9 @@ describe("OpportunityMarket", () => {
     const wrapAmount = 100_000_000n;
     await runner.wrapEncryptedTokens(staker, wrapAmount);
 
+    // Net balance after protocol fee
+    const netAmount = await runner.decryptEtaBalance(staker);
+
     // Add options
     const { optionIndex: optionA } = await runner.addOptionAsCreator("Option A");
     await runner.addOptionAsCreator("Option B");
@@ -462,7 +465,7 @@ describe("OpportunityMarket", () => {
 
     // Verify ETA balance decreased after staking
     const balanceAfterStake = await runner.decryptEtaBalance(staker);
-    expect(balanceAfterStake).to.equal(wrapAmount - stakeAmount);
+    expect(balanceAfterStake).to.equal(netAmount - stakeAmount);
 
     // Verify initial state
     let shareAccount = await runner.fetchShareAccountData(staker, shareAccountId);
@@ -495,7 +498,7 @@ describe("OpportunityMarket", () => {
 
     // Verify ETA balance was refunded
     const balanceAfterUnstake = await runner.decryptEtaBalance(staker);
-    expect(balanceAfterUnstake).to.equal(wrapAmount);
+    expect(balanceAfterUnstake).to.equal(netAmount);
 
     // Select winner and wait for stake period to end
     await runner.selectOption(optionA);
