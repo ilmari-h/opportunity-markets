@@ -4069,19 +4069,6 @@
       ]
     },
     {
-      "name": "OptionSelectedEvent",
-      "discriminator": [
-        159,
-        159,
-        126,
-        76,
-        111,
-        128,
-        68,
-        33
-      ]
-    },
-    {
       "name": "PendingDepositClaimedEvent",
       "discriminator": [
         3,
@@ -4235,6 +4222,19 @@
         159,
         68,
         128
+      ]
+    },
+    {
+      "name": "WinningOptionsSelectedEvent",
+      "discriminator": [
+        228,
+        90,
+        78,
+        13,
+        36,
+        36,
+        173,
+        6
       ]
     }
   ],
@@ -5681,36 +5681,6 @@
       }
     },
     {
-      "name": "OptionSelectedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "market",
-            "type": "pubkey"
-          },
-          {
-            "name": "authority",
-            "type": "pubkey"
-          },
-          {
-            "name": "selected_options",
-            "type": {
-              "vec": {
-                "defined": {
-                  "name": "WinningOption"
-                }
-              }
-            }
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
       "name": "Output",
       "docs": [
         "An output of a computation.",
@@ -6631,6 +6601,36 @@
           {
             "name": "reward_percentage",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WinningOptionsSelectedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "selected_options",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "WinningOption"
+                }
+              }
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }

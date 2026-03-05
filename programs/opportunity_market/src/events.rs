@@ -127,7 +127,7 @@ pub struct MarketOpenedEvent {
 }
 
 #[event]
-pub struct OptionSelectedEvent {
+pub struct WinningOptionsSelectedEvent {
     pub market: Pubkey,
     pub authority: Pubkey,
     pub selected_options: Vec<WinningOption>,

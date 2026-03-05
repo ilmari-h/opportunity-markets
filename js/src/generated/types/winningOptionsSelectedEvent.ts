@@ -28,21 +28,21 @@ import {
   type WinningOptionArgs,
 } from '.';
 
-export type OptionSelectedEvent = {
+export type WinningOptionsSelectedEvent = {
   market: Address;
   authority: Address;
   selectedOptions: Array<WinningOption>;
   timestamp: bigint;
 };
 
-export type OptionSelectedEventArgs = {
+export type WinningOptionsSelectedEventArgs = {
   market: Address;
   authority: Address;
   selectedOptions: Array<WinningOptionArgs>;
   timestamp: number | bigint;
 };
 
-export function getOptionSelectedEventEncoder(): Encoder<OptionSelectedEventArgs> {
+export function getWinningOptionsSelectedEventEncoder(): Encoder<WinningOptionsSelectedEventArgs> {
   return getStructEncoder([
     ['market', getAddressEncoder()],
     ['authority', getAddressEncoder()],
@@ -51,7 +51,7 @@ export function getOptionSelectedEventEncoder(): Encoder<OptionSelectedEventArgs
   ]);
 }
 
-export function getOptionSelectedEventDecoder(): Decoder<OptionSelectedEvent> {
+export function getWinningOptionsSelectedEventDecoder(): Decoder<WinningOptionsSelectedEvent> {
   return getStructDecoder([
     ['market', getAddressDecoder()],
     ['authority', getAddressDecoder()],
@@ -60,12 +60,12 @@ export function getOptionSelectedEventDecoder(): Decoder<OptionSelectedEvent> {
   ]);
 }
 
-export function getOptionSelectedEventCodec(): Codec<
-  OptionSelectedEventArgs,
-  OptionSelectedEvent
+export function getWinningOptionsSelectedEventCodec(): Codec<
+  WinningOptionsSelectedEventArgs,
+  WinningOptionsSelectedEvent
 > {
   return combineCodec(
-    getOptionSelectedEventEncoder(),
-    getOptionSelectedEventDecoder()
+    getWinningOptionsSelectedEventEncoder(),
+    getWinningOptionsSelectedEventDecoder()
   );
 }

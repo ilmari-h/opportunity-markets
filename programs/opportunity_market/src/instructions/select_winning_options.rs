@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::error::ErrorCode;
-use crate::events::{emit_ts, OptionSelectedEvent};
+use crate::events::{WinningOptionsSelectedEvent, emit_ts};
 use crate::state::{OpportunityMarket, WinningOption};
 
 #[derive(Accounts)]
@@ -72,7 +72,7 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
     // Save the selected options
     market.selected_options = Some(selections.clone());
 
-    emit_ts!(OptionSelectedEvent {
+    emit_ts!(WinningOptionsSelectedEvent{
         market: market.key(),
         authority: ctx.accounts.authority.key(),
         selected_options: selections,
