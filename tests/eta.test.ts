@@ -21,12 +21,11 @@ import {
   randomComputationOffset,
   randomStateNonce,
   fetchEncryptedTokenAccount,
-  fetchMaybeCentralState,
   getEncryptedTokenAccountAddress,
   getEphemeralEncryptedTokenAccountAddress,
-  getInitCentralStateInstructionAsync,
   getTokenVaultAddress,
   initTokenVault,
+  ensureCentralState,
 } from "../js/src";
 import { initializeAllCompDefs } from "./utils/comp-defs";
 import { sendTransaction } from "./utils/transaction";
@@ -39,6 +38,7 @@ import * as os from "os";
 import { generateX25519Keypair, createCipher } from "../js/src/x25519/keypair";
 import { expect } from "chai";
 import { shouldThrowCustomError } from "./utils/errors";
+import { getDeployerKeypair } from "./utils/deployer";
 
 const RPC_URL = process.env.ANCHOR_PROVIDER_URL || "http://127.0.0.1:8899";
 const WS_URL = RPC_URL.replace("http", "ws").replace(":8899", ":8900");
@@ -91,24 +91,17 @@ describe("Encrypted Token Account (SPL)", () => {
     ]);
     mxePublicKey = await getMXEPublicKey(provider, program.programId);
 
-    // Ensure central state exists (required by initTokenVault)
-    const { getProgramDerivedAddress, getBytesEncoder } = await import("@solana/kit");
-    const [centralStateAddress] = await getProgramDerivedAddress({
-      programAddress: programId,
-      seeds: [getBytesEncoder().encode(new Uint8Array([99, 101, 110, 116, 114, 97, 108, 95, 115, 116, 97, 116, 101]))],
+    // Ensure central state exists (required by initTokenVault) - use stable deployer key
+    const deployer = await getDeployerKeypair();
+    const centralStateIx = await ensureCentralState(rpc, {
+      signer: deployer,
+      earlinessCutoffSeconds: 0n,
+      minOptionDeposit: 1n,
+      protocolFeeBp: 0,
+      feeRecipient: deployer.address,
     });
-    const centralState = await fetchMaybeCentralState(rpc, centralStateAddress);
-    if (!centralState.exists) {
-      const payer = await generateKeyPairSigner();
-      await airdrop({ recipientAddress: payer.address, lamports: lamports(2_000_000_000n), commitment: "confirmed" });
-      const ix = await getInitCentralStateInstructionAsync({
-        payer,
-        earlinessCutoffSeconds: 0n,
-        minOptionDeposit: 1n,
-        protocolFeeBp: 0,
-        feeRecipient: payer.address,
-      });
-      await sendTransaction(rpc, sendAndConfirm, payer, [ix], { label: "Init central state" });
+    if (centralStateIx) {
+      await sendTransaction(rpc, sendAndConfirm, deployer, [centralStateIx], { label: "Ensure central state" });
     }
   });
 

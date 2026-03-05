@@ -12,8 +12,6 @@ import {
   createSolanaRpcSubscriptions,
   lamports,
   sendAndConfirmTransactionFactory,
-  getProgramDerivedAddress,
-  getBytesEncoder,
   type Rpc,
   type SolanaRpcApi,
 } from "@solana/kit";
@@ -25,11 +23,10 @@ import {
 import {
   createMarket,
   fetchOpportunityMarket,
-  fetchMaybeCentralState,
   getClaimFeesInstructionAsync,
   randomComputationOffset,
   randomStateNonce,
-  getInitCentralStateInstructionAsync,
+  ensureCentralState,
   initEncryptedTokenAccount,
   initTokenVault,
   getTokenVaultAddress,
@@ -62,6 +59,7 @@ import { generateX25519Keypair, X25519Keypair, createCipher } from "../../js/src
 import { createTokenMint, createAta, mintTokensTo } from "./spl-token";
 import { sendTransaction, type SendAndConfirmFn } from "./transaction";
 import { nonceToBytes } from "./nonce";
+import { getDeployerKeypair } from "./deployer";
 
 // ============================================================================
 // Types
@@ -269,28 +267,19 @@ export class TestRunner {
     );
     await Promise.all(airdropPromises);
 
-    // Initialize central state (skip if already exists)
-    const [centralStateAddress] = await getProgramDerivedAddress({
-      programAddress: programId,
-      seeds: [getBytesEncoder().encode(new Uint8Array([99, 101, 110, 116, 114, 97, 108, 95, 115, 116, 97, 116, 101]))], // "central_state"
+    // Initialize or update central state (use stable deployer key as authority)
+    const deployer = await getDeployerKeypair();
+    const centralStateIx = await ensureCentralState(runner.rpc, {
+      signer: deployer,
+      earlinessCutoffSeconds: 0n,
+      minOptionDeposit: 1n,
+      protocolFeeBp: 100,
+      feeRecipient: creatorAccountBase.keypair.address,
     });
-    const centralStateAccount = await fetchMaybeCentralState(runner.rpc, centralStateAddress);
-
-    if (!centralStateAccount.exists) {
-      console.log("Initializing central state...");
-      const initCentralStateIx = await getInitCentralStateInstructionAsync({
-        payer: creatorAccountBase.keypair,
-        earlinessCutoffSeconds: 0n,
-        minOptionDeposit: 1n,
-        protocolFeeBp: 100,
-        feeRecipient: creatorAccountBase.keypair.address,
+    if (centralStateIx) {
+      await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [centralStateIx], {
+        label: "Ensure central state",
       });
-
-      await sendTransaction(runner.rpc, runner.sendAndConfirm, creatorAccountBase.keypair, [initCentralStateIx], {
-        label: "Init central state",
-      });
-    } else {
-      console.log("Central state already exists, skipping initialization...");
     }
 
     // Create SPL token mint (creator is mint authority)
