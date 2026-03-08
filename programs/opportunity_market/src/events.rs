@@ -141,6 +141,10 @@ pub struct RewardClaimedEvent {
     pub share_account: Pubkey,
     pub option: u16,
     pub reward_amount: u64,
+    pub staked_at_timestamp: u64,
+    pub unstaked_at_timestamp: u64,
+    pub revealed_score: u64,
+    pub revealed_amount: u64,
     pub timestamp: i64,
 }
 

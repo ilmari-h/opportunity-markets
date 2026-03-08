@@ -5925,6 +5925,22 @@
             "type": "u64"
           },
           {
+            "name": "staked_at_timestamp",
+            "type": "u64"
+          },
+          {
+            "name": "unstaked_at_timestamp",
+            "type": "u64"
+          },
+          {
+            "name": "revealed_score",
+            "type": "u64"
+          },
+          {
+            "name": "revealed_amount",
+            "type": "u64"
+          },
+          {
             "name": "timestamp",
             "type": "i64"
           }

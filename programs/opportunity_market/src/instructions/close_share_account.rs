@@ -145,6 +145,15 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
             }
         }
     }
+ 
+    let staked_at_timestamp = share_account.staked_at_timestamp.ok_or(ErrorCode::NotRevealed)?;
+    let unstaked_at_timestamp = share_account.unstaked_at_timestamp.unwrap_or(
+        market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?
+            .checked_add(market.time_to_stake)
+            .ok_or(ErrorCode::Overflow)?
+    );
+    let revealed_score = share_account.revealed_score.unwrap_or(0);
+    let revealed_amount = share_account.revealed_amount.unwrap_or(0);
 
     emit_ts!(RewardClaimedEvent {
         owner: ctx.accounts.owner.key(),
@@ -152,6 +161,10 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
         share_account: ctx.accounts.share_account.key(),
         option: option_index,
         reward_amount: user_reward,
+        staked_at_timestamp: staked_at_timestamp,
+        unstaked_at_timestamp: unstaked_at_timestamp,
+        revealed_score: revealed_score,
+        revealed_amount: revealed_amount,
     });
 
     // Account will be closed automatically via the close constraint
