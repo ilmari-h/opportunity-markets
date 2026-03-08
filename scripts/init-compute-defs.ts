@@ -20,7 +20,6 @@ import {
   type CompDefCircuitName,
   ALL_COMP_DEF_CIRCUITS,
 } from "../js/src";
-import { getArciumEnv } from "@arcium-hq/client";
 import * as fs from "fs";
 import * as os from "os";
 
