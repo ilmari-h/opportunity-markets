@@ -12,3 +12,6 @@ export * from "./utils";
 
 // Export Arcium utilities
 export * from "./arcium/awaitFinalizeComputation";
+
+// Export x25519
+export * from "./x25519/keypair";
