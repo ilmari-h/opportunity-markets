@@ -221,6 +221,96 @@ describe("Encrypted Token Account (SPL)", () => {
     expect(balanceAfterUnwrap).to.equal(wrapAmount - unwrapAmount);
   });
 
+  it("can wrap tokens twice and accumulate encrypted balance", async () => {
+    const user = await generateKeyPairSigner();
+    await airdrop({
+      recipientAddress: user.address,
+      lamports: lamports(2_000_000_000n),
+      commitment: "confirmed",
+    });
+
+    const splAmount = 100_000_000n;
+    const { mint, ata: userAta } = await createMintAndFundAccount(
+      rpc,
+      sendAndConfirm,
+      user,
+      user.address,
+      splAmount,
+    );
+
+    const keypair = generateX25519Keypair();
+
+    const initEtaIx = await initEncryptedTokenAccount({
+      signer: user,
+      tokenMint: mint.address,
+      userPubkey: keypair.publicKey,
+      stateNonce: randomStateNonce(),
+    });
+
+    await sendTransaction(rpc, sendAndConfirm, user, [initEtaIx], {
+      label: "initEncryptedTokenAccount",
+    });
+
+    const [etaAddress] = await getEncryptedTokenAccountAddress(mint.address, user.address, programId);
+
+    await initTokenVaultForMint(user, mint.address);
+
+    const n = 30_000_000n;
+    const a = 10_000_000n;
+
+    // First wrap: n tokens
+    const wrapOffset1 = randomComputationOffset();
+    const wrapIx1 = await wrapEncryptedTokens(
+      {
+        signer: user,
+        tokenMint: mint.address,
+        encryptedTokenAccount: etaAddress,
+        signerTokenAccount: userAta,
+        tokenProgram: TOKEN_PROGRAM_ADDRESS,
+        amount: n,
+      },
+      {
+        clusterOffset: arciumEnv.arciumClusterOffset,
+        computationOffset: wrapOffset1,
+      },
+    );
+
+    await sendTransaction(rpc, sendAndConfirm, user, [wrapIx1], {
+      label: "wrapEncryptedTokens (first)",
+    });
+    await awaitComputationFinalization(rpc, wrapOffset1);
+
+    // Check balance = n after first wrap
+    const balanceAfterFirst = await decryptEtaBalance(etaAddress, keypair.secretKey);
+    expect(balanceAfterFirst).to.equal(n);
+
+    // Second wrap: n - a tokens
+    const wrapOffset2 = randomComputationOffset();
+    const wrapIx2 = await wrapEncryptedTokens(
+      {
+        signer: user,
+        tokenMint: mint.address,
+        encryptedTokenAccount: etaAddress,
+        signerTokenAccount: userAta,
+        tokenProgram: TOKEN_PROGRAM_ADDRESS,
+        amount: n - a,
+      },
+      {
+        clusterOffset: arciumEnv.arciumClusterOffset,
+        computationOffset: wrapOffset2,
+      },
+    );
+
+    await sendTransaction(rpc, sendAndConfirm, user, [wrapIx2], {
+      label: "wrapEncryptedTokens (second)",
+    });
+    await awaitComputationFinalization(rpc, wrapOffset2);
+
+    // Check balance = n + (n - a) = 2n - a
+    const balanceAfterSecond = await decryptEtaBalance(etaAddress, keypair.secretKey);
+    expect(balanceAfterSecond).to.equal(2n * n - a);
+  });
+
   it("another user can create ephemeral ETA", async () => {
     // Generate owner keypair and airdrop SOL
     const owner = await generateKeyPairSigner();
