@@ -5,7 +5,7 @@ You can think of the Opportunity Markets protocol as something similar to a voti
 
 **Opportunity Markets serve an advisory function in decision making.**
 The options with majority stake do not automatically win.
-The market creator has the right to choose whichever option they believe is the most valuable.
+The market creator has the right to choose the winning options according to whichever they believe are the most valuable.
 There can be multiple winning options, each assigned different sized slice of the total reward pool.
 
 **Opportunity Markets provide the market creator with capital backed signals of new opportunities.**
