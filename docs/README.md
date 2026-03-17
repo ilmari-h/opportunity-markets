@@ -14,7 +14,8 @@ Staking data is confidential while the market is open, allowing the creator to t
 
 # Technical Description of The Protocol
 
-We implemented Opportunity Markets as a Solana smart contract with Arcium for shared encrypted state.
+The protocol is implemented as a Solana smart contract. 
+Confidential staking is implemented with Arcium.
 
 ## PDAs
 
