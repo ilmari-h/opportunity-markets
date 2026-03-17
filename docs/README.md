@@ -69,7 +69,7 @@ The market creator can create options without staking on them via `add_market_op
 
 ### Opening the Opportunity Market for Staking
 
-The market creator (or whoever for that matter) sends SPL tokens to the Opporunity Market account's token account to fund the reward pool. The size of the reward pool is set on creation (*TODO but can be extended later!*).
+The market creator (or whoever for that matter) sends SPL tokens to the Opporunity Market account's token account to fund the reward pool. The size of the reward pool is configured on creation but can also be extended later via the `increase_reward_pool` instruction.
 
 The market creator then opens the market to staking by calling the `open_market` instruction.
 
