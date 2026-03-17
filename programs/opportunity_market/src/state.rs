@@ -153,14 +153,3 @@ pub struct OpportunityMarketOption {
     // Whether this option has been fully initialized (set true in MPC callback)
     pub initialized: bool,
 }
-
-#[account]
-#[derive(InitSpace)]
-pub struct OpportunityMarketShare {
-    // [share_amount, selected_option]
-    pub encrypted_state: [[u8; 32]; 2],
-    pub bump: u8,
-    pub owner: Pubkey,
-    pub market: Pubkey,
-    pub state_nonce: u128,
-}

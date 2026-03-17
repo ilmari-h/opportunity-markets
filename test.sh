@@ -10,9 +10,14 @@ if [ ! -f "$KEYPAIR_PATH" ]; then
   exit 1
 fi
 
-# Build (--skip-keys-sync preserves the declare_id! macro)
+# Ensure the deploy keypair matches our deterministic program keypair
+# (must be in place BEFORE build so key sync and compilation use the right ID)
+mkdir -p target/deploy
+cp "$KEYPAIR_PATH" target/deploy/opportunity_market-keypair.json
+
+# Build (let arcium sync keys from the deploy keypair, then compile)
 echo "Building..."
-arcium build --skip-keys-sync
+arcium build
 
 # Test (--skip-build prevents overwriting the keypair)
 echo "Running tests..."

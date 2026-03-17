@@ -39,7 +39,8 @@ following to match:
 1. `declare_id!()` in `programs/opportunity_market/src/lib.rs`
 2. `OPPORTUNITY_MARKET_PROGRAM_ADDRESS` in `js/src/generated/programs/opportunityMarket.ts`
 3. `[programs.localnet]` in `Anchor.toml`
-4. Copy your keypair to `target/deploy/opportunity_market-keypair.json`
+4. `program_keypair` in `Arcium.toml`
+5. Copy your keypair to `target/deploy/opportunity_market-keypair.json`
 
 ### Running tests
 
@@ -47,6 +48,20 @@ following to match:
 bun install
 ./test.sh
 ```
+
+### Troubleshooting: `DeclaredProgramIdMismatch`
+
+If tests fail with `Error Code: DeclaredProgramIdMismatch`, the compiled `.so` binary has a different program ID baked in than the deploy keypair. This happens when:
+
+- `target/deploy/opportunity_market-keypair.json` doesn't match the `declare_id!()` in the source. The `test.sh` script copies the deterministic keypair here before building.
+- The build was skipped due to caching (arcium reports "Skipping build") and the cached `.so` was compiled with a different keypair. Fix by deleting stale artifacts and rebuilding:
+
+```bash
+rm -f target/deploy/opportunity_market.so target/sbpf-solana-solana/release/opportunity_market.so
+arcium build
+```
+
+- `Arcium.toml` has a bad `program_keypair` path (e.g. trailing whitespace), causing arcium to fall back to a generated keypair.
 
 ## Deployment
 

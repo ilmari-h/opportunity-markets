@@ -45,7 +45,7 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
     // Percentages must sum to 100
     require!(percentage_sum == 100, ErrorCode::InvalidWinningOptionsInput);
 
-    // Enforce market is open
+    // Enforce market was opened
     let open_timestamp = market.open_timestamp.ok_or_else(|| ErrorCode::MarketNotOpen)?;
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
