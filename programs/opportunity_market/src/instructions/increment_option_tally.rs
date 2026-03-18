@@ -37,8 +37,11 @@ pub struct IncrementOptionTally<'info> {
 }
 
 pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: u16, _share_account_id: u32) -> Result<()> {
-    // Check that we are within the reveal window
     let market = &ctx.accounts.market;
+
+    require!(!market.reward_withdrawn, ErrorCode::RewardAlreadyWithdrawn);
+
+    // Check that we are within the reveal window
     let open_timestamp = market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
     let clock = Clock::get()?;
     let current_time = clock.unix_timestamp as u64;

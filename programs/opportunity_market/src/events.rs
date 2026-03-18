@@ -175,6 +175,15 @@ pub struct RewardPoolIncreasedEvent {
 }
 
 #[event]
+pub struct RewardWithdrawnEvent {
+    pub market: Pubkey,
+    pub creator: Pubkey,
+    pub reward_amount: u64,
+    pub refund_token_account: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
 pub struct RevealPeriodExtendedEvent {
     pub market: Pubkey,
     pub authority: Pubkey,

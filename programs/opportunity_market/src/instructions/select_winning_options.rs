@@ -18,6 +18,9 @@ pub struct SelectWinningOptions<'info> {
 pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Vec<WinningOption>) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
+    require!(!market.reward_withdrawn, ErrorCode::RewardAlreadyWithdrawn);
+    require!(market.selected_options.is_none(), ErrorCode::WinnerAlreadySelected);
+
     // Validate selection count
     require!(!selections.is_empty() && selections.len() <= 10, ErrorCode::InvalidWinningOptionsInput);
 

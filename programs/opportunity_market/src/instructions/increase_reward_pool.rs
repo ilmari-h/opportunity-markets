@@ -56,6 +56,9 @@ pub fn increase_reward_pool(ctx: Context<IncreaseRewardPool>, new_reward_amount:
     // Winners must not already be selected
     require!(market.selected_options.is_none(), ErrorCode::WinnerAlreadySelected);
 
+    // Reward must not have been withdrawn
+    require!(!market.reward_withdrawn, ErrorCode::RewardAlreadyWithdrawn);
+
     let old_reward_amount = market.reward_amount;
     market.reward_amount = new_reward_amount;
 
