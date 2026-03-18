@@ -19,6 +19,7 @@ export * from './computationSignature';
 export * from './encryptedTokenAccountInitializedEvent';
 export * from './encryptedTokensUnwrappedError';
 export * from './encryptedTokensUnwrappedEvent';
+export * from './encryptedTokensWrappedError';
 export * from './encryptedTokensWrappedEvent';
 export * from './ephemeralAccountClosedError';
 export * from './ephemeralAccountClosedEvent';

@@ -4059,6 +4059,19 @@
       ]
     },
     {
+      "name": "EncryptedTokensWrappedError",
+      "discriminator": [
+        35,
+        166,
+        13,
+        96,
+        124,
+        82,
+        141,
+        108
+      ]
+    },
+    {
       "name": "EncryptedTokensWrappedEvent",
       "discriminator": [
         86,
@@ -5163,6 +5176,22 @@
           {
             "name": "nonce",
             "type": "u128"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EncryptedTokensWrappedError",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
           },
           {
             "name": "timestamp",
