@@ -60,4 +60,6 @@ pub enum ErrorCode {
     NoFeesToClaim,
     #[msg("Invalid winning options input")]
     InvalidWinningOptionsInput,
+    #[msg("New reward amount must be greater than current")]
+    RewardAmountNotIncreased,
 }

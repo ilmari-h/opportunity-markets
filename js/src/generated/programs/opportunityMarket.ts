@@ -29,6 +29,7 @@ import {
   type ParsedCreateMarketInstruction,
   type ParsedDoUnstakeEarlyInstruction,
   type ParsedExtendRevealPeriodInstruction,
+  type ParsedIncreaseRewardPoolInstruction,
   type ParsedIncrementOptionTallyInstruction,
   type ParsedInitCentralStateInstruction,
   type ParsedInitEncryptedTokenAccountInstruction,
@@ -229,6 +230,7 @@ export enum OpportunityMarketInstruction {
   CreateMarket,
   DoUnstakeEarly,
   ExtendRevealPeriod,
+  IncreaseRewardPool,
   IncrementOptionTally,
   InitCentralState,
   InitEncryptedTokenAccount,
@@ -422,6 +424,17 @@ export function identifyOpportunityMarketInstruction(
     )
   ) {
     return OpportunityMarketInstruction.ExtendRevealPeriod;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([140, 244, 44, 96, 126, 219, 140, 0])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.IncreaseRewardPool;
   }
   if (
     containsBytes(
@@ -729,6 +742,9 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.ExtendRevealPeriod;
     } & ParsedExtendRevealPeriodInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.IncreaseRewardPool;
+    } & ParsedIncreaseRewardPoolInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.IncrementOptionTally;
     } & ParsedIncrementOptionTallyInstruction<TProgram>)

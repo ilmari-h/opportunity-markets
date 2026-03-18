@@ -148,6 +148,10 @@ pub mod opportunity_market {
         instructions::extend_reveal_period(ctx, new_time_to_reveal)
     }
 
+    pub fn increase_reward_pool(ctx: Context<IncreaseRewardPool>, new_reward_amount: u64) -> Result<()> {
+        instructions::increase_reward_pool(ctx, new_reward_amount)
+    }
+
     pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: u16, share_account_id: u32) -> Result<()> {
         instructions::increment_option_tally(ctx, option_index, share_account_id)
     }

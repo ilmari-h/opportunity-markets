@@ -1672,6 +1672,100 @@
       ]
     },
     {
+      "name": "increase_reward_pool",
+      "discriminator": [
+        140,
+        244,
+        44,
+        96,
+        126,
+        219,
+        140,
+        0
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "market_token_ata",
+          "docs": [
+            "Market's ATA holding reward tokens"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "new_reward_amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "increment_option_tally",
       "discriminator": [
         93,
@@ -4108,6 +4202,19 @@
       ]
     },
     {
+      "name": "RewardPoolIncreasedEvent",
+      "discriminator": [
+        48,
+        60,
+        73,
+        27,
+        87,
+        2,
+        31,
+        79
+      ]
+    },
+    {
       "name": "ShareAccountInitializedEvent",
       "discriminator": [
         94,
@@ -4383,6 +4490,11 @@
       "code": 6028,
       "name": "InvalidWinningOptionsInput",
       "msg": "Invalid winning options input"
+    },
+    {
+      "code": 6029,
+      "name": "RewardAmountNotIncreased",
+      "msg": "New reward amount must be greater than current"
     }
   ],
   "types": [
@@ -5938,6 +6050,34 @@
           },
           {
             "name": "revealed_amount",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RewardPoolIncreasedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "old_reward_amount",
+            "type": "u64"
+          },
+          {
+            "name": "new_reward_amount",
             "type": "u64"
           },
           {

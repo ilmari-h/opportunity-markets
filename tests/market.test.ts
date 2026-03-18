@@ -13,6 +13,7 @@ import { shouldThrowCustomError } from "./utils/errors";
 import { generateX25519Keypair, X25519Keypair } from "../js/src/x25519/keypair";
 import {
   OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED,
+  OPPORTUNITY_MARKET_ERROR__REWARD_AMOUNT_NOT_INCREASED,
   OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE,
   OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET,
 } from "../js/src/generated/errors/opportunityMarket";
@@ -816,6 +817,60 @@ describe("OpportunityMarket", () => {
     // Verify share account was rolled back (staked_at_timestamp reset to None)
     const shareAccount = await runner.fetchShareAccountData(user, shareAccountId);
     expect(isNone(shareAccount.data.stakedAtTimestamp)).to.be.true;
+  });
+
+  it("allows increasing the reward pool during staking", async () => {
+    const initialReward = 1_000_000_000n;
+    const increasedReward = 2_000_000_000n;
+
+    const observer = loadObserverKeypair();
+
+    const runner = await TestRunner.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 1,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 5_000_000_000n,
+      marketConfig: {
+        rewardAmount: initialReward,
+        timeToStake: 120n,
+        timeToReveal: 20n,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    // Fund with enough for the increased reward, open market
+    await runner.fundMarket(increasedReward);
+    const openTimestamp = await runner.openMarket();
+
+    // Add an option so staking can happen
+    await runner.addOptionAsCreator("Option A");
+
+    // Wait for staking period to be active
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    // Verify initial reward amount
+    let market = await runner.fetchMarket();
+    expect(market.data.rewardAmount).to.equal(initialReward);
+
+    // Increase the reward pool
+    await runner.increaseRewardPool(increasedReward);
+
+    // Verify updated reward amount
+    market = await runner.fetchMarket();
+    expect(market.data.rewardAmount).to.equal(increasedReward);
+
+    // Negative: try to decrease (set to a smaller amount) — should fail
+    await shouldThrowCustomError(
+      () => runner.increaseRewardPool(initialReward),
+      OPPORTUNITY_MARKET_ERROR__REWARD_AMOUNT_NOT_INCREASED
+    );
+
+    // Negative: try to set same amount — should fail
+    await shouldThrowCustomError(
+      () => runner.increaseRewardPool(increasedReward),
+      OPPORTUNITY_MARKET_ERROR__REWARD_AMOUNT_NOT_INCREASED
+    );
   });
 
   it("rejects staking before staking period is active", async () => {

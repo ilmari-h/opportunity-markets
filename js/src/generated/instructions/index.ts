@@ -21,6 +21,7 @@ export * from './closeShareAccount';
 export * from './createMarket';
 export * from './doUnstakeEarly';
 export * from './extendRevealPeriod';
+export * from './increaseRewardPool';
 export * from './incrementOptionTally';
 export * from './initCentralState';
 export * from './initEncryptedTokenAccount';

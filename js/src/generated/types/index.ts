@@ -41,6 +41,7 @@ export * from './revealPeriodExtendedEvent';
 export * from './revealSharesOutput';
 export * from './revealSharesOutputStruct0';
 export * from './rewardClaimedEvent';
+export * from './rewardPoolIncreasedEvent';
 export * from './shareAccountInitializedEvent';
 export * from './stakedError';
 export * from './stakedEvent';

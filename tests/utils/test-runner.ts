@@ -42,6 +42,7 @@ import {
   unstakeEarly as unstakeEarlyIx,
   doUnstakeEarly as doUnstakeEarlyIx,
   openMarket as openMarketIx,
+  increaseRewardPool as increaseRewardPoolIx,
   awaitComputationFinalization,
   type ComputationResult,
   getEncryptedTokenAccountAddress,
@@ -531,6 +532,27 @@ export class TestRunner {
 
   async selectSingleWinningOption(optionIndex: number): Promise<void> {
     await this.selectWinningOptions([{ optionIndex, rewardPercentage: 100 }]);
+  }
+
+  async increaseRewardPool(newRewardAmount: bigint): Promise<void> {
+    const [marketAta] = await findAssociatedTokenPda({
+      mint: this.mint.address,
+      owner: this.marketAddress,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    });
+
+    const ix = increaseRewardPoolIx({
+      authority: this.marketCreator.solanaKeypair,
+      market: this.marketAddress,
+      tokenMint: this.mint.address,
+      marketTokenAta: marketAta,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      newRewardAmount,
+    });
+
+    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
+      label: "Increase reward pool",
+    });
   }
 
   // ============================================================================

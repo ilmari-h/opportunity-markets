@@ -14,6 +14,7 @@ export * from "./addMarketOptionAsCreator";
 export * from "./openMarket";
 export * from "./selectWinningOptions";
 export * from "./extendRevealPeriod";
+export * from "./increaseRewardPool";
 export * from "./initShareAccount";
 export * from "./closeShareAccount";
 export * from "./incrementOptionTally";

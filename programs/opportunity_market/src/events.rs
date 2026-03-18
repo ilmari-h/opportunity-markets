@@ -160,6 +160,15 @@ pub struct TallyIncrementedEvent {
 }
 
 #[event]
+pub struct RewardPoolIncreasedEvent {
+    pub market: Pubkey,
+    pub authority: Pubkey,
+    pub old_reward_amount: u64,
+    pub new_reward_amount: u64,
+    pub timestamp: i64,
+}
+
+#[event]
 pub struct RevealPeriodExtendedEvent {
     pub market: Pubkey,
     pub authority: Pubkey,
