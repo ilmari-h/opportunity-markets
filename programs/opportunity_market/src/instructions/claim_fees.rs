@@ -28,6 +28,7 @@ pub struct ClaimFees<'info> {
         seeds = [TOKEN_VAULT_SEED, token_mint.key().as_ref()],
         bump = token_vault.bump,
         constraint = token_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
+        constraint = token_vault.collected_fees > 0 @ ErrorCode::NoFeesToClaim,
     )]
     pub token_vault: Account<'info, TokenVault>,
 
@@ -42,6 +43,7 @@ pub struct ClaimFees<'info> {
     #[account(
         mut,
         token::mint = token_mint,
+        token::authority = central_state.fee_recipient,
         token::token_program = token_program,
     )]
     pub fee_recipient_token_account: InterfaceAccount<'info, TokenAccount>,
@@ -52,8 +54,6 @@ pub struct ClaimFees<'info> {
 pub fn claim_fees(ctx: Context<ClaimFees>) -> Result<()> {
     let token_vault = &ctx.accounts.token_vault;
     let fees = token_vault.collected_fees;
-
-    require!(fees > 0, ErrorCode::NoFeesToClaim);
 
     let vault_bump = token_vault.bump;
     let mint_key = ctx.accounts.token_mint.key();

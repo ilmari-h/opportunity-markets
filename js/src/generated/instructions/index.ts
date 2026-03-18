@@ -42,6 +42,7 @@ export * from './unwrapEncryptedTokens';
 export * from './unwrapEncryptedTokensCallback';
 export * from './unwrapEncryptedTokensCompDef';
 export * from './updateCentralState';
+export * from './withdrawReward';
 export * from './wrapEncryptedTokens';
 export * from './wrapEncryptedTokensCallback';
 export * from './wrapEncryptedTokensCompDef';

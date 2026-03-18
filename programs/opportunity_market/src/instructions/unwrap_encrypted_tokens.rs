@@ -27,6 +27,8 @@ pub struct UnwrapEncryptedTokens<'info> {
         constraint = encrypted_token_account.owner == signer.key() @ ErrorCode::Unauthorized,
         constraint = encrypted_token_account.token_mint == token_mint.key() @ ErrorCode::InvalidMint,
         constraint = !encrypted_token_account.locked @ ErrorCode::Locked,
+        constraint = encrypted_token_account.pending_deposit == 0 @ ErrorCode::InvalidAccountState,
+        constraint = encrypted_token_account.is_initialized @ ErrorCode::InvalidAccountState,
     )]
     pub encrypted_token_account: Box<Account<'info, EncryptedTokenAccount>>,
 

@@ -50,6 +50,7 @@ import {
   type ParsedUnwrapEncryptedTokensCompDefInstruction,
   type ParsedUnwrapEncryptedTokensInstruction,
   type ParsedUpdateCentralStateInstruction,
+  type ParsedWithdrawRewardInstruction,
   type ParsedWrapEncryptedTokensCallbackInstruction,
   type ParsedWrapEncryptedTokensCompDefInstruction,
   type ParsedWrapEncryptedTokensInstruction,
@@ -251,6 +252,7 @@ export enum OpportunityMarketInstruction {
   UnwrapEncryptedTokensCallback,
   UnwrapEncryptedTokensCompDef,
   UpdateCentralState,
+  WithdrawReward,
   WrapEncryptedTokens,
   WrapEncryptedTokensCallback,
   WrapEncryptedTokensCompDef,
@@ -660,6 +662,17 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([191, 187, 176, 137, 9, 25, 187, 244])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.WithdrawReward;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([249, 160, 73, 35, 110, 134, 22, 106])
       ),
       0
@@ -805,6 +818,9 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.UpdateCentralState;
     } & ParsedUpdateCentralStateInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.WithdrawReward;
+    } & ParsedWithdrawRewardInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.WrapEncryptedTokens;
     } & ParsedWrapEncryptedTokensInstruction<TProgram>)

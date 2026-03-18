@@ -144,6 +144,10 @@ pub mod opportunity_market {
         instructions::select_winning_options(ctx, selections)
     }
 
+    pub fn withdraw_reward(ctx: Context<WithdrawReward>) -> Result<()> {
+        instructions::withdraw_reward(ctx)
+    }
+
     pub fn extend_reveal_period(ctx: Context<ExtendRevealPeriod>, new_time_to_reveal: u64) -> Result<()> {
         instructions::extend_reveal_period(ctx, new_time_to_reveal)
     }

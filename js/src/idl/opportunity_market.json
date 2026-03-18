@@ -3546,6 +3546,106 @@
       ]
     },
     {
+      "name": "withdraw_reward",
+      "discriminator": [
+        191,
+        187,
+        176,
+        137,
+        9,
+        25,
+        187,
+        244
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "signer": true,
+          "relations": [
+            "market"
+          ]
+        },
+        {
+          "name": "market",
+          "writable": true
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "market_token_ata",
+          "docs": [
+            "Market's ATA holding reward tokens"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "refund_token_account",
+          "docs": [
+            "Creator-specified destination for refunded reward tokens"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "wrap_encrypted_tokens",
       "discriminator": [
         249,
@@ -4059,6 +4159,19 @@
       ]
     },
     {
+      "name": "EncryptedTokensWrappedError",
+      "discriminator": [
+        35,
+        166,
+        13,
+        96,
+        124,
+        82,
+        141,
+        108
+      ]
+    },
+    {
       "name": "EncryptedTokensWrappedEvent",
       "discriminator": [
         86,
@@ -4212,6 +4325,19 @@
         2,
         31,
         79
+      ]
+    },
+    {
+      "name": "RewardWithdrawnEvent",
+      "discriminator": [
+        4,
+        188,
+        172,
+        228,
+        102,
+        43,
+        76,
+        171
       ]
     },
     {
@@ -4495,6 +4621,11 @@
       "code": 6029,
       "name": "RewardAmountNotIncreased",
       "msg": "New reward amount must be greater than current"
+    },
+    {
+      "code": 6030,
+      "name": "RewardAlreadyWithdrawn",
+      "msg": "Reward has already been withdrawn"
     }
   ],
   "types": [
@@ -5172,6 +5303,22 @@
       }
     },
     {
+      "name": "EncryptedTokensWrappedError",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "EncryptedTokensWrappedEvent",
       "type": {
         "kind": "struct",
@@ -5742,6 +5889,10 @@
           {
             "name": "allow_closing_early",
             "type": "bool"
+          },
+          {
+            "name": "reward_withdrawn",
+            "type": "bool"
           }
         ]
       }
@@ -6079,6 +6230,34 @@
           {
             "name": "new_reward_amount",
             "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RewardWithdrawnEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "reward_amount",
+            "type": "u64"
+          },
+          {
+            "name": "refund_token_account",
+            "type": "pubkey"
           },
           {
             "name": "timestamp",

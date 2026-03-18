@@ -62,4 +62,6 @@ pub enum ErrorCode {
     InvalidWinningOptionsInput,
     #[msg("New reward amount must be greater than current")]
     RewardAmountNotIncreased,
+    #[msg("Reward has already been withdrawn")]
+    RewardAlreadyWithdrawn,
 }

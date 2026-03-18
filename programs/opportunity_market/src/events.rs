@@ -103,6 +103,12 @@ pub struct UnstakedError {
 }
 
 #[event]
+pub struct EncryptedTokensWrappedError {
+    pub user: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
 pub struct EncryptedTokensUnwrappedError {
     pub user: Pubkey,
     pub timestamp: i64,
@@ -165,6 +171,15 @@ pub struct RewardPoolIncreasedEvent {
     pub authority: Pubkey,
     pub old_reward_amount: u64,
     pub new_reward_amount: u64,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct RewardWithdrawnEvent {
+    pub market: Pubkey,
+    pub creator: Pubkey,
+    pub reward_amount: u64,
+    pub refund_token_account: Pubkey,
     pub timestamp: i64,
 }
 

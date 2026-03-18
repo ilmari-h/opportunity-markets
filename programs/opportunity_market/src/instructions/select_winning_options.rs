@@ -18,6 +18,9 @@ pub struct SelectWinningOptions<'info> {
 pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Vec<WinningOption>) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
+    require!(!market.reward_withdrawn, ErrorCode::RewardAlreadyWithdrawn);
+    require!(market.selected_options.is_none(), ErrorCode::WinnerAlreadySelected);
+
     // Validate selection count
     require!(!selections.is_empty() && selections.len() <= 10, ErrorCode::InvalidWinningOptionsInput);
 
@@ -66,7 +69,7 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
 
     // If staking is still open, close it by setting time_to_stake to end now
     if current_timestamp < stake_end_timestamp {
-        market.time_to_stake = (current_timestamp - open_timestamp).saturating_sub(1);
+        market.time_to_stake = current_timestamp - open_timestamp;
     }
 
     // Save the selected options

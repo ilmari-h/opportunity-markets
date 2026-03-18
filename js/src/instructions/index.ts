@@ -22,3 +22,4 @@ export * from "./unstakeEarly";
 export * from "./doUnstakeEarly";
 export * from "./ensureCentralState";
 export * from "./claimPendingDeposit";
+export * from "./withdrawReward";

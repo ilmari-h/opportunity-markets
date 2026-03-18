@@ -43,6 +43,7 @@ import {
   doUnstakeEarly as doUnstakeEarlyIx,
   openMarket as openMarketIx,
   increaseRewardPool as increaseRewardPoolIx,
+  withdrawReward as withdrawRewardIx,
   awaitComputationFinalization,
   type ComputationResult,
   getEncryptedTokenAccountAddress,
@@ -552,6 +553,22 @@ export class TestRunner {
 
     await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
       label: "Increase reward pool",
+    });
+  }
+
+  async withdrawReward(refundTokenAccount?: Address): Promise<void> {
+    const refund = refundTokenAccount ?? this.marketCreator.tokenAccount;
+
+    const ix = await withdrawRewardIx({
+      creator: this.marketCreator.solanaKeypair,
+      market: this.marketAddress,
+      tokenMint: this.mint.address,
+      refundTokenAccount: refund,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    });
+
+    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
+      label: "Withdraw reward",
     });
   }
 

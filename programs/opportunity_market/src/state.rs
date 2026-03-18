@@ -79,6 +79,9 @@ pub struct OpportunityMarket {
 
     // If false, market can only be closed after stake period ends
     pub allow_closing_early: bool,
+
+    // If true, reward has been withdrawn by the creator (market resolved without winners)
+    pub reward_withdrawn: bool,
 }
 
 #[account]

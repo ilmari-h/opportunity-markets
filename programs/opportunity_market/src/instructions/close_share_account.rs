@@ -61,7 +61,43 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
     let market = &ctx.accounts.market;
     let option = &ctx.accounts.option;
 
-    // Check that shares have been revealed
+    // Market must be resolved: either winners selected or reward withdrawn
+    require!(
+        market.selected_options.is_some() || market.reward_withdrawn,
+        ErrorCode::MarketNotResolved
+    );
+
+    // Check that reveal period is over
+    let clock = Clock::get()?;
+    let current_time = clock.unix_timestamp as u64;
+
+    let open_timestamp = market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
+    let reveal_end = open_timestamp
+        .checked_add(market.time_to_stake)
+        .and_then(|t| t.checked_add(market.time_to_reveal))
+        .ok_or(ErrorCode::Overflow)?;
+
+    require!(current_time >= reveal_end, ErrorCode::MarketNotResolved);
+
+    if market.reward_withdrawn {
+        // Reward was withdrawn — no reveal required, no reward to distribute.
+        // Just emit the event with zeroed fields and close the account.
+        emit_ts!(RewardClaimedEvent {
+            owner: ctx.accounts.owner.key(),
+            market: market.key(),
+            share_account: ctx.accounts.share_account.key(),
+            option: option_index,
+            reward_amount: 0u64,
+            staked_at_timestamp: share_account.staked_at_timestamp.unwrap_or(0),
+            unstaked_at_timestamp: share_account.unstaked_at_timestamp.unwrap_or(0),
+            revealed_score: 0u64,
+            revealed_amount: 0u64,
+        });
+
+        return Ok(());
+    }
+
+    // Normal path: winners were selected, shares must be revealed
     let revealed_option = share_account.revealed_option.ok_or(ErrorCode::NotRevealed)?;
     if share_account.revealed_amount.is_none() {
         return Err(ErrorCode::NotRevealed.into());
@@ -72,24 +108,6 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
         revealed_option == option_index,
         ErrorCode::InvalidOptionIndex
     );
-
-    // Check that reveal period is over
-    let clock = Clock::get()?;
-    let current_time = clock.unix_timestamp as u64;
-
-    if let Some(open_timestamp) = market.open_timestamp {
-        let reveal_end = open_timestamp
-            .checked_add(market.time_to_stake)
-            .and_then(|t| t.checked_add(market.time_to_reveal))
-            .ok_or(ErrorCode::Overflow)?;
-
-        if current_time < reveal_end {
-            return Err(ErrorCode::MarketNotResolved.into());
-        }
-    } else {
-        // Market hasn't been opened yet
-        return Err(ErrorCode::MarketNotOpen.into());
-    }
 
     // Check if this share was bought for a winning option and user incremented the tally
     // If so, transfer proportional yield from market to user
@@ -145,10 +163,10 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
             }
         }
     }
- 
+
     let staked_at_timestamp = share_account.staked_at_timestamp.ok_or(ErrorCode::NotRevealed)?;
     let unstaked_at_timestamp = share_account.unstaked_at_timestamp.unwrap_or(
-        market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?
+        open_timestamp
             .checked_add(market.time_to_stake)
             .ok_or(ErrorCode::Overflow)?
     );

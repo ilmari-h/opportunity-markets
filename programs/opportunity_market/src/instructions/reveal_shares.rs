@@ -32,6 +32,8 @@ pub struct RevealShares<'info> {
 
     #[account(
         mut,
+        constraint = user_eta.owner == owner.key() @ ErrorCode::Unauthorized,
+        constraint = market.mint == user_eta.token_mint @ ErrorCode::InvalidMint,
         constraint = !user_eta.locked @ ErrorCode::Locked,
     )]
     pub user_eta: Box<Account<'info, EncryptedTokenAccount>>,
@@ -79,9 +81,6 @@ pub fn reveal_shares(
 ) -> Result<()> {
     let user_pubkey = ctx.accounts.user_eta.user_pubkey;
 
-    require!(ctx.accounts.user_eta.owner.key().eq(&ctx.accounts.owner.key()), ErrorCode::Unauthorized);
-    require!(ctx.accounts.market.mint.eq(&ctx.accounts.user_eta.token_mint.key()), ErrorCode::InvalidMint);
-
     let market = &ctx.accounts.market;
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
@@ -93,6 +92,10 @@ pub fn reveal_shares(
         .saturating_add(market.time_to_stake);
 
     require!(current_timestamp >= reveal_start, ErrorCode::MarketNotResolved);
+    require!(
+        market.selected_options.is_some() || market.reward_withdrawn,
+        ErrorCode::MarketNotResolved
+    );
 
     let share_account_key = ctx.accounts.share_account.key();
     let share_account_nonce = ctx.accounts.share_account.state_nonce;
