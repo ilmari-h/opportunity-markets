@@ -25,7 +25,7 @@ Basically, you can think of the Opportunity Markets protocol as something simila
 
 The options with majority stake do not automatically win.
 The market creator has the right to choose the winning options according to whichever they believe are the most valuable.
-There can be multiple winning options, each assigned different sized slice of the total reward pool.
+There can be multiple winning options, each assigned a differently sized slice of the total reward pool.
 
 2. **Opportunity Markets provide the market creator with capital backed signals of new opportunities**
 
@@ -56,19 +56,16 @@ We lock the ETA while waiting for Arcium callback to complete.
 ### `ShareAccount`
 
 When a user stakes on an Opportunity Market option, a Share Account is created to keep track of how much money the user staked and for which option.
-The amount and option choice are both encrypted. The stake amount is deducted from the users ETA.
+The amount and option choice are both encrypted. The stake amount is deducted from the user's ETA.
 
 Once a user's stake is stored in a Share Account, it cannot be increased, only withdrawn completely.
 A user can, however, have multiple Share Accounts for the same option. So if they wish to stake more, a new Share Account can be opened.
 
-Once the market closes, to claim any potential reward from a Share Account that represents a stake in the winning option, the `reveal_shares` instruction must be called. This decrypts and records the users stake amount and option choice in plain text in the Share Account struct.
-Calling this instruction is permissionless and can therefore be automated in a "cranker" process, so users don't have to do it themselves.
-
-After reavealing, the user can claim their reward and close their Share Account by calling `close_share_account`.
+Once the market closes (and after our "cranking" process finishes as documented in section [Distributing the Reward](#distributing-the-reward)) the owner of the Share Account can claim their reward if the account is for one of the winning options.
 
 ### `OpportunityMarketOption`
 
-Account representing an option in the market. This market also holds the tally of the total revealed stake amount for this option.
+Account representing an option in the market. This account also holds the tally of the total revealed stake amount for this option.
 
 ### `OpportunityMarket`
 
@@ -90,7 +87,7 @@ The market creator can create options without staking on them via `add_market_op
 
 ### Opening the Opportunity Market for Staking
 
-The market creator (or whoever for that matter) sends SPL tokens to the Opporunity Market account's token account to fund the reward pool. The size of the reward pool is configured on creation but can also be extended later via the `increase_reward_pool` instruction.
+The market creator (or whoever for that matter) sends SPL tokens to the Opportunity Market account's token account to fund the reward pool. The size of the reward pool is configured on creation but can also be extended later via the `increase_reward_pool` instruction.
 
 The market creator then opens the market to staking by calling the `open_market` instruction.
 
@@ -100,12 +97,12 @@ Once the market is open, users can stake on options.
 The market is open for a certain period of time, the length of which is configured upon market creation.
 During this time, users and the market creator can keep adding new options.
 
-Staking is done with the `stake` instruction. This deducts balance from the user's ETA and records the stake amount as an encrypted field in their `ShareAccount`, alonside the encrypted identifier of the option they voted for.
+Staking is done with the `stake` instruction. This deducts balance from the user's ETA and records the stake amount as an encrypted field in their `ShareAccount`, alongside the encrypted identifier of the option they voted for.
 
 The user can claim back their stake amount with a delay by calling the `unstake_early` instruction.
 After calling that, they must wait a certain period of time before actually claiming back their stake via `do_unstake_early`.
 The latter instruction is permissionless, and can be moved to a "cranker" process to improve UX.
-Users are incentiviced to keep their stake in the market as long as possible. More about that in later section *Distributing the Reward*.
+Users are incentivized to keep their stake in the market as long as possible. More about that in later section [Distributing the Reward](#distributing-the-reward).
 
 ### Selecting the Winning Options
 
@@ -117,9 +114,9 @@ If the market is configured to allow closing early, this instruction can be call
 
 Once the winning options have been selected, those who staked on them are entitled to a slice of the reward pool.
 
-Before the reward can be claimed however, the stake amount and option choice of the eligible users' must be revealed.
+Before the reward can be claimed however, the stake amount and option choice of the eligible users must be revealed.
 Revealing must be done for each eligible `ShareAccount` via the instruction `reveal_shares`.
-After that, the total option tally must be incremented via `increment_option_tally`, This increments the user's stake amount in the `OpportunityMarketOptionAccount`, the total sum of which is used for reward calculation.  
+After that, the total option tally must be incremented via `increment_option_tally`. This increments the user's stake amount in the `OpportunityMarketOptionAccount`, the total sum of which is used for reward calculation.  
 Both of these operations are permissionless, and can be done by a background "cranker" process.
 
 After all the shares have been revealed and the tallies incremented, eligible users can claim their rewards via the `close_share_account` instruction.
