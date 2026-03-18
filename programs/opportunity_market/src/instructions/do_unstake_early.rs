@@ -25,6 +25,7 @@ pub struct DoUnstakeEarly<'info> {
     #[account(
         mut,
         constraint = user_eta.owner == share_account_owner @ ErrorCode::Unauthorized,
+        constraint = market.mint == user_eta.token_mint @ ErrorCode::InvalidMint,
         constraint = !user_eta.locked @ ErrorCode::Locked,
     )]
     pub user_eta: Box<Account<'info, EncryptedTokenAccount>>,
@@ -79,8 +80,6 @@ pub fn do_unstake_early(
     _share_account_owner: Pubkey,
 ) -> Result<()> {
     let user_pubkey = ctx.accounts.user_eta.user_pubkey;
-
-    require!(ctx.accounts.market.mint.eq(&ctx.accounts.user_eta.token_mint), ErrorCode::InvalidMint);
 
     // Enforce staking period is still active
     let market = &ctx.accounts.market;

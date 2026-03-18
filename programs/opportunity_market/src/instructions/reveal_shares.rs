@@ -32,6 +32,8 @@ pub struct RevealShares<'info> {
 
     #[account(
         mut,
+        constraint = user_eta.owner == owner.key() @ ErrorCode::Unauthorized,
+        constraint = market.mint == user_eta.token_mint @ ErrorCode::InvalidMint,
         constraint = !user_eta.locked @ ErrorCode::Locked,
     )]
     pub user_eta: Box<Account<'info, EncryptedTokenAccount>>,
@@ -78,9 +80,6 @@ pub fn reveal_shares(
     _share_account_id: u32,
 ) -> Result<()> {
     let user_pubkey = ctx.accounts.user_eta.user_pubkey;
-
-    require!(ctx.accounts.user_eta.owner.key().eq(&ctx.accounts.owner.key()), ErrorCode::Unauthorized);
-    require!(ctx.accounts.market.mint.eq(&ctx.accounts.user_eta.token_mint.key()), ErrorCode::InvalidMint);
 
     let market = &ctx.accounts.market;
     let clock = Clock::get()?;
