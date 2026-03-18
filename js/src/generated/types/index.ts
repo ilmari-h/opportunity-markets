@@ -43,6 +43,7 @@ export * from './revealSharesOutput';
 export * from './revealSharesOutputStruct0';
 export * from './rewardClaimedEvent';
 export * from './rewardPoolIncreasedEvent';
+export * from './rewardWithdrawnEvent';
 export * from './shareAccountInitializedEvent';
 export * from './stakedError';
 export * from './stakedEvent';

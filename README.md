@@ -45,6 +45,20 @@ arcium build
 
 - `Arcium.toml` has a bad `program_keypair` path (e.g. trailing whitespace), causing arcium to fall back to a generated keypair.
 
+### Troubleshooting: Tests hang at "Airdropping" or connect to stale validator
+
+If tests hang during `TestRunner.initialize` (at the airdrop step) or comp defs unexpectedly show as "already initialized" on what should be a fresh network, a zombie `solana-test-validator` process from a previous run is likely still holding port 8899. This commonly happens after Ctrl+C'ing a test run.
+
+```bash
+# Check for stale validator
+lsof -i :8899
+
+# Kill it
+kill <PID>
+```
+
+Then re-run the tests.
+
 ## Deployment
 
 1. Enable the `hosted-compdefs` feature by adding to the  defaults in `programs/opportunity_market/Cargo.toml`

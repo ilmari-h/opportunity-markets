@@ -16,6 +16,7 @@ import {
   OPPORTUNITY_MARKET_ERROR__REWARD_AMOUNT_NOT_INCREASED,
   OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE,
   OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET,
+  OPPORTUNITY_MARKET_ERROR__REWARD_ALREADY_WITHDRAWN,
 } from "../js/src/generated/errors/opportunityMarket";
 import * as fs from "fs";
 import * as os from "os";
@@ -871,6 +872,88 @@ describe("OpportunityMarket", () => {
       () => runner.increaseRewardPool(increasedReward),
       OPPORTUNITY_MARKET_ERROR__REWARD_AMOUNT_NOT_INCREASED
     );
+  });
+
+  it("allows creator to withdraw reward and resolve market without winners", async () => {
+    const marketFundingAmount = 1_000_000_000n;
+    const timeToStake = 10n;
+    const timeToReveal = 20n;
+
+    const observer = loadObserverKeypair();
+
+    const runner = await TestRunner.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 1,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketConfig: {
+        rewardAmount: marketFundingAmount,
+        timeToStake,
+        timeToReveal,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    // Fund and open market
+    await runner.fundMarket();
+    const openTimestamp = await runner.openMarket();
+
+    // Add options
+    const { optionIndex: optionA } = await runner.addOptionAsCreator("Option A");
+    await runner.addOptionAsCreator("Option B");
+
+    // Wait for staking period to be active, then stake
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    const user = runner.participants[0];
+    await runner.initEncryptedTokenAccount(user);
+    await runner.wrapEncryptedTokens(user, 100_000_000n);
+    const shareAccountId = await runner.stakeOnOption(user, 50n, optionA);
+
+    // Get creator balance before withdrawal
+    const rpc = runner.getRpc();
+    const creatorBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(runner.creator))).data.amount;
+
+    // Withdraw reward
+    await runner.withdrawReward();
+
+    // Verify creator received the reward tokens back
+    const creatorBalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(runner.creator))).data.amount;
+    expect(creatorBalanceAfter - creatorBalanceBefore).to.equal(marketFundingAmount);
+
+    // Verify market state
+    const market = await runner.fetchMarket();
+    expect(market.data.rewardWithdrawn).to.be.true;
+    expect(market.data.rewardAmount).to.equal(0n);
+    expect(isNone(market.data.selectedOptions)).to.be.true;
+
+    // Cannot withdraw again
+    await shouldThrowCustomError(
+      () => runner.withdrawReward(),
+      OPPORTUNITY_MARKET_ERROR__REWARD_ALREADY_WITHDRAWN
+    );
+
+    // Cannot select winners after withdrawal
+    await shouldThrowCustomError(
+      () => runner.selectSingleWinningOption(optionA),
+      OPPORTUNITY_MARKET_ERROR__REWARD_ALREADY_WITHDRAWN
+    );
+
+    // Wait for reveal period to end so close_share_account is allowed
+    // withdraw_reward truncates time_to_stake, so fetch the updated market state
+    const updatedMarket = await runner.fetchMarket();
+    const updatedOpenTs = updatedMarket.data.openTimestamp.__option === "Some"
+      ? Number(updatedMarket.data.openTimestamp.value) : 0;
+    const revealEnd = updatedOpenTs + Number(updatedMarket.data.timeToStake) + Number(updatedMarket.data.timeToReveal);
+    await sleepUntilOnChainTimestamp(revealEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    // Close share account WITHOUT revealing — allowed when reward is withdrawn
+    await runner.closeShareAccount(user, optionA, shareAccountId);
+
+    // Verify share account was closed
+    const addr = await runner.getShareAccountAddress(user, shareAccountId);
+    expect(await runner.accountExists(addr)).to.be.false;
   });
 
   it("rejects staking before staking period is active", async () => {

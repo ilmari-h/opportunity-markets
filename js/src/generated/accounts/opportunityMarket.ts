@@ -82,6 +82,7 @@ export type OpportunityMarket = {
   unstakeDelaySeconds: bigint;
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
+  rewardWithdrawn: boolean;
 };
 
 export type OpportunityMarketArgs = {
@@ -100,6 +101,7 @@ export type OpportunityMarketArgs = {
   unstakeDelaySeconds: number | bigint;
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
+  rewardWithdrawn: boolean;
 };
 
 export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
@@ -124,6 +126,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['unstakeDelaySeconds', getU64Encoder()],
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['allowClosingEarly', getBooleanEncoder()],
+      ['rewardWithdrawn', getBooleanEncoder()],
     ]),
     (value) => ({ ...value, discriminator: OPPORTUNITY_MARKET_DISCRIMINATOR })
   );
@@ -150,6 +153,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['unstakeDelaySeconds', getU64Decoder()],
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['allowClosingEarly', getBooleanDecoder()],
+    ['rewardWithdrawn', getBooleanDecoder()],
   ]);
 }
 
