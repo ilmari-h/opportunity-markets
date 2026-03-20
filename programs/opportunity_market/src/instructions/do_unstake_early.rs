@@ -161,22 +161,22 @@ pub fn do_unstake_early(
 pub struct UnstakeEarlyCallback<'info> {
     pub arcium_program: Program<'info, Arcium>,
     #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_UNSTAKE_EARLY))]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
     #[account(address = derive_mxe_pda!())]
-    pub mxe_account: Account<'info, MXEAccount>,
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
     /// CHECK: computation_account
     pub computation_account: UncheckedAccount<'info>,
     #[account(address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet))]
-    pub cluster_account: Account<'info, Cluster>,
+    pub cluster_account: Box<Account<'info, Cluster>>,
     #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
     /// CHECK: instructions_sysvar
     pub instructions_sysvar: AccountInfo<'info>,
 
     // Callback accounts
     #[account(mut)]
-    pub user_eta: Account<'info, EncryptedTokenAccount>,
+    pub user_eta: Box<Account<'info, EncryptedTokenAccount>>,
     #[account(mut)]
-    pub share_account: Account<'info, ShareAccount>,
+    pub share_account: Box<Account<'info, ShareAccount>>,
 }
 
 pub fn unstake_early_callback(
