@@ -24,7 +24,7 @@ export type UnstakedEvent = {
   user: Address;
   market: Address;
   encryptedTokenAccount: Address;
-  shareAccount: Address;
+  stakeAccount: Address;
   timestamp: bigint;
 };
 
@@ -32,7 +32,7 @@ export type UnstakedEventArgs = {
   user: Address;
   market: Address;
   encryptedTokenAccount: Address;
-  shareAccount: Address;
+  stakeAccount: Address;
   timestamp: number | bigint;
 };
 
@@ -41,7 +41,7 @@ export function getUnstakedEventEncoder(): FixedSizeEncoder<UnstakedEventArgs> {
     ['user', getAddressEncoder()],
     ['market', getAddressEncoder()],
     ['encryptedTokenAccount', getAddressEncoder()],
-    ['shareAccount', getAddressEncoder()],
+    ['stakeAccount', getAddressEncoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -51,7 +51,7 @@ export function getUnstakedEventDecoder(): FixedSizeDecoder<UnstakedEvent> {
     ['user', getAddressDecoder()],
     ['market', getAddressDecoder()],
     ['encryptedTokenAccount', getAddressDecoder()],
-    ['shareAccount', getAddressDecoder()],
+    ['stakeAccount', getAddressDecoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

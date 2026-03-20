@@ -5,12 +5,12 @@ use anchor_spl::token_interface::{
 
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, RewardClaimedEvent};
-use crate::instructions::stake::SHARE_ACCOUNT_SEED;
-use crate::state::{OpportunityMarket, OpportunityMarketOption, ShareAccount};
+use crate::instructions::stake::STAKE_ACCOUNT_SEED;
+use crate::state::{OpportunityMarket, OpportunityMarketOption, StakeAccount};
 
 #[derive(Accounts)]
-#[instruction(option_index: u16, share_account_id: u32)]
-pub struct CloseShareAccount<'info> {
+#[instruction(option_index: u16, stake_account_id: u32)]
+pub struct CloseStakeAccount<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
@@ -19,11 +19,11 @@ pub struct CloseShareAccount<'info> {
 
     #[account(
         mut,
-        seeds = [SHARE_ACCOUNT_SEED, owner.key().as_ref(), market.key().as_ref(), &share_account_id.to_le_bytes()],
-        bump = share_account.bump,
+        seeds = [STAKE_ACCOUNT_SEED, owner.key().as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
+        bump = stake_account.bump,
         close = owner,
     )]
-    pub share_account: Account<'info, ShareAccount>,
+    pub stake_account: Account<'info, StakeAccount>,
 
     #[account(
         seeds = [b"option", market.key().as_ref(), &option_index.to_le_bytes()],
@@ -56,8 +56,8 @@ pub struct CloseShareAccount<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _share_account_id: u32) -> Result<()> {
-    let share_account = &ctx.accounts.share_account;
+pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_index: u16, _stake_account_id: u32) -> Result<()> {
+    let stake_account = &ctx.accounts.stake_account;
     let market = &ctx.accounts.market;
     let option = &ctx.accounts.option;
 
@@ -85,11 +85,11 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
         emit_ts!(RewardClaimedEvent {
             owner: ctx.accounts.owner.key(),
             market: market.key(),
-            share_account: ctx.accounts.share_account.key(),
+            stake_account: ctx.accounts.stake_account.key(),
             option: option_index,
             reward_amount: 0u64,
-            staked_at_timestamp: share_account.staked_at_timestamp.unwrap_or(0),
-            unstaked_at_timestamp: share_account.unstaked_at_timestamp.unwrap_or(0),
+            staked_at_timestamp: stake_account.staked_at_timestamp.unwrap_or(0),
+            unstaked_at_timestamp: stake_account.unstaked_at_timestamp.unwrap_or(0),
             revealed_score: 0u64,
             revealed_amount: 0u64,
         });
@@ -97,9 +97,9 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
         return Ok(());
     }
 
-    // Normal path: winners were selected, shares must be revealed
-    let revealed_option = share_account.revealed_option.ok_or(ErrorCode::NotRevealed)?;
-    if share_account.revealed_amount.is_none() {
+    // Normal path: winners were selected, stakes must be revealed
+    let revealed_option = stake_account.revealed_option.ok_or(ErrorCode::NotRevealed)?;
+    if stake_account.revealed_amount.is_none() {
         return Err(ErrorCode::NotRevealed.into());
     }
 
@@ -109,13 +109,13 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
         ErrorCode::InvalidOptionIndex
     );
 
-    // Check if this share was bought for a winning option and user incremented the tally
+    // Check if this stake was for a winning option and user incremented the tally
     // If so, transfer proportional yield from market to user
     let mut user_reward: u64 = 0;
     if let Some(winning) = market.selected_options.as_ref().and_then(|opts| opts.iter().find(|w| w.option_index == revealed_option)) {
-        if share_account.total_incremented {
+        if stake_account.total_incremented {
             // User is eligible for yield
-            let user_score = share_account.revealed_score.ok_or(ErrorCode::NotRevealed)?;
+            let user_score = stake_account.revealed_score.ok_or(ErrorCode::NotRevealed)?;
             let total_score = option.total_score.ok_or(ErrorCode::NotRevealed)?;
 
             // Calculate proportional reward: (user_score * reward_amount * percentage) / (total_score * 100)
@@ -164,19 +164,19 @@ pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, _
         }
     }
 
-    let staked_at_timestamp = share_account.staked_at_timestamp.ok_or(ErrorCode::NotRevealed)?;
-    let unstaked_at_timestamp = share_account.unstaked_at_timestamp.unwrap_or(
+    let staked_at_timestamp = stake_account.staked_at_timestamp.ok_or(ErrorCode::NotRevealed)?;
+    let unstaked_at_timestamp = stake_account.unstaked_at_timestamp.unwrap_or(
         open_timestamp
             .checked_add(market.time_to_stake)
             .ok_or(ErrorCode::Overflow)?
     );
-    let revealed_score = share_account.revealed_score.unwrap_or(0);
-    let revealed_amount = share_account.revealed_amount.unwrap_or(0);
+    let revealed_score = stake_account.revealed_score.unwrap_or(0);
+    let revealed_amount = stake_account.revealed_amount.unwrap_or(0);
 
     emit_ts!(RewardClaimedEvent {
         owner: ctx.accounts.owner.key(),
         market: market.key(),
-        share_account: ctx.accounts.share_account.key(),
+        stake_account: ctx.accounts.stake_account.key(),
         option: option_index,
         reward_amount: user_reward,
         staked_at_timestamp: staked_at_timestamp,

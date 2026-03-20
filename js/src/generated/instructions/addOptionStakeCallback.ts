@@ -67,7 +67,7 @@ export type AddOptionStakeCallbackInstruction<
   TAccountInstructionsSysvar extends string | AccountMeta<string> =
     'Sysvar1nstructions1111111111111111111111111',
   TAccountSourceEta extends string | AccountMeta<string> = string,
-  TAccountShareAccount extends string | AccountMeta<string> = string,
+  TAccountStakeAccount extends string | AccountMeta<string> = string,
   TAccountOption extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
@@ -95,9 +95,9 @@ export type AddOptionStakeCallbackInstruction<
       TAccountSourceEta extends string
         ? WritableAccount<TAccountSourceEta>
         : TAccountSourceEta,
-      TAccountShareAccount extends string
-        ? WritableAccount<TAccountShareAccount>
-        : TAccountShareAccount,
+      TAccountStakeAccount extends string
+        ? WritableAccount<TAccountStakeAccount>
+        : TAccountStakeAccount,
       TAccountOption extends string
         ? WritableAccount<TAccountOption>
         : TAccountOption,
@@ -216,7 +216,7 @@ export type AddOptionStakeCallbackInput<
   TAccountClusterAccount extends string = string,
   TAccountInstructionsSysvar extends string = string,
   TAccountSourceEta extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
   TAccountOption extends string = string,
 > = {
   arciumProgram?: Address<TAccountArciumProgram>;
@@ -226,7 +226,7 @@ export type AddOptionStakeCallbackInput<
   clusterAccount: Address<TAccountClusterAccount>;
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
   sourceEta: Address<TAccountSourceEta>;
-  shareAccount: Address<TAccountShareAccount>;
+  stakeAccount: Address<TAccountStakeAccount>;
   option: Address<TAccountOption>;
   output: AddOptionStakeCallbackInstructionDataArgs['output'];
 };
@@ -239,7 +239,7 @@ export function getAddOptionStakeCallbackInstruction<
   TAccountClusterAccount extends string,
   TAccountInstructionsSysvar extends string,
   TAccountSourceEta extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TAccountOption extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
@@ -251,7 +251,7 @@ export function getAddOptionStakeCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountSourceEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountOption
   >,
   config?: { programAddress?: TProgramAddress }
@@ -264,7 +264,7 @@ export function getAddOptionStakeCallbackInstruction<
   TAccountClusterAccount,
   TAccountInstructionsSysvar,
   TAccountSourceEta,
-  TAccountShareAccount,
+  TAccountStakeAccount,
   TAccountOption
 > {
   // Program address.
@@ -286,7 +286,7 @@ export function getAddOptionStakeCallbackInstruction<
       isWritable: false,
     },
     sourceEta: { value: input.sourceEta ?? null, isWritable: true },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     option: { value: input.option ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
@@ -317,7 +317,7 @@ export function getAddOptionStakeCallbackInstruction<
       getAccountMeta(accounts.clusterAccount),
       getAccountMeta(accounts.instructionsSysvar),
       getAccountMeta(accounts.sourceEta),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.option),
     ],
     data: getAddOptionStakeCallbackInstructionDataEncoder().encode(
@@ -333,7 +333,7 @@ export function getAddOptionStakeCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountSourceEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountOption
   >);
 }
@@ -351,7 +351,7 @@ export type ParsedAddOptionStakeCallbackInstruction<
     clusterAccount: TAccountMetas[4];
     instructionsSysvar: TAccountMetas[5];
     sourceEta: TAccountMetas[6];
-    shareAccount: TAccountMetas[7];
+    stakeAccount: TAccountMetas[7];
     option: TAccountMetas[8];
   };
   data: AddOptionStakeCallbackInstructionData;
@@ -385,7 +385,7 @@ export function parseAddOptionStakeCallbackInstruction<
       clusterAccount: getNextAccount(),
       instructionsSysvar: getNextAccount(),
       sourceEta: getNextAccount(),
-      shareAccount: getNextAccount(),
+      stakeAccount: getNextAccount(),
       option: getNextAccount(),
     },
     data: getAddOptionStakeCallbackInstructionDataDecoder().decode(

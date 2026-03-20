@@ -84,9 +84,9 @@ pub fn unwrap_encrypted_tokens_comp_def(ctx: Context<UnwrapEncryptedTokensCompDe
     Ok(())
 }
 
-#[init_computation_definition_accounts("buy_opportunity_market_shares", payer)]
+#[init_computation_definition_accounts("stake", payer)]
 #[derive(Accounts)]
-pub struct BuyOpportunityMarketSharesCompDef<'info> {
+pub struct StakeCompDef<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     #[account(mut, address = derive_mxe_pda!())]
@@ -104,14 +104,14 @@ pub struct BuyOpportunityMarketSharesCompDef<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn buy_opportunity_market_shares_comp_def(ctx: Context<BuyOpportunityMarketSharesCompDef>) -> Result<()> {
+pub fn stake_comp_def(ctx: Context<StakeCompDef>) -> Result<()> {
     #[cfg(feature = "hosted-compdefs")]
     {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/buy_opportunity_market_shares.arcis".to_string(),
-                hash: circuit_hash!("buy_opportunity_market_shares"),
+                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/stake.arcis".to_string(),
+                hash: circuit_hash!("stake"),
             })),
             None,
         )?;

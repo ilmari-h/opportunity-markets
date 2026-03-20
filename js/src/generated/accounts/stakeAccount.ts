@@ -51,17 +51,17 @@ import {
   type ReadonlyUint8Array,
 } from '@solana/kit';
 
-export const SHARE_ACCOUNT_DISCRIMINATOR = new Uint8Array([
-  244, 129, 214, 179, 30, 194, 247, 141,
+export const STAKE_ACCOUNT_DISCRIMINATOR = new Uint8Array([
+  80, 158, 67, 124, 50, 189, 192, 255,
 ]);
 
-export function getShareAccountDiscriminatorBytes() {
+export function getStakeAccountDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    SHARE_ACCOUNT_DISCRIMINATOR
+    STAKE_ACCOUNT_DISCRIMINATOR
   );
 }
 
-export type ShareAccount = {
+export type StakeAccount = {
   discriminator: ReadonlyUint8Array;
   encryptedState: Array<Array<number>>;
   stateNonce: bigint;
@@ -80,7 +80,7 @@ export type ShareAccount = {
   locked: boolean;
 };
 
-export type ShareAccountArgs = {
+export type StakeAccountArgs = {
   encryptedState: Array<Array<number>>;
   stateNonce: number | bigint;
   bump: number;
@@ -98,7 +98,7 @@ export type ShareAccountArgs = {
   locked: boolean;
 };
 
-export function getShareAccountEncoder(): Encoder<ShareAccountArgs> {
+export function getStakeAccountEncoder(): Encoder<StakeAccountArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
@@ -128,11 +128,11 @@ export function getShareAccountEncoder(): Encoder<ShareAccountArgs> {
       ['unstakeableAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['locked', getBooleanEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: SHARE_ACCOUNT_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: STAKE_ACCOUNT_DISCRIMINATOR })
   );
 }
 
-export function getShareAccountDecoder(): Decoder<ShareAccount> {
+export function getStakeAccountDecoder(): Decoder<StakeAccount> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     [
@@ -163,59 +163,59 @@ export function getShareAccountDecoder(): Decoder<ShareAccount> {
   ]);
 }
 
-export function getShareAccountCodec(): Codec<ShareAccountArgs, ShareAccount> {
-  return combineCodec(getShareAccountEncoder(), getShareAccountDecoder());
+export function getStakeAccountCodec(): Codec<StakeAccountArgs, StakeAccount> {
+  return combineCodec(getStakeAccountEncoder(), getStakeAccountDecoder());
 }
 
-export function decodeShareAccount<TAddress extends string = string>(
+export function decodeStakeAccount<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress>
-): Account<ShareAccount, TAddress>;
-export function decodeShareAccount<TAddress extends string = string>(
+): Account<StakeAccount, TAddress>;
+export function decodeStakeAccount<TAddress extends string = string>(
   encodedAccount: MaybeEncodedAccount<TAddress>
-): MaybeAccount<ShareAccount, TAddress>;
-export function decodeShareAccount<TAddress extends string = string>(
+): MaybeAccount<StakeAccount, TAddress>;
+export function decodeStakeAccount<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
-): Account<ShareAccount, TAddress> | MaybeAccount<ShareAccount, TAddress> {
+): Account<StakeAccount, TAddress> | MaybeAccount<StakeAccount, TAddress> {
   return decodeAccount(
     encodedAccount as MaybeEncodedAccount<TAddress>,
-    getShareAccountDecoder()
+    getStakeAccountDecoder()
   );
 }
 
-export async function fetchShareAccount<TAddress extends string = string>(
+export async function fetchStakeAccount<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<Account<ShareAccount, TAddress>> {
-  const maybeAccount = await fetchMaybeShareAccount(rpc, address, config);
+): Promise<Account<StakeAccount, TAddress>> {
+  const maybeAccount = await fetchMaybeStakeAccount(rpc, address, config);
   assertAccountExists(maybeAccount);
   return maybeAccount;
 }
 
-export async function fetchMaybeShareAccount<TAddress extends string = string>(
+export async function fetchMaybeStakeAccount<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<MaybeAccount<ShareAccount, TAddress>> {
+): Promise<MaybeAccount<StakeAccount, TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
-  return decodeShareAccount(maybeAccount);
+  return decodeStakeAccount(maybeAccount);
 }
 
-export async function fetchAllShareAccount(
+export async function fetchAllStakeAccount(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<Account<ShareAccount>[]> {
-  const maybeAccounts = await fetchAllMaybeShareAccount(rpc, addresses, config);
+): Promise<Account<StakeAccount>[]> {
+  const maybeAccounts = await fetchAllMaybeStakeAccount(rpc, addresses, config);
   assertAccountsExist(maybeAccounts);
   return maybeAccounts;
 }
 
-export async function fetchAllMaybeShareAccount(
+export async function fetchAllMaybeStakeAccount(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<MaybeAccount<ShareAccount>[]> {
+): Promise<MaybeAccount<StakeAccount>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
-  return maybeAccounts.map((maybeAccount) => decodeShareAccount(maybeAccount));
+  return maybeAccounts.map((maybeAccount) => decodeStakeAccount(maybeAccount));
 }

@@ -11,15 +11,9 @@ mod circuits {
         pub amount: u64,
     }
 
-    // User input for buying market shares (encrypted)
-    pub struct BuySharesInput {
-        pub amount: u64,
-        pub selected_option: u16,
-    }
-
-    // Bought shares amount for ShareAccount
+    // Stake data: amount and selected option
     #[derive(Clone, Copy)]
-    pub struct SharePurchase {
+    pub struct StakeData {
         pub amount: u64,
         pub selected_option: u16
     }
@@ -68,25 +62,25 @@ mod circuits {
     }
 
     // Input for add_option_stake circuit (encrypted amount)
-    pub struct AddOptionStakeInput {
+    pub struct AddOptionStakeData {
         pub amount: u64,
     }
 
-    // Add option + stake: deduct from user's ETA, create share purchase
+    // Add option + stake: deduct from user's ETA, create stake data
     // selected_option passed as plaintext u64 (no plaintext_u16 in ArgBuilder)
     #[instruction]
     pub fn add_option_stake(
-        input_ctx: Enc<Shared, AddOptionStakeInput>,
-        shares_recipient_ctx: Shared,
+        input_ctx: Enc<Shared, AddOptionStakeData>,
+        stake_recipient_ctx: Shared,
         user_eta_ctx: Enc<Shared, EncryptedTokenBalance>,
-        share_account_ctx: Shared,
+        stake_account_ctx: Shared,
         min_deposit: u64,
         selected_option: u64,
     ) -> (
         bool,
         Enc<Shared, EncryptedTokenBalance>,
-        Enc<Shared, SharePurchase>,
-        Enc<Shared, SharePurchase>
+        Enc<Shared, StakeData>,
+        Enc<Shared, StakeData>
     ) {
         let input = input_ctx.to_arcis();
         let mut user_balance = user_eta_ctx.to_arcis();
@@ -102,7 +96,7 @@ mod circuits {
         let error = below_min || insufficient_user_balance;
 
         let bought_amount = if error { 0 } else { amount };
-        let bought_shares = SharePurchase {
+        let stake_data = StakeData {
             amount: bought_amount,
             selected_option: selected_option as u16,
         };
@@ -116,24 +110,24 @@ mod circuits {
         (
             error.reveal(),
             user_eta_ctx.owner.from_arcis(user_balance),
-            share_account_ctx.from_arcis(bought_shares),
-            shares_recipient_ctx.from_arcis(bought_shares),
+            stake_account_ctx.from_arcis(stake_data),
+            stake_recipient_ctx.from_arcis(stake_data),
         )
     }
 
-    // Buy shares: deduct from user's encrypted token balance
-    // Returns: (error, new_user_balance, bought_shares_mxe, bought_shares_shared)
+    // Stake: deduct from user's encrypted token balance
+    // Returns: (error, new_user_balance, stake_data_mxe, stake_data_shared)
     #[instruction]
-    pub fn buy_opportunity_market_shares(
-        input_ctx: Enc<Shared, BuySharesInput>,
-        shares_recipient_ctx: Shared,
+    pub fn stake(
+        input_ctx: Enc<Shared, StakeData>,
+        stake_recipient_ctx: Shared,
         user_eta_ctx: Enc<Shared, EncryptedTokenBalance>,
-        share_account_ctx: Shared,
+        stake_account_ctx: Shared,
     ) -> (
         bool,
         Enc<Shared, EncryptedTokenBalance>,
-        Enc<Shared, SharePurchase>,
-        Enc<Shared, SharePurchase>
+        Enc<Shared, StakeData>,
+        Enc<Shared, StakeData>
     ) {
         let input = input_ctx.to_arcis();
         let mut user_balance = user_eta_ctx.to_arcis();
@@ -145,9 +139,9 @@ mod circuits {
 
         let error = insufficient_user_balance;
 
-        // Calculate bought shares (0 on error)
+        // Calculate stake amount (0 on error)
         let bought_amount = if error { 0 } else { amount };
-        let bought_shares = SharePurchase {
+        let stake_data = StakeData {
             amount: bought_amount,
             selected_option: input.selected_option
         };
@@ -162,16 +156,16 @@ mod circuits {
         (
             error.reveal(),
             user_eta_ctx.owner.from_arcis(user_balance),
-            share_account_ctx.from_arcis(bought_shares),
-            shares_recipient_ctx.from_arcis(bought_shares)
+            stake_account_ctx.from_arcis(stake_data),
+            stake_recipient_ctx.from_arcis(stake_data)
         )
     }
 
-    // Reveal shares: decrypt share account and credit ETA
+    // Reveal stake: decrypt stake account and credit ETA
     // If is_eta_initialized is false (state_nonce == 0), treat existing balance as 0
     #[instruction]
     pub fn reveal_stake(
-        share_account_ctx: Enc<Shared, SharePurchase>,
+        stake_account_ctx: Enc<Shared, StakeData>,
         user_eta_ctx: Enc<Shared, EncryptedTokenBalance>,
         is_eta_initialized: bool,
     ) -> (
@@ -179,19 +173,19 @@ mod circuits {
         u16,                               // revealed_option
         Enc<Shared, EncryptedTokenBalance>,     // updated ETA balance
     ) {
-        let share_data = share_account_ctx.to_arcis();
+        let stake_data = stake_account_ctx.to_arcis();
         let mut user_balance = if is_eta_initialized {
             user_eta_ctx.to_arcis()
         } else {
             EncryptedTokenBalance { amount: 0 }
         };
 
-        // Credit share amount to ETA balance
-        user_balance.amount = user_balance.amount + share_data.amount;
+        // Credit stake amount to ETA balance
+        user_balance.amount = user_balance.amount + stake_data.amount;
 
         (
-            share_data.amount.reveal(),
-            share_data.selected_option.reveal(),
+            stake_data.amount.reveal(),
+            stake_data.selected_option.reveal(),
             user_eta_ctx.owner.from_arcis(user_balance),
         )
     }
@@ -200,18 +194,18 @@ mod circuits {
     // If is_eta_initialized is false (state_nonce == 0), treat existing balance as 0
     #[instruction]
     pub fn unstake_early(
-        share_account_ctx: Enc<Shared, SharePurchase>,
+        stake_account_ctx: Enc<Shared, StakeData>,
         user_eta_ctx: Enc<Shared, EncryptedTokenBalance>,
         is_eta_initialized: bool,
     ) -> Enc<Shared, EncryptedTokenBalance> {
-        let share_data = share_account_ctx.to_arcis();
+        let stake_data = stake_account_ctx.to_arcis();
         let mut user_balance = if is_eta_initialized {
             user_eta_ctx.to_arcis()
         } else {
             EncryptedTokenBalance { amount: 0 }
         };
 
-        user_balance.amount = user_balance.amount + share_data.amount;
+        user_balance.amount = user_balance.amount + stake_data.amount;
 
         user_eta_ctx.owner.from_arcis(user_balance)
     }

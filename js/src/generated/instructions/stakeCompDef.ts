@@ -33,16 +33,17 @@ import {
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const BUY_OPPORTUNITY_MARKET_SHARES_COMP_DEF_DISCRIMINATOR =
-  new Uint8Array([111, 144, 68, 110, 33, 204, 64, 235]);
+export const STAKE_COMP_DEF_DISCRIMINATOR = new Uint8Array([
+  156, 5, 60, 126, 142, 149, 1, 130,
+]);
 
-export function getBuyOpportunityMarketSharesCompDefDiscriminatorBytes() {
+export function getStakeCompDefDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    BUY_OPPORTUNITY_MARKET_SHARES_COMP_DEF_DISCRIMINATOR
+    STAKE_COMP_DEF_DISCRIMINATOR
   );
 }
 
-export type BuyOpportunityMarketSharesCompDefInstruction<
+export type StakeCompDefInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountPayer extends string | AccountMeta<string> = string,
   TAccountMxeAccount extends string | AccountMeta<string> = string,
@@ -85,39 +86,34 @@ export type BuyOpportunityMarketSharesCompDefInstruction<
     ]
   >;
 
-export type BuyOpportunityMarketSharesCompDefInstructionData = {
-  discriminator: ReadonlyUint8Array;
-};
+export type StakeCompDefInstructionData = { discriminator: ReadonlyUint8Array };
 
-export type BuyOpportunityMarketSharesCompDefInstructionDataArgs = {};
+export type StakeCompDefInstructionDataArgs = {};
 
-export function getBuyOpportunityMarketSharesCompDefInstructionDataEncoder(): FixedSizeEncoder<BuyOpportunityMarketSharesCompDefInstructionDataArgs> {
+export function getStakeCompDefInstructionDataEncoder(): FixedSizeEncoder<StakeCompDefInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
-    (value) => ({
-      ...value,
-      discriminator: BUY_OPPORTUNITY_MARKET_SHARES_COMP_DEF_DISCRIMINATOR,
-    })
+    (value) => ({ ...value, discriminator: STAKE_COMP_DEF_DISCRIMINATOR })
   );
 }
 
-export function getBuyOpportunityMarketSharesCompDefInstructionDataDecoder(): FixedSizeDecoder<BuyOpportunityMarketSharesCompDefInstructionData> {
+export function getStakeCompDefInstructionDataDecoder(): FixedSizeDecoder<StakeCompDefInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
   ]);
 }
 
-export function getBuyOpportunityMarketSharesCompDefInstructionDataCodec(): FixedSizeCodec<
-  BuyOpportunityMarketSharesCompDefInstructionDataArgs,
-  BuyOpportunityMarketSharesCompDefInstructionData
+export function getStakeCompDefInstructionDataCodec(): FixedSizeCodec<
+  StakeCompDefInstructionDataArgs,
+  StakeCompDefInstructionData
 > {
   return combineCodec(
-    getBuyOpportunityMarketSharesCompDefInstructionDataEncoder(),
-    getBuyOpportunityMarketSharesCompDefInstructionDataDecoder()
+    getStakeCompDefInstructionDataEncoder(),
+    getStakeCompDefInstructionDataDecoder()
   );
 }
 
-export type BuyOpportunityMarketSharesCompDefInput<
+export type StakeCompDefInput<
   TAccountPayer extends string = string,
   TAccountMxeAccount extends string = string,
   TAccountCompDefAccount extends string = string,
@@ -135,7 +131,7 @@ export type BuyOpportunityMarketSharesCompDefInput<
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export function getBuyOpportunityMarketSharesCompDefInstruction<
+export function getStakeCompDefInstruction<
   TAccountPayer extends string,
   TAccountMxeAccount extends string,
   TAccountCompDefAccount extends string,
@@ -145,7 +141,7 @@ export function getBuyOpportunityMarketSharesCompDefInstruction<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: BuyOpportunityMarketSharesCompDefInput<
+  input: StakeCompDefInput<
     TAccountPayer,
     TAccountMxeAccount,
     TAccountCompDefAccount,
@@ -155,7 +151,7 @@ export function getBuyOpportunityMarketSharesCompDefInstruction<
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): BuyOpportunityMarketSharesCompDefInstruction<
+): StakeCompDefInstruction<
   TProgramAddress,
   TAccountPayer,
   TAccountMxeAccount,
@@ -212,11 +208,9 @@ export function getBuyOpportunityMarketSharesCompDefInstruction<
       getAccountMeta(accounts.arciumProgram),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getBuyOpportunityMarketSharesCompDefInstructionDataEncoder().encode(
-      {}
-    ),
+    data: getStakeCompDefInstructionDataEncoder().encode({}),
     programAddress,
-  } as BuyOpportunityMarketSharesCompDefInstruction<
+  } as StakeCompDefInstruction<
     TProgramAddress,
     TAccountPayer,
     TAccountMxeAccount,
@@ -228,7 +222,7 @@ export function getBuyOpportunityMarketSharesCompDefInstruction<
   >);
 }
 
-export type ParsedBuyOpportunityMarketSharesCompDefInstruction<
+export type ParsedStakeCompDefInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -242,17 +236,17 @@ export type ParsedBuyOpportunityMarketSharesCompDefInstruction<
     arciumProgram: TAccountMetas[5];
     systemProgram: TAccountMetas[6];
   };
-  data: BuyOpportunityMarketSharesCompDefInstructionData;
+  data: StakeCompDefInstructionData;
 };
 
-export function parseBuyOpportunityMarketSharesCompDefInstruction<
+export function parseStakeCompDefInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedBuyOpportunityMarketSharesCompDefInstruction<TProgram, TAccountMetas> {
+): ParsedStakeCompDefInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -274,8 +268,6 @@ export function parseBuyOpportunityMarketSharesCompDefInstruction<
       arciumProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getBuyOpportunityMarketSharesCompDefInstructionDataDecoder().decode(
-      instruction.data
-    ),
+    data: getStakeCompDefInstructionDataDecoder().decode(instruction.data),
   };
 }

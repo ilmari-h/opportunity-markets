@@ -8,7 +8,7 @@ import { type BaseInstructionParams } from "./instructionParams";
 export interface UnstakeEarlyParams extends BaseInstructionParams {
   signer: TransactionSigner;
   market: Address;
-  shareAccountId: number;
+  stakeAccountId: number;
 }
 
 export async function unstakeEarly(

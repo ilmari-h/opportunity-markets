@@ -20,44 +20,44 @@ import {
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type ShareAccountInitializedEvent = {
-  shareAccount: Address;
+export type StakeAccountInitializedEvent = {
+  stakeAccount: Address;
   owner: Address;
   market: Address;
   timestamp: bigint;
 };
 
-export type ShareAccountInitializedEventArgs = {
-  shareAccount: Address;
+export type StakeAccountInitializedEventArgs = {
+  stakeAccount: Address;
   owner: Address;
   market: Address;
   timestamp: number | bigint;
 };
 
-export function getShareAccountInitializedEventEncoder(): FixedSizeEncoder<ShareAccountInitializedEventArgs> {
+export function getStakeAccountInitializedEventEncoder(): FixedSizeEncoder<StakeAccountInitializedEventArgs> {
   return getStructEncoder([
-    ['shareAccount', getAddressEncoder()],
+    ['stakeAccount', getAddressEncoder()],
     ['owner', getAddressEncoder()],
     ['market', getAddressEncoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getShareAccountInitializedEventDecoder(): FixedSizeDecoder<ShareAccountInitializedEvent> {
+export function getStakeAccountInitializedEventDecoder(): FixedSizeDecoder<StakeAccountInitializedEvent> {
   return getStructDecoder([
-    ['shareAccount', getAddressDecoder()],
+    ['stakeAccount', getAddressDecoder()],
     ['owner', getAddressDecoder()],
     ['market', getAddressDecoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getShareAccountInitializedEventCodec(): FixedSizeCodec<
-  ShareAccountInitializedEventArgs,
-  ShareAccountInitializedEvent
+export function getStakeAccountInitializedEventCodec(): FixedSizeCodec<
+  StakeAccountInitializedEventArgs,
+  StakeAccountInitializedEvent
 > {
   return combineCodec(
-    getShareAccountInitializedEventEncoder(),
-    getShareAccountInitializedEventDecoder()
+    getStakeAccountInitializedEventEncoder(),
+    getStakeAccountInitializedEventDecoder()
   );
 }

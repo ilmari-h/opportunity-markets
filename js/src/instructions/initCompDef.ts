@@ -16,7 +16,7 @@ import { PublicKey } from "@solana/web3.js";
 import {
   getWrapEncryptedTokensCompDefInstruction,
   getUnwrapEncryptedTokensCompDefInstruction,
-  getBuyOpportunityMarketSharesCompDefInstruction,
+  getStakeCompDefInstruction,
   getRevealStakeCompDefInstruction,
   getUnstakeEarlyCompDefInstruction,
   getAddOptionStakeCompDefInstruction,
@@ -30,7 +30,7 @@ import { type BaseInstructionParams } from "./instructionParams";
 export type CompDefCircuitName =
   | "wrap_encrypted_tokens"
   | "unwrap_encrypted_tokens"
-  | "buy_opportunity_market_shares"
+  | "stake"
   | "reveal_stake"
   | "unstake_early"
   | "add_option_stake"
@@ -39,7 +39,7 @@ export type CompDefCircuitName =
 export const ALL_COMP_DEF_CIRCUITS: CompDefCircuitName[] = [
   "wrap_encrypted_tokens",
   "unwrap_encrypted_tokens",
-  "buy_opportunity_market_shares",
+  "stake",
   "reveal_stake",
   "unstake_early",
   "add_option_stake",
@@ -106,8 +106,8 @@ export async function getInitCompDefInstruction(
     case "unwrap_encrypted_tokens":
       return getUnwrapEncryptedTokensCompDefInstruction(baseInput, { programAddress: programId });
 
-    case "buy_opportunity_market_shares":
-      return getBuyOpportunityMarketSharesCompDefInstruction(baseInput, { programAddress: programId });
+    case "stake":
+      return getStakeCompDefInstruction(baseInput, { programAddress: programId });
 
     case "reveal_stake":
       return getRevealStakeCompDefInstruction(baseInput, { programAddress: programId });

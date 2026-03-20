@@ -110,7 +110,7 @@ pub struct EncryptedTokenAccount {
 
 #[account]
 #[derive(InitSpace)]
-pub struct ShareAccount {
+pub struct StakeAccount {
     pub encrypted_state: [[u8; 32]; 2],  // stake amount and option
     pub state_nonce: u128,
     pub bump: u8,
@@ -147,8 +147,8 @@ pub struct OpportunityMarketOption {
     #[max_len(50)]
     pub name: String,
 
-    /// Total shares bought for this option (tally)
-    pub total_shares: Option<u64>,
+    /// Total staked for this option (tally)
+    pub total_staked: Option<u64>,
 
     // Scales by time-in-market
     pub total_score: Option<u64>,

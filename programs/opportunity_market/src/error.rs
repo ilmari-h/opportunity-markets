@@ -24,13 +24,13 @@ pub enum ErrorCode {
     StakingNotActive,
     #[msg("Market winner already selected")]
     WinnerAlreadySelected,
-    #[msg("Shares already revealed")]
+    #[msg("Stake already revealed")]
     AlreadyRevealed,
     #[msg("Staking period not over")]
     MarketNotResolved,
-    #[msg("Shares not yet revealed")]
+    #[msg("Stake not yet revealed")]
     NotRevealed,
-    #[msg("Tally already incremented for this share account")]
+    #[msg("Tally already incremented for this stake account")]
     TallyAlreadyIncremented,
     #[msg("Arithmetic overflow")]
     Overflow,
@@ -38,13 +38,13 @@ pub enum ErrorCode {
     RevealPeriodEnded,
     #[msg("Token mint does not match account mint")]
     InvalidMint,
-    #[msg("Shares already unstaked")]
+    #[msg("Already unstaked")]
     AlreadyUnstaked,
-    #[msg("Shares already purchased for this share account")]
+    #[msg("Already staked for this stake account")]
     AlreadyPurchased,
     #[msg("Deposit amount below minimum required for option creation")]
     DepositBelowMinimum,
-    #[msg("Add option stake failed: insufficient balance, shares, or below minimum deposit")]
+    #[msg("Add option stake failed: insufficient balance or below minimum deposit")]
     AddOptionStakeFailed,
     #[msg("Account is locked")]
     Locked,

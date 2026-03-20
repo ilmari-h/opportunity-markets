@@ -54,11 +54,11 @@ pub struct StakedEvent {
     pub user: Pubkey,
     pub market: Pubkey,
     pub encrypted_token_account: Pubkey,
-    pub share_account: Pubkey,
-    pub share_encrypted_state: [[u8; 32]; 2], // share amount and option
-    pub share_state_nonce: u128,
-    pub share_encrypted_state_disclosure: [[u8; 32]; 2],
-    pub share_state_disclosure_nonce: u128,
+    pub stake_account: Pubkey,
+    pub stake_encrypted_state: [[u8; 32]; 2], // stake amount and option
+    pub stake_state_nonce: u128,
+    pub stake_encrypted_state_disclosure: [[u8; 32]; 2],
+    pub stake_state_disclosure_nonce: u128,
     pub encrypted_eta_balance: [u8; 32],
     pub eta_balance_nonce: u128,
     pub timestamp: i64,
@@ -69,8 +69,8 @@ pub struct StakeRevealedEvent {
     pub user: Pubkey,
     pub market: Pubkey,
     pub encrypted_token_account: Pubkey,
-    pub share_account: Pubkey,
-    pub shares_amount: u64,
+    pub stake_account: Pubkey,
+    pub stake_amount: u64,
     pub selected_option: u16,
     pub timestamp: i64,
 }
@@ -80,7 +80,7 @@ pub struct UnstakedEvent {
     pub user: Pubkey,
     pub market: Pubkey,
     pub encrypted_token_account: Pubkey,
-    pub share_account: Pubkey,
+    pub stake_account: Pubkey,
     pub timestamp: i64,
 }
 
@@ -144,7 +144,7 @@ pub struct WinningOptionsSelectedEvent {
 pub struct RewardClaimedEvent {
     pub owner: Pubkey,
     pub market: Pubkey,
-    pub share_account: Pubkey,
+    pub stake_account: Pubkey,
     pub option: u16,
     pub reward_amount: u64,
     pub staked_at_timestamp: u64,
@@ -158,7 +158,7 @@ pub struct RewardClaimedEvent {
 pub struct TallyIncrementedEvent {
     pub owner: Pubkey,
     pub market: Pubkey,
-    pub share_account: Pubkey,
+    pub stake_account: Pubkey,
     pub option: u16,
     pub revealed_amount: u64,
     pub user_score: u64,
@@ -218,7 +218,7 @@ pub struct EphemeralAccountClosedError {
 pub struct UnstakeInitiatedEvent {
     pub user: Pubkey,
     pub market: Pubkey,
-    pub share_account: Pubkey,
+    pub stake_account: Pubkey,
     pub unstakeable_at_timestamp: u64,
     pub timestamp: i64,
 }
@@ -242,8 +242,8 @@ pub struct EphemeralEncryptedTokenAccountInitializedEvent {
 }
 
 #[event]
-pub struct ShareAccountInitializedEvent {
-    pub share_account: Pubkey,
+pub struct StakeAccountInitializedEvent {
+    pub stake_account: Pubkey,
     pub owner: Pubkey,
     pub market: Pubkey,
     pub timestamp: i64,

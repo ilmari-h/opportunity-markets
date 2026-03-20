@@ -4,14 +4,14 @@ use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, MarketOptionCreatedEvent, StakedError, StakedEvent};
-use crate::state::{CentralState, OpportunityMarket, OpportunityMarketOption, ShareAccount, EncryptedTokenAccount};
-use crate::instructions::stake::SHARE_ACCOUNT_SEED;
+use crate::state::{CentralState, OpportunityMarket, OpportunityMarketOption, StakeAccount, EncryptedTokenAccount};
+use crate::instructions::stake::STAKE_ACCOUNT_SEED;
 use crate::COMP_DEF_OFFSET_ADD_OPTION_STAKE;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
 
 #[queue_computation_accounts("add_option_stake", creator)]
 #[derive(Accounts)]
-#[instruction(computation_offset: u64, option_index: u16, share_account_id: u32)]
+#[instruction(computation_offset: u64, option_index: u16, stake_account_id: u32)]
 pub struct AddMarketOption<'info> {
     #[account(mut)]
     pub creator: Signer<'info>,
@@ -47,12 +47,12 @@ pub struct AddMarketOption<'info> {
 
     #[account(
         mut,
-        seeds = [SHARE_ACCOUNT_SEED, creator.key().as_ref(), market.key().as_ref(), &share_account_id.to_le_bytes()],
+        seeds = [STAKE_ACCOUNT_SEED, creator.key().as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump,
-        constraint = share_account.staked_at_timestamp.is_none() @ ErrorCode::AlreadyPurchased,
-        constraint = !share_account.locked @ ErrorCode::Locked,
+        constraint = stake_account.staked_at_timestamp.is_none() @ ErrorCode::AlreadyPurchased,
+        constraint = !stake_account.locked @ ErrorCode::Locked,
     )]
-    pub share_account: Box<Account<'info, ShareAccount>>,
+    pub stake_account: Box<Account<'info, StakeAccount>>,
 
     // Arcium accounts
     #[account(
@@ -91,7 +91,7 @@ pub fn add_market_option(
     ctx: Context<AddMarketOption>,
     computation_offset: u64,
     option_index: u16,
-    _share_account_id: u32,
+    _stake_account_id: u32,
     name: String,
     amount_ciphertext: [u8; 32],
     input_nonce: u128,
@@ -126,19 +126,19 @@ pub fn add_market_option(
     option.bump = ctx.bumps.option;
     option.index = option_index;
     option.name = name;
-    option.total_shares = None;
+    option.total_staked = None;
     option.total_score = None;
     option.creator = ctx.accounts.creator.key();
     option.initialized = false;
 
-    // Lock share account and set staked timestamp
-    ctx.accounts.share_account.staked_at_timestamp = Some(current_timestamp);
-    ctx.accounts.share_account.locked = true;
+    // Lock stake account and set staked timestamp
+    ctx.accounts.stake_account.staked_at_timestamp = Some(current_timestamp);
+    ctx.accounts.stake_account.locked = true;
 
     let source_eta_key = ctx.accounts.source_eta.key();
     let source_eta_nonce = ctx.accounts.source_eta.state_nonce;
 
-    let share_account_key = ctx.accounts.share_account.key();
+    let stake_account_key = ctx.accounts.stake_account.key();
     let option_key = ctx.accounts.option.key();
 
     ctx.accounts.source_eta.locked = true;
@@ -159,9 +159,9 @@ pub fn add_market_option(
         .plaintext_u128(source_eta_nonce)
         .account(source_eta_key, 8, 32 * 1)
 
-        // Share account context (Shared)
+        // Stake account context (Shared)
         .x25519_pubkey(user_pubkey)
-        .plaintext_u128(ctx.accounts.share_account.state_nonce)
+        .plaintext_u128(ctx.accounts.stake_account.state_nonce)
 
         // Plaintext: min_deposit from central_state
         .plaintext_u64(ctx.accounts.central_state.min_option_deposit)
@@ -185,7 +185,7 @@ pub fn add_market_option(
                     is_writable: true,
                 },
                 CallbackAccount {
-                    pubkey: share_account_key,
+                    pubkey: stake_account_key,
                     is_writable: true,
                 },
                 CallbackAccount {
@@ -222,7 +222,7 @@ pub struct AddOptionStakeCallback<'info> {
     pub source_eta: Box<Account<'info, EncryptedTokenAccount>>,
 
     #[account(mut)]
-    pub share_account: Box<Account<'info, ShareAccount>>,
+    pub stake_account: Box<Account<'info, StakeAccount>>,
 
     #[account(mut)]
     pub option: Box<Account<'info, OpportunityMarketOption>>,
@@ -234,7 +234,7 @@ pub fn add_market_option_callback(
 ) -> Result<()> {
     // Unlock
     ctx.accounts.source_eta.locked = false;
-    ctx.accounts.share_account.locked = false;
+    ctx.accounts.stake_account.locked = false;
 
     // Verify output - on error, rollback and return Ok so mutations persist
     let res = match output.verify_output(
@@ -244,7 +244,7 @@ pub fn add_market_option_callback(
         Ok(AddOptionStakeOutput { field_0 }) => field_0,
         Err(_) => {
             // Rollback
-            ctx.accounts.share_account.staked_at_timestamp = None;
+            ctx.accounts.stake_account.staked_at_timestamp = None;
             emit_ts!(StakedError {
                 user: ctx.accounts.source_eta.owner,
             });
@@ -254,7 +254,7 @@ pub fn add_market_option_callback(
 
     if res.field_0 {
         // Rollback
-        ctx.accounts.share_account.staked_at_timestamp = None;
+        ctx.accounts.stake_account.staked_at_timestamp = None;
         emit_ts!(StakedError {
             user: ctx.accounts.source_eta.owner,
         });
@@ -262,26 +262,26 @@ pub fn add_market_option_callback(
     }
 
     let new_user_balance = res.field_1;
-    let bought_shares = res.field_2;
-    let bought_shares_disclosed = res.field_3;
+    let stake_data = res.field_2;
+    let stake_data_disclosed = res.field_3;
 
     // Update source ETA balance
     ctx.accounts.source_eta.state_nonce = new_user_balance.nonce;
     ctx.accounts.source_eta.encrypted_state = new_user_balance.ciphertexts;
     ctx.accounts.source_eta.is_initialized = true;
 
-    // Update share account encrypted state
-    ctx.accounts.share_account.state_nonce = bought_shares.nonce;
-    ctx.accounts.share_account.encrypted_state = bought_shares.ciphertexts;
-    ctx.accounts.share_account.state_nonce_disclosure = bought_shares_disclosed.nonce;
-    ctx.accounts.share_account.encrypted_state_disclosure =bought_shares_disclosed.ciphertexts;
+    // Update stake account encrypted state
+    ctx.accounts.stake_account.state_nonce = stake_data.nonce;
+    ctx.accounts.stake_account.encrypted_state = stake_data.ciphertexts;
+    ctx.accounts.stake_account.state_nonce_disclosure = stake_data_disclosed.nonce;
+    ctx.accounts.stake_account.encrypted_state_disclosure =stake_data_disclosed.ciphertexts;
 
     // Mark option as initialized
     ctx.accounts.option.initialized = true;
 
     emit_ts!(MarketOptionCreatedEvent {
         option: ctx.accounts.option.key(),
-        market: ctx.accounts.share_account.market,
+        market: ctx.accounts.stake_account.market,
         index: ctx.accounts.option.index,
         name: ctx.accounts.option.name.clone(),
         creator: ctx.accounts.option.creator,
@@ -290,13 +290,13 @@ pub fn add_market_option_callback(
 
     emit_ts!(StakedEvent {
         user: ctx.accounts.source_eta.owner,
-        market: ctx.accounts.share_account.market,
+        market: ctx.accounts.stake_account.market,
         encrypted_token_account: ctx.accounts.source_eta.key(),
-        share_account: ctx.accounts.share_account.key(),
-        share_encrypted_state: bought_shares.ciphertexts,
-        share_state_nonce: bought_shares.nonce,
-        share_encrypted_state_disclosure: bought_shares_disclosed.ciphertexts,
-        share_state_disclosure_nonce: bought_shares_disclosed.nonce,
+        stake_account: ctx.accounts.stake_account.key(),
+        stake_encrypted_state: stake_data.ciphertexts,
+        stake_state_nonce: stake_data.nonce,
+        stake_encrypted_state_disclosure: stake_data_disclosed.ciphertexts,
+        stake_state_disclosure_nonce: stake_data_disclosed.nonce,
         encrypted_eta_balance: new_user_balance.ciphertexts[0],
         eta_balance_nonce: new_user_balance.nonce,
     });

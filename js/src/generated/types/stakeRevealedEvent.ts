@@ -28,8 +28,8 @@ export type StakeRevealedEvent = {
   user: Address;
   market: Address;
   encryptedTokenAccount: Address;
-  shareAccount: Address;
-  sharesAmount: bigint;
+  stakeAccount: Address;
+  stakeAmount: bigint;
   selectedOption: number;
   timestamp: bigint;
 };
@@ -38,8 +38,8 @@ export type StakeRevealedEventArgs = {
   user: Address;
   market: Address;
   encryptedTokenAccount: Address;
-  shareAccount: Address;
-  sharesAmount: number | bigint;
+  stakeAccount: Address;
+  stakeAmount: number | bigint;
   selectedOption: number;
   timestamp: number | bigint;
 };
@@ -49,8 +49,8 @@ export function getStakeRevealedEventEncoder(): FixedSizeEncoder<StakeRevealedEv
     ['user', getAddressEncoder()],
     ['market', getAddressEncoder()],
     ['encryptedTokenAccount', getAddressEncoder()],
-    ['shareAccount', getAddressEncoder()],
-    ['sharesAmount', getU64Encoder()],
+    ['stakeAccount', getAddressEncoder()],
+    ['stakeAmount', getU64Encoder()],
     ['selectedOption', getU16Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
@@ -61,8 +61,8 @@ export function getStakeRevealedEventDecoder(): FixedSizeDecoder<StakeRevealedEv
     ['user', getAddressDecoder()],
     ['market', getAddressDecoder()],
     ['encryptedTokenAccount', getAddressDecoder()],
-    ['shareAccount', getAddressDecoder()],
-    ['sharesAmount', getU64Decoder()],
+    ['stakeAccount', getAddressDecoder()],
+    ['stakeAmount', getU64Decoder()],
     ['selectedOption', getU16Decoder()],
     ['timestamp', getI64Decoder()],
   ]);

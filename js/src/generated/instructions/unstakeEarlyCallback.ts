@@ -67,7 +67,7 @@ export type UnstakeEarlyCallbackInstruction<
   TAccountInstructionsSysvar extends string | AccountMeta<string> =
     'Sysvar1nstructions1111111111111111111111111',
   TAccountUserEta extends string | AccountMeta<string> = string,
-  TAccountShareAccount extends string | AccountMeta<string> = string,
+  TAccountStakeAccount extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -94,9 +94,9 @@ export type UnstakeEarlyCallbackInstruction<
       TAccountUserEta extends string
         ? WritableAccount<TAccountUserEta>
         : TAccountUserEta,
-      TAccountShareAccount extends string
-        ? WritableAccount<TAccountShareAccount>
-        : TAccountShareAccount,
+      TAccountStakeAccount extends string
+        ? WritableAccount<TAccountStakeAccount>
+        : TAccountStakeAccount,
       ...TRemainingAccounts,
     ]
   >;
@@ -212,7 +212,7 @@ export type UnstakeEarlyCallbackInput<
   TAccountClusterAccount extends string = string,
   TAccountInstructionsSysvar extends string = string,
   TAccountUserEta extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
 > = {
   arciumProgram?: Address<TAccountArciumProgram>;
   compDefAccount: Address<TAccountCompDefAccount>;
@@ -221,7 +221,7 @@ export type UnstakeEarlyCallbackInput<
   clusterAccount: Address<TAccountClusterAccount>;
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
   userEta: Address<TAccountUserEta>;
-  shareAccount: Address<TAccountShareAccount>;
+  stakeAccount: Address<TAccountStakeAccount>;
   output: UnstakeEarlyCallbackInstructionDataArgs['output'];
 };
 
@@ -233,7 +233,7 @@ export function getUnstakeEarlyCallbackInstruction<
   TAccountClusterAccount extends string,
   TAccountInstructionsSysvar extends string,
   TAccountUserEta extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: UnstakeEarlyCallbackInput<
@@ -244,7 +244,7 @@ export function getUnstakeEarlyCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountUserEta,
-    TAccountShareAccount
+    TAccountStakeAccount
   >,
   config?: { programAddress?: TProgramAddress }
 ): UnstakeEarlyCallbackInstruction<
@@ -256,7 +256,7 @@ export function getUnstakeEarlyCallbackInstruction<
   TAccountClusterAccount,
   TAccountInstructionsSysvar,
   TAccountUserEta,
-  TAccountShareAccount
+  TAccountStakeAccount
 > {
   // Program address.
   const programAddress =
@@ -277,7 +277,7 @@ export function getUnstakeEarlyCallbackInstruction<
       isWritable: false,
     },
     userEta: { value: input.userEta ?? null, isWritable: true },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -307,7 +307,7 @@ export function getUnstakeEarlyCallbackInstruction<
       getAccountMeta(accounts.clusterAccount),
       getAccountMeta(accounts.instructionsSysvar),
       getAccountMeta(accounts.userEta),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
     ],
     data: getUnstakeEarlyCallbackInstructionDataEncoder().encode(
       args as UnstakeEarlyCallbackInstructionDataArgs
@@ -322,7 +322,7 @@ export function getUnstakeEarlyCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountUserEta,
-    TAccountShareAccount
+    TAccountStakeAccount
   >);
 }
 
@@ -339,7 +339,7 @@ export type ParsedUnstakeEarlyCallbackInstruction<
     clusterAccount: TAccountMetas[4];
     instructionsSysvar: TAccountMetas[5];
     userEta: TAccountMetas[6];
-    shareAccount: TAccountMetas[7];
+    stakeAccount: TAccountMetas[7];
   };
   data: UnstakeEarlyCallbackInstructionData;
 };
@@ -372,7 +372,7 @@ export function parseUnstakeEarlyCallbackInstruction<
       clusterAccount: getNextAccount(),
       instructionsSysvar: getNextAccount(),
       userEta: getNextAccount(),
-      shareAccount: getNextAccount(),
+      stakeAccount: getNextAccount(),
     },
     data: getUnstakeEarlyCallbackInstructionDataDecoder().decode(
       instruction.data

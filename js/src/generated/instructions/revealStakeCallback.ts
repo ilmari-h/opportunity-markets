@@ -66,7 +66,7 @@ export type RevealStakeCallbackInstruction<
   TAccountClusterAccount extends string | AccountMeta<string> = string,
   TAccountInstructionsSysvar extends string | AccountMeta<string> =
     'Sysvar1nstructions1111111111111111111111111',
-  TAccountShareAccount extends string | AccountMeta<string> = string,
+  TAccountStakeAccount extends string | AccountMeta<string> = string,
   TAccountUserEta extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
@@ -91,9 +91,9 @@ export type RevealStakeCallbackInstruction<
       TAccountInstructionsSysvar extends string
         ? ReadonlyAccount<TAccountInstructionsSysvar>
         : TAccountInstructionsSysvar,
-      TAccountShareAccount extends string
-        ? WritableAccount<TAccountShareAccount>
-        : TAccountShareAccount,
+      TAccountStakeAccount extends string
+        ? WritableAccount<TAccountStakeAccount>
+        : TAccountStakeAccount,
       TAccountUserEta extends string
         ? WritableAccount<TAccountUserEta>
         : TAccountUserEta,
@@ -208,7 +208,7 @@ export type RevealStakeCallbackInput<
   TAccountComputationAccount extends string = string,
   TAccountClusterAccount extends string = string,
   TAccountInstructionsSysvar extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
   TAccountUserEta extends string = string,
 > = {
   arciumProgram?: Address<TAccountArciumProgram>;
@@ -217,7 +217,7 @@ export type RevealStakeCallbackInput<
   computationAccount: Address<TAccountComputationAccount>;
   clusterAccount: Address<TAccountClusterAccount>;
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
-  shareAccount: Address<TAccountShareAccount>;
+  stakeAccount: Address<TAccountStakeAccount>;
   userEta: Address<TAccountUserEta>;
   output: RevealStakeCallbackInstructionDataArgs['output'];
 };
@@ -229,7 +229,7 @@ export function getRevealStakeCallbackInstruction<
   TAccountComputationAccount extends string,
   TAccountClusterAccount extends string,
   TAccountInstructionsSysvar extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TAccountUserEta extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
@@ -240,7 +240,7 @@ export function getRevealStakeCallbackInstruction<
     TAccountComputationAccount,
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountUserEta
   >,
   config?: { programAddress?: TProgramAddress }
@@ -252,7 +252,7 @@ export function getRevealStakeCallbackInstruction<
   TAccountComputationAccount,
   TAccountClusterAccount,
   TAccountInstructionsSysvar,
-  TAccountShareAccount,
+  TAccountStakeAccount,
   TAccountUserEta
 > {
   // Program address.
@@ -273,7 +273,7 @@ export function getRevealStakeCallbackInstruction<
       value: input.instructionsSysvar ?? null,
       isWritable: false,
     },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     userEta: { value: input.userEta ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
@@ -303,7 +303,7 @@ export function getRevealStakeCallbackInstruction<
       getAccountMeta(accounts.computationAccount),
       getAccountMeta(accounts.clusterAccount),
       getAccountMeta(accounts.instructionsSysvar),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.userEta),
     ],
     data: getRevealStakeCallbackInstructionDataEncoder().encode(
@@ -318,7 +318,7 @@ export function getRevealStakeCallbackInstruction<
     TAccountComputationAccount,
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountUserEta
   >);
 }
@@ -335,7 +335,7 @@ export type ParsedRevealStakeCallbackInstruction<
     computationAccount: TAccountMetas[3];
     clusterAccount: TAccountMetas[4];
     instructionsSysvar: TAccountMetas[5];
-    shareAccount: TAccountMetas[6];
+    stakeAccount: TAccountMetas[6];
     userEta: TAccountMetas[7];
   };
   data: RevealStakeCallbackInstructionData;
@@ -368,7 +368,7 @@ export function parseRevealStakeCallbackInstruction<
       computationAccount: getNextAccount(),
       clusterAccount: getNextAccount(),
       instructionsSysvar: getNextAccount(),
-      shareAccount: getNextAccount(),
+      stakeAccount: getNextAccount(),
       userEta: getNextAccount(),
     },
     data: getRevealStakeCallbackInstructionDataDecoder().decode(

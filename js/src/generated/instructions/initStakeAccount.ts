@@ -44,21 +44,21 @@ import {
   type ResolvedAccount,
 } from '../shared';
 
-export const INIT_SHARE_ACCOUNT_DISCRIMINATOR = new Uint8Array([
-  141, 106, 216, 55, 166, 167, 139, 141,
+export const INIT_STAKE_ACCOUNT_DISCRIMINATOR = new Uint8Array([
+  132, 171, 255, 149, 163, 37, 220, 45,
 ]);
 
-export function getInitShareAccountDiscriminatorBytes() {
+export function getInitStakeAccountDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    INIT_SHARE_ACCOUNT_DISCRIMINATOR
+    INIT_STAKE_ACCOUNT_DISCRIMINATOR
   );
 }
 
-export type InitShareAccountInstruction<
+export type InitStakeAccountInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountSigner extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
-  TAccountShareAccount extends string | AccountMeta<string> = string,
+  TAccountStakeAccount extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
     '11111111111111111111111111111111',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -73,9 +73,9 @@ export type InitShareAccountInstruction<
       TAccountMarket extends string
         ? ReadonlyAccount<TAccountMarket>
         : TAccountMarket,
-      TAccountShareAccount extends string
-        ? WritableAccount<TAccountShareAccount>
-        : TAccountShareAccount,
+      TAccountStakeAccount extends string
+        ? WritableAccount<TAccountStakeAccount>
+        : TAccountStakeAccount,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -83,80 +83,80 @@ export type InitShareAccountInstruction<
     ]
   >;
 
-export type InitShareAccountInstructionData = {
+export type InitStakeAccountInstructionData = {
   discriminator: ReadonlyUint8Array;
   stateNonce: bigint;
-  shareAccountId: number;
+  stakeAccountId: number;
 };
 
-export type InitShareAccountInstructionDataArgs = {
+export type InitStakeAccountInstructionDataArgs = {
   stateNonce: number | bigint;
-  shareAccountId: number;
+  stakeAccountId: number;
 };
 
-export function getInitShareAccountInstructionDataEncoder(): FixedSizeEncoder<InitShareAccountInstructionDataArgs> {
+export function getInitStakeAccountInstructionDataEncoder(): FixedSizeEncoder<InitStakeAccountInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['stateNonce', getU128Encoder()],
-      ['shareAccountId', getU32Encoder()],
+      ['stakeAccountId', getU32Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: INIT_SHARE_ACCOUNT_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: INIT_STAKE_ACCOUNT_DISCRIMINATOR })
   );
 }
 
-export function getInitShareAccountInstructionDataDecoder(): FixedSizeDecoder<InitShareAccountInstructionData> {
+export function getInitStakeAccountInstructionDataDecoder(): FixedSizeDecoder<InitStakeAccountInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['stateNonce', getU128Decoder()],
-    ['shareAccountId', getU32Decoder()],
+    ['stakeAccountId', getU32Decoder()],
   ]);
 }
 
-export function getInitShareAccountInstructionDataCodec(): FixedSizeCodec<
-  InitShareAccountInstructionDataArgs,
-  InitShareAccountInstructionData
+export function getInitStakeAccountInstructionDataCodec(): FixedSizeCodec<
+  InitStakeAccountInstructionDataArgs,
+  InitStakeAccountInstructionData
 > {
   return combineCodec(
-    getInitShareAccountInstructionDataEncoder(),
-    getInitShareAccountInstructionDataDecoder()
+    getInitStakeAccountInstructionDataEncoder(),
+    getInitStakeAccountInstructionDataDecoder()
   );
 }
 
-export type InitShareAccountAsyncInput<
+export type InitStakeAccountAsyncInput<
   TAccountSigner extends string = string,
   TAccountMarket extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
   market: Address<TAccountMarket>;
-  shareAccount?: Address<TAccountShareAccount>;
+  stakeAccount?: Address<TAccountStakeAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
-  stateNonce: InitShareAccountInstructionDataArgs['stateNonce'];
-  shareAccountId: InitShareAccountInstructionDataArgs['shareAccountId'];
+  stateNonce: InitStakeAccountInstructionDataArgs['stateNonce'];
+  stakeAccountId: InitStakeAccountInstructionDataArgs['stakeAccountId'];
 };
 
-export async function getInitShareAccountInstructionAsync<
+export async function getInitStakeAccountInstructionAsync<
   TAccountSigner extends string,
   TAccountMarket extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: InitShareAccountAsyncInput<
+  input: InitStakeAccountAsyncInput<
     TAccountSigner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
-  InitShareAccountInstruction<
+  InitStakeAccountInstruction<
     TProgramAddress,
     TAccountSigner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountSystemProgram
   >
 > {
@@ -168,7 +168,7 @@ export async function getInitShareAccountInstructionAsync<
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -180,18 +180,18 @@ export async function getInitShareAccountInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.shareAccount.value) {
-    accounts.shareAccount.value = await getProgramDerivedAddress({
+  if (!accounts.stakeAccount.value) {
+    accounts.stakeAccount.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
         getBytesEncoder().encode(
           new Uint8Array([
-            115, 104, 97, 114, 101, 95, 97, 99, 99, 111, 117, 110, 116,
+            115, 116, 97, 107, 101, 95, 97, 99, 99, 111, 117, 110, 116,
           ])
         ),
         getAddressEncoder().encode(expectAddress(accounts.signer.value)),
         getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getU32Encoder().encode(expectSome(args.shareAccountId)),
+        getU32Encoder().encode(expectSome(args.stakeAccountId)),
       ],
     });
   }
@@ -205,55 +205,55 @@ export async function getInitShareAccountInstructionAsync<
     accounts: [
       getAccountMeta(accounts.signer),
       getAccountMeta(accounts.market),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getInitShareAccountInstructionDataEncoder().encode(
-      args as InitShareAccountInstructionDataArgs
+    data: getInitStakeAccountInstructionDataEncoder().encode(
+      args as InitStakeAccountInstructionDataArgs
     ),
     programAddress,
-  } as InitShareAccountInstruction<
+  } as InitStakeAccountInstruction<
     TProgramAddress,
     TAccountSigner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountSystemProgram
   >);
 }
 
-export type InitShareAccountInput<
+export type InitStakeAccountInput<
   TAccountSigner extends string = string,
   TAccountMarket extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
   market: Address<TAccountMarket>;
-  shareAccount: Address<TAccountShareAccount>;
+  stakeAccount: Address<TAccountStakeAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
-  stateNonce: InitShareAccountInstructionDataArgs['stateNonce'];
-  shareAccountId: InitShareAccountInstructionDataArgs['shareAccountId'];
+  stateNonce: InitStakeAccountInstructionDataArgs['stateNonce'];
+  stakeAccountId: InitStakeAccountInstructionDataArgs['stakeAccountId'];
 };
 
-export function getInitShareAccountInstruction<
+export function getInitStakeAccountInstruction<
   TAccountSigner extends string,
   TAccountMarket extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: InitShareAccountInput<
+  input: InitStakeAccountInput<
     TAccountSigner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): InitShareAccountInstruction<
+): InitStakeAccountInstruction<
   TProgramAddress,
   TAccountSigner,
   TAccountMarket,
-  TAccountShareAccount,
+  TAccountStakeAccount,
   TAccountSystemProgram
 > {
   // Program address.
@@ -264,7 +264,7 @@ export function getInitShareAccountInstruction<
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -286,23 +286,23 @@ export function getInitShareAccountInstruction<
     accounts: [
       getAccountMeta(accounts.signer),
       getAccountMeta(accounts.market),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getInitShareAccountInstructionDataEncoder().encode(
-      args as InitShareAccountInstructionDataArgs
+    data: getInitStakeAccountInstructionDataEncoder().encode(
+      args as InitStakeAccountInstructionDataArgs
     ),
     programAddress,
-  } as InitShareAccountInstruction<
+  } as InitStakeAccountInstruction<
     TProgramAddress,
     TAccountSigner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountSystemProgram
   >);
 }
 
-export type ParsedInitShareAccountInstruction<
+export type ParsedInitStakeAccountInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -310,20 +310,20 @@ export type ParsedInitShareAccountInstruction<
   accounts: {
     signer: TAccountMetas[0];
     market: TAccountMetas[1];
-    shareAccount: TAccountMetas[2];
+    stakeAccount: TAccountMetas[2];
     systemProgram: TAccountMetas[3];
   };
-  data: InitShareAccountInstructionData;
+  data: InitStakeAccountInstructionData;
 };
 
-export function parseInitShareAccountInstruction<
+export function parseInitStakeAccountInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedInitShareAccountInstruction<TProgram, TAccountMetas> {
+): ParsedInitStakeAccountInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 4) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -339,9 +339,9 @@ export function parseInitShareAccountInstruction<
     accounts: {
       signer: getNextAccount(),
       market: getNextAccount(),
-      shareAccount: getNextAccount(),
+      stakeAccount: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getInitShareAccountInstructionDataDecoder().decode(instruction.data),
+    data: getInitStakeAccountInstructionDataDecoder().decode(instruction.data),
   };
 }

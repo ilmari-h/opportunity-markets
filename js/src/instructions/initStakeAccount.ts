@@ -1,22 +1,22 @@
 import { type TransactionSigner, type Address } from "@solana/kit";
 import {
-  getInitShareAccountInstructionAsync,
-  type InitShareAccountInstruction,
+  getInitStakeAccountInstructionAsync,
+  type InitStakeAccountInstruction,
 } from "../generated";
 import { type BaseInstructionParams } from "./instructionParams";
 
-export interface InitShareAccountParams extends BaseInstructionParams {
+export interface InitStakeAccountParams extends BaseInstructionParams {
   signer: TransactionSigner;
   market: Address;
   stateNonce: bigint;
-  shareAccountId: number;
+  stakeAccountId: number;
 }
 
-export async function initShareAccount(
-  input: InitShareAccountParams
-): Promise<InitShareAccountInstruction<string>> {
+export async function initStakeAccount(
+  input: InitStakeAccountParams
+): Promise<InitStakeAccountInstruction<string>> {
   const { programAddress, ...params } = input;
-  return getInitShareAccountInstructionAsync(
+  return getInitStakeAccountInstructionAsync(
     params,
     programAddress ? { programAddress } : undefined
   );

@@ -23,7 +23,7 @@ import {
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type BuyOpportunityMarketSharesOutputStruct0 = {
+export type StakeOutputStruct0 = {
   field0: boolean;
   field1: {
     encryptionKey: Array<number>;
@@ -42,7 +42,7 @@ export type BuyOpportunityMarketSharesOutputStruct0 = {
   };
 };
 
-export type BuyOpportunityMarketSharesOutputStruct0Args = {
+export type StakeOutputStruct0Args = {
   field0: boolean;
   field1: {
     encryptionKey: Array<number>;
@@ -61,7 +61,7 @@ export type BuyOpportunityMarketSharesOutputStruct0Args = {
   };
 };
 
-export function getBuyOpportunityMarketSharesOutputStruct0Encoder(): FixedSizeEncoder<BuyOpportunityMarketSharesOutputStruct0Args> {
+export function getStakeOutputStruct0Encoder(): FixedSizeEncoder<StakeOutputStruct0Args> {
   return getStructEncoder([
     ['field0', getBooleanEncoder()],
     [
@@ -106,7 +106,7 @@ export function getBuyOpportunityMarketSharesOutputStruct0Encoder(): FixedSizeEn
   ]);
 }
 
-export function getBuyOpportunityMarketSharesOutputStruct0Decoder(): FixedSizeDecoder<BuyOpportunityMarketSharesOutputStruct0> {
+export function getStakeOutputStruct0Decoder(): FixedSizeDecoder<StakeOutputStruct0> {
   return getStructDecoder([
     ['field0', getBooleanDecoder()],
     [
@@ -151,12 +151,12 @@ export function getBuyOpportunityMarketSharesOutputStruct0Decoder(): FixedSizeDe
   ]);
 }
 
-export function getBuyOpportunityMarketSharesOutputStruct0Codec(): FixedSizeCodec<
-  BuyOpportunityMarketSharesOutputStruct0Args,
-  BuyOpportunityMarketSharesOutputStruct0
+export function getStakeOutputStruct0Codec(): FixedSizeCodec<
+  StakeOutputStruct0Args,
+  StakeOutputStruct0
 > {
   return combineCodec(
-    getBuyOpportunityMarketSharesOutputStruct0Encoder(),
-    getBuyOpportunityMarketSharesOutputStruct0Decoder()
+    getStakeOutputStruct0Encoder(),
+    getStakeOutputStruct0Decoder()
   );
 }

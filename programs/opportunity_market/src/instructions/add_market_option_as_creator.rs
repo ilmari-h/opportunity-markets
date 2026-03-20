@@ -61,7 +61,7 @@ pub fn add_market_option_as_creator(
     option.bump = ctx.bumps.option;
     option.index = option_index;
     option.name = name;
-    option.total_shares = None;
+    option.total_staked = None;
     option.total_score = None;
     option.creator = ctx.accounts.creator.key();
     option.initialized = true;

@@ -4,14 +4,14 @@ use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, UnstakedError, UnstakedEvent};
-use crate::instructions::stake::SHARE_ACCOUNT_SEED;
-use crate::state::{OpportunityMarket, ShareAccount, EncryptedTokenAccount};
+use crate::instructions::stake::STAKE_ACCOUNT_SEED;
+use crate::state::{OpportunityMarket, StakeAccount, EncryptedTokenAccount};
 use crate::COMP_DEF_OFFSET_UNSTAKE_EARLY;
 use crate::{ArciumSignerAccount, ID, ID_CONST};
 
 #[queue_computation_accounts("unstake_early", signer)]
 #[derive(Accounts)]
-#[instruction(computation_offset: u64, share_account_id: u32, share_account_owner: Pubkey)]
+#[instruction(computation_offset: u64, stake_account_id: u32, stake_account_owner: Pubkey)]
 pub struct DoUnstakeEarly<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -24,7 +24,7 @@ pub struct DoUnstakeEarly<'info> {
 
     #[account(
         mut,
-        constraint = user_eta.owner == share_account_owner @ ErrorCode::Unauthorized,
+        constraint = user_eta.owner == stake_account_owner @ ErrorCode::Unauthorized,
         constraint = market.mint == user_eta.token_mint @ ErrorCode::InvalidMint,
         constraint = !user_eta.locked @ ErrorCode::Locked,
     )]
@@ -32,13 +32,13 @@ pub struct DoUnstakeEarly<'info> {
 
     #[account(
         mut,
-        seeds = [SHARE_ACCOUNT_SEED, share_account_owner.as_ref(), market.key().as_ref(), &share_account_id.to_le_bytes()],
-        bump = share_account.bump,
-        constraint = share_account.unstaked_at_timestamp.is_none() @ ErrorCode::AlreadyUnstaked,
-        constraint = share_account.unstakeable_at_timestamp.is_some() @ ErrorCode::UnstakeNotInitiated,
-        constraint = !share_account.locked @ ErrorCode::Locked,
+        seeds = [STAKE_ACCOUNT_SEED, stake_account_owner.as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
+        bump = stake_account.bump,
+        constraint = stake_account.unstaked_at_timestamp.is_none() @ ErrorCode::AlreadyUnstaked,
+        constraint = stake_account.unstakeable_at_timestamp.is_some() @ ErrorCode::UnstakeNotInitiated,
+        constraint = !stake_account.locked @ ErrorCode::Locked,
     )]
-    pub share_account: Box<Account<'info, ShareAccount>>,
+    pub stake_account: Box<Account<'info, StakeAccount>>,
 
     // Arcium accounts
     #[account(
@@ -76,8 +76,8 @@ pub struct DoUnstakeEarly<'info> {
 pub fn do_unstake_early(
     ctx: Context<DoUnstakeEarly>,
     computation_offset: u64,
-    _share_account_id: u32,
-    _share_account_owner: Pubkey,
+    _stake_account_id: u32,
+    _stake_account_owner: Pubkey,
 ) -> Result<()> {
     let user_pubkey = ctx.accounts.user_eta.user_pubkey;
 
@@ -94,31 +94,31 @@ pub fn do_unstake_early(
     );
 
     // Enforce unstake delay has passed
-    let unstakeable_at = ctx.accounts.share_account.unstakeable_at_timestamp
+    let unstakeable_at = ctx.accounts.stake_account.unstakeable_at_timestamp
         .ok_or_else(|| ErrorCode::UnstakeNotInitiated)?;
     require!(
         current_timestamp >= unstakeable_at,
         ErrorCode::UnstakeDelayNotMet
     );
 
-    let share_account_key = ctx.accounts.share_account.key();
-    let share_account_nonce = ctx.accounts.share_account.state_nonce;
+    let stake_account_key = ctx.accounts.stake_account.key();
+    let stake_account_nonce = ctx.accounts.stake_account.state_nonce;
 
     let user_eta_key = ctx.accounts.user_eta.key();
     let user_eta_nonce = ctx.accounts.user_eta.state_nonce;
 
     // Lock both accounts while MPC computation is pending
     ctx.accounts.user_eta.locked = true;
-    ctx.accounts.share_account.locked = true;
+    ctx.accounts.stake_account.locked = true;
 
 
     // Build args for encrypted computation
     let is_eta_initialized = ctx.accounts.user_eta.is_initialized;
     let args = ArgBuilder::new()
-        // Share account encrypted state (Enc<Shared, SharePurchase>)
+        // Stake account encrypted state (Enc<Shared, StakeData>)
         .x25519_pubkey(user_pubkey)
-        .plaintext_u128(share_account_nonce)
-        .account(share_account_key, 8, 32 * 2)
+        .plaintext_u128(stake_account_nonce)
+        .account(stake_account_key, 8, 32 * 2)
 
         // User ETA encrypted state (Enc<Shared, EncryptedTokenBalance>)
         .x25519_pubkey(user_pubkey)
@@ -144,7 +144,7 @@ pub fn do_unstake_early(
                     is_writable: true,
                 },
                 CallbackAccount {
-                    pubkey: share_account_key,
+                    pubkey: stake_account_key,
                     is_writable: true,
                 },
             ],
@@ -176,7 +176,7 @@ pub struct UnstakeEarlyCallback<'info> {
     #[account(mut)]
     pub user_eta: Box<Account<'info, EncryptedTokenAccount>>,
     #[account(mut)]
-    pub share_account: Box<Account<'info, ShareAccount>>,
+    pub stake_account: Box<Account<'info, StakeAccount>>,
 }
 
 pub fn unstake_early_callback(
@@ -185,7 +185,7 @@ pub fn unstake_early_callback(
 ) -> Result<()> {
     // Unlock accounts
     ctx.accounts.user_eta.locked = false;
-    ctx.accounts.share_account.locked = false;
+    ctx.accounts.stake_account.locked = false;
 
     // Verify output - on error, emit event and return Ok so unlocks persist
     let new_user_balance = match output.verify_output(
@@ -201,9 +201,9 @@ pub fn unstake_early_callback(
         }
     };
 
-    // Mark share account as unstaked
+    // Mark stake account as unstaked
     let clock = Clock::get()?;
-    ctx.accounts.share_account.unstaked_at_timestamp = Some(clock.unix_timestamp as u64);
+    ctx.accounts.stake_account.unstaked_at_timestamp = Some(clock.unix_timestamp as u64);
 
     // Update user ETA with refunded balance
     ctx.accounts.user_eta.state_nonce = new_user_balance.nonce;
@@ -212,9 +212,9 @@ pub fn unstake_early_callback(
 
     emit_ts!(UnstakedEvent {
         user: ctx.accounts.user_eta.owner,
-        market: ctx.accounts.share_account.market,
+        market: ctx.accounts.stake_account.market,
         encrypted_token_account: ctx.accounts.user_eta.key(),
-        share_account: ctx.accounts.share_account.key(),
+        stake_account: ctx.accounts.stake_account.key(),
     });
 
     Ok(())

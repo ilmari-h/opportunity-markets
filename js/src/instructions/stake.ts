@@ -11,7 +11,7 @@ export interface StakeParams extends BaseInstructionParams {
   signer: TransactionSigner;
   market: Address;
   userEta: Address;
-  shareAccountId: number;
+  stakeAccountId: number;
   amountCiphertext: ByteArray;
   selectedOptionCiphertext: ByteArray;
   inputNonce: bigint;
@@ -27,7 +27,7 @@ export async function stake(
     signer,
     market,
     userEta,
-    shareAccountId,
+    stakeAccountId,
     amountCiphertext,
     selectedOptionCiphertext,
     inputNonce,
@@ -36,11 +36,11 @@ export async function stake(
 
   return getStakeInstructionAsync(
     {
-      ...getComputeAccounts("buy_opportunity_market_shares", config),
+      ...getComputeAccounts("stake", config),
       signer,
       market,
       userEta,
-      shareAccountId,
+      stakeAccountId,
       amountCiphertext: toNumberArray(amountCiphertext),
       selectedOptionCiphertext: toNumberArray(selectedOptionCiphertext),
       inputNonce,

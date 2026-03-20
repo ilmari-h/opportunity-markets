@@ -11,14 +11,14 @@ export interface RevealStakeParams extends BaseInstructionParams {
   owner: Address;
   market: Address;
   userEta: Address;
-  shareAccountId: number;
+  stakeAccountId: number;
 }
 
 export async function revealStake(
   input: RevealStakeParams,
   config: ArciumConfig
 ): Promise<RevealStakeInstruction<string>> {
-  const { programAddress, signer, owner, market, userEta, shareAccountId } = input;
+  const { programAddress, signer, owner, market, userEta, stakeAccountId } = input;
 
   return getRevealStakeInstructionAsync(
     {
@@ -27,7 +27,7 @@ export async function revealStake(
       owner,
       market,
       userEta,
-      shareAccountId,
+      stakeAccountId,
     },
     programAddress ? { programAddress } : undefined
   );

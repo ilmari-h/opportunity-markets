@@ -60,7 +60,7 @@ export type DoUnstakeEarlyInstruction<
   TAccountSigner extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
   TAccountUserEta extends string | AccountMeta<string> = string,
-  TAccountShareAccount extends string | AccountMeta<string> = string,
+  TAccountStakeAccount extends string | AccountMeta<string> = string,
   TAccountSignPdaAccount extends string | AccountMeta<string> = string,
   TAccountMxeAccount extends string | AccountMeta<string> = string,
   TAccountMempoolAccount extends string | AccountMeta<string> = string,
@@ -91,9 +91,9 @@ export type DoUnstakeEarlyInstruction<
       TAccountUserEta extends string
         ? WritableAccount<TAccountUserEta>
         : TAccountUserEta,
-      TAccountShareAccount extends string
-        ? WritableAccount<TAccountShareAccount>
-        : TAccountShareAccount,
+      TAccountStakeAccount extends string
+        ? WritableAccount<TAccountStakeAccount>
+        : TAccountStakeAccount,
       TAccountSignPdaAccount extends string
         ? WritableAccount<TAccountSignPdaAccount>
         : TAccountSignPdaAccount,
@@ -134,14 +134,14 @@ export type DoUnstakeEarlyInstruction<
 export type DoUnstakeEarlyInstructionData = {
   discriminator: ReadonlyUint8Array;
   computationOffset: bigint;
-  shareAccountId: number;
-  shareAccountOwner: Address;
+  stakeAccountId: number;
+  stakeAccountOwner: Address;
 };
 
 export type DoUnstakeEarlyInstructionDataArgs = {
   computationOffset: number | bigint;
-  shareAccountId: number;
-  shareAccountOwner: Address;
+  stakeAccountId: number;
+  stakeAccountOwner: Address;
 };
 
 export function getDoUnstakeEarlyInstructionDataEncoder(): FixedSizeEncoder<DoUnstakeEarlyInstructionDataArgs> {
@@ -149,8 +149,8 @@ export function getDoUnstakeEarlyInstructionDataEncoder(): FixedSizeEncoder<DoUn
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['computationOffset', getU64Encoder()],
-      ['shareAccountId', getU32Encoder()],
-      ['shareAccountOwner', getAddressEncoder()],
+      ['stakeAccountId', getU32Encoder()],
+      ['stakeAccountOwner', getAddressEncoder()],
     ]),
     (value) => ({ ...value, discriminator: DO_UNSTAKE_EARLY_DISCRIMINATOR })
   );
@@ -160,8 +160,8 @@ export function getDoUnstakeEarlyInstructionDataDecoder(): FixedSizeDecoder<DoUn
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['computationOffset', getU64Decoder()],
-    ['shareAccountId', getU32Decoder()],
-    ['shareAccountOwner', getAddressDecoder()],
+    ['stakeAccountId', getU32Decoder()],
+    ['stakeAccountOwner', getAddressDecoder()],
   ]);
 }
 
@@ -179,7 +179,7 @@ export type DoUnstakeEarlyAsyncInput<
   TAccountSigner extends string = string,
   TAccountMarket extends string = string,
   TAccountUserEta extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
   TAccountSignPdaAccount extends string = string,
   TAccountMxeAccount extends string = string,
   TAccountMempoolAccount extends string = string,
@@ -195,7 +195,7 @@ export type DoUnstakeEarlyAsyncInput<
   signer: TransactionSigner<TAccountSigner>;
   market: Address<TAccountMarket>;
   userEta: Address<TAccountUserEta>;
-  shareAccount?: Address<TAccountShareAccount>;
+  stakeAccount?: Address<TAccountStakeAccount>;
   signPdaAccount?: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
   mempoolAccount: Address<TAccountMempoolAccount>;
@@ -208,15 +208,15 @@ export type DoUnstakeEarlyAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
   computationOffset: DoUnstakeEarlyInstructionDataArgs['computationOffset'];
-  shareAccountId: DoUnstakeEarlyInstructionDataArgs['shareAccountId'];
-  shareAccountOwner: DoUnstakeEarlyInstructionDataArgs['shareAccountOwner'];
+  stakeAccountId: DoUnstakeEarlyInstructionDataArgs['stakeAccountId'];
+  stakeAccountOwner: DoUnstakeEarlyInstructionDataArgs['stakeAccountOwner'];
 };
 
 export async function getDoUnstakeEarlyInstructionAsync<
   TAccountSigner extends string,
   TAccountMarket extends string,
   TAccountUserEta extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TAccountSignPdaAccount extends string,
   TAccountMxeAccount extends string,
   TAccountMempoolAccount extends string,
@@ -234,7 +234,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
     TAccountSigner,
     TAccountMarket,
     TAccountUserEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -254,7 +254,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
     TAccountSigner,
     TAccountMarket,
     TAccountUserEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -277,7 +277,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
     signer: { value: input.signer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
     userEta: { value: input.userEta ?? null, isWritable: true },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },
     mempoolAccount: { value: input.mempoolAccount ?? null, isWritable: true },
@@ -302,18 +302,18 @@ export async function getDoUnstakeEarlyInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.shareAccount.value) {
-    accounts.shareAccount.value = await getProgramDerivedAddress({
+  if (!accounts.stakeAccount.value) {
+    accounts.stakeAccount.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
         getBytesEncoder().encode(
           new Uint8Array([
-            115, 104, 97, 114, 101, 95, 97, 99, 99, 111, 117, 110, 116,
+            115, 116, 97, 107, 101, 95, 97, 99, 99, 111, 117, 110, 116,
           ])
         ),
-        getAddressEncoder().encode(expectSome(args.shareAccountOwner)),
+        getAddressEncoder().encode(expectSome(args.stakeAccountOwner)),
         getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getU32Encoder().encode(expectSome(args.shareAccountId)),
+        getU32Encoder().encode(expectSome(args.stakeAccountId)),
       ],
     });
   }
@@ -353,7 +353,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
       getAccountMeta(accounts.signer),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.userEta),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.signPdaAccount),
       getAccountMeta(accounts.mxeAccount),
       getAccountMeta(accounts.mempoolAccount),
@@ -375,7 +375,7 @@ export async function getDoUnstakeEarlyInstructionAsync<
     TAccountSigner,
     TAccountMarket,
     TAccountUserEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -394,7 +394,7 @@ export type DoUnstakeEarlyInput<
   TAccountSigner extends string = string,
   TAccountMarket extends string = string,
   TAccountUserEta extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
   TAccountSignPdaAccount extends string = string,
   TAccountMxeAccount extends string = string,
   TAccountMempoolAccount extends string = string,
@@ -410,7 +410,7 @@ export type DoUnstakeEarlyInput<
   signer: TransactionSigner<TAccountSigner>;
   market: Address<TAccountMarket>;
   userEta: Address<TAccountUserEta>;
-  shareAccount: Address<TAccountShareAccount>;
+  stakeAccount: Address<TAccountStakeAccount>;
   signPdaAccount: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
   mempoolAccount: Address<TAccountMempoolAccount>;
@@ -423,15 +423,15 @@ export type DoUnstakeEarlyInput<
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
   computationOffset: DoUnstakeEarlyInstructionDataArgs['computationOffset'];
-  shareAccountId: DoUnstakeEarlyInstructionDataArgs['shareAccountId'];
-  shareAccountOwner: DoUnstakeEarlyInstructionDataArgs['shareAccountOwner'];
+  stakeAccountId: DoUnstakeEarlyInstructionDataArgs['stakeAccountId'];
+  stakeAccountOwner: DoUnstakeEarlyInstructionDataArgs['stakeAccountOwner'];
 };
 
 export function getDoUnstakeEarlyInstruction<
   TAccountSigner extends string,
   TAccountMarket extends string,
   TAccountUserEta extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TAccountSignPdaAccount extends string,
   TAccountMxeAccount extends string,
   TAccountMempoolAccount extends string,
@@ -449,7 +449,7 @@ export function getDoUnstakeEarlyInstruction<
     TAccountSigner,
     TAccountMarket,
     TAccountUserEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -468,7 +468,7 @@ export function getDoUnstakeEarlyInstruction<
   TAccountSigner,
   TAccountMarket,
   TAccountUserEta,
-  TAccountShareAccount,
+  TAccountStakeAccount,
   TAccountSignPdaAccount,
   TAccountMxeAccount,
   TAccountMempoolAccount,
@@ -490,7 +490,7 @@ export function getDoUnstakeEarlyInstruction<
     signer: { value: input.signer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
     userEta: { value: input.userEta ?? null, isWritable: true },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },
     mempoolAccount: { value: input.mempoolAccount ?? null, isWritable: true },
@@ -538,7 +538,7 @@ export function getDoUnstakeEarlyInstruction<
       getAccountMeta(accounts.signer),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.userEta),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.signPdaAccount),
       getAccountMeta(accounts.mxeAccount),
       getAccountMeta(accounts.mempoolAccount),
@@ -560,7 +560,7 @@ export function getDoUnstakeEarlyInstruction<
     TAccountSigner,
     TAccountMarket,
     TAccountUserEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -584,7 +584,7 @@ export type ParsedDoUnstakeEarlyInstruction<
     signer: TAccountMetas[0];
     market: TAccountMetas[1];
     userEta: TAccountMetas[2];
-    shareAccount: TAccountMetas[3];
+    stakeAccount: TAccountMetas[3];
     signPdaAccount: TAccountMetas[4];
     mxeAccount: TAccountMetas[5];
     mempoolAccount: TAccountMetas[6];
@@ -624,7 +624,7 @@ export function parseDoUnstakeEarlyInstruction<
       signer: getNextAccount(),
       market: getNextAccount(),
       userEta: getNextAccount(),
-      shareAccount: getNextAccount(),
+      stakeAccount: getNextAccount(),
       signPdaAccount: getNextAccount(),
       mxeAccount: getNextAccount(),
       mempoolAccount: getNextAccount(),

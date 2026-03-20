@@ -59,7 +59,7 @@ export type RevealStakeInstruction<
   TAccountSigner extends string | AccountMeta<string> = string,
   TAccountOwner extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
-  TAccountShareAccount extends string | AccountMeta<string> = string,
+  TAccountStakeAccount extends string | AccountMeta<string> = string,
   TAccountUserEta extends string | AccountMeta<string> = string,
   TAccountSignPdaAccount extends string | AccountMeta<string> = string,
   TAccountMxeAccount extends string | AccountMeta<string> = string,
@@ -91,9 +91,9 @@ export type RevealStakeInstruction<
       TAccountMarket extends string
         ? ReadonlyAccount<TAccountMarket>
         : TAccountMarket,
-      TAccountShareAccount extends string
-        ? WritableAccount<TAccountShareAccount>
-        : TAccountShareAccount,
+      TAccountStakeAccount extends string
+        ? WritableAccount<TAccountStakeAccount>
+        : TAccountStakeAccount,
       TAccountUserEta extends string
         ? WritableAccount<TAccountUserEta>
         : TAccountUserEta,
@@ -137,12 +137,12 @@ export type RevealStakeInstruction<
 export type RevealStakeInstructionData = {
   discriminator: ReadonlyUint8Array;
   computationOffset: bigint;
-  shareAccountId: number;
+  stakeAccountId: number;
 };
 
 export type RevealStakeInstructionDataArgs = {
   computationOffset: number | bigint;
-  shareAccountId: number;
+  stakeAccountId: number;
 };
 
 export function getRevealStakeInstructionDataEncoder(): FixedSizeEncoder<RevealStakeInstructionDataArgs> {
@@ -150,7 +150,7 @@ export function getRevealStakeInstructionDataEncoder(): FixedSizeEncoder<RevealS
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['computationOffset', getU64Encoder()],
-      ['shareAccountId', getU32Encoder()],
+      ['stakeAccountId', getU32Encoder()],
     ]),
     (value) => ({ ...value, discriminator: REVEAL_STAKE_DISCRIMINATOR })
   );
@@ -160,7 +160,7 @@ export function getRevealStakeInstructionDataDecoder(): FixedSizeDecoder<RevealS
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['computationOffset', getU64Decoder()],
-    ['shareAccountId', getU32Decoder()],
+    ['stakeAccountId', getU32Decoder()],
   ]);
 }
 
@@ -178,7 +178,7 @@ export type RevealStakeAsyncInput<
   TAccountSigner extends string = string,
   TAccountOwner extends string = string,
   TAccountMarket extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
   TAccountUserEta extends string = string,
   TAccountSignPdaAccount extends string = string,
   TAccountMxeAccount extends string = string,
@@ -195,7 +195,7 @@ export type RevealStakeAsyncInput<
   signer: TransactionSigner<TAccountSigner>;
   owner: Address<TAccountOwner>;
   market: Address<TAccountMarket>;
-  shareAccount?: Address<TAccountShareAccount>;
+  stakeAccount?: Address<TAccountStakeAccount>;
   userEta: Address<TAccountUserEta>;
   signPdaAccount?: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
@@ -209,14 +209,14 @@ export type RevealStakeAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
   computationOffset: RevealStakeInstructionDataArgs['computationOffset'];
-  shareAccountId: RevealStakeInstructionDataArgs['shareAccountId'];
+  stakeAccountId: RevealStakeInstructionDataArgs['stakeAccountId'];
 };
 
 export async function getRevealStakeInstructionAsync<
   TAccountSigner extends string,
   TAccountOwner extends string,
   TAccountMarket extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TAccountUserEta extends string,
   TAccountSignPdaAccount extends string,
   TAccountMxeAccount extends string,
@@ -235,7 +235,7 @@ export async function getRevealStakeInstructionAsync<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountUserEta,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
@@ -256,7 +256,7 @@ export async function getRevealStakeInstructionAsync<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountUserEta,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
@@ -280,7 +280,7 @@ export async function getRevealStakeInstructionAsync<
     signer: { value: input.signer ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: false },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     userEta: { value: input.userEta ?? null, isWritable: true },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },
@@ -306,18 +306,18 @@ export async function getRevealStakeInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.shareAccount.value) {
-    accounts.shareAccount.value = await getProgramDerivedAddress({
+  if (!accounts.stakeAccount.value) {
+    accounts.stakeAccount.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
         getBytesEncoder().encode(
           new Uint8Array([
-            115, 104, 97, 114, 101, 95, 97, 99, 99, 111, 117, 110, 116,
+            115, 116, 97, 107, 101, 95, 97, 99, 99, 111, 117, 110, 116,
           ])
         ),
         getAddressEncoder().encode(expectAddress(accounts.owner.value)),
         getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getU32Encoder().encode(expectSome(args.shareAccountId)),
+        getU32Encoder().encode(expectSome(args.stakeAccountId)),
       ],
     });
   }
@@ -357,7 +357,7 @@ export async function getRevealStakeInstructionAsync<
       getAccountMeta(accounts.signer),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.market),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.userEta),
       getAccountMeta(accounts.signPdaAccount),
       getAccountMeta(accounts.mxeAccount),
@@ -380,7 +380,7 @@ export async function getRevealStakeInstructionAsync<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountUserEta,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
@@ -400,7 +400,7 @@ export type RevealStakeInput<
   TAccountSigner extends string = string,
   TAccountOwner extends string = string,
   TAccountMarket extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
   TAccountUserEta extends string = string,
   TAccountSignPdaAccount extends string = string,
   TAccountMxeAccount extends string = string,
@@ -417,7 +417,7 @@ export type RevealStakeInput<
   signer: TransactionSigner<TAccountSigner>;
   owner: Address<TAccountOwner>;
   market: Address<TAccountMarket>;
-  shareAccount: Address<TAccountShareAccount>;
+  stakeAccount: Address<TAccountStakeAccount>;
   userEta: Address<TAccountUserEta>;
   signPdaAccount: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
@@ -431,14 +431,14 @@ export type RevealStakeInput<
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
   computationOffset: RevealStakeInstructionDataArgs['computationOffset'];
-  shareAccountId: RevealStakeInstructionDataArgs['shareAccountId'];
+  stakeAccountId: RevealStakeInstructionDataArgs['stakeAccountId'];
 };
 
 export function getRevealStakeInstruction<
   TAccountSigner extends string,
   TAccountOwner extends string,
   TAccountMarket extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TAccountUserEta extends string,
   TAccountSignPdaAccount extends string,
   TAccountMxeAccount extends string,
@@ -457,7 +457,7 @@ export function getRevealStakeInstruction<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountUserEta,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
@@ -477,7 +477,7 @@ export function getRevealStakeInstruction<
   TAccountSigner,
   TAccountOwner,
   TAccountMarket,
-  TAccountShareAccount,
+  TAccountStakeAccount,
   TAccountUserEta,
   TAccountSignPdaAccount,
   TAccountMxeAccount,
@@ -500,7 +500,7 @@ export function getRevealStakeInstruction<
     signer: { value: input.signer ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: false },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     userEta: { value: input.userEta ?? null, isWritable: true },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },
@@ -549,7 +549,7 @@ export function getRevealStakeInstruction<
       getAccountMeta(accounts.signer),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.market),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.userEta),
       getAccountMeta(accounts.signPdaAccount),
       getAccountMeta(accounts.mxeAccount),
@@ -572,7 +572,7 @@ export function getRevealStakeInstruction<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountUserEta,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
@@ -597,7 +597,7 @@ export type ParsedRevealStakeInstruction<
     signer: TAccountMetas[0];
     owner: TAccountMetas[1];
     market: TAccountMetas[2];
-    shareAccount: TAccountMetas[3];
+    stakeAccount: TAccountMetas[3];
     userEta: TAccountMetas[4];
     signPdaAccount: TAccountMetas[5];
     mxeAccount: TAccountMetas[6];
@@ -638,7 +638,7 @@ export function parseRevealStakeInstruction<
       signer: getNextAccount(),
       owner: getNextAccount(),
       market: getNextAccount(),
-      shareAccount: getNextAccount(),
+      stakeAccount: getNextAccount(),
       userEta: getNextAccount(),
       signPdaAccount: getNextAccount(),
       mxeAccount: getNextAccount(),

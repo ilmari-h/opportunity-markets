@@ -10,7 +10,7 @@ export interface IncrementOptionTallyParams extends BaseInstructionParams {
   owner: Address;
   market: Address;
   optionIndex: number;
-  shareAccountId: number;
+  stakeAccountId: number;
 }
 
 export async function incrementOptionTally(

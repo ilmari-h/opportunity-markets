@@ -11,9 +11,9 @@ export interface AddMarketOptionParams extends BaseInstructionParams {
   creator: TransactionSigner;
   market: Address;
   sourceEta: Address;
-  shareAccount: Address;
+  stakeAccount: Address;
   optionIndex: number;
-  shareAccountId: number;
+  stakeAccountId: number;
   name: string;
   amountCiphertext: ByteArray;
   inputNonce: bigint;
@@ -29,9 +29,9 @@ export async function addMarketOption(
     creator,
     market,
     sourceEta,
-    shareAccount,
+    stakeAccount,
     optionIndex,
-    shareAccountId,
+    stakeAccountId,
     name,
     amountCiphertext,
     inputNonce,
@@ -44,9 +44,9 @@ export async function addMarketOption(
       creator,
       market,
       sourceEta,
-      shareAccount,
+      stakeAccount,
       optionIndex,
-      shareAccountId,
+      stakeAccountId,
       name,
       amountCiphertext: toNumberArray(amountCiphertext),
       inputNonce,

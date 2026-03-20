@@ -56,7 +56,7 @@ export type UnstakeEarlyInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountSigner extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
-  TAccountShareAccount extends string | AccountMeta<string> = string,
+  TAccountStakeAccount extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -69,25 +69,25 @@ export type UnstakeEarlyInstruction<
       TAccountMarket extends string
         ? ReadonlyAccount<TAccountMarket>
         : TAccountMarket,
-      TAccountShareAccount extends string
-        ? WritableAccount<TAccountShareAccount>
-        : TAccountShareAccount,
+      TAccountStakeAccount extends string
+        ? WritableAccount<TAccountStakeAccount>
+        : TAccountStakeAccount,
       ...TRemainingAccounts,
     ]
   >;
 
 export type UnstakeEarlyInstructionData = {
   discriminator: ReadonlyUint8Array;
-  shareAccountId: number;
+  stakeAccountId: number;
 };
 
-export type UnstakeEarlyInstructionDataArgs = { shareAccountId: number };
+export type UnstakeEarlyInstructionDataArgs = { stakeAccountId: number };
 
 export function getUnstakeEarlyInstructionDataEncoder(): FixedSizeEncoder<UnstakeEarlyInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['shareAccountId', getU32Encoder()],
+      ['stakeAccountId', getU32Encoder()],
     ]),
     (value) => ({ ...value, discriminator: UNSTAKE_EARLY_DISCRIMINATOR })
   );
@@ -96,7 +96,7 @@ export function getUnstakeEarlyInstructionDataEncoder(): FixedSizeEncoder<Unstak
 export function getUnstakeEarlyInstructionDataDecoder(): FixedSizeDecoder<UnstakeEarlyInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['shareAccountId', getU32Decoder()],
+    ['stakeAccountId', getU32Decoder()],
   ]);
 }
 
@@ -113,24 +113,24 @@ export function getUnstakeEarlyInstructionDataCodec(): FixedSizeCodec<
 export type UnstakeEarlyAsyncInput<
   TAccountSigner extends string = string,
   TAccountMarket extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
   market: Address<TAccountMarket>;
-  shareAccount?: Address<TAccountShareAccount>;
-  shareAccountId: UnstakeEarlyInstructionDataArgs['shareAccountId'];
+  stakeAccount?: Address<TAccountStakeAccount>;
+  stakeAccountId: UnstakeEarlyInstructionDataArgs['stakeAccountId'];
 };
 
 export async function getUnstakeEarlyInstructionAsync<
   TAccountSigner extends string,
   TAccountMarket extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: UnstakeEarlyAsyncInput<
     TAccountSigner,
     TAccountMarket,
-    TAccountShareAccount
+    TAccountStakeAccount
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
@@ -138,7 +138,7 @@ export async function getUnstakeEarlyInstructionAsync<
     TProgramAddress,
     TAccountSigner,
     TAccountMarket,
-    TAccountShareAccount
+    TAccountStakeAccount
   >
 > {
   // Program address.
@@ -149,7 +149,7 @@ export async function getUnstakeEarlyInstructionAsync<
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -160,18 +160,18 @@ export async function getUnstakeEarlyInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.shareAccount.value) {
-    accounts.shareAccount.value = await getProgramDerivedAddress({
+  if (!accounts.stakeAccount.value) {
+    accounts.stakeAccount.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
         getBytesEncoder().encode(
           new Uint8Array([
-            115, 104, 97, 114, 101, 95, 97, 99, 99, 111, 117, 110, 116,
+            115, 116, 97, 107, 101, 95, 97, 99, 99, 111, 117, 110, 116,
           ])
         ),
         getAddressEncoder().encode(expectAddress(accounts.signer.value)),
         getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getU32Encoder().encode(expectSome(args.shareAccountId)),
+        getU32Encoder().encode(expectSome(args.stakeAccountId)),
       ],
     });
   }
@@ -181,7 +181,7 @@ export async function getUnstakeEarlyInstructionAsync<
     accounts: [
       getAccountMeta(accounts.signer),
       getAccountMeta(accounts.market),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
     ],
     data: getUnstakeEarlyInstructionDataEncoder().encode(
       args as UnstakeEarlyInstructionDataArgs
@@ -191,38 +191,38 @@ export async function getUnstakeEarlyInstructionAsync<
     TProgramAddress,
     TAccountSigner,
     TAccountMarket,
-    TAccountShareAccount
+    TAccountStakeAccount
   >);
 }
 
 export type UnstakeEarlyInput<
   TAccountSigner extends string = string,
   TAccountMarket extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
   market: Address<TAccountMarket>;
-  shareAccount: Address<TAccountShareAccount>;
-  shareAccountId: UnstakeEarlyInstructionDataArgs['shareAccountId'];
+  stakeAccount: Address<TAccountStakeAccount>;
+  stakeAccountId: UnstakeEarlyInstructionDataArgs['stakeAccountId'];
 };
 
 export function getUnstakeEarlyInstruction<
   TAccountSigner extends string,
   TAccountMarket extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: UnstakeEarlyInput<
     TAccountSigner,
     TAccountMarket,
-    TAccountShareAccount
+    TAccountStakeAccount
   >,
   config?: { programAddress?: TProgramAddress }
 ): UnstakeEarlyInstruction<
   TProgramAddress,
   TAccountSigner,
   TAccountMarket,
-  TAccountShareAccount
+  TAccountStakeAccount
 > {
   // Program address.
   const programAddress =
@@ -232,7 +232,7 @@ export function getUnstakeEarlyInstruction<
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -247,7 +247,7 @@ export function getUnstakeEarlyInstruction<
     accounts: [
       getAccountMeta(accounts.signer),
       getAccountMeta(accounts.market),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
     ],
     data: getUnstakeEarlyInstructionDataEncoder().encode(
       args as UnstakeEarlyInstructionDataArgs
@@ -257,7 +257,7 @@ export function getUnstakeEarlyInstruction<
     TProgramAddress,
     TAccountSigner,
     TAccountMarket,
-    TAccountShareAccount
+    TAccountStakeAccount
   >);
 }
 
@@ -269,7 +269,7 @@ export type ParsedUnstakeEarlyInstruction<
   accounts: {
     signer: TAccountMetas[0];
     market: TAccountMetas[1];
-    shareAccount: TAccountMetas[2];
+    stakeAccount: TAccountMetas[2];
   };
   data: UnstakeEarlyInstructionData;
 };
@@ -297,7 +297,7 @@ export function parseUnstakeEarlyInstruction<
     accounts: {
       signer: getNextAccount(),
       market: getNextAccount(),
-      shareAccount: getNextAccount(),
+      stakeAccount: getNextAccount(),
     },
     data: getUnstakeEarlyInstructionDataDecoder().decode(instruction.data),
   };

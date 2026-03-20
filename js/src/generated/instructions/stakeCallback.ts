@@ -40,22 +40,23 @@ import {
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 import {
-  getBuyOpportunityMarketSharesOutputDecoder,
-  getBuyOpportunityMarketSharesOutputEncoder,
-  type BuyOpportunityMarketSharesOutput,
-  type BuyOpportunityMarketSharesOutputArgs,
+  getStakeOutputDecoder,
+  getStakeOutputEncoder,
+  type StakeOutput,
+  type StakeOutputArgs,
 } from '../types';
 
-export const BUY_OPPORTUNITY_MARKET_SHARES_CALLBACK_DISCRIMINATOR =
-  new Uint8Array([177, 167, 6, 168, 16, 41, 123, 23]);
+export const STAKE_CALLBACK_DISCRIMINATOR = new Uint8Array([
+  40, 220, 36, 47, 6, 116, 132, 89,
+]);
 
-export function getBuyOpportunityMarketSharesCallbackDiscriminatorBytes() {
+export function getStakeCallbackDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    BUY_OPPORTUNITY_MARKET_SHARES_CALLBACK_DISCRIMINATOR
+    STAKE_CALLBACK_DISCRIMINATOR
   );
 }
 
-export type BuyOpportunityMarketSharesCallbackInstruction<
+export type StakeCallbackInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountArciumProgram extends string | AccountMeta<string> =
     'Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ',
@@ -67,7 +68,7 @@ export type BuyOpportunityMarketSharesCallbackInstruction<
     'Sysvar1nstructions1111111111111111111111111',
   TAccountUserEncryptedTokenAccount extends string | AccountMeta<string> =
     string,
-  TAccountShareAccount extends string | AccountMeta<string> = string,
+  TAccountStakeAccount extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -94,41 +95,35 @@ export type BuyOpportunityMarketSharesCallbackInstruction<
       TAccountUserEncryptedTokenAccount extends string
         ? WritableAccount<TAccountUserEncryptedTokenAccount>
         : TAccountUserEncryptedTokenAccount,
-      TAccountShareAccount extends string
-        ? WritableAccount<TAccountShareAccount>
-        : TAccountShareAccount,
+      TAccountStakeAccount extends string
+        ? WritableAccount<TAccountStakeAccount>
+        : TAccountStakeAccount,
       ...TRemainingAccounts,
     ]
   >;
 
-export type BuyOpportunityMarketSharesCallbackInstructionData = {
+export type StakeCallbackInstructionData = {
   discriminator: ReadonlyUint8Array;
   output:
-    | {
-        __kind: 'Success';
-        fields: readonly [BuyOpportunityMarketSharesOutput, Array<number>];
-      }
+    | { __kind: 'Success'; fields: readonly [StakeOutput, Array<number>] }
     | { __kind: 'Failure' }
     | {
         __kind: 'MarkerForIdlBuildDoNotUseThis';
-        fields: readonly [BuyOpportunityMarketSharesOutput];
+        fields: readonly [StakeOutput];
       };
 };
 
-export type BuyOpportunityMarketSharesCallbackInstructionDataArgs = {
+export type StakeCallbackInstructionDataArgs = {
   output:
-    | {
-        __kind: 'Success';
-        fields: readonly [BuyOpportunityMarketSharesOutputArgs, Array<number>];
-      }
+    | { __kind: 'Success'; fields: readonly [StakeOutputArgs, Array<number>] }
     | { __kind: 'Failure' }
     | {
         __kind: 'MarkerForIdlBuildDoNotUseThis';
-        fields: readonly [BuyOpportunityMarketSharesOutputArgs];
+        fields: readonly [StakeOutputArgs];
       };
 };
 
-export function getBuyOpportunityMarketSharesCallbackInstructionDataEncoder(): Encoder<BuyOpportunityMarketSharesCallbackInstructionDataArgs> {
+export function getStakeCallbackInstructionDataEncoder(): Encoder<StakeCallbackInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
@@ -141,7 +136,7 @@ export function getBuyOpportunityMarketSharesCallbackInstructionDataEncoder(): E
               [
                 'fields',
                 getTupleEncoder([
-                  getBuyOpportunityMarketSharesOutputEncoder(),
+                  getStakeOutputEncoder(),
                   getArrayEncoder(getU8Encoder(), { size: 64 }),
                 ]),
               ],
@@ -151,23 +146,17 @@ export function getBuyOpportunityMarketSharesCallbackInstructionDataEncoder(): E
           [
             'MarkerForIdlBuildDoNotUseThis',
             getStructEncoder([
-              [
-                'fields',
-                getTupleEncoder([getBuyOpportunityMarketSharesOutputEncoder()]),
-              ],
+              ['fields', getTupleEncoder([getStakeOutputEncoder()])],
             ]),
           ],
         ]),
       ],
     ]),
-    (value) => ({
-      ...value,
-      discriminator: BUY_OPPORTUNITY_MARKET_SHARES_CALLBACK_DISCRIMINATOR,
-    })
+    (value) => ({ ...value, discriminator: STAKE_CALLBACK_DISCRIMINATOR })
   );
 }
 
-export function getBuyOpportunityMarketSharesCallbackInstructionDataDecoder(): Decoder<BuyOpportunityMarketSharesCallbackInstructionData> {
+export function getStakeCallbackInstructionDataDecoder(): Decoder<StakeCallbackInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     [
@@ -179,7 +168,7 @@ export function getBuyOpportunityMarketSharesCallbackInstructionDataDecoder(): D
             [
               'fields',
               getTupleDecoder([
-                getBuyOpportunityMarketSharesOutputDecoder(),
+                getStakeOutputDecoder(),
                 getArrayDecoder(getU8Decoder(), { size: 64 }),
               ]),
             ],
@@ -189,10 +178,7 @@ export function getBuyOpportunityMarketSharesCallbackInstructionDataDecoder(): D
         [
           'MarkerForIdlBuildDoNotUseThis',
           getStructDecoder([
-            [
-              'fields',
-              getTupleDecoder([getBuyOpportunityMarketSharesOutputDecoder()]),
-            ],
+            ['fields', getTupleDecoder([getStakeOutputDecoder()])],
           ]),
         ],
       ]),
@@ -200,17 +186,17 @@ export function getBuyOpportunityMarketSharesCallbackInstructionDataDecoder(): D
   ]);
 }
 
-export function getBuyOpportunityMarketSharesCallbackInstructionDataCodec(): Codec<
-  BuyOpportunityMarketSharesCallbackInstructionDataArgs,
-  BuyOpportunityMarketSharesCallbackInstructionData
+export function getStakeCallbackInstructionDataCodec(): Codec<
+  StakeCallbackInstructionDataArgs,
+  StakeCallbackInstructionData
 > {
   return combineCodec(
-    getBuyOpportunityMarketSharesCallbackInstructionDataEncoder(),
-    getBuyOpportunityMarketSharesCallbackInstructionDataDecoder()
+    getStakeCallbackInstructionDataEncoder(),
+    getStakeCallbackInstructionDataDecoder()
   );
 }
 
-export type BuyOpportunityMarketSharesCallbackInput<
+export type StakeCallbackInput<
   TAccountArciumProgram extends string = string,
   TAccountCompDefAccount extends string = string,
   TAccountMxeAccount extends string = string,
@@ -218,7 +204,7 @@ export type BuyOpportunityMarketSharesCallbackInput<
   TAccountClusterAccount extends string = string,
   TAccountInstructionsSysvar extends string = string,
   TAccountUserEncryptedTokenAccount extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
 > = {
   arciumProgram?: Address<TAccountArciumProgram>;
   compDefAccount: Address<TAccountCompDefAccount>;
@@ -227,11 +213,11 @@ export type BuyOpportunityMarketSharesCallbackInput<
   clusterAccount: Address<TAccountClusterAccount>;
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
   userEncryptedTokenAccount: Address<TAccountUserEncryptedTokenAccount>;
-  shareAccount: Address<TAccountShareAccount>;
-  output: BuyOpportunityMarketSharesCallbackInstructionDataArgs['output'];
+  stakeAccount: Address<TAccountStakeAccount>;
+  output: StakeCallbackInstructionDataArgs['output'];
 };
 
-export function getBuyOpportunityMarketSharesCallbackInstruction<
+export function getStakeCallbackInstruction<
   TAccountArciumProgram extends string,
   TAccountCompDefAccount extends string,
   TAccountMxeAccount extends string,
@@ -239,10 +225,10 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
   TAccountClusterAccount extends string,
   TAccountInstructionsSysvar extends string,
   TAccountUserEncryptedTokenAccount extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: BuyOpportunityMarketSharesCallbackInput<
+  input: StakeCallbackInput<
     TAccountArciumProgram,
     TAccountCompDefAccount,
     TAccountMxeAccount,
@@ -250,10 +236,10 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountUserEncryptedTokenAccount,
-    TAccountShareAccount
+    TAccountStakeAccount
   >,
   config?: { programAddress?: TProgramAddress }
-): BuyOpportunityMarketSharesCallbackInstruction<
+): StakeCallbackInstruction<
   TProgramAddress,
   TAccountArciumProgram,
   TAccountCompDefAccount,
@@ -262,7 +248,7 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
   TAccountClusterAccount,
   TAccountInstructionsSysvar,
   TAccountUserEncryptedTokenAccount,
-  TAccountShareAccount
+  TAccountStakeAccount
 > {
   // Program address.
   const programAddress =
@@ -286,7 +272,7 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
       value: input.userEncryptedTokenAccount ?? null,
       isWritable: true,
     },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -316,13 +302,13 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
       getAccountMeta(accounts.clusterAccount),
       getAccountMeta(accounts.instructionsSysvar),
       getAccountMeta(accounts.userEncryptedTokenAccount),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
     ],
-    data: getBuyOpportunityMarketSharesCallbackInstructionDataEncoder().encode(
-      args as BuyOpportunityMarketSharesCallbackInstructionDataArgs
+    data: getStakeCallbackInstructionDataEncoder().encode(
+      args as StakeCallbackInstructionDataArgs
     ),
     programAddress,
-  } as BuyOpportunityMarketSharesCallbackInstruction<
+  } as StakeCallbackInstruction<
     TProgramAddress,
     TAccountArciumProgram,
     TAccountCompDefAccount,
@@ -331,11 +317,11 @@ export function getBuyOpportunityMarketSharesCallbackInstruction<
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
     TAccountUserEncryptedTokenAccount,
-    TAccountShareAccount
+    TAccountStakeAccount
   >);
 }
 
-export type ParsedBuyOpportunityMarketSharesCallbackInstruction<
+export type ParsedStakeCallbackInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -348,22 +334,19 @@ export type ParsedBuyOpportunityMarketSharesCallbackInstruction<
     clusterAccount: TAccountMetas[4];
     instructionsSysvar: TAccountMetas[5];
     userEncryptedTokenAccount: TAccountMetas[6];
-    shareAccount: TAccountMetas[7];
+    stakeAccount: TAccountMetas[7];
   };
-  data: BuyOpportunityMarketSharesCallbackInstructionData;
+  data: StakeCallbackInstructionData;
 };
 
-export function parseBuyOpportunityMarketSharesCallbackInstruction<
+export function parseStakeCallbackInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedBuyOpportunityMarketSharesCallbackInstruction<
-  TProgram,
-  TAccountMetas
-> {
+): ParsedStakeCallbackInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -384,10 +367,8 @@ export function parseBuyOpportunityMarketSharesCallbackInstruction<
       clusterAccount: getNextAccount(),
       instructionsSysvar: getNextAccount(),
       userEncryptedTokenAccount: getNextAccount(),
-      shareAccount: getNextAccount(),
+      stakeAccount: getNextAccount(),
     },
-    data: getBuyOpportunityMarketSharesCallbackInstructionDataDecoder().decode(
-      instruction.data
-    ),
+    data: getStakeCallbackInstructionDataDecoder().decode(instruction.data),
   };
 }

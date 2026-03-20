@@ -10,15 +10,15 @@ export interface DoUnstakeEarlyParams extends BaseInstructionParams {
   signer: TransactionSigner;
   market: Address;
   userEta: Address;
-  shareAccountId: number;
-  shareAccountOwner: Address;
+  stakeAccountId: number;
+  stakeAccountOwner: Address;
 }
 
 export async function doUnstakeEarly(
   input: DoUnstakeEarlyParams,
   config: ArciumConfig
 ): Promise<DoUnstakeEarlyInstruction<string>> {
-  const { programAddress, signer, market, userEta, shareAccountId, shareAccountOwner } = input;
+  const { programAddress, signer, market, userEta, stakeAccountId, stakeAccountOwner } = input;
 
   return getDoUnstakeEarlyInstructionAsync(
     {
@@ -26,8 +26,8 @@ export async function doUnstakeEarly(
       signer,
       market,
       userEta,
-      shareAccountId,
-      shareAccountOwner,
+      stakeAccountId,
+      stakeAccountOwner,
     },
     programAddress ? { programAddress } : undefined
   );

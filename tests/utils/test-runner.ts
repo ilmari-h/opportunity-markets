@@ -33,12 +33,12 @@ import {
   wrapEncryptedTokens,
   addMarketOption,
   addMarketOptionAsCreator,
-  initShareAccount,
+  initStakeAccount,
   stake,
   selectWinningOptions as selectWinningOptionsIx,
   revealStake,
   incrementOptionTally,
-  closeShareAccount,
+  closeStakeAccount,
   unstakeEarly as unstakeEarlyIx,
   doUnstakeEarly as doUnstakeEarlyIx,
   openMarket as openMarketIx,
@@ -47,8 +47,8 @@ import {
   awaitComputationFinalization,
   type ComputationResult,
   getEncryptedTokenAccountAddress,
-  getShareAccountAddress as getShareAccountAddressPda,
-  fetchShareAccount,
+  getStakeAccountAddress as getStakeAccountAddressPda,
+  fetchStakeAccount,
   getOpportunityMarketOptionAddress,
   fetchOpportunityMarketOption,
   fetchEncryptedTokenAccount,
@@ -66,7 +66,7 @@ import { getDeployerKeypair } from "./deployer";
 // Types
 // ============================================================================
 
-export interface ShareAccountInfo {
+export interface StakeAccountInfo {
   id: number;
   amount: bigint;
   optionIndex: number;
@@ -81,7 +81,7 @@ interface TestUser {
   x25519Keypair: X25519Keypair;
   tokenAccount: Address;
   encryptedTokenAccount?: Address;
-  shareAccounts: ShareAccountInfo[];
+  stakeAccounts: StakeAccountInfo[];
 }
 
 interface MarketConfig {
@@ -103,7 +103,7 @@ export interface TestRunnerConfig {
 }
 
 // Batch input types
-export interface SharePurchase {
+export interface StakePurchase {
   userId: Address;
   amount: bigint;
   optionIndex: number;
@@ -111,19 +111,19 @@ export interface SharePurchase {
 
 export interface RevealRequest {
   userId: Address;
-  shareAccountId: number;
+  stakeAccountId: number;
 }
 
 export interface TallyIncrement {
   userId: Address;
   optionIndex: number;
-  shareAccountId: number;
+  stakeAccountId: number;
 }
 
 export interface CloseRequest {
   userId: Address;
   optionIndex: number;
-  shareAccountId: number;
+  stakeAccountId: number;
 }
 
 // ============================================================================
@@ -359,7 +359,7 @@ export class TestRunner {
         solanaKeypair: acc.keypair,
         x25519Keypair: acc.x25519Keypair,
         tokenAccount: acc.tokenAccount,
-        shareAccounts: [],
+        stakeAccounts: [],
       };
       runner.users.set(acc.keypair.address.toString(), user);
     }
@@ -370,7 +370,7 @@ export class TestRunner {
       solanaKeypair: creatorAcc.keypair,
       x25519Keypair: creatorAcc.x25519Keypair,
       tokenAccount: creatorAcc.tokenAccount,
-      shareAccounts: [],
+      stakeAccounts: [],
     };
     // Also add creator to users map so they can be looked up
     runner.users.set(creatorAcc.keypair.address.toString(), runner.marketCreator);
@@ -446,12 +446,12 @@ export class TestRunner {
     };
   }
 
-  private getNextShareAccountId(user: TestUser): number {
-    return user.shareAccounts.length;
+  private getNextStakeAccountId(user: TestUser): number {
+    return user.stakeAccounts.length;
   }
 
-  private addShareAccount(user: TestUser, info: ShareAccountInfo): void {
-    user.shareAccounts.push(info);
+  private addStakeAccount(user: TestUser, info: StakeAccountInfo): void {
+    user.stakeAccounts.push(info);
   }
 
   private assertEtaInitialized(user: TestUser): void {
@@ -647,30 +647,30 @@ export class TestRunner {
 
   /**
    * Add a market option as a regular user with an initial stake.
-   * Uses MPC computation and creates a share account.
+   * Uses MPC computation and creates a stake account.
    */
   async addMarketOption(
     userId: Address,
     name: string,
     depositAmount: bigint
-  ): Promise<{ optionIndex: number; shareAccountId: number }> {
+  ): Promise<{ optionIndex: number; stakeAccountId: number }> {
     const user = this.getUser(userId);
     this.assertEtaInitialized(user);
 
     const optionIndex = ++this.optionCount;
     const cipher = createCipher(user.x25519Keypair.secretKey, this.mxePublicKey);
-    const shareAccountId = this.getNextShareAccountId(user);
-    const shareAccountNonce = deserializeLE(randomBytes(16));
+    const stakeAccountId = this.getNextStakeAccountId(user);
+    const stakeAccountNonce = deserializeLE(randomBytes(16));
 
-    // Get share account address first
-    const [shareAccountAddress] = await getShareAccountAddressPda(userId, this.marketAddress, shareAccountId);
+    // Get stake account address first
+    const [stakeAccountAddress] = await getStakeAccountAddressPda(userId, this.marketAddress, stakeAccountId);
 
-    // Init share account instruction
-    const initIx = await initShareAccount({
+    // Init stake account instruction
+    const initIx = await initStakeAccount({
       signer: user.solanaKeypair,
       market: this.marketAddress,
-      stateNonce: shareAccountNonce,
-      shareAccountId,
+      stateNonce: stakeAccountNonce,
+      stakeAccountId,
     });
 
     const inputNonce = randomBytes(16);
@@ -683,9 +683,9 @@ export class TestRunner {
         creator: user.solanaKeypair,
         market: this.marketAddress,
         sourceEta: user.encryptedTokenAccount!,
-        shareAccount: shareAccountAddress,
+        stakeAccount: stakeAccountAddress,
         optionIndex,
-        shareAccountId,
+        stakeAccountId,
         name,
         amountCiphertext: amountCiphertext[0],
         inputNonce: deserializeLE(inputNonce),
@@ -702,33 +702,33 @@ export class TestRunner {
     const result = await awaitComputationFinalization(this.rpc, offset);
     this.assertComputationSucceeded(result, `addMarketOption("${name}")`);
 
-    // Fetch the share account to get the encrypted state
-    const shareAccountData = await fetchShareAccount(this.rpc, shareAccountAddress);
+    // Fetch the stake account to get the encrypted state
+    const stakeAccountData = await fetchStakeAccount(this.rpc, stakeAccountAddress);
 
-    // Store share account info with encrypted state
-    this.addShareAccount(user, {
-      id: shareAccountId,
+    // Store stake account info with encrypted state
+    this.addStakeAccount(user, {
+      id: stakeAccountId,
       amount: depositAmount,
       optionIndex,
-      encryptedState: shareAccountData.data.encryptedState,
-      stateNonce: shareAccountData.data.stateNonce,
-      encryptedStateDisclosure: shareAccountData.data.encryptedStateDisclosure,
-      stateNonceDisclosure: shareAccountData.data.stateNonceDisclosure,
+      encryptedState: stakeAccountData.data.encryptedState,
+      stateNonce: stakeAccountData.data.stateNonce,
+      encryptedStateDisclosure: stakeAccountData.data.encryptedStateDisclosure,
+      stateNonceDisclosure: stakeAccountData.data.stateNonceDisclosure,
     });
 
-    return { optionIndex, shareAccountId };
+    return { optionIndex, stakeAccountId };
   }
 
   // ============================================================================
-  // Share Operations - Batch First
+  // Stake Operations - Batch First
   // ============================================================================
 
   async stakeOnOptionBatch(
-    purchases: SharePurchase[]
+    purchases: StakePurchase[]
   ): Promise<number[]> {
     // Group purchases by user to handle ETA locking correctly
     // Each stake locks the ETA until callback completes, so same-user stakes must be sequential
-    const purchasesByUser = new Map<string, { purchase: SharePurchase; originalIndex: number }[]>();
+    const purchasesByUser = new Map<string, { purchase: StakePurchase; originalIndex: number }[]>();
     for (let i = 0; i < purchases.length; i++) {
       const p = purchases[i];
       const key = p.userId.toString();
@@ -739,7 +739,7 @@ export class TestRunner {
     }
 
     // Results array to maintain original order
-    const results: { shareAccountId: number; originalIndex: number }[] = [];
+    const results: { stakeAccountId: number; originalIndex: number }[] = [];
 
     // Process users in parallel, but each user's purchases sequentially
     await Promise.all(
@@ -749,18 +749,18 @@ export class TestRunner {
           this.assertEtaInitialized(user);
 
           const cipher = createCipher(user.x25519Keypair.secretKey, this.mxePublicKey);
-          const shareAccountId = this.getNextShareAccountId(user);
+          const stakeAccountId = this.getNextStakeAccountId(user);
 
-          // Init share account
-          const initIx = await initShareAccount({
+          // Init stake account
+          const initIx = await initStakeAccount({
             signer: user.solanaKeypair,
             market: this.marketAddress,
             stateNonce: deserializeLE(randomBytes(16)),
-            shareAccountId,
+            stakeAccountId,
           });
 
           await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [initIx], {
-            label: `Init share account`,
+            label: `Init stake account`,
           });
 
           // Stake instruction
@@ -775,7 +775,7 @@ export class TestRunner {
               signer: user.solanaKeypair,
               market: this.marketAddress,
               userEta,
-              shareAccountId,
+              stakeAccountId,
               amountCiphertext: ciphertexts[0],
               selectedOptionCiphertext: ciphertexts[1],
               inputNonce: deserializeLE(inputNonce),
@@ -793,29 +793,29 @@ export class TestRunner {
           const result = await awaitComputationFinalization(this.rpc, computationOffset);
           this.assertComputationSucceeded(result, "stakeOnOption");
 
-          // Fetch the share account to get the encrypted state
-          const [shareAccountAddress] = await getShareAccountAddressPda(p.userId, this.marketAddress, shareAccountId);
-          const shareAccountData = await fetchShareAccount(this.rpc, shareAccountAddress);
+          // Fetch the stake account to get the encrypted state
+          const [stakeAccountAddress] = await getStakeAccountAddressPda(p.userId, this.marketAddress, stakeAccountId);
+          const stakeAccountData = await fetchStakeAccount(this.rpc, stakeAccountAddress);
 
-          // Store share account info with encrypted state
-          this.addShareAccount(user, {
-            id: shareAccountId,
+          // Store stake account info with encrypted state
+          this.addStakeAccount(user, {
+            id: stakeAccountId,
             amount: p.amount,
             optionIndex: p.optionIndex,
-            encryptedState: shareAccountData.data.encryptedState,
-            stateNonce: shareAccountData.data.stateNonce,
-            encryptedStateDisclosure: shareAccountData.data.encryptedStateDisclosure,
-            stateNonceDisclosure: shareAccountData.data.stateNonceDisclosure,
+            encryptedState: stakeAccountData.data.encryptedState,
+            stateNonce: stakeAccountData.data.stateNonce,
+            encryptedStateDisclosure: stakeAccountData.data.encryptedStateDisclosure,
+            stateNonceDisclosure: stakeAccountData.data.stateNonceDisclosure,
           });
 
-          results.push({ shareAccountId, originalIndex });
+          results.push({ stakeAccountId, originalIndex });
         }
       })
     );
 
     // Sort by original index to maintain input order
     results.sort((a, b) => a.originalIndex - b.originalIndex);
-    return results.map((r) => r.shareAccountId);
+    return results.map((r) => r.stakeAccountId);
   }
 
   async stakeOnOption(
@@ -823,8 +823,8 @@ export class TestRunner {
     amount: bigint,
     optionIndex: number
   ): Promise<number> {
-    const [shareAccountId] = await this.stakeOnOptionBatch([{ userId, amount, optionIndex }]);
-    return shareAccountId;
+    const [stakeAccountId] = await this.stakeOnOptionBatch([{ userId, amount, optionIndex }]);
+    return stakeAccountId;
   }
 
   async revealStakeBatch(reveals: RevealRequest[]): Promise<void> {
@@ -853,13 +853,13 @@ export class TestRunner {
               owner: user.solanaKeypair.address,
               market: this.marketAddress,
               userEta,
-              shareAccountId: r.shareAccountId,
+              stakeAccountId: r.stakeAccountId,
             },
             this.getArciumConfig(computationOffset)
           );
 
           await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [ix], {
-            label: `Reveal shares`,
+            label: `Reveal stake`,
           });
 
           // Wait for this computation to finalize before next reveal for this user
@@ -871,17 +871,17 @@ export class TestRunner {
     );
   }
 
-  async revealStake(userId: Address, shareAccountId: number): Promise<void> {
-    await this.revealStakeBatch([{ userId, shareAccountId }]);
+  async revealStake(userId: Address, stakeAccountId: number): Promise<void> {
+    await this.revealStakeBatch([{ userId, stakeAccountId }]);
   }
 
-  async unstakeEarly(userId: Address, shareAccountId: number): Promise<void> {
+  async unstakeEarly(userId: Address, stakeAccountId: number): Promise<void> {
     const user = this.getUser(userId);
 
     const ix = await unstakeEarlyIx({
       signer: user.solanaKeypair,
       market: this.marketAddress,
-      shareAccountId,
+      stakeAccountId,
     });
 
     await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [ix], {
@@ -891,23 +891,23 @@ export class TestRunner {
 
   async doUnstakeEarly(
     executorId: Address,
-    shareOwnerId: Address,
-    shareAccountId: number
+    stakeOwnerId: Address,
+    stakeAccountId: number
   ): Promise<void> {
     const executor = this.getUser(executorId);
-    const owner = this.getUser(shareOwnerId);
+    const owner = this.getUser(stakeOwnerId);
     this.assertEtaInitialized(owner);
 
     const computationOffset = randomComputationOffset();
-    const [userEta] = await getEncryptedTokenAccountAddress(this.mint.address, shareOwnerId);
+    const [userEta] = await getEncryptedTokenAccountAddress(this.mint.address, stakeOwnerId);
 
     const ix = await doUnstakeEarlyIx(
       {
         signer: executor.solanaKeypair,
         market: this.marketAddress,
         userEta,
-        shareAccountId,
-        shareAccountOwner: shareOwnerId,
+        stakeAccountId,
+        stakeAccountOwner: stakeOwnerId,
       },
       this.getArciumConfig(computationOffset)
     );
@@ -929,7 +929,7 @@ export class TestRunner {
           owner: user.solanaKeypair.address,
           market: this.marketAddress,
           optionIndex: inc.optionIndex,
-          shareAccountId: inc.shareAccountId,
+          stakeAccountId: inc.stakeAccountId,
         });
         return { user, ix };
       })
@@ -942,22 +942,22 @@ export class TestRunner {
     }
   }
 
-  async incrementOptionTally(userId: Address, optionIndex: number, shareAccountId: number): Promise<void> {
-    await this.incrementOptionTallyBatch([{ userId, optionIndex, shareAccountId }]);
+  async incrementOptionTally(userId: Address, optionIndex: number, stakeAccountId: number): Promise<void> {
+    await this.incrementOptionTallyBatch([{ userId, optionIndex, stakeAccountId }]);
   }
 
-  async closeShareAccountBatch(closes: CloseRequest[]): Promise<void> {
+  async closeStakeAccountBatch(closes: CloseRequest[]): Promise<void> {
     const instructions = await Promise.all(
       closes.map(async (close) => {
         const user = this.getUser(close.userId);
-        const ix = await closeShareAccount({
+        const ix = await closeStakeAccount({
           owner: user.solanaKeypair,
           market: this.marketAddress,
           tokenMint: this.mint.address,
           ownerTokenAccount: user.tokenAccount,
           tokenProgram: TOKEN_PROGRAM_ADDRESS,
           optionIndex: close.optionIndex,
-          shareAccountId: close.shareAccountId,
+          stakeAccountId: close.stakeAccountId,
         });
         return { user, ix };
       })
@@ -965,13 +965,13 @@ export class TestRunner {
 
     for (const data of instructions) {
       await sendTransaction(this.rpc, this.sendAndConfirm, data.user.solanaKeypair, [data.ix], {
-        label: `Close share account`,
+        label: `Close stake account`,
       });
     }
   }
 
-  async closeShareAccount(userId: Address, optionIndex: number, shareAccountId: number): Promise<void> {
-    await this.closeShareAccountBatch([{ userId, optionIndex, shareAccountId }]);
+  async closeStakeAccount(userId: Address, optionIndex: number, stakeAccountId: number): Promise<void> {
+    await this.closeStakeAccountBatch([{ userId, optionIndex, stakeAccountId }]);
   }
 
   // ============================================================================
@@ -1020,38 +1020,38 @@ export class TestRunner {
     return this.getUser(userId).tokenAccount;
   }
 
-  /** Get a user's share accounts info (id, amount, optionIndex for each) */
-  getUserShareAccounts(userId: Address): ShareAccountInfo[] {
-    return this.getUser(userId).shareAccounts;
+  /** Get a user's stake accounts info (id, amount, optionIndex for each) */
+  getUserStakeAccounts(userId: Address): StakeAccountInfo[] {
+    return this.getUser(userId).stakeAccounts;
   }
 
-  /** Get share accounts for a user filtered by option index */
-  getUserShareAccountsForOption(userId: Address, optionIndex: number): ShareAccountInfo[] {
-    return this.getUser(userId).shareAccounts.filter((sa) => sa.optionIndex === optionIndex);
+  /** Get stake accounts for a user filtered by option index */
+  getUserStakeAccountsForOption(userId: Address, optionIndex: number): StakeAccountInfo[] {
+    return this.getUser(userId).stakeAccounts.filter((sa) => sa.optionIndex === optionIndex);
   }
 
-  /** Get a specific share account by ID */
-  getShareAccountInfo(userId: Address, shareAccountId: number): ShareAccountInfo {
+  /** Get a specific stake account by ID */
+  getStakeAccountInfo(userId: Address, stakeAccountId: number): StakeAccountInfo {
     const user = this.getUser(userId);
-    const shareAccount = user.shareAccounts.find((sa) => sa.id === shareAccountId);
-    if (!shareAccount) {
-      throw new Error(`Share account ${shareAccountId} not found for user ${userId}`);
+    const stakeAccount = user.stakeAccounts.find((sa) => sa.id === stakeAccountId);
+    if (!stakeAccount) {
+      throw new Error(`Stake account ${stakeAccountId} not found for user ${userId}`);
     }
-    return shareAccount;
+    return stakeAccount;
   }
 
   /**
-   * Decrypt the stake amount and option from a share account.
+   * Decrypt the stake amount and option from a stake account.
    * Uses the user's x25519 keypair and MXE public key to derive the cipher.
    * @returns { amount: bigint, optionIndex: bigint }
    */
-  decryptStakeAmount(userId: Address, shareAccountId: number): { amount: bigint; optionIndex: bigint } {
+  decryptStakeAmount(userId: Address, stakeAccountId: number): { amount: bigint; optionIndex: bigint } {
     const user = this.getUser(userId);
-    const shareAccount = this.getShareAccountInfo(userId, shareAccountId);
+    const stakeAccount = this.getStakeAccountInfo(userId, stakeAccountId);
 
     const cipher = createCipher(user.x25519Keypair.secretKey, this.mxePublicKey);
-    const nonceBytes = nonceToBytes(shareAccount.stateNonce);
-    const decrypted = cipher.decrypt(shareAccount.encryptedState, nonceBytes);
+    const nonceBytes = nonceToBytes(stakeAccount.stateNonce);
+    const decrypted = cipher.decrypt(stakeAccount.encryptedState, nonceBytes);
 
     return {
       amount: decrypted[0],
@@ -1060,23 +1060,23 @@ export class TestRunner {
   }
 
   /**
-   * Decrypt the disclosed stake amount and option from a share account.
+   * Decrypt the disclosed stake amount and option from a stake account.
    * Uses the provided x25519 keypair (the authorized reader) and MXE public key to derive the cipher.
-   * @param userId - The owner of the share account
-   * @param shareAccountId - The share account ID
+   * @param userId - The owner of the stake account
+   * @param stakeAccountId - The stake account ID
    * @param readerKeypair - The x25519 keypair of the authorized reader
    * @returns { amount: bigint, optionIndex: bigint }
    */
   decryptDisclosedStakeAmount(
     userId: Address,
-    shareAccountId: number,
+    stakeAccountId: number,
     readerKeypair: X25519Keypair
   ): { amount: bigint; optionIndex: bigint } {
-    const shareAccount = this.getShareAccountInfo(userId, shareAccountId);
+    const stakeAccount = this.getStakeAccountInfo(userId, stakeAccountId);
 
     const cipher = createCipher(readerKeypair.secretKey, this.mxePublicKey);
-    const nonceBytes = nonceToBytes(shareAccount.stateNonceDisclosure);
-    const decrypted = cipher.decrypt(shareAccount.encryptedStateDisclosure, nonceBytes);
+    const nonceBytes = nonceToBytes(stakeAccount.stateNonceDisclosure);
+    const decrypted = cipher.decrypt(stakeAccount.encryptedStateDisclosure, nonceBytes);
 
     return {
       amount: decrypted[0],
@@ -1137,16 +1137,16 @@ export class TestRunner {
     return marketAta;
   }
 
-  /** Get share account PDA address for a user */
-  async getShareAccountAddress(userId: Address, shareAccountId: number): Promise<Address> {
-    const [address] = await getShareAccountAddressPda(userId, this.marketAddress, shareAccountId);
+  /** Get stake account PDA address for a user */
+  async getStakeAccountAddress(userId: Address, stakeAccountId: number): Promise<Address> {
+    const [address] = await getStakeAccountAddressPda(userId, this.marketAddress, stakeAccountId);
     return address;
   }
 
-  /** Fetch a share account */
-  async fetchShareAccountData(userId: Address, shareAccountId: number) {
-    const address = await this.getShareAccountAddress(userId, shareAccountId);
-    return fetchShareAccount(this.rpc, address);
+  /** Fetch a stake account */
+  async fetchStakeAccountData(userId: Address, stakeAccountId: number) {
+    const address = await this.getStakeAccountAddress(userId, stakeAccountId);
+    return fetchStakeAccount(this.rpc, address);
   }
 
   /** Get option PDA address */
