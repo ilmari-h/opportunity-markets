@@ -8,7 +8,7 @@ export * from "./initCompDef";
 export * from "./stake";
 export * from "./wrapEncryptedTokens";
 export * from "./unwrapEncryptedTokens";
-export * from "./revealShares";
+export * from "./revealStake";
 export * from "./addMarketOption";
 export * from "./addMarketOptionAsCreator";
 export * from "./openMarket";

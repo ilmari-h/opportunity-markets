@@ -17,7 +17,7 @@ import {
   getWrapEncryptedTokensCompDefInstruction,
   getUnwrapEncryptedTokensCompDefInstruction,
   getBuyOpportunityMarketSharesCompDefInstruction,
-  getRevealSharesCompDefInstruction,
+  getRevealStakeCompDefInstruction,
   getUnstakeEarlyCompDefInstruction,
   getAddOptionStakeCompDefInstruction,
   getCloseEphemeralEncryptedTokenAccountCompDefInstruction,
@@ -31,7 +31,7 @@ export type CompDefCircuitName =
   | "wrap_encrypted_tokens"
   | "unwrap_encrypted_tokens"
   | "buy_opportunity_market_shares"
-  | "reveal_shares"
+  | "reveal_stake"
   | "unstake_early"
   | "add_option_stake"
   | "close_ephemeral_encrypted_token_account";
@@ -40,7 +40,7 @@ export const ALL_COMP_DEF_CIRCUITS: CompDefCircuitName[] = [
   "wrap_encrypted_tokens",
   "unwrap_encrypted_tokens",
   "buy_opportunity_market_shares",
-  "reveal_shares",
+  "reveal_stake",
   "unstake_early",
   "add_option_stake",
   "close_ephemeral_encrypted_token_account",
@@ -109,8 +109,8 @@ export async function getInitCompDefInstruction(
     case "buy_opportunity_market_shares":
       return getBuyOpportunityMarketSharesCompDefInstruction(baseInput, { programAddress: programId });
 
-    case "reveal_shares":
-      return getRevealSharesCompDefInstruction(baseInput, { programAddress: programId });
+    case "reveal_stake":
+      return getRevealStakeCompDefInstruction(baseInput, { programAddress: programId });
 
     case "unstake_early":
       return getUnstakeEarlyCompDefInstruction(baseInput, { programAddress: programId });

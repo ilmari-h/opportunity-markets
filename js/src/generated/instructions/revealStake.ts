@@ -44,17 +44,17 @@ import {
   type ResolvedAccount,
 } from '../shared';
 
-export const REVEAL_SHARES_DISCRIMINATOR = new Uint8Array([
-  35, 237, 35, 4, 200, 197, 110, 118,
+export const REVEAL_STAKE_DISCRIMINATOR = new Uint8Array([
+  107, 229, 210, 77, 126, 255, 243, 188,
 ]);
 
-export function getRevealSharesDiscriminatorBytes() {
+export function getRevealStakeDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    REVEAL_SHARES_DISCRIMINATOR
+    REVEAL_STAKE_DISCRIMINATOR
   );
 }
 
-export type RevealSharesInstruction<
+export type RevealStakeInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountSigner extends string | AccountMeta<string> = string,
   TAccountOwner extends string | AccountMeta<string> = string,
@@ -134,29 +134,29 @@ export type RevealSharesInstruction<
     ]
   >;
 
-export type RevealSharesInstructionData = {
+export type RevealStakeInstructionData = {
   discriminator: ReadonlyUint8Array;
   computationOffset: bigint;
   shareAccountId: number;
 };
 
-export type RevealSharesInstructionDataArgs = {
+export type RevealStakeInstructionDataArgs = {
   computationOffset: number | bigint;
   shareAccountId: number;
 };
 
-export function getRevealSharesInstructionDataEncoder(): FixedSizeEncoder<RevealSharesInstructionDataArgs> {
+export function getRevealStakeInstructionDataEncoder(): FixedSizeEncoder<RevealStakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['computationOffset', getU64Encoder()],
       ['shareAccountId', getU32Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: REVEAL_SHARES_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: REVEAL_STAKE_DISCRIMINATOR })
   );
 }
 
-export function getRevealSharesInstructionDataDecoder(): FixedSizeDecoder<RevealSharesInstructionData> {
+export function getRevealStakeInstructionDataDecoder(): FixedSizeDecoder<RevealStakeInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['computationOffset', getU64Decoder()],
@@ -164,17 +164,17 @@ export function getRevealSharesInstructionDataDecoder(): FixedSizeDecoder<Reveal
   ]);
 }
 
-export function getRevealSharesInstructionDataCodec(): FixedSizeCodec<
-  RevealSharesInstructionDataArgs,
-  RevealSharesInstructionData
+export function getRevealStakeInstructionDataCodec(): FixedSizeCodec<
+  RevealStakeInstructionDataArgs,
+  RevealStakeInstructionData
 > {
   return combineCodec(
-    getRevealSharesInstructionDataEncoder(),
-    getRevealSharesInstructionDataDecoder()
+    getRevealStakeInstructionDataEncoder(),
+    getRevealStakeInstructionDataDecoder()
   );
 }
 
-export type RevealSharesAsyncInput<
+export type RevealStakeAsyncInput<
   TAccountSigner extends string = string,
   TAccountOwner extends string = string,
   TAccountMarket extends string = string,
@@ -208,11 +208,11 @@ export type RevealSharesAsyncInput<
   clockAccount?: Address<TAccountClockAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
-  computationOffset: RevealSharesInstructionDataArgs['computationOffset'];
-  shareAccountId: RevealSharesInstructionDataArgs['shareAccountId'];
+  computationOffset: RevealStakeInstructionDataArgs['computationOffset'];
+  shareAccountId: RevealStakeInstructionDataArgs['shareAccountId'];
 };
 
-export async function getRevealSharesInstructionAsync<
+export async function getRevealStakeInstructionAsync<
   TAccountSigner extends string,
   TAccountOwner extends string,
   TAccountMarket extends string,
@@ -231,7 +231,7 @@ export async function getRevealSharesInstructionAsync<
   TAccountArciumProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: RevealSharesAsyncInput<
+  input: RevealStakeAsyncInput<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
@@ -251,7 +251,7 @@ export async function getRevealSharesInstructionAsync<
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
-  RevealSharesInstruction<
+  RevealStakeInstruction<
     TProgramAddress,
     TAccountSigner,
     TAccountOwner,
@@ -371,11 +371,11 @@ export async function getRevealSharesInstructionAsync<
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.arciumProgram),
     ],
-    data: getRevealSharesInstructionDataEncoder().encode(
-      args as RevealSharesInstructionDataArgs
+    data: getRevealStakeInstructionDataEncoder().encode(
+      args as RevealStakeInstructionDataArgs
     ),
     programAddress,
-  } as RevealSharesInstruction<
+  } as RevealStakeInstruction<
     TProgramAddress,
     TAccountSigner,
     TAccountOwner,
@@ -396,7 +396,7 @@ export async function getRevealSharesInstructionAsync<
   >);
 }
 
-export type RevealSharesInput<
+export type RevealStakeInput<
   TAccountSigner extends string = string,
   TAccountOwner extends string = string,
   TAccountMarket extends string = string,
@@ -430,11 +430,11 @@ export type RevealSharesInput<
   clockAccount?: Address<TAccountClockAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
-  computationOffset: RevealSharesInstructionDataArgs['computationOffset'];
-  shareAccountId: RevealSharesInstructionDataArgs['shareAccountId'];
+  computationOffset: RevealStakeInstructionDataArgs['computationOffset'];
+  shareAccountId: RevealStakeInstructionDataArgs['shareAccountId'];
 };
 
-export function getRevealSharesInstruction<
+export function getRevealStakeInstruction<
   TAccountSigner extends string,
   TAccountOwner extends string,
   TAccountMarket extends string,
@@ -453,7 +453,7 @@ export function getRevealSharesInstruction<
   TAccountArciumProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: RevealSharesInput<
+  input: RevealStakeInput<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
@@ -472,7 +472,7 @@ export function getRevealSharesInstruction<
     TAccountArciumProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): RevealSharesInstruction<
+): RevealStakeInstruction<
   TProgramAddress,
   TAccountSigner,
   TAccountOwner,
@@ -563,11 +563,11 @@ export function getRevealSharesInstruction<
       getAccountMeta(accounts.systemProgram),
       getAccountMeta(accounts.arciumProgram),
     ],
-    data: getRevealSharesInstructionDataEncoder().encode(
-      args as RevealSharesInstructionDataArgs
+    data: getRevealStakeInstructionDataEncoder().encode(
+      args as RevealStakeInstructionDataArgs
     ),
     programAddress,
-  } as RevealSharesInstruction<
+  } as RevealStakeInstruction<
     TProgramAddress,
     TAccountSigner,
     TAccountOwner,
@@ -588,7 +588,7 @@ export function getRevealSharesInstruction<
   >);
 }
 
-export type ParsedRevealSharesInstruction<
+export type ParsedRevealStakeInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -611,17 +611,17 @@ export type ParsedRevealSharesInstruction<
     systemProgram: TAccountMetas[14];
     arciumProgram: TAccountMetas[15];
   };
-  data: RevealSharesInstructionData;
+  data: RevealStakeInstructionData;
 };
 
-export function parseRevealSharesInstruction<
+export function parseRevealStakeInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedRevealSharesInstruction<TProgram, TAccountMetas> {
+): ParsedRevealStakeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 16) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -652,6 +652,6 @@ export function parseRevealSharesInstruction<
       systemProgram: getNextAccount(),
       arciumProgram: getNextAccount(),
     },
-    data: getRevealSharesInstructionDataDecoder().decode(instruction.data),
+    data: getRevealStakeInstructionDataDecoder().decode(instruction.data),
   };
 }

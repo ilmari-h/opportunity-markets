@@ -1,12 +1,12 @@
 import { type TransactionSigner, type Address } from "@solana/kit";
 import {
-  getRevealSharesInstructionAsync,
-  type RevealSharesInstruction,
+  getRevealStakeInstructionAsync,
+  type RevealStakeInstruction,
 } from "../generated";
 import { type ArciumConfig, getComputeAccounts } from "../arcium/computeAccounts";
 import { type BaseInstructionParams } from "./instructionParams";
 
-export interface RevealSharesParams extends BaseInstructionParams {
+export interface RevealStakeParams extends BaseInstructionParams {
   signer: TransactionSigner;
   owner: Address;
   market: Address;
@@ -14,15 +14,15 @@ export interface RevealSharesParams extends BaseInstructionParams {
   shareAccountId: number;
 }
 
-export async function revealShares(
-  input: RevealSharesParams,
+export async function revealStake(
+  input: RevealStakeParams,
   config: ArciumConfig
-): Promise<RevealSharesInstruction<string>> {
+): Promise<RevealStakeInstruction<string>> {
   const { programAddress, signer, owner, market, userEta, shareAccountId } = input;
 
-  return getRevealSharesInstructionAsync(
+  return getRevealStakeInstructionAsync(
     {
-      ...getComputeAccounts("reveal_shares", config),
+      ...getComputeAccounts("reveal_stake", config),
       signer,
       owner,
       market,

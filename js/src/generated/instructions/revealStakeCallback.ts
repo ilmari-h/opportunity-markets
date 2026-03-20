@@ -40,23 +40,23 @@ import {
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 import {
-  getRevealSharesOutputDecoder,
-  getRevealSharesOutputEncoder,
-  type RevealSharesOutput,
-  type RevealSharesOutputArgs,
+  getRevealStakeOutputDecoder,
+  getRevealStakeOutputEncoder,
+  type RevealStakeOutput,
+  type RevealStakeOutputArgs,
 } from '../types';
 
-export const REVEAL_SHARES_CALLBACK_DISCRIMINATOR = new Uint8Array([
-  181, 56, 156, 218, 30, 234, 255, 68,
+export const REVEAL_STAKE_CALLBACK_DISCRIMINATOR = new Uint8Array([
+  79, 19, 120, 162, 232, 39, 206, 116,
 ]);
 
-export function getRevealSharesCallbackDiscriminatorBytes() {
+export function getRevealStakeCallbackDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    REVEAL_SHARES_CALLBACK_DISCRIMINATOR
+    REVEAL_STAKE_CALLBACK_DISCRIMINATOR
   );
 }
 
-export type RevealSharesCallbackInstruction<
+export type RevealStakeCallbackInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountArciumProgram extends string | AccountMeta<string> =
     'Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ',
@@ -101,34 +101,31 @@ export type RevealSharesCallbackInstruction<
     ]
   >;
 
-export type RevealSharesCallbackInstructionData = {
+export type RevealStakeCallbackInstructionData = {
   discriminator: ReadonlyUint8Array;
   output:
-    | {
-        __kind: 'Success';
-        fields: readonly [RevealSharesOutput, Array<number>];
-      }
+    | { __kind: 'Success'; fields: readonly [RevealStakeOutput, Array<number>] }
     | { __kind: 'Failure' }
     | {
         __kind: 'MarkerForIdlBuildDoNotUseThis';
-        fields: readonly [RevealSharesOutput];
+        fields: readonly [RevealStakeOutput];
       };
 };
 
-export type RevealSharesCallbackInstructionDataArgs = {
+export type RevealStakeCallbackInstructionDataArgs = {
   output:
     | {
         __kind: 'Success';
-        fields: readonly [RevealSharesOutputArgs, Array<number>];
+        fields: readonly [RevealStakeOutputArgs, Array<number>];
       }
     | { __kind: 'Failure' }
     | {
         __kind: 'MarkerForIdlBuildDoNotUseThis';
-        fields: readonly [RevealSharesOutputArgs];
+        fields: readonly [RevealStakeOutputArgs];
       };
 };
 
-export function getRevealSharesCallbackInstructionDataEncoder(): Encoder<RevealSharesCallbackInstructionDataArgs> {
+export function getRevealStakeCallbackInstructionDataEncoder(): Encoder<RevealStakeCallbackInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
@@ -141,7 +138,7 @@ export function getRevealSharesCallbackInstructionDataEncoder(): Encoder<RevealS
               [
                 'fields',
                 getTupleEncoder([
-                  getRevealSharesOutputEncoder(),
+                  getRevealStakeOutputEncoder(),
                   getArrayEncoder(getU8Encoder(), { size: 64 }),
                 ]),
               ],
@@ -151,7 +148,7 @@ export function getRevealSharesCallbackInstructionDataEncoder(): Encoder<RevealS
           [
             'MarkerForIdlBuildDoNotUseThis',
             getStructEncoder([
-              ['fields', getTupleEncoder([getRevealSharesOutputEncoder()])],
+              ['fields', getTupleEncoder([getRevealStakeOutputEncoder()])],
             ]),
           ],
         ]),
@@ -159,12 +156,12 @@ export function getRevealSharesCallbackInstructionDataEncoder(): Encoder<RevealS
     ]),
     (value) => ({
       ...value,
-      discriminator: REVEAL_SHARES_CALLBACK_DISCRIMINATOR,
+      discriminator: REVEAL_STAKE_CALLBACK_DISCRIMINATOR,
     })
   );
 }
 
-export function getRevealSharesCallbackInstructionDataDecoder(): Decoder<RevealSharesCallbackInstructionData> {
+export function getRevealStakeCallbackInstructionDataDecoder(): Decoder<RevealStakeCallbackInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     [
@@ -176,7 +173,7 @@ export function getRevealSharesCallbackInstructionDataDecoder(): Decoder<RevealS
             [
               'fields',
               getTupleDecoder([
-                getRevealSharesOutputDecoder(),
+                getRevealStakeOutputDecoder(),
                 getArrayDecoder(getU8Decoder(), { size: 64 }),
               ]),
             ],
@@ -186,7 +183,7 @@ export function getRevealSharesCallbackInstructionDataDecoder(): Decoder<RevealS
         [
           'MarkerForIdlBuildDoNotUseThis',
           getStructDecoder([
-            ['fields', getTupleDecoder([getRevealSharesOutputDecoder()])],
+            ['fields', getTupleDecoder([getRevealStakeOutputDecoder()])],
           ]),
         ],
       ]),
@@ -194,17 +191,17 @@ export function getRevealSharesCallbackInstructionDataDecoder(): Decoder<RevealS
   ]);
 }
 
-export function getRevealSharesCallbackInstructionDataCodec(): Codec<
-  RevealSharesCallbackInstructionDataArgs,
-  RevealSharesCallbackInstructionData
+export function getRevealStakeCallbackInstructionDataCodec(): Codec<
+  RevealStakeCallbackInstructionDataArgs,
+  RevealStakeCallbackInstructionData
 > {
   return combineCodec(
-    getRevealSharesCallbackInstructionDataEncoder(),
-    getRevealSharesCallbackInstructionDataDecoder()
+    getRevealStakeCallbackInstructionDataEncoder(),
+    getRevealStakeCallbackInstructionDataDecoder()
   );
 }
 
-export type RevealSharesCallbackInput<
+export type RevealStakeCallbackInput<
   TAccountArciumProgram extends string = string,
   TAccountCompDefAccount extends string = string,
   TAccountMxeAccount extends string = string,
@@ -222,10 +219,10 @@ export type RevealSharesCallbackInput<
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
   shareAccount: Address<TAccountShareAccount>;
   userEta: Address<TAccountUserEta>;
-  output: RevealSharesCallbackInstructionDataArgs['output'];
+  output: RevealStakeCallbackInstructionDataArgs['output'];
 };
 
-export function getRevealSharesCallbackInstruction<
+export function getRevealStakeCallbackInstruction<
   TAccountArciumProgram extends string,
   TAccountCompDefAccount extends string,
   TAccountMxeAccount extends string,
@@ -236,7 +233,7 @@ export function getRevealSharesCallbackInstruction<
   TAccountUserEta extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: RevealSharesCallbackInput<
+  input: RevealStakeCallbackInput<
     TAccountArciumProgram,
     TAccountCompDefAccount,
     TAccountMxeAccount,
@@ -247,7 +244,7 @@ export function getRevealSharesCallbackInstruction<
     TAccountUserEta
   >,
   config?: { programAddress?: TProgramAddress }
-): RevealSharesCallbackInstruction<
+): RevealStakeCallbackInstruction<
   TProgramAddress,
   TAccountArciumProgram,
   TAccountCompDefAccount,
@@ -309,11 +306,11 @@ export function getRevealSharesCallbackInstruction<
       getAccountMeta(accounts.shareAccount),
       getAccountMeta(accounts.userEta),
     ],
-    data: getRevealSharesCallbackInstructionDataEncoder().encode(
-      args as RevealSharesCallbackInstructionDataArgs
+    data: getRevealStakeCallbackInstructionDataEncoder().encode(
+      args as RevealStakeCallbackInstructionDataArgs
     ),
     programAddress,
-  } as RevealSharesCallbackInstruction<
+  } as RevealStakeCallbackInstruction<
     TProgramAddress,
     TAccountArciumProgram,
     TAccountCompDefAccount,
@@ -326,7 +323,7 @@ export function getRevealSharesCallbackInstruction<
   >);
 }
 
-export type ParsedRevealSharesCallbackInstruction<
+export type ParsedRevealStakeCallbackInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -341,17 +338,17 @@ export type ParsedRevealSharesCallbackInstruction<
     shareAccount: TAccountMetas[6];
     userEta: TAccountMetas[7];
   };
-  data: RevealSharesCallbackInstructionData;
+  data: RevealStakeCallbackInstructionData;
 };
 
-export function parseRevealSharesCallbackInstruction<
+export function parseRevealStakeCallbackInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedRevealSharesCallbackInstruction<TProgram, TAccountMetas> {
+): ParsedRevealStakeCallbackInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -374,7 +371,7 @@ export function parseRevealSharesCallbackInstruction<
       shareAccount: getNextAccount(),
       userEta: getNextAccount(),
     },
-    data: getRevealSharesCallbackInstructionDataDecoder().decode(
+    data: getRevealStakeCallbackInstructionDataDecoder().decode(
       instruction.data
     ),
   };

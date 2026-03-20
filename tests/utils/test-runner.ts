@@ -36,7 +36,7 @@ import {
   initShareAccount,
   stake,
   selectWinningOptions as selectWinningOptionsIx,
-  revealShares,
+  revealStake,
   incrementOptionTally,
   closeShareAccount,
   unstakeEarly as unstakeEarlyIx,
@@ -827,7 +827,7 @@ export class TestRunner {
     return shareAccountId;
   }
 
-  async revealSharesBatch(reveals: RevealRequest[]): Promise<void> {
+  async revealStakeBatch(reveals: RevealRequest[]): Promise<void> {
     // Group reveals by user to handle ETA locking correctly
     // Each reveal locks the ETA until callback completes, so same-user reveals must be sequential
     const revealsByUser = new Map<string, RevealRequest[]>();
@@ -847,7 +847,7 @@ export class TestRunner {
           const computationOffset = randomComputationOffset();
           const [userEta] = await getEncryptedTokenAccountAddress(this.mint.address, r.userId);
 
-          const ix = await revealShares(
+          const ix = await revealStake(
             {
               signer: user.solanaKeypair,
               owner: user.solanaKeypair.address,
@@ -865,14 +865,14 @@ export class TestRunner {
           // Wait for this computation to finalize before next reveal for this user
           // This ensures the ETA is unlocked by the callback
           const result = await awaitComputationFinalization(this.rpc, computationOffset);
-          this.assertComputationSucceeded(result, "revealShares");
+          this.assertComputationSucceeded(result, "revealStake");
         }
       })
     );
   }
 
-  async revealShares(userId: Address, shareAccountId: number): Promise<void> {
-    await this.revealSharesBatch([{ userId, shareAccountId }]);
+  async revealStake(userId: Address, shareAccountId: number): Promise<void> {
+    await this.revealStakeBatch([{ userId, shareAccountId }]);
   }
 
   async unstakeEarly(userId: Address, shareAccountId: number): Promise<void> {

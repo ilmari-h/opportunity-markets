@@ -33,17 +33,17 @@ import {
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const REVEAL_SHARES_COMP_DEF_DISCRIMINATOR = new Uint8Array([
-  101, 145, 43, 177, 171, 13, 172, 254,
+export const REVEAL_STAKE_COMP_DEF_DISCRIMINATOR = new Uint8Array([
+  197, 20, 216, 132, 43, 99, 64, 0,
 ]);
 
-export function getRevealSharesCompDefDiscriminatorBytes() {
+export function getRevealStakeCompDefDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    REVEAL_SHARES_COMP_DEF_DISCRIMINATOR
+    REVEAL_STAKE_COMP_DEF_DISCRIMINATOR
   );
 }
 
-export type RevealSharesCompDefInstruction<
+export type RevealStakeCompDefInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountPayer extends string | AccountMeta<string> = string,
   TAccountMxeAccount extends string | AccountMeta<string> = string,
@@ -86,39 +86,39 @@ export type RevealSharesCompDefInstruction<
     ]
   >;
 
-export type RevealSharesCompDefInstructionData = {
+export type RevealStakeCompDefInstructionData = {
   discriminator: ReadonlyUint8Array;
 };
 
-export type RevealSharesCompDefInstructionDataArgs = {};
+export type RevealStakeCompDefInstructionDataArgs = {};
 
-export function getRevealSharesCompDefInstructionDataEncoder(): FixedSizeEncoder<RevealSharesCompDefInstructionDataArgs> {
+export function getRevealStakeCompDefInstructionDataEncoder(): FixedSizeEncoder<RevealStakeCompDefInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
     (value) => ({
       ...value,
-      discriminator: REVEAL_SHARES_COMP_DEF_DISCRIMINATOR,
+      discriminator: REVEAL_STAKE_COMP_DEF_DISCRIMINATOR,
     })
   );
 }
 
-export function getRevealSharesCompDefInstructionDataDecoder(): FixedSizeDecoder<RevealSharesCompDefInstructionData> {
+export function getRevealStakeCompDefInstructionDataDecoder(): FixedSizeDecoder<RevealStakeCompDefInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
   ]);
 }
 
-export function getRevealSharesCompDefInstructionDataCodec(): FixedSizeCodec<
-  RevealSharesCompDefInstructionDataArgs,
-  RevealSharesCompDefInstructionData
+export function getRevealStakeCompDefInstructionDataCodec(): FixedSizeCodec<
+  RevealStakeCompDefInstructionDataArgs,
+  RevealStakeCompDefInstructionData
 > {
   return combineCodec(
-    getRevealSharesCompDefInstructionDataEncoder(),
-    getRevealSharesCompDefInstructionDataDecoder()
+    getRevealStakeCompDefInstructionDataEncoder(),
+    getRevealStakeCompDefInstructionDataDecoder()
   );
 }
 
-export type RevealSharesCompDefInput<
+export type RevealStakeCompDefInput<
   TAccountPayer extends string = string,
   TAccountMxeAccount extends string = string,
   TAccountCompDefAccount extends string = string,
@@ -136,7 +136,7 @@ export type RevealSharesCompDefInput<
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export function getRevealSharesCompDefInstruction<
+export function getRevealStakeCompDefInstruction<
   TAccountPayer extends string,
   TAccountMxeAccount extends string,
   TAccountCompDefAccount extends string,
@@ -146,7 +146,7 @@ export function getRevealSharesCompDefInstruction<
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: RevealSharesCompDefInput<
+  input: RevealStakeCompDefInput<
     TAccountPayer,
     TAccountMxeAccount,
     TAccountCompDefAccount,
@@ -156,7 +156,7 @@ export function getRevealSharesCompDefInstruction<
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): RevealSharesCompDefInstruction<
+): RevealStakeCompDefInstruction<
   TProgramAddress,
   TAccountPayer,
   TAccountMxeAccount,
@@ -213,9 +213,9 @@ export function getRevealSharesCompDefInstruction<
       getAccountMeta(accounts.arciumProgram),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getRevealSharesCompDefInstructionDataEncoder().encode({}),
+    data: getRevealStakeCompDefInstructionDataEncoder().encode({}),
     programAddress,
-  } as RevealSharesCompDefInstruction<
+  } as RevealStakeCompDefInstruction<
     TProgramAddress,
     TAccountPayer,
     TAccountMxeAccount,
@@ -227,7 +227,7 @@ export function getRevealSharesCompDefInstruction<
   >);
 }
 
-export type ParsedRevealSharesCompDefInstruction<
+export type ParsedRevealStakeCompDefInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -241,17 +241,17 @@ export type ParsedRevealSharesCompDefInstruction<
     arciumProgram: TAccountMetas[5];
     systemProgram: TAccountMetas[6];
   };
-  data: RevealSharesCompDefInstructionData;
+  data: RevealStakeCompDefInstructionData;
 };
 
-export function parseRevealSharesCompDefInstruction<
+export function parseRevealStakeCompDefInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedRevealSharesCompDefInstruction<TProgram, TAccountMetas> {
+): ParsedRevealStakeCompDefInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -273,7 +273,7 @@ export function parseRevealSharesCompDefInstruction<
       arciumProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getRevealSharesCompDefInstructionDataDecoder().decode(
+    data: getRevealStakeCompDefInstructionDataDecoder().decode(
       instruction.data
     ),
   };

@@ -6,13 +6,13 @@ use crate::error::ErrorCode;
 use crate::events::{emit_ts, StakeRevealedError, StakeRevealedEvent};
 use crate::instructions::stake::SHARE_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, ShareAccount, EncryptedTokenAccount};
-use crate::COMP_DEF_OFFSET_REVEAL_SHARES;
+use crate::COMP_DEF_OFFSET_REVEAL_STAKE;
 use crate::{ArciumSignerAccount, ID, ID_CONST};
 
-#[queue_computation_accounts("reveal_shares", signer)]
+#[queue_computation_accounts("reveal_stake", signer)]
 #[derive(Accounts)]
 #[instruction(computation_offset: u64, share_account_id: u32)]
-pub struct RevealShares<'info> {
+pub struct RevealStake<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
@@ -59,7 +59,7 @@ pub struct RevealShares<'info> {
     #[account(mut, address = derive_comp_pda!(computation_offset, mxe_account, ErrorCode::ClusterNotSet))]
     /// CHECK: computation_account
     pub computation_account: UncheckedAccount<'info>,
-    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_REVEAL_SHARES))]
+    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_REVEAL_STAKE))]
     pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
     #[account(mut, address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet))]
     pub cluster_account: Account<'info, Cluster>,
@@ -74,8 +74,8 @@ pub struct RevealShares<'info> {
 
 // This operation is permissionless:
 // after the staking period has ended and an option has been selected, anyone can reveal anyones vote.
-pub fn reveal_shares(
-    ctx: Context<RevealShares>,
+pub fn reveal_stake(
+    ctx: Context<RevealStake>,
     computation_offset: u64,
     _share_account_id: u32,
 ) -> Result<()> {
@@ -135,7 +135,7 @@ pub fn reveal_shares(
         ctx.accounts,
         computation_offset,
         args,
-        vec![RevealSharesCallback::callback_ix(
+        vec![RevealStakeCallback::callback_ix(
             computation_offset,
             &ctx.accounts.mxe_account,
             &[
@@ -156,11 +156,11 @@ pub fn reveal_shares(
     Ok(())
 }
 
-#[callback_accounts("reveal_shares")]
+#[callback_accounts("reveal_stake")]
 #[derive(Accounts)]
-pub struct RevealSharesCallback<'info> {
+pub struct RevealStakeCallback<'info> {
     pub arcium_program: Program<'info, Arcium>,
-    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_REVEAL_SHARES))]
+    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_REVEAL_STAKE))]
     pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
     #[account(address = derive_mxe_pda!())]
     pub mxe_account: Box<Account<'info, MXEAccount>>,
@@ -179,9 +179,9 @@ pub struct RevealSharesCallback<'info> {
     pub user_eta: Box<Account<'info, EncryptedTokenAccount>>,
 }
 
-pub fn reveal_shares_callback(
-    ctx: Context<RevealSharesCallback>,
-    output: SignedComputationOutputs<RevealSharesOutput>,
+pub fn reveal_stake_callback(
+    ctx: Context<RevealStakeCallback>,
+    output: SignedComputationOutputs<RevealStakeOutput>,
 ) -> Result<()> {
     // Unlock accounts
     ctx.accounts.share_account.locked = false;
@@ -194,7 +194,7 @@ pub fn reveal_shares_callback(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
-        Ok(RevealSharesOutput { field_0 }) => field_0,
+        Ok(RevealStakeOutput { field_0 }) => field_0,
         Err(_) => {
             emit_ts!(StakeRevealedError {
                 user: ctx.accounts.user_eta.owner,

@@ -2446,16 +2446,16 @@
       ]
     },
     {
-      "name": "reveal_shares",
+      "name": "reveal_stake",
       "discriminator": [
-        35,
-        237,
-        35,
-        4,
-        200,
-        197,
-        110,
-        118
+        107,
+        229,
+        210,
+        77,
+        126,
+        255,
+        243,
+        188
       ],
       "accounts": [
         {
@@ -2596,16 +2596,16 @@
       ]
     },
     {
-      "name": "reveal_shares_callback",
+      "name": "reveal_stake_callback",
       "discriminator": [
-        181,
-        56,
-        156,
-        218,
-        30,
-        234,
-        255,
-        68
+        79,
+        19,
+        120,
+        162,
+        232,
+        39,
+        206,
+        116
       ],
       "accounts": [
         {
@@ -2648,7 +2648,7 @@
                   "kind": "type",
                   "type": {
                     "defined": {
-                      "name": "RevealSharesOutput"
+                      "name": "RevealStakeOutput"
                     }
                   }
                 }
@@ -2659,16 +2659,16 @@
       ]
     },
     {
-      "name": "reveal_shares_comp_def",
+      "name": "reveal_stake_comp_def",
       "discriminator": [
-        101,
-        145,
+        197,
+        20,
+        216,
+        132,
         43,
-        177,
-        171,
-        13,
-        172,
-        254
+        99,
+        64,
+        0
       ],
       "accounts": [
         {
@@ -6113,7 +6113,7 @@
       }
     },
     {
-      "name": "RevealSharesOutput",
+      "name": "RevealStakeOutput",
       "docs": [
         "The output of the callback instruction. Provided as a struct with ordered fields",
         "as anchor does not support tuples and tuple structs yet."
@@ -6125,7 +6125,7 @@
             "name": "field_0",
             "type": {
               "defined": {
-                "name": "RevealSharesOutputStruct0"
+                "name": "RevealStakeOutputStruct0"
               }
             }
           }
@@ -6133,7 +6133,7 @@
       }
     },
     {
-      "name": "RevealSharesOutputStruct0",
+      "name": "RevealStakeOutputStruct0",
       "type": {
         "kind": "struct",
         "fields": [

@@ -37,9 +37,9 @@ import {
   type ParsedInitShareAccountInstruction,
   type ParsedInitTokenVaultInstruction,
   type ParsedOpenMarketInstruction,
-  type ParsedRevealSharesCallbackInstruction,
-  type ParsedRevealSharesCompDefInstruction,
-  type ParsedRevealSharesInstruction,
+  type ParsedRevealStakeCallbackInstruction,
+  type ParsedRevealStakeCompDefInstruction,
+  type ParsedRevealStakeInstruction,
   type ParsedSelectWinningOptionsInstruction,
   type ParsedStakeInstruction,
   type ParsedTransferCentralStateAuthorityInstruction,
@@ -239,9 +239,9 @@ export enum OpportunityMarketInstruction {
   InitShareAccount,
   InitTokenVault,
   OpenMarket,
-  RevealShares,
-  RevealSharesCallback,
-  RevealSharesCompDef,
+  RevealStake,
+  RevealStakeCallback,
+  RevealStakeCompDef,
   SelectWinningOptions,
   Stake,
   TransferCentralStateAuthority,
@@ -519,34 +519,34 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([35, 237, 35, 4, 200, 197, 110, 118])
+        new Uint8Array([107, 229, 210, 77, 126, 255, 243, 188])
       ),
       0
     )
   ) {
-    return OpportunityMarketInstruction.RevealShares;
+    return OpportunityMarketInstruction.RevealStake;
   }
   if (
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([181, 56, 156, 218, 30, 234, 255, 68])
+        new Uint8Array([79, 19, 120, 162, 232, 39, 206, 116])
       ),
       0
     )
   ) {
-    return OpportunityMarketInstruction.RevealSharesCallback;
+    return OpportunityMarketInstruction.RevealStakeCallback;
   }
   if (
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([101, 145, 43, 177, 171, 13, 172, 254])
+        new Uint8Array([197, 20, 216, 132, 43, 99, 64, 0])
       ),
       0
     )
   ) {
-    return OpportunityMarketInstruction.RevealSharesCompDef;
+    return OpportunityMarketInstruction.RevealStakeCompDef;
   }
   if (
     containsBytes(
@@ -780,14 +780,14 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.OpenMarket;
     } & ParsedOpenMarketInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.RevealShares;
-    } & ParsedRevealSharesInstruction<TProgram>)
+      instructionType: OpportunityMarketInstruction.RevealStake;
+    } & ParsedRevealStakeInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.RevealSharesCallback;
-    } & ParsedRevealSharesCallbackInstruction<TProgram>)
+      instructionType: OpportunityMarketInstruction.RevealStakeCallback;
+    } & ParsedRevealStakeCallbackInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.RevealSharesCompDef;
-    } & ParsedRevealSharesCompDefInstruction<TProgram>)
+      instructionType: OpportunityMarketInstruction.RevealStakeCompDef;
+    } & ParsedRevealStakeCompDefInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.SelectWinningOptions;
     } & ParsedSelectWinningOptionsInstruction<TProgram>)

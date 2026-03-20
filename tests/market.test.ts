@@ -153,7 +153,7 @@ describe("OpportunityMarket", () => {
     );
 
     // Reveal shares for winners
-    await runner.revealSharesBatch(
+    await runner.revealStakeBatch(
       winners.map((userId, i) => ({ userId, shareAccountId: winnerShareAccounts[i].id }))
     );
 
@@ -383,7 +383,7 @@ describe("OpportunityMarket", () => {
 
     // Reveal ALL share accounts sequentially (one at a time to avoid concurrent MPC issues)
     for (const sa of userShareAccounts) {
-      await runner.revealShares(user, sa.id);
+      await runner.revealStake(user, sa.id);
     }
 
     // Verify all shares are revealed
@@ -543,7 +543,7 @@ describe("OpportunityMarket", () => {
     await sleepUntilOnChainTimestamp(stakeEndTimestamp + 1);
 
     // Reveal shares.
-    await runner.revealShares(staker, shareAccountId);
+    await runner.revealStake(staker, shareAccountId);
     shareAccount = await runner.fetchShareAccountData(staker, shareAccountId);
     expect(shareAccount.data.revealedAmount).to.deep.equal(some(stakeAmount));
     expect(shareAccount.data.revealedOption).to.deep.equal(some(optionA));
@@ -631,8 +631,8 @@ describe("OpportunityMarket", () => {
 
     // Reveal all share accounts (users in parallel, each user's reveals sequential due to ETA locking)
     await Promise.all([
-      runner.revealSharesBatch(u1ShareIds.map(sid => ({ userId: user1, shareAccountId: sid }))),
-      runner.revealSharesBatch(u2ShareIds.map(sid => ({ userId: user2, shareAccountId: sid }))),
+      runner.revealStakeBatch(u1ShareIds.map(sid => ({ userId: user1, shareAccountId: sid }))),
+      runner.revealStakeBatch(u2ShareIds.map(sid => ({ userId: user2, shareAccountId: sid }))),
     ]);
 
     // Increment tally for winning share accounts only (all in parallel)

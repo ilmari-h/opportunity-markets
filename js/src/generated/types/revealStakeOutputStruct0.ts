@@ -25,7 +25,7 @@ import {
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type RevealSharesOutputStruct0 = {
+export type RevealStakeOutputStruct0 = {
   field0: bigint;
   field1: number;
   field2: {
@@ -35,7 +35,7 @@ export type RevealSharesOutputStruct0 = {
   };
 };
 
-export type RevealSharesOutputStruct0Args = {
+export type RevealStakeOutputStruct0Args = {
   field0: number | bigint;
   field1: number;
   field2: {
@@ -45,7 +45,7 @@ export type RevealSharesOutputStruct0Args = {
   };
 };
 
-export function getRevealSharesOutputStruct0Encoder(): FixedSizeEncoder<RevealSharesOutputStruct0Args> {
+export function getRevealStakeOutputStruct0Encoder(): FixedSizeEncoder<RevealStakeOutputStruct0Args> {
   return getStructEncoder([
     ['field0', getU64Encoder()],
     ['field1', getU16Encoder()],
@@ -65,7 +65,7 @@ export function getRevealSharesOutputStruct0Encoder(): FixedSizeEncoder<RevealSh
   ]);
 }
 
-export function getRevealSharesOutputStruct0Decoder(): FixedSizeDecoder<RevealSharesOutputStruct0> {
+export function getRevealStakeOutputStruct0Decoder(): FixedSizeDecoder<RevealStakeOutputStruct0> {
   return getStructDecoder([
     ['field0', getU64Decoder()],
     ['field1', getU16Decoder()],
@@ -85,12 +85,12 @@ export function getRevealSharesOutputStruct0Decoder(): FixedSizeDecoder<RevealSh
   ]);
 }
 
-export function getRevealSharesOutputStruct0Codec(): FixedSizeCodec<
-  RevealSharesOutputStruct0Args,
-  RevealSharesOutputStruct0
+export function getRevealStakeOutputStruct0Codec(): FixedSizeCodec<
+  RevealStakeOutputStruct0Args,
+  RevealStakeOutputStruct0
 > {
   return combineCodec(
-    getRevealSharesOutputStruct0Encoder(),
-    getRevealSharesOutputStruct0Decoder()
+    getRevealStakeOutputStruct0Encoder(),
+    getRevealStakeOutputStruct0Decoder()
   );
 }

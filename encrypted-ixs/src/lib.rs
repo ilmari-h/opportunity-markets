@@ -170,7 +170,7 @@ mod circuits {
     // Reveal shares: decrypt share account and credit ETA
     // If is_eta_initialized is false (state_nonce == 0), treat existing balance as 0
     #[instruction]
-    pub fn reveal_shares(
+    pub fn reveal_stake(
         share_account_ctx: Enc<Shared, SharePurchase>,
         user_eta_ctx: Enc<Shared, EncryptedTokenBalance>,
         is_eta_initialized: bool,

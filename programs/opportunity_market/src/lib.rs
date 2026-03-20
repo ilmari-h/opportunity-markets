@@ -16,7 +16,7 @@ pub use state::*;
 pub const COMP_DEF_OFFSET_WRAP_ENCRYPTED_TOKENS: u32 = comp_def_offset("wrap_encrypted_tokens");
 pub const COMP_DEF_OFFSET_UNWRAP_ENCRYPTED_TOKENS: u32 = comp_def_offset("unwrap_encrypted_tokens");
 pub const COMP_DEF_OFFSET_BUY_OPPORTUNITY_MARKET_SHARES: u32 = comp_def_offset("buy_opportunity_market_shares");
-pub const COMP_DEF_OFFSET_REVEAL_SHARES: u32 = comp_def_offset("reveal_shares");
+pub const COMP_DEF_OFFSET_REVEAL_STAKE: u32 = comp_def_offset("reveal_stake");
 pub const COMP_DEF_OFFSET_UNSTAKE_EARLY: u32 = comp_def_offset("unstake_early");
 pub const COMP_DEF_OFFSET_ADD_OPTION_STAKE: u32 = comp_def_offset("add_option_stake");
 pub const COMP_DEF_OFFSET_CLOSE_EPHEMERAL_ENCRYPTED_TOKEN_ACCOUNT: u32 = comp_def_offset("close_ephemeral_encrypted_token_account");
@@ -35,8 +35,8 @@ pub mod opportunity_market {
         instructions::unwrap_encrypted_tokens_comp_def(ctx)
     }
 
-    pub fn reveal_shares_comp_def(ctx: Context<RevealSharesCompDef>) -> Result<()> {
-        instructions::reveal_shares_comp_def(ctx)
+    pub fn reveal_stake_comp_def(ctx: Context<RevealStakeCompDef>) -> Result<()> {
+        instructions::reveal_stake_comp_def(ctx)
     }
 
     pub fn unstake_early_comp_def(ctx: Context<UnstakeEarlyCompDef>) -> Result<()> {
@@ -266,20 +266,20 @@ pub mod opportunity_market {
     ) -> Result<()> {
         instructions::buy_opportunity_market_shares_callback(ctx, output)
     }
-    pub fn reveal_shares(
-        ctx: Context<RevealShares>,
+    pub fn reveal_stake(
+        ctx: Context<RevealStake>,
         computation_offset: u64,
         share_account_id: u32,
     ) -> Result<()> {
-        instructions::reveal_shares(ctx, computation_offset, share_account_id)
+        instructions::reveal_stake(ctx, computation_offset, share_account_id)
     }
 
-    #[arcium_callback(encrypted_ix = "reveal_shares")]
-    pub fn reveal_shares_callback(
-        ctx: Context<RevealSharesCallback>,
-        output: SignedComputationOutputs<RevealSharesOutput>,
+    #[arcium_callback(encrypted_ix = "reveal_stake")]
+    pub fn reveal_stake_callback(
+        ctx: Context<RevealStakeCallback>,
+        output: SignedComputationOutputs<RevealStakeOutput>,
     ) -> Result<()> {
-        instructions::reveal_shares_callback(ctx, output)
+        instructions::reveal_stake_callback(ctx, output)
     }
 
     pub fn unstake_early(
