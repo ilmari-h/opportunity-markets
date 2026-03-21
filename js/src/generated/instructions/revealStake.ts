@@ -60,7 +60,6 @@ export type RevealStakeInstruction<
   TAccountOwner extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
   TAccountStakeAccount extends string | AccountMeta<string> = string,
-  TAccountUserEta extends string | AccountMeta<string> = string,
   TAccountSignPdaAccount extends string | AccountMeta<string> = string,
   TAccountMxeAccount extends string | AccountMeta<string> = string,
   TAccountMempoolAccount extends string | AccountMeta<string> = string,
@@ -94,9 +93,6 @@ export type RevealStakeInstruction<
       TAccountStakeAccount extends string
         ? WritableAccount<TAccountStakeAccount>
         : TAccountStakeAccount,
-      TAccountUserEta extends string
-        ? WritableAccount<TAccountUserEta>
-        : TAccountUserEta,
       TAccountSignPdaAccount extends string
         ? WritableAccount<TAccountSignPdaAccount>
         : TAccountSignPdaAccount,
@@ -179,7 +175,6 @@ export type RevealStakeAsyncInput<
   TAccountOwner extends string = string,
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
-  TAccountUserEta extends string = string,
   TAccountSignPdaAccount extends string = string,
   TAccountMxeAccount extends string = string,
   TAccountMempoolAccount extends string = string,
@@ -196,7 +191,6 @@ export type RevealStakeAsyncInput<
   owner: Address<TAccountOwner>;
   market: Address<TAccountMarket>;
   stakeAccount?: Address<TAccountStakeAccount>;
-  userEta: Address<TAccountUserEta>;
   signPdaAccount?: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
   mempoolAccount: Address<TAccountMempoolAccount>;
@@ -217,7 +211,6 @@ export async function getRevealStakeInstructionAsync<
   TAccountOwner extends string,
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
-  TAccountUserEta extends string,
   TAccountSignPdaAccount extends string,
   TAccountMxeAccount extends string,
   TAccountMempoolAccount extends string,
@@ -236,7 +229,6 @@ export async function getRevealStakeInstructionAsync<
     TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
-    TAccountUserEta,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -257,7 +249,6 @@ export async function getRevealStakeInstructionAsync<
     TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
-    TAccountUserEta,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -281,7 +272,6 @@ export async function getRevealStakeInstructionAsync<
     owner: { value: input.owner ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
-    userEta: { value: input.userEta ?? null, isWritable: true },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },
     mempoolAccount: { value: input.mempoolAccount ?? null, isWritable: true },
@@ -358,7 +348,6 @@ export async function getRevealStakeInstructionAsync<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
-      getAccountMeta(accounts.userEta),
       getAccountMeta(accounts.signPdaAccount),
       getAccountMeta(accounts.mxeAccount),
       getAccountMeta(accounts.mempoolAccount),
@@ -381,7 +370,6 @@ export async function getRevealStakeInstructionAsync<
     TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
-    TAccountUserEta,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -401,7 +389,6 @@ export type RevealStakeInput<
   TAccountOwner extends string = string,
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
-  TAccountUserEta extends string = string,
   TAccountSignPdaAccount extends string = string,
   TAccountMxeAccount extends string = string,
   TAccountMempoolAccount extends string = string,
@@ -418,7 +405,6 @@ export type RevealStakeInput<
   owner: Address<TAccountOwner>;
   market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
-  userEta: Address<TAccountUserEta>;
   signPdaAccount: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
   mempoolAccount: Address<TAccountMempoolAccount>;
@@ -439,7 +425,6 @@ export function getRevealStakeInstruction<
   TAccountOwner extends string,
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
-  TAccountUserEta extends string,
   TAccountSignPdaAccount extends string,
   TAccountMxeAccount extends string,
   TAccountMempoolAccount extends string,
@@ -458,7 +443,6 @@ export function getRevealStakeInstruction<
     TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
-    TAccountUserEta,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -478,7 +462,6 @@ export function getRevealStakeInstruction<
   TAccountOwner,
   TAccountMarket,
   TAccountStakeAccount,
-  TAccountUserEta,
   TAccountSignPdaAccount,
   TAccountMxeAccount,
   TAccountMempoolAccount,
@@ -501,7 +484,6 @@ export function getRevealStakeInstruction<
     owner: { value: input.owner ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
-    userEta: { value: input.userEta ?? null, isWritable: true },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },
     mempoolAccount: { value: input.mempoolAccount ?? null, isWritable: true },
@@ -550,7 +532,6 @@ export function getRevealStakeInstruction<
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
-      getAccountMeta(accounts.userEta),
       getAccountMeta(accounts.signPdaAccount),
       getAccountMeta(accounts.mxeAccount),
       getAccountMeta(accounts.mempoolAccount),
@@ -573,7 +554,6 @@ export function getRevealStakeInstruction<
     TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
-    TAccountUserEta,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -598,18 +578,17 @@ export type ParsedRevealStakeInstruction<
     owner: TAccountMetas[1];
     market: TAccountMetas[2];
     stakeAccount: TAccountMetas[3];
-    userEta: TAccountMetas[4];
-    signPdaAccount: TAccountMetas[5];
-    mxeAccount: TAccountMetas[6];
-    mempoolAccount: TAccountMetas[7];
-    executingPool: TAccountMetas[8];
-    computationAccount: TAccountMetas[9];
-    compDefAccount: TAccountMetas[10];
-    clusterAccount: TAccountMetas[11];
-    poolAccount: TAccountMetas[12];
-    clockAccount: TAccountMetas[13];
-    systemProgram: TAccountMetas[14];
-    arciumProgram: TAccountMetas[15];
+    signPdaAccount: TAccountMetas[4];
+    mxeAccount: TAccountMetas[5];
+    mempoolAccount: TAccountMetas[6];
+    executingPool: TAccountMetas[7];
+    computationAccount: TAccountMetas[8];
+    compDefAccount: TAccountMetas[9];
+    clusterAccount: TAccountMetas[10];
+    poolAccount: TAccountMetas[11];
+    clockAccount: TAccountMetas[12];
+    systemProgram: TAccountMetas[13];
+    arciumProgram: TAccountMetas[14];
   };
   data: RevealStakeInstructionData;
 };
@@ -622,7 +601,7 @@ export function parseRevealStakeInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedRevealStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 16) {
+  if (instruction.accounts.length < 15) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -639,7 +618,6 @@ export function parseRevealStakeInstruction<
       owner: getNextAccount(),
       market: getNextAccount(),
       stakeAccount: getNextAccount(),
-      userEta: getNextAccount(),
       signPdaAccount: getNextAccount(),
       mxeAccount: getNextAccount(),
       mempoolAccount: getNextAccount(),

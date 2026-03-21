@@ -67,7 +67,6 @@ export type RevealStakeCallbackInstruction<
   TAccountInstructionsSysvar extends string | AccountMeta<string> =
     'Sysvar1nstructions1111111111111111111111111',
   TAccountStakeAccount extends string | AccountMeta<string> = string,
-  TAccountUserEta extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -94,9 +93,6 @@ export type RevealStakeCallbackInstruction<
       TAccountStakeAccount extends string
         ? WritableAccount<TAccountStakeAccount>
         : TAccountStakeAccount,
-      TAccountUserEta extends string
-        ? WritableAccount<TAccountUserEta>
-        : TAccountUserEta,
       ...TRemainingAccounts,
     ]
   >;
@@ -209,7 +205,6 @@ export type RevealStakeCallbackInput<
   TAccountClusterAccount extends string = string,
   TAccountInstructionsSysvar extends string = string,
   TAccountStakeAccount extends string = string,
-  TAccountUserEta extends string = string,
 > = {
   arciumProgram?: Address<TAccountArciumProgram>;
   compDefAccount: Address<TAccountCompDefAccount>;
@@ -218,7 +213,6 @@ export type RevealStakeCallbackInput<
   clusterAccount: Address<TAccountClusterAccount>;
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
   stakeAccount: Address<TAccountStakeAccount>;
-  userEta: Address<TAccountUserEta>;
   output: RevealStakeCallbackInstructionDataArgs['output'];
 };
 
@@ -230,7 +224,6 @@ export function getRevealStakeCallbackInstruction<
   TAccountClusterAccount extends string,
   TAccountInstructionsSysvar extends string,
   TAccountStakeAccount extends string,
-  TAccountUserEta extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: RevealStakeCallbackInput<
@@ -240,8 +233,7 @@ export function getRevealStakeCallbackInstruction<
     TAccountComputationAccount,
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
-    TAccountStakeAccount,
-    TAccountUserEta
+    TAccountStakeAccount
   >,
   config?: { programAddress?: TProgramAddress }
 ): RevealStakeCallbackInstruction<
@@ -252,8 +244,7 @@ export function getRevealStakeCallbackInstruction<
   TAccountComputationAccount,
   TAccountClusterAccount,
   TAccountInstructionsSysvar,
-  TAccountStakeAccount,
-  TAccountUserEta
+  TAccountStakeAccount
 > {
   // Program address.
   const programAddress =
@@ -274,7 +265,6 @@ export function getRevealStakeCallbackInstruction<
       isWritable: false,
     },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
-    userEta: { value: input.userEta ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -304,7 +294,6 @@ export function getRevealStakeCallbackInstruction<
       getAccountMeta(accounts.clusterAccount),
       getAccountMeta(accounts.instructionsSysvar),
       getAccountMeta(accounts.stakeAccount),
-      getAccountMeta(accounts.userEta),
     ],
     data: getRevealStakeCallbackInstructionDataEncoder().encode(
       args as RevealStakeCallbackInstructionDataArgs
@@ -318,8 +307,7 @@ export function getRevealStakeCallbackInstruction<
     TAccountComputationAccount,
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
-    TAccountStakeAccount,
-    TAccountUserEta
+    TAccountStakeAccount
   >);
 }
 
@@ -336,7 +324,6 @@ export type ParsedRevealStakeCallbackInstruction<
     clusterAccount: TAccountMetas[4];
     instructionsSysvar: TAccountMetas[5];
     stakeAccount: TAccountMetas[6];
-    userEta: TAccountMetas[7];
   };
   data: RevealStakeCallbackInstructionData;
 };
@@ -349,7 +336,7 @@ export function parseRevealStakeCallbackInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedRevealStakeCallbackInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -369,7 +356,6 @@ export function parseRevealStakeCallbackInstruction<
       clusterAccount: getNextAccount(),
       instructionsSysvar: getNextAccount(),
       stakeAccount: getNextAccount(),
-      userEta: getNextAccount(),
     },
     data: getRevealStakeCallbackInstructionDataDecoder().decode(
       instruction.data

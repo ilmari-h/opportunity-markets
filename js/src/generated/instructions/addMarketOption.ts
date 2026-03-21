@@ -72,8 +72,13 @@ export type AddMarketOptionInstruction<
   TAccountMarket extends string | AccountMeta<string> = string,
   TAccountCentralState extends string | AccountMeta<string> = string,
   TAccountOption extends string | AccountMeta<string> = string,
-  TAccountSourceEta extends string | AccountMeta<string> = string,
   TAccountStakeAccount extends string | AccountMeta<string> = string,
+  TAccountTokenMint extends string | AccountMeta<string> = string,
+  TAccountCreatorTokenAccount extends string | AccountMeta<string> = string,
+  TAccountMarketTokenAta extends string | AccountMeta<string> = string,
+  TAccountTokenVault extends string | AccountMeta<string> = string,
+  TAccountTokenVaultAta extends string | AccountMeta<string> = string,
+  TAccountTokenProgram extends string | AccountMeta<string> = string,
   TAccountSignPdaAccount extends string | AccountMeta<string> = string,
   TAccountMxeAccount extends string | AccountMeta<string> = string,
   TAccountMempoolAccount extends string | AccountMeta<string> = string,
@@ -107,12 +112,27 @@ export type AddMarketOptionInstruction<
       TAccountOption extends string
         ? WritableAccount<TAccountOption>
         : TAccountOption,
-      TAccountSourceEta extends string
-        ? WritableAccount<TAccountSourceEta>
-        : TAccountSourceEta,
       TAccountStakeAccount extends string
         ? WritableAccount<TAccountStakeAccount>
         : TAccountStakeAccount,
+      TAccountTokenMint extends string
+        ? ReadonlyAccount<TAccountTokenMint>
+        : TAccountTokenMint,
+      TAccountCreatorTokenAccount extends string
+        ? WritableAccount<TAccountCreatorTokenAccount>
+        : TAccountCreatorTokenAccount,
+      TAccountMarketTokenAta extends string
+        ? WritableAccount<TAccountMarketTokenAta>
+        : TAccountMarketTokenAta,
+      TAccountTokenVault extends string
+        ? WritableAccount<TAccountTokenVault>
+        : TAccountTokenVault,
+      TAccountTokenVaultAta extends string
+        ? WritableAccount<TAccountTokenVaultAta>
+        : TAccountTokenVaultAta,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
       TAccountSignPdaAccount extends string
         ? WritableAccount<TAccountSignPdaAccount>
         : TAccountSignPdaAccount,
@@ -156,9 +176,11 @@ export type AddMarketOptionInstructionData = {
   optionIndex: number;
   stakeAccountId: number;
   name: string;
-  amountCiphertext: Array<number>;
+  amount: bigint;
+  selectedOptionCiphertext: Array<number>;
   inputNonce: bigint;
   authorizedReaderNonce: bigint;
+  userPubkey: Array<number>;
 };
 
 export type AddMarketOptionInstructionDataArgs = {
@@ -166,9 +188,11 @@ export type AddMarketOptionInstructionDataArgs = {
   optionIndex: number;
   stakeAccountId: number;
   name: string;
-  amountCiphertext: Array<number>;
+  amount: number | bigint;
+  selectedOptionCiphertext: Array<number>;
   inputNonce: number | bigint;
   authorizedReaderNonce: number | bigint;
+  userPubkey: Array<number>;
 };
 
 export function getAddMarketOptionInstructionDataEncoder(): Encoder<AddMarketOptionInstructionDataArgs> {
@@ -179,9 +203,14 @@ export function getAddMarketOptionInstructionDataEncoder(): Encoder<AddMarketOpt
       ['optionIndex', getU16Encoder()],
       ['stakeAccountId', getU32Encoder()],
       ['name', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
-      ['amountCiphertext', getArrayEncoder(getU8Encoder(), { size: 32 })],
+      ['amount', getU64Encoder()],
+      [
+        'selectedOptionCiphertext',
+        getArrayEncoder(getU8Encoder(), { size: 32 }),
+      ],
       ['inputNonce', getU128Encoder()],
       ['authorizedReaderNonce', getU128Encoder()],
+      ['userPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
     ]),
     (value) => ({ ...value, discriminator: ADD_MARKET_OPTION_DISCRIMINATOR })
   );
@@ -194,9 +223,11 @@ export function getAddMarketOptionInstructionDataDecoder(): Decoder<AddMarketOpt
     ['optionIndex', getU16Decoder()],
     ['stakeAccountId', getU32Decoder()],
     ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
-    ['amountCiphertext', getArrayDecoder(getU8Decoder(), { size: 32 })],
+    ['amount', getU64Decoder()],
+    ['selectedOptionCiphertext', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['inputNonce', getU128Decoder()],
     ['authorizedReaderNonce', getU128Decoder()],
+    ['userPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
   ]);
 }
 
@@ -215,8 +246,13 @@ export type AddMarketOptionAsyncInput<
   TAccountMarket extends string = string,
   TAccountCentralState extends string = string,
   TAccountOption extends string = string,
-  TAccountSourceEta extends string = string,
   TAccountStakeAccount extends string = string,
+  TAccountTokenMint extends string = string,
+  TAccountCreatorTokenAccount extends string = string,
+  TAccountMarketTokenAta extends string = string,
+  TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
+  TAccountTokenProgram extends string = string,
   TAccountSignPdaAccount extends string = string,
   TAccountMxeAccount extends string = string,
   TAccountMempoolAccount extends string = string,
@@ -233,8 +269,16 @@ export type AddMarketOptionAsyncInput<
   market: Address<TAccountMarket>;
   centralState?: Address<TAccountCentralState>;
   option?: Address<TAccountOption>;
-  sourceEta: Address<TAccountSourceEta>;
   stakeAccount?: Address<TAccountStakeAccount>;
+  tokenMint: Address<TAccountTokenMint>;
+  creatorTokenAccount: Address<TAccountCreatorTokenAccount>;
+  /** Market's ATA for holding staked tokens */
+  marketTokenAta?: Address<TAccountMarketTokenAta>;
+  /** Token vault for fee collection */
+  tokenVault?: Address<TAccountTokenVault>;
+  /** Token vault ATA for fee tokens */
+  tokenVaultAta?: Address<TAccountTokenVaultAta>;
+  tokenProgram: Address<TAccountTokenProgram>;
   signPdaAccount?: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
   mempoolAccount: Address<TAccountMempoolAccount>;
@@ -250,9 +294,11 @@ export type AddMarketOptionAsyncInput<
   optionIndex: AddMarketOptionInstructionDataArgs['optionIndex'];
   stakeAccountId: AddMarketOptionInstructionDataArgs['stakeAccountId'];
   name: AddMarketOptionInstructionDataArgs['name'];
-  amountCiphertext: AddMarketOptionInstructionDataArgs['amountCiphertext'];
+  amount: AddMarketOptionInstructionDataArgs['amount'];
+  selectedOptionCiphertext: AddMarketOptionInstructionDataArgs['selectedOptionCiphertext'];
   inputNonce: AddMarketOptionInstructionDataArgs['inputNonce'];
   authorizedReaderNonce: AddMarketOptionInstructionDataArgs['authorizedReaderNonce'];
+  userPubkey: AddMarketOptionInstructionDataArgs['userPubkey'];
 };
 
 export async function getAddMarketOptionInstructionAsync<
@@ -260,8 +306,13 @@ export async function getAddMarketOptionInstructionAsync<
   TAccountMarket extends string,
   TAccountCentralState extends string,
   TAccountOption extends string,
-  TAccountSourceEta extends string,
   TAccountStakeAccount extends string,
+  TAccountTokenMint extends string,
+  TAccountCreatorTokenAccount extends string,
+  TAccountMarketTokenAta extends string,
+  TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
+  TAccountTokenProgram extends string,
   TAccountSignPdaAccount extends string,
   TAccountMxeAccount extends string,
   TAccountMempoolAccount extends string,
@@ -280,8 +331,13 @@ export async function getAddMarketOptionInstructionAsync<
     TAccountMarket,
     TAccountCentralState,
     TAccountOption,
-    TAccountSourceEta,
     TAccountStakeAccount,
+    TAccountTokenMint,
+    TAccountCreatorTokenAccount,
+    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -302,8 +358,13 @@ export async function getAddMarketOptionInstructionAsync<
     TAccountMarket,
     TAccountCentralState,
     TAccountOption,
-    TAccountSourceEta,
     TAccountStakeAccount,
+    TAccountTokenMint,
+    TAccountCreatorTokenAccount,
+    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -327,8 +388,16 @@ export async function getAddMarketOptionInstructionAsync<
     market: { value: input.market ?? null, isWritable: true },
     centralState: { value: input.centralState ?? null, isWritable: false },
     option: { value: input.option ?? null, isWritable: true },
-    sourceEta: { value: input.sourceEta ?? null, isWritable: true },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
+    tokenMint: { value: input.tokenMint ?? null, isWritable: false },
+    creatorTokenAccount: {
+      value: input.creatorTokenAccount ?? null,
+      isWritable: true,
+    },
+    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
+    tokenVault: { value: input.tokenVault ?? null, isWritable: true },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },
     mempoolAccount: { value: input.mempoolAccount ?? null, isWritable: true },
@@ -392,6 +461,39 @@ export async function getAddMarketOptionInstructionAsync<
       ],
     });
   }
+  if (!accounts.marketTokenAta.value) {
+    accounts.marketTokenAta.value = await getProgramDerivedAddress({
+      programAddress:
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
+      seeds: [
+        getAddressEncoder().encode(expectAddress(accounts.market.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
+      ],
+    });
+  }
+  if (!accounts.tokenVault.value) {
+    accounts.tokenVault.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(
+          new Uint8Array([116, 111, 107, 101, 110, 95, 118, 97, 117, 108, 116])
+        ),
+        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
+      ],
+    });
+  }
+  if (!accounts.tokenVaultAta.value) {
+    accounts.tokenVaultAta.value = await getProgramDerivedAddress({
+      programAddress:
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
+      seeds: [
+        getAddressEncoder().encode(expectAddress(accounts.tokenVault.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
+      ],
+    });
+  }
   if (!accounts.signPdaAccount.value) {
     accounts.signPdaAccount.value = await getProgramDerivedAddress({
       programAddress,
@@ -429,8 +531,13 @@ export async function getAddMarketOptionInstructionAsync<
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.centralState),
       getAccountMeta(accounts.option),
-      getAccountMeta(accounts.sourceEta),
       getAccountMeta(accounts.stakeAccount),
+      getAccountMeta(accounts.tokenMint),
+      getAccountMeta(accounts.creatorTokenAccount),
+      getAccountMeta(accounts.marketTokenAta),
+      getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.signPdaAccount),
       getAccountMeta(accounts.mxeAccount),
       getAccountMeta(accounts.mempoolAccount),
@@ -453,8 +560,13 @@ export async function getAddMarketOptionInstructionAsync<
     TAccountMarket,
     TAccountCentralState,
     TAccountOption,
-    TAccountSourceEta,
     TAccountStakeAccount,
+    TAccountTokenMint,
+    TAccountCreatorTokenAccount,
+    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -474,8 +586,13 @@ export type AddMarketOptionInput<
   TAccountMarket extends string = string,
   TAccountCentralState extends string = string,
   TAccountOption extends string = string,
-  TAccountSourceEta extends string = string,
   TAccountStakeAccount extends string = string,
+  TAccountTokenMint extends string = string,
+  TAccountCreatorTokenAccount extends string = string,
+  TAccountMarketTokenAta extends string = string,
+  TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
+  TAccountTokenProgram extends string = string,
   TAccountSignPdaAccount extends string = string,
   TAccountMxeAccount extends string = string,
   TAccountMempoolAccount extends string = string,
@@ -492,8 +609,16 @@ export type AddMarketOptionInput<
   market: Address<TAccountMarket>;
   centralState: Address<TAccountCentralState>;
   option: Address<TAccountOption>;
-  sourceEta: Address<TAccountSourceEta>;
   stakeAccount: Address<TAccountStakeAccount>;
+  tokenMint: Address<TAccountTokenMint>;
+  creatorTokenAccount: Address<TAccountCreatorTokenAccount>;
+  /** Market's ATA for holding staked tokens */
+  marketTokenAta: Address<TAccountMarketTokenAta>;
+  /** Token vault for fee collection */
+  tokenVault: Address<TAccountTokenVault>;
+  /** Token vault ATA for fee tokens */
+  tokenVaultAta: Address<TAccountTokenVaultAta>;
+  tokenProgram: Address<TAccountTokenProgram>;
   signPdaAccount: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
   mempoolAccount: Address<TAccountMempoolAccount>;
@@ -509,9 +634,11 @@ export type AddMarketOptionInput<
   optionIndex: AddMarketOptionInstructionDataArgs['optionIndex'];
   stakeAccountId: AddMarketOptionInstructionDataArgs['stakeAccountId'];
   name: AddMarketOptionInstructionDataArgs['name'];
-  amountCiphertext: AddMarketOptionInstructionDataArgs['amountCiphertext'];
+  amount: AddMarketOptionInstructionDataArgs['amount'];
+  selectedOptionCiphertext: AddMarketOptionInstructionDataArgs['selectedOptionCiphertext'];
   inputNonce: AddMarketOptionInstructionDataArgs['inputNonce'];
   authorizedReaderNonce: AddMarketOptionInstructionDataArgs['authorizedReaderNonce'];
+  userPubkey: AddMarketOptionInstructionDataArgs['userPubkey'];
 };
 
 export function getAddMarketOptionInstruction<
@@ -519,8 +646,13 @@ export function getAddMarketOptionInstruction<
   TAccountMarket extends string,
   TAccountCentralState extends string,
   TAccountOption extends string,
-  TAccountSourceEta extends string,
   TAccountStakeAccount extends string,
+  TAccountTokenMint extends string,
+  TAccountCreatorTokenAccount extends string,
+  TAccountMarketTokenAta extends string,
+  TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
+  TAccountTokenProgram extends string,
   TAccountSignPdaAccount extends string,
   TAccountMxeAccount extends string,
   TAccountMempoolAccount extends string,
@@ -539,8 +671,13 @@ export function getAddMarketOptionInstruction<
     TAccountMarket,
     TAccountCentralState,
     TAccountOption,
-    TAccountSourceEta,
     TAccountStakeAccount,
+    TAccountTokenMint,
+    TAccountCreatorTokenAccount,
+    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -560,8 +697,13 @@ export function getAddMarketOptionInstruction<
   TAccountMarket,
   TAccountCentralState,
   TAccountOption,
-  TAccountSourceEta,
   TAccountStakeAccount,
+  TAccountTokenMint,
+  TAccountCreatorTokenAccount,
+  TAccountMarketTokenAta,
+  TAccountTokenVault,
+  TAccountTokenVaultAta,
+  TAccountTokenProgram,
   TAccountSignPdaAccount,
   TAccountMxeAccount,
   TAccountMempoolAccount,
@@ -584,8 +726,16 @@ export function getAddMarketOptionInstruction<
     market: { value: input.market ?? null, isWritable: true },
     centralState: { value: input.centralState ?? null, isWritable: false },
     option: { value: input.option ?? null, isWritable: true },
-    sourceEta: { value: input.sourceEta ?? null, isWritable: true },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
+    tokenMint: { value: input.tokenMint ?? null, isWritable: false },
+    creatorTokenAccount: {
+      value: input.creatorTokenAccount ?? null,
+      isWritable: true,
+    },
+    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
+    tokenVault: { value: input.tokenVault ?? null, isWritable: true },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },
     mempoolAccount: { value: input.mempoolAccount ?? null, isWritable: true },
@@ -634,8 +784,13 @@ export function getAddMarketOptionInstruction<
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.centralState),
       getAccountMeta(accounts.option),
-      getAccountMeta(accounts.sourceEta),
       getAccountMeta(accounts.stakeAccount),
+      getAccountMeta(accounts.tokenMint),
+      getAccountMeta(accounts.creatorTokenAccount),
+      getAccountMeta(accounts.marketTokenAta),
+      getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.signPdaAccount),
       getAccountMeta(accounts.mxeAccount),
       getAccountMeta(accounts.mempoolAccount),
@@ -658,8 +813,13 @@ export function getAddMarketOptionInstruction<
     TAccountMarket,
     TAccountCentralState,
     TAccountOption,
-    TAccountSourceEta,
     TAccountStakeAccount,
+    TAccountTokenMint,
+    TAccountCreatorTokenAccount,
+    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -684,19 +844,27 @@ export type ParsedAddMarketOptionInstruction<
     market: TAccountMetas[1];
     centralState: TAccountMetas[2];
     option: TAccountMetas[3];
-    sourceEta: TAccountMetas[4];
-    stakeAccount: TAccountMetas[5];
-    signPdaAccount: TAccountMetas[6];
-    mxeAccount: TAccountMetas[7];
-    mempoolAccount: TAccountMetas[8];
-    executingPool: TAccountMetas[9];
-    computationAccount: TAccountMetas[10];
-    compDefAccount: TAccountMetas[11];
-    clusterAccount: TAccountMetas[12];
-    poolAccount: TAccountMetas[13];
-    clockAccount: TAccountMetas[14];
-    systemProgram: TAccountMetas[15];
-    arciumProgram: TAccountMetas[16];
+    stakeAccount: TAccountMetas[4];
+    tokenMint: TAccountMetas[5];
+    creatorTokenAccount: TAccountMetas[6];
+    /** Market's ATA for holding staked tokens */
+    marketTokenAta: TAccountMetas[7];
+    /** Token vault for fee collection */
+    tokenVault: TAccountMetas[8];
+    /** Token vault ATA for fee tokens */
+    tokenVaultAta: TAccountMetas[9];
+    tokenProgram: TAccountMetas[10];
+    signPdaAccount: TAccountMetas[11];
+    mxeAccount: TAccountMetas[12];
+    mempoolAccount: TAccountMetas[13];
+    executingPool: TAccountMetas[14];
+    computationAccount: TAccountMetas[15];
+    compDefAccount: TAccountMetas[16];
+    clusterAccount: TAccountMetas[17];
+    poolAccount: TAccountMetas[18];
+    clockAccount: TAccountMetas[19];
+    systemProgram: TAccountMetas[20];
+    arciumProgram: TAccountMetas[21];
   };
   data: AddMarketOptionInstructionData;
 };
@@ -709,7 +877,7 @@ export function parseAddMarketOptionInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedAddMarketOptionInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 17) {
+  if (instruction.accounts.length < 22) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -726,8 +894,13 @@ export function parseAddMarketOptionInstruction<
       market: getNextAccount(),
       centralState: getNextAccount(),
       option: getNextAccount(),
-      sourceEta: getNextAccount(),
       stakeAccount: getNextAccount(),
+      tokenMint: getNextAccount(),
+      creatorTokenAccount: getNextAccount(),
+      marketTokenAta: getNextAccount(),
+      tokenVault: getNextAccount(),
+      tokenVaultAta: getNextAccount(),
+      tokenProgram: getNextAccount(),
       signPdaAccount: getNextAccount(),
       mxeAccount: getNextAccount(),
       mempoolAccount: getNextAccount(),

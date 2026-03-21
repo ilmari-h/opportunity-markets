@@ -22,6 +22,10 @@ pub struct CloseStakeAccount<'info> {
         seeds = [STAKE_ACCOUNT_SEED, owner.key().as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump = stake_account.bump,
         close = owner,
+        // Staked tokens must have been returned before closing
+        constraint = stake_account.stake_reclaimed
+            || stake_account.unstaked_at_timestamp.is_some()
+            @ ErrorCode::InvalidAccountState,
     )]
     pub stake_account: Account<'info, StakeAccount>,
 
@@ -81,17 +85,16 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_index: u16, _
 
     if market.reward_withdrawn {
         // Reward was withdrawn — no reveal required, no reward to distribute.
-        // Just emit the event with zeroed fields and close the account.
         emit_ts!(RewardClaimedEvent {
             owner: ctx.accounts.owner.key(),
             market: market.key(),
             stake_account: ctx.accounts.stake_account.key(),
             option: option_index,
+            stake_amount: stake_account.amount,
             reward_amount: 0u64,
             staked_at_timestamp: stake_account.staked_at_timestamp.unwrap_or(0),
             unstaked_at_timestamp: stake_account.unstaked_at_timestamp.unwrap_or(0),
-            revealed_score: 0u64,
-            revealed_amount: 0u64,
+            score: 0u64,
         });
 
         return Ok(());
@@ -99,9 +102,6 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_index: u16, _
 
     // Normal path: winners were selected, stakes must be revealed
     let revealed_option = stake_account.revealed_option.ok_or(ErrorCode::NotRevealed)?;
-    if stake_account.revealed_amount.is_none() {
-        return Err(ErrorCode::NotRevealed.into());
-    }
 
     // Check that the option_index matches the user's revealed option
     require!(
@@ -110,16 +110,12 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_index: u16, _
     );
 
     // Check if this stake was for a winning option and user incremented the tally
-    // If so, transfer proportional yield from market to user
     let mut user_reward: u64 = 0;
     if let Some(winning) = market.selected_options.as_ref().and_then(|opts| opts.iter().find(|w| w.option_index == revealed_option)) {
         if stake_account.total_incremented {
-            // User is eligible for yield
-            let user_score = stake_account.revealed_score.ok_or(ErrorCode::NotRevealed)?;
+            let user_score = stake_account.score.ok_or(ErrorCode::NotRevealed)?;
             let total_score = option.total_score.ok_or(ErrorCode::NotRevealed)?;
 
-            // Calculate proportional reward: (user_score * reward_amount * percentage) / (total_score * 100)
-            // Use u128 to prevent overflow during multiplication
             let reward_amount = market.reward_amount as u128;
             let percentage = winning.reward_percentage as u128;
             user_reward = (user_score as u128)
@@ -132,36 +128,36 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_index: u16, _
                         .checked_mul(100)
                         .ok_or(ErrorCode::Overflow)?
                 )
-                .ok_or(ErrorCode::Overflow)? as u64; // Round down
-
-            // Transfer SPL tokens from market ATA to owner's token account
-            if user_reward > 0 {
-                let creator_key = market.creator;
-                let index_bytes = market.index.to_le_bytes();
-                let bump = market.bump;
-                let signer_seeds: &[&[&[u8]]] = &[&[
-                    b"opportunity_market",
-                    creator_key.as_ref(),
-                    &index_bytes,
-                    &[bump],
-                ]];
-
-                transfer_checked(
-                    CpiContext::new_with_signer(
-                        ctx.accounts.token_program.to_account_info(),
-                        TransferChecked {
-                            from: ctx.accounts.market_token_ata.to_account_info(),
-                            mint: ctx.accounts.token_mint.to_account_info(),
-                            to: ctx.accounts.owner_token_account.to_account_info(),
-                            authority: market.to_account_info(),
-                        },
-                        signer_seeds,
-                    ),
-                    user_reward,
-                    ctx.accounts.token_mint.decimals,
-                )?;
-            }
+                .ok_or(ErrorCode::Overflow)? as u64;
         }
+    }
+
+    // Transfer reward only (staked tokens already returned via reclaim_stake or do_unstake_early)
+    if user_reward > 0 {
+        let creator_key = market.creator;
+        let index_bytes = market.index.to_le_bytes();
+        let bump = market.bump;
+        let signer_seeds: &[&[&[u8]]] = &[&[
+            b"opportunity_market",
+            creator_key.as_ref(),
+            &index_bytes,
+            &[bump],
+        ]];
+
+        transfer_checked(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                TransferChecked {
+                    from: ctx.accounts.market_token_ata.to_account_info(),
+                    mint: ctx.accounts.token_mint.to_account_info(),
+                    to: ctx.accounts.owner_token_account.to_account_info(),
+                    authority: market.to_account_info(),
+                },
+                signer_seeds,
+            ),
+            user_reward,
+            ctx.accounts.token_mint.decimals,
+        )?;
     }
 
     let staked_at_timestamp = stake_account.staked_at_timestamp.ok_or(ErrorCode::NotRevealed)?;
@@ -170,21 +166,19 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_index: u16, _
             .checked_add(market.time_to_stake)
             .ok_or(ErrorCode::Overflow)?
     );
-    let revealed_score = stake_account.revealed_score.unwrap_or(0);
-    let revealed_amount = stake_account.revealed_amount.unwrap_or(0);
+    let score = stake_account.score.unwrap_or(0);
 
     emit_ts!(RewardClaimedEvent {
         owner: ctx.accounts.owner.key(),
         market: market.key(),
-        stake_account: ctx.accounts.stake_account.key(),
+        stake_account: stake_account.key(),
         option: option_index,
+        stake_amount: stake_account.amount,
         reward_amount: user_reward,
         staked_at_timestamp: staked_at_timestamp,
         unstaked_at_timestamp: unstaked_at_timestamp,
-        revealed_score: revealed_score,
-        revealed_amount: revealed_amount,
+        score: score,
     });
 
-    // Account will be closed automatically via the close constraint
     Ok(())
 }

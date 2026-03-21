@@ -35,12 +35,14 @@ pub fn init_stake_account(
     stake_account.owner = ctx.accounts.signer.key();
     stake_account.market = ctx.accounts.market.key();
     stake_account.state_nonce = state_nonce;
-    stake_account.state_nonce_disclosure = 0; // initialized later TODO: why?
-    stake_account.encrypted_state = [[0u8; 32]; 2];
-    stake_account.encrypted_state_disclosure = [[0u8; 32]; 2];
-    stake_account.revealed_amount = None;
+    stake_account.state_nonce_disclosure = 0;
+    stake_account.encrypted_option = [0u8; 32];
+    stake_account.encrypted_option_disclosure = [0u8; 32];
+    stake_account.user_pubkey = [0u8; 32];
+    stake_account.amount = 0;
     stake_account.revealed_option = None;
     stake_account.locked = false;
+    stake_account.stake_reclaimed = false;
 
     emit_ts!(StakeAccountInitializedEvent {
         stake_account: stake_account.key(),

@@ -5,7 +5,7 @@ use arcium_client::idl::arcium::types::CallbackAccount;
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, StakeRevealedError, StakeRevealedEvent};
 use crate::instructions::stake::STAKE_ACCOUNT_SEED;
-use crate::state::{OpportunityMarket, StakeAccount, EncryptedTokenAccount};
+use crate::state::{OpportunityMarket, StakeAccount};
 use crate::COMP_DEF_OFFSET_REVEAL_STAKE;
 use crate::{ArciumSignerAccount, ID, ID_CONST};
 
@@ -25,18 +25,10 @@ pub struct RevealStake<'info> {
         mut,
         seeds = [STAKE_ACCOUNT_SEED, owner.key().as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump = stake_account.bump,
-        constraint = stake_account.revealed_amount.is_none() @ ErrorCode::AlreadyRevealed,
+        constraint = stake_account.revealed_option.is_none() @ ErrorCode::AlreadyRevealed,
         constraint = !stake_account.locked @ ErrorCode::Locked,
     )]
     pub stake_account: Box<Account<'info, StakeAccount>>,
-
-    #[account(
-        mut,
-        constraint = user_eta.owner == owner.key() @ ErrorCode::Unauthorized,
-        constraint = market.mint == user_eta.token_mint @ ErrorCode::InvalidMint,
-        constraint = !user_eta.locked @ ErrorCode::Locked,
-    )]
-    pub user_eta: Box<Account<'info, EncryptedTokenAccount>>,
 
     // Arcium accounts
     #[account(
@@ -79,8 +71,6 @@ pub fn reveal_stake(
     computation_offset: u64,
     _stake_account_id: u32,
 ) -> Result<()> {
-    let user_pubkey = ctx.accounts.user_eta.user_pubkey;
-
     let market = &ctx.accounts.market;
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
@@ -100,33 +90,17 @@ pub fn reveal_stake(
     let stake_account_key = ctx.accounts.stake_account.key();
     let stake_account_nonce = ctx.accounts.stake_account.state_nonce;
 
-    let user_eta_key = ctx.accounts.user_eta.key();
-    let user_eta_nonce = ctx.accounts.user_eta.state_nonce;
-
     // Lock StakeAccount while MPC computation is pending
     ctx.accounts.stake_account.locked = true;
 
-    // Lock ETA if going to be modified by callback
-    if ctx.accounts.stake_account.unstaked_at_timestamp.is_none() {
-        ctx.accounts.user_eta.locked = true;
-    }
+    let user_pubkey = ctx.accounts.stake_account.user_pubkey;
 
-    // Build args for encrypted computation
-    let is_eta_initialized = ctx.accounts.user_eta.is_initialized;
+    // Build args for encrypted computation (option decryption only)
     let args = ArgBuilder::new()
-
-        // Stake account encrypted state (Enc<Shared, StakeData>)
+        // Stake account encrypted option (Enc<Shared, SelectedOption>)
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(stake_account_nonce)
-        .account(stake_account_key, 8, 32 * 2)
-
-        // User ETA encrypted state (Enc<Shared, EncryptedTokenBalance>)
-        .x25519_pubkey(user_pubkey)
-        .plaintext_u128(user_eta_nonce)
-        .account(user_eta_key, 8, 32 * 1)
-
-        // Is ETA initialized flag
-        .plaintext_bool(is_eta_initialized)
+        .account(stake_account_key, 8, 32 * 1)
         .build();
 
     // Queue computation with callback
@@ -141,10 +115,6 @@ pub fn reveal_stake(
             &[
                 CallbackAccount {
                     pubkey: stake_account_key,
-                    is_writable: true,
-                },
-                CallbackAccount {
-                    pubkey: user_eta_key,
                     is_writable: true,
                 },
             ],
@@ -175,55 +145,37 @@ pub struct RevealStakeCallback<'info> {
     // Callback accounts
     #[account(mut)]
     pub stake_account: Box<Account<'info, StakeAccount>>,
-    #[account(mut)]
-    pub user_eta: Box<Account<'info, EncryptedTokenAccount>>,
 }
 
 pub fn reveal_stake_callback(
     ctx: Context<RevealStakeCallback>,
     output: SignedComputationOutputs<RevealStakeOutput>,
 ) -> Result<()> {
-    // Unlock accounts
+    // Unlock
     ctx.accounts.stake_account.locked = false;
-    if ctx.accounts.stake_account.unstaked_at_timestamp.is_none() {
-        ctx.accounts.user_eta.locked = false;
-    }
 
-    // Verify output - on error, emit event and return Ok so unlocks persist
-    let res = match output.verify_output(
+    // Verify output
+    let revealed_option = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
         Ok(RevealStakeOutput { field_0 }) => field_0,
         Err(_) => {
             emit_ts!(StakeRevealedError {
-                user: ctx.accounts.user_eta.owner,
+                user: ctx.accounts.stake_account.owner,
             });
             return Ok(());
         }
     };
 
-    let revealed_amount = res.field_0;
-    let revealed_option = res.field_1;
-    let new_user_balance = res.field_2;
-
-    // Update stake account with revealed values
-    ctx.accounts.stake_account.revealed_amount = Some(revealed_amount);
+    // Set revealed option
     ctx.accounts.stake_account.revealed_option = Some(revealed_option);
 
-    // Only credit ETA if stake was not already unstaked
-    if ctx.accounts.stake_account.unstaked_at_timestamp.is_none() {
-        ctx.accounts.user_eta.state_nonce = new_user_balance.nonce;
-        ctx.accounts.user_eta.encrypted_state = new_user_balance.ciphertexts;
-        ctx.accounts.user_eta.is_initialized = true;
-    }
-
     emit_ts!(StakeRevealedEvent {
-        user: ctx.accounts.user_eta.owner,
+        user: ctx.accounts.stake_account.owner,
         market: ctx.accounts.stake_account.market,
-        encrypted_token_account: ctx.accounts.user_eta.key(),
         stake_account: ctx.accounts.stake_account.key(),
-        stake_amount: revealed_amount,
+        stake_amount: ctx.accounts.stake_account.amount,
         selected_option: revealed_option,
     });
 

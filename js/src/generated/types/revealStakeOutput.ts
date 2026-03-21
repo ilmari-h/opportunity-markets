@@ -10,31 +10,27 @@ import {
   combineCodec,
   getStructDecoder,
   getStructEncoder,
+  getU16Decoder,
+  getU16Encoder,
   type FixedSizeCodec,
   type FixedSizeDecoder,
   type FixedSizeEncoder,
 } from '@solana/kit';
-import {
-  getRevealStakeOutputStruct0Decoder,
-  getRevealStakeOutputStruct0Encoder,
-  type RevealStakeOutputStruct0,
-  type RevealStakeOutputStruct0Args,
-} from '.';
 
 /**
  * The output of the callback instruction. Provided as a struct with ordered fields
  * as anchor does not support tuples and tuple structs yet.
  */
-export type RevealStakeOutput = { field0: RevealStakeOutputStruct0 };
+export type RevealStakeOutput = { field0: number };
 
-export type RevealStakeOutputArgs = { field0: RevealStakeOutputStruct0Args };
+export type RevealStakeOutputArgs = RevealStakeOutput;
 
 export function getRevealStakeOutputEncoder(): FixedSizeEncoder<RevealStakeOutputArgs> {
-  return getStructEncoder([['field0', getRevealStakeOutputStruct0Encoder()]]);
+  return getStructEncoder([['field0', getU16Encoder()]]);
 }
 
 export function getRevealStakeOutputDecoder(): FixedSizeDecoder<RevealStakeOutput> {
-  return getStructDecoder([['field0', getRevealStakeOutputStruct0Decoder()]]);
+  return getStructDecoder([['field0', getU16Decoder()]]);
 }
 
 export function getRevealStakeOutputCodec(): FixedSizeCodec<

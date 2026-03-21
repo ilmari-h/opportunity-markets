@@ -11,7 +11,6 @@ export * from './centralState';
 export * from './clockAccount';
 export * from './cluster';
 export * from './computationDefinitionAccount';
-export * from './encryptedTokenAccount';
 export * from './feePool';
 export * from './mXEAccount';
 export * from './opportunityMarket';

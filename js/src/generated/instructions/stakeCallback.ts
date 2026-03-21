@@ -66,8 +66,6 @@ export type StakeCallbackInstruction<
   TAccountClusterAccount extends string | AccountMeta<string> = string,
   TAccountInstructionsSysvar extends string | AccountMeta<string> =
     'Sysvar1nstructions1111111111111111111111111',
-  TAccountUserEncryptedTokenAccount extends string | AccountMeta<string> =
-    string,
   TAccountStakeAccount extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
@@ -92,9 +90,6 @@ export type StakeCallbackInstruction<
       TAccountInstructionsSysvar extends string
         ? ReadonlyAccount<TAccountInstructionsSysvar>
         : TAccountInstructionsSysvar,
-      TAccountUserEncryptedTokenAccount extends string
-        ? WritableAccount<TAccountUserEncryptedTokenAccount>
-        : TAccountUserEncryptedTokenAccount,
       TAccountStakeAccount extends string
         ? WritableAccount<TAccountStakeAccount>
         : TAccountStakeAccount,
@@ -203,7 +198,6 @@ export type StakeCallbackInput<
   TAccountComputationAccount extends string = string,
   TAccountClusterAccount extends string = string,
   TAccountInstructionsSysvar extends string = string,
-  TAccountUserEncryptedTokenAccount extends string = string,
   TAccountStakeAccount extends string = string,
 > = {
   arciumProgram?: Address<TAccountArciumProgram>;
@@ -212,7 +206,6 @@ export type StakeCallbackInput<
   computationAccount: Address<TAccountComputationAccount>;
   clusterAccount: Address<TAccountClusterAccount>;
   instructionsSysvar?: Address<TAccountInstructionsSysvar>;
-  userEncryptedTokenAccount: Address<TAccountUserEncryptedTokenAccount>;
   stakeAccount: Address<TAccountStakeAccount>;
   output: StakeCallbackInstructionDataArgs['output'];
 };
@@ -224,7 +217,6 @@ export function getStakeCallbackInstruction<
   TAccountComputationAccount extends string,
   TAccountClusterAccount extends string,
   TAccountInstructionsSysvar extends string,
-  TAccountUserEncryptedTokenAccount extends string,
   TAccountStakeAccount extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
@@ -235,7 +227,6 @@ export function getStakeCallbackInstruction<
     TAccountComputationAccount,
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
-    TAccountUserEncryptedTokenAccount,
     TAccountStakeAccount
   >,
   config?: { programAddress?: TProgramAddress }
@@ -247,7 +238,6 @@ export function getStakeCallbackInstruction<
   TAccountComputationAccount,
   TAccountClusterAccount,
   TAccountInstructionsSysvar,
-  TAccountUserEncryptedTokenAccount,
   TAccountStakeAccount
 > {
   // Program address.
@@ -267,10 +257,6 @@ export function getStakeCallbackInstruction<
     instructionsSysvar: {
       value: input.instructionsSysvar ?? null,
       isWritable: false,
-    },
-    userEncryptedTokenAccount: {
-      value: input.userEncryptedTokenAccount ?? null,
-      isWritable: true,
     },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
   };
@@ -301,7 +287,6 @@ export function getStakeCallbackInstruction<
       getAccountMeta(accounts.computationAccount),
       getAccountMeta(accounts.clusterAccount),
       getAccountMeta(accounts.instructionsSysvar),
-      getAccountMeta(accounts.userEncryptedTokenAccount),
       getAccountMeta(accounts.stakeAccount),
     ],
     data: getStakeCallbackInstructionDataEncoder().encode(
@@ -316,7 +301,6 @@ export function getStakeCallbackInstruction<
     TAccountComputationAccount,
     TAccountClusterAccount,
     TAccountInstructionsSysvar,
-    TAccountUserEncryptedTokenAccount,
     TAccountStakeAccount
   >);
 }
@@ -333,8 +317,7 @@ export type ParsedStakeCallbackInstruction<
     computationAccount: TAccountMetas[3];
     clusterAccount: TAccountMetas[4];
     instructionsSysvar: TAccountMetas[5];
-    userEncryptedTokenAccount: TAccountMetas[6];
-    stakeAccount: TAccountMetas[7];
+    stakeAccount: TAccountMetas[6];
   };
   data: StakeCallbackInstructionData;
 };
@@ -347,7 +330,7 @@ export function parseStakeCallbackInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedStakeCallbackInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -366,7 +349,6 @@ export function parseStakeCallbackInstruction<
       computationAccount: getNextAccount(),
       clusterAccount: getNextAccount(),
       instructionsSysvar: getNextAccount(),
-      userEncryptedTokenAccount: getNextAccount(),
       stakeAccount: getNextAccount(),
     },
     data: getStakeCallbackInstructionDataDecoder().decode(instruction.data),

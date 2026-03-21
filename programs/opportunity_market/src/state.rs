@@ -86,54 +86,24 @@ pub struct OpportunityMarket {
 
 #[account]
 #[derive(InitSpace)]
-pub struct EncryptedTokenAccount {
-    pub encrypted_state: [[u8; 32]; 1],  // encrypted token amount
-    pub bump: u8,
-    pub index: u64,  // PDA seed index (0 for regular ETAs, arbitrary for ephemeral ETAs)
-    pub owner: Pubkey,
-    pub state_nonce: u128,
-    pub token_mint: Pubkey,
-    pub user_pubkey: [u8; 32],
-
-    // Locked while waiting for Arcium MPC callback
-    pub locked: bool,
-
-    // Tracks unconfirmed deposits for safety
-    pub pending_deposit: u64,
-
-    // Who paid rent for this account (None for regular ETAs, Some for ephemeral ETAs)
-    pub rent_payer: Option<Pubkey>,
-
-    // Whether this ETA has been initialized with encrypted state via a callback
-    pub is_initialized: bool,
-}
-
-#[account]
-#[derive(InitSpace)]
 pub struct StakeAccount {
-    pub encrypted_state: [[u8; 32]; 2],  // stake amount and option
+    pub encrypted_option: [u8; 32],          // encrypted option ciphertext
     pub state_nonce: u128,
     pub bump: u8,
     pub owner: Pubkey,
     pub market: Pubkey,
-
-    pub encrypted_state_disclosure: [[u8; 32];2],
+    pub user_pubkey: [u8; 32],               // x25519 pubkey for MPC decryption
+    pub encrypted_option_disclosure: [u8; 32],
     pub state_nonce_disclosure: u128,
     pub staked_at_timestamp: Option<u64>,
     pub unstaked_at_timestamp: Option<u64>,
-
-    pub revealed_amount: Option<u64>,
+    pub amount: u64,                         // plaintext stake amount
     pub revealed_option: Option<u16>,
-
-    // Amount that scales by time-in-market.
-    pub revealed_score: Option<u64>,
-
+    pub score: Option<u64>,
     pub total_incremented: bool,
-
     pub unstakeable_at_timestamp: Option<u64>,
-
-    // Locked while waiting for Arcium MPC callback
     pub locked: bool,
+    pub stake_reclaimed: bool,               // whether staked tokens have been returned
 }
 
 #[account]

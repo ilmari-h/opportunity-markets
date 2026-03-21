@@ -22,44 +22,48 @@ import {
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type PendingDepositClaimedEvent = {
-  user: Address;
-  encryptedTokenAccount: Address;
+export type StakeReclaimedEvent = {
+  owner: Address;
+  market: Address;
+  stakeAccount: Address;
   amount: bigint;
   timestamp: bigint;
 };
 
-export type PendingDepositClaimedEventArgs = {
-  user: Address;
-  encryptedTokenAccount: Address;
+export type StakeReclaimedEventArgs = {
+  owner: Address;
+  market: Address;
+  stakeAccount: Address;
   amount: number | bigint;
   timestamp: number | bigint;
 };
 
-export function getPendingDepositClaimedEventEncoder(): FixedSizeEncoder<PendingDepositClaimedEventArgs> {
+export function getStakeReclaimedEventEncoder(): FixedSizeEncoder<StakeReclaimedEventArgs> {
   return getStructEncoder([
-    ['user', getAddressEncoder()],
-    ['encryptedTokenAccount', getAddressEncoder()],
+    ['owner', getAddressEncoder()],
+    ['market', getAddressEncoder()],
+    ['stakeAccount', getAddressEncoder()],
     ['amount', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getPendingDepositClaimedEventDecoder(): FixedSizeDecoder<PendingDepositClaimedEvent> {
+export function getStakeReclaimedEventDecoder(): FixedSizeDecoder<StakeReclaimedEvent> {
   return getStructDecoder([
-    ['user', getAddressDecoder()],
-    ['encryptedTokenAccount', getAddressDecoder()],
+    ['owner', getAddressDecoder()],
+    ['market', getAddressDecoder()],
+    ['stakeAccount', getAddressDecoder()],
     ['amount', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getPendingDepositClaimedEventCodec(): FixedSizeCodec<
-  PendingDepositClaimedEventArgs,
-  PendingDepositClaimedEvent
+export function getStakeReclaimedEventCodec(): FixedSizeCodec<
+  StakeReclaimedEventArgs,
+  StakeReclaimedEvent
 > {
   return combineCodec(
-    getPendingDepositClaimedEventEncoder(),
-    getPendingDepositClaimedEventDecoder()
+    getStakeReclaimedEventEncoder(),
+    getStakeReclaimedEventDecoder()
   );
 }

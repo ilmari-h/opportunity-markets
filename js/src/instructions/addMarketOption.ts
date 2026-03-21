@@ -10,14 +10,21 @@ import { type BaseInstructionParams } from "./instructionParams";
 export interface AddMarketOptionParams extends BaseInstructionParams {
   creator: TransactionSigner;
   market: Address;
-  sourceEta: Address;
   stakeAccount: Address;
   optionIndex: number;
   stakeAccountId: number;
   name: string;
-  amountCiphertext: ByteArray;
+  tokenMint: Address;
+  creatorTokenAccount: Address;
+  marketTokenAta: Address;
+  tokenVault: Address;
+  tokenVaultAta: Address;
+  tokenProgram: Address;
+  amount: bigint;
+  selectedOptionCiphertext: ByteArray;
   inputNonce: bigint;
   authorizedReaderNonce: bigint;
+  userPubkey: ByteArray;
 }
 
 export async function addMarketOption(
@@ -28,14 +35,21 @@ export async function addMarketOption(
     programAddress,
     creator,
     market,
-    sourceEta,
     stakeAccount,
     optionIndex,
     stakeAccountId,
     name,
-    amountCiphertext,
+    tokenMint,
+    creatorTokenAccount,
+    marketTokenAta,
+    tokenVault,
+    tokenVaultAta,
+    tokenProgram,
+    amount,
+    selectedOptionCiphertext,
     inputNonce,
     authorizedReaderNonce,
+    userPubkey,
   } = input;
 
   return getAddMarketOptionInstructionAsync(
@@ -43,14 +57,21 @@ export async function addMarketOption(
       ...getComputeAccounts("add_option_stake", config),
       creator,
       market,
-      sourceEta,
       stakeAccount,
       optionIndex,
       stakeAccountId,
       name,
-      amountCiphertext: toNumberArray(amountCiphertext),
+      tokenMint,
+      creatorTokenAccount,
+      marketTokenAta,
+      tokenVault,
+      tokenVaultAta,
+      tokenProgram,
+      amount,
+      selectedOptionCiphertext: toNumberArray(selectedOptionCiphertext),
       inputNonce,
       authorizedReaderNonce,
+      userPubkey: toNumberArray(userPubkey),
     },
     programAddress ? { programAddress } : undefined
   );

@@ -10,8 +10,6 @@ import {
   combineCodec,
   getArrayDecoder,
   getArrayEncoder,
-  getBooleanDecoder,
-  getBooleanEncoder,
   getStructDecoder,
   getStructEncoder,
   getU128Decoder,
@@ -24,18 +22,12 @@ import {
 } from '@solana/kit';
 
 export type StakeOutputStruct0 = {
-  field0: boolean;
+  field0: {
+    encryptionKey: Array<number>;
+    nonce: bigint;
+    ciphertexts: Array<Array<number>>;
+  };
   field1: {
-    encryptionKey: Array<number>;
-    nonce: bigint;
-    ciphertexts: Array<Array<number>>;
-  };
-  field2: {
-    encryptionKey: Array<number>;
-    nonce: bigint;
-    ciphertexts: Array<Array<number>>;
-  };
-  field3: {
     encryptionKey: Array<number>;
     nonce: bigint;
     ciphertexts: Array<Array<number>>;
@@ -43,18 +35,12 @@ export type StakeOutputStruct0 = {
 };
 
 export type StakeOutputStruct0Args = {
-  field0: boolean;
+  field0: {
+    encryptionKey: Array<number>;
+    nonce: number | bigint;
+    ciphertexts: Array<Array<number>>;
+  };
   field1: {
-    encryptionKey: Array<number>;
-    nonce: number | bigint;
-    ciphertexts: Array<Array<number>>;
-  };
-  field2: {
-    encryptionKey: Array<number>;
-    nonce: number | bigint;
-    ciphertexts: Array<Array<number>>;
-  };
-  field3: {
     encryptionKey: Array<number>;
     nonce: number | bigint;
     ciphertexts: Array<Array<number>>;
@@ -63,9 +49,8 @@ export type StakeOutputStruct0Args = {
 
 export function getStakeOutputStruct0Encoder(): FixedSizeEncoder<StakeOutputStruct0Args> {
   return getStructEncoder([
-    ['field0', getBooleanEncoder()],
     [
-      'field1',
+      'field0',
       getStructEncoder([
         ['encryptionKey', getArrayEncoder(getU8Encoder(), { size: 32 })],
         ['nonce', getU128Encoder()],
@@ -78,27 +63,14 @@ export function getStakeOutputStruct0Encoder(): FixedSizeEncoder<StakeOutputStru
       ]),
     ],
     [
-      'field2',
+      'field1',
       getStructEncoder([
         ['encryptionKey', getArrayEncoder(getU8Encoder(), { size: 32 })],
         ['nonce', getU128Encoder()],
         [
           'ciphertexts',
           getArrayEncoder(getArrayEncoder(getU8Encoder(), { size: 32 }), {
-            size: 2,
-          }),
-        ],
-      ]),
-    ],
-    [
-      'field3',
-      getStructEncoder([
-        ['encryptionKey', getArrayEncoder(getU8Encoder(), { size: 32 })],
-        ['nonce', getU128Encoder()],
-        [
-          'ciphertexts',
-          getArrayEncoder(getArrayEncoder(getU8Encoder(), { size: 32 }), {
-            size: 2,
+            size: 1,
           }),
         ],
       ]),
@@ -108,9 +80,8 @@ export function getStakeOutputStruct0Encoder(): FixedSizeEncoder<StakeOutputStru
 
 export function getStakeOutputStruct0Decoder(): FixedSizeDecoder<StakeOutputStruct0> {
   return getStructDecoder([
-    ['field0', getBooleanDecoder()],
     [
-      'field1',
+      'field0',
       getStructDecoder([
         ['encryptionKey', getArrayDecoder(getU8Decoder(), { size: 32 })],
         ['nonce', getU128Decoder()],
@@ -123,27 +94,14 @@ export function getStakeOutputStruct0Decoder(): FixedSizeDecoder<StakeOutputStru
       ]),
     ],
     [
-      'field2',
+      'field1',
       getStructDecoder([
         ['encryptionKey', getArrayDecoder(getU8Decoder(), { size: 32 })],
         ['nonce', getU128Decoder()],
         [
           'ciphertexts',
           getArrayDecoder(getArrayDecoder(getU8Decoder(), { size: 32 }), {
-            size: 2,
-          }),
-        ],
-      ]),
-    ],
-    [
-      'field3',
-      getStructDecoder([
-        ['encryptionKey', getArrayDecoder(getU8Decoder(), { size: 32 })],
-        ['nonce', getU128Decoder()],
-        [
-          'ciphertexts',
-          getArrayDecoder(getArrayDecoder(getU8Decoder(), { size: 32 }), {
-            size: 2,
+            size: 1,
           }),
         ],
       ]),

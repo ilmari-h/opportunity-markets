@@ -27,7 +27,6 @@ import {
 export type StakeRevealedEvent = {
   user: Address;
   market: Address;
-  encryptedTokenAccount: Address;
   stakeAccount: Address;
   stakeAmount: bigint;
   selectedOption: number;
@@ -37,7 +36,6 @@ export type StakeRevealedEvent = {
 export type StakeRevealedEventArgs = {
   user: Address;
   market: Address;
-  encryptedTokenAccount: Address;
   stakeAccount: Address;
   stakeAmount: number | bigint;
   selectedOption: number;
@@ -48,7 +46,6 @@ export function getStakeRevealedEventEncoder(): FixedSizeEncoder<StakeRevealedEv
   return getStructEncoder([
     ['user', getAddressEncoder()],
     ['market', getAddressEncoder()],
-    ['encryptedTokenAccount', getAddressEncoder()],
     ['stakeAccount', getAddressEncoder()],
     ['stakeAmount', getU64Encoder()],
     ['selectedOption', getU16Encoder()],
@@ -60,7 +57,6 @@ export function getStakeRevealedEventDecoder(): FixedSizeDecoder<StakeRevealedEv
   return getStructDecoder([
     ['user', getAddressDecoder()],
     ['market', getAddressDecoder()],
-    ['encryptedTokenAccount', getAddressDecoder()],
     ['stakeAccount', getAddressDecoder()],
     ['stakeAmount', getU64Decoder()],
     ['selectedOption', getU16Decoder()],

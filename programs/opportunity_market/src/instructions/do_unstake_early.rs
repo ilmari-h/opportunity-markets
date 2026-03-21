@@ -1,17 +1,15 @@
 use anchor_lang::prelude::*;
-use arcium_anchor::prelude::*;
-use arcium_client::idl::arcium::types::CallbackAccount;
+use anchor_spl::token_interface::{
+    transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
+};
 
 use crate::error::ErrorCode;
-use crate::events::{emit_ts, UnstakedError, UnstakedEvent};
+use crate::events::{emit_ts, UnstakedEvent};
 use crate::instructions::stake::STAKE_ACCOUNT_SEED;
-use crate::state::{OpportunityMarket, StakeAccount, EncryptedTokenAccount};
-use crate::COMP_DEF_OFFSET_UNSTAKE_EARLY;
-use crate::{ArciumSignerAccount, ID, ID_CONST};
+use crate::state::{OpportunityMarket, StakeAccount};
 
-#[queue_computation_accounts("unstake_early", signer)]
 #[derive(Accounts)]
-#[instruction(computation_offset: u64, stake_account_id: u32, stake_account_owner: Pubkey)]
+#[instruction(stake_account_id: u32, stake_account_owner: Pubkey)]
 pub struct DoUnstakeEarly<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -24,14 +22,6 @@ pub struct DoUnstakeEarly<'info> {
 
     #[account(
         mut,
-        constraint = user_eta.owner == stake_account_owner @ ErrorCode::Unauthorized,
-        constraint = market.mint == user_eta.token_mint @ ErrorCode::InvalidMint,
-        constraint = !user_eta.locked @ ErrorCode::Locked,
-    )]
-    pub user_eta: Box<Account<'info, EncryptedTokenAccount>>,
-
-    #[account(
-        mut,
         seeds = [STAKE_ACCOUNT_SEED, stake_account_owner.as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump = stake_account.bump,
         constraint = stake_account.unstaked_at_timestamp.is_none() @ ErrorCode::AlreadyUnstaked,
@@ -40,47 +30,37 @@ pub struct DoUnstakeEarly<'info> {
     )]
     pub stake_account: Box<Account<'info, StakeAccount>>,
 
-    // Arcium accounts
+    // SPL token accounts
+    #[account(address = market.mint)]
+    pub token_mint: Box<InterfaceAccount<'info, Mint>>,
+
+    /// Market's ATA holding staked tokens
     #[account(
-        init_if_needed,
-        space = 9,
-        payer = signer,
-        seeds = [&SIGN_PDA_SEED],
-        bump,
-        address = derive_sign_pda!(),
+        mut,
+        associated_token::mint = token_mint,
+        associated_token::authority = market,
+        associated_token::token_program = token_program,
     )]
-    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
-    #[account(address = derive_mxe_pda!())]
-    pub mxe_account: Box<Account<'info, MXEAccount>>,
-    #[account(mut, address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet))]
-    /// CHECK: mempool_account
-    pub mempool_account: UncheckedAccount<'info>,
-    #[account(mut, address = derive_execpool_pda!(mxe_account, ErrorCode::ClusterNotSet))]
-    /// CHECK: executing_pool
-    pub executing_pool: UncheckedAccount<'info>,
-    #[account(mut, address = derive_comp_pda!(computation_offset, mxe_account, ErrorCode::ClusterNotSet))]
-    /// CHECK: computation_account
-    pub computation_account: UncheckedAccount<'info>,
-    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_UNSTAKE_EARLY))]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
-    #[account(mut, address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet))]
-    pub cluster_account: Account<'info, Cluster>,
-    #[account(mut, address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS)]
-    pub pool_account: Account<'info, FeePool>,
-    #[account(mut, address = ARCIUM_CLOCK_ACCOUNT_ADDRESS)]
-    pub clock_account: Account<'info, ClockAccount>,
+    pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// Owner's token account to receive refund
+    #[account(
+        mut,
+        token::mint = token_mint,
+        token::authority = stake_account_owner,
+        token::token_program = token_program,
+    )]
+    pub owner_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
-    pub arcium_program: Program<'info, Arcium>,
 }
 
 pub fn do_unstake_early(
     ctx: Context<DoUnstakeEarly>,
-    computation_offset: u64,
     _stake_account_id: u32,
     _stake_account_owner: Pubkey,
 ) -> Result<()> {
-    let user_pubkey = ctx.accounts.user_eta.user_pubkey;
-
     // Enforce staking period is still active
     let market = &ctx.accounts.market;
     let open_timestamp = market.open_timestamp.ok_or_else(|| ErrorCode::MarketNotOpen)?;
@@ -101,119 +81,40 @@ pub fn do_unstake_early(
         ErrorCode::UnstakeDelayNotMet
     );
 
-    let stake_account_key = ctx.accounts.stake_account.key();
-    let stake_account_nonce = ctx.accounts.stake_account.state_nonce;
+    let amount = ctx.accounts.stake_account.amount;
 
-    let user_eta_key = ctx.accounts.user_eta.key();
-    let user_eta_nonce = ctx.accounts.user_eta.state_nonce;
+    // Transfer staked tokens from market ATA back to owner
+    let creator_key = market.creator;
+    let index_bytes = market.index.to_le_bytes();
+    let bump = market.bump;
+    let signer_seeds: &[&[&[u8]]] = &[&[
+        b"opportunity_market",
+        creator_key.as_ref(),
+        &index_bytes,
+        &[bump],
+    ]];
 
-    // Lock both accounts while MPC computation is pending
-    ctx.accounts.user_eta.locked = true;
-    ctx.accounts.stake_account.locked = true;
-
-
-    // Build args for encrypted computation
-    let is_eta_initialized = ctx.accounts.user_eta.is_initialized;
-    let args = ArgBuilder::new()
-        // Stake account encrypted state (Enc<Shared, StakeData>)
-        .x25519_pubkey(user_pubkey)
-        .plaintext_u128(stake_account_nonce)
-        .account(stake_account_key, 8, 32 * 2)
-
-        // User ETA encrypted state (Enc<Shared, EncryptedTokenBalance>)
-        .x25519_pubkey(user_pubkey)
-        .plaintext_u128(user_eta_nonce)
-        .account(user_eta_key, 8, 32 * 1)
-
-        // Is ETA initialized flag
-        .plaintext_bool(is_eta_initialized)
-        .build();
-
-    // Queue computation with callback
-    ctx.accounts.sign_pda_account.bump = ctx.bumps.sign_pda_account;
-    queue_computation(
-        ctx.accounts,
-        computation_offset,
-        args,
-        vec![UnstakeEarlyCallback::callback_ix(
-            computation_offset,
-            &ctx.accounts.mxe_account,
-            &[
-                CallbackAccount {
-                    pubkey: user_eta_key,
-                    is_writable: true,
-                },
-                CallbackAccount {
-                    pubkey: stake_account_key,
-                    is_writable: true,
-                },
-            ],
-        )?],
-        1,
-        0,
+    transfer_checked(
+        CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            TransferChecked {
+                from: ctx.accounts.market_token_ata.to_account_info(),
+                mint: ctx.accounts.token_mint.to_account_info(),
+                to: ctx.accounts.owner_token_account.to_account_info(),
+                authority: market.to_account_info(),
+            },
+            signer_seeds,
+        ),
+        amount,
+        ctx.accounts.token_mint.decimals,
     )?;
 
-    Ok(())
-}
-
-#[callback_accounts("unstake_early")]
-#[derive(Accounts)]
-pub struct UnstakeEarlyCallback<'info> {
-    pub arcium_program: Program<'info, Arcium>,
-    #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_UNSTAKE_EARLY))]
-    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
-    #[account(address = derive_mxe_pda!())]
-    pub mxe_account: Box<Account<'info, MXEAccount>>,
-    /// CHECK: computation_account
-    pub computation_account: UncheckedAccount<'info>,
-    #[account(address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet))]
-    pub cluster_account: Box<Account<'info, Cluster>>,
-    #[account(address = ::anchor_lang::solana_program::sysvar::instructions::ID)]
-    /// CHECK: instructions_sysvar
-    pub instructions_sysvar: AccountInfo<'info>,
-
-    // Callback accounts
-    #[account(mut)]
-    pub user_eta: Box<Account<'info, EncryptedTokenAccount>>,
-    #[account(mut)]
-    pub stake_account: Box<Account<'info, StakeAccount>>,
-}
-
-pub fn unstake_early_callback(
-    ctx: Context<UnstakeEarlyCallback>,
-    output: SignedComputationOutputs<UnstakeEarlyOutput>,
-) -> Result<()> {
-    // Unlock accounts
-    ctx.accounts.user_eta.locked = false;
-    ctx.accounts.stake_account.locked = false;
-
-    // Verify output - on error, emit event and return Ok so unlocks persist
-    let new_user_balance = match output.verify_output(
-        &ctx.accounts.cluster_account,
-        &ctx.accounts.computation_account,
-    ) {
-        Ok(UnstakeEarlyOutput { field_0 }) => field_0,
-        Err(_) => {
-            emit_ts!(UnstakedError {
-                user: ctx.accounts.user_eta.owner,
-            });
-            return Ok(());
-        }
-    };
-
     // Mark stake account as unstaked
-    let clock = Clock::get()?;
-    ctx.accounts.stake_account.unstaked_at_timestamp = Some(clock.unix_timestamp as u64);
-
-    // Update user ETA with refunded balance
-    ctx.accounts.user_eta.state_nonce = new_user_balance.nonce;
-    ctx.accounts.user_eta.encrypted_state = new_user_balance.ciphertexts;
-    ctx.accounts.user_eta.is_initialized = true;
+    ctx.accounts.stake_account.unstaked_at_timestamp = Some(current_timestamp);
 
     emit_ts!(UnstakedEvent {
-        user: ctx.accounts.user_eta.owner,
-        market: ctx.accounts.stake_account.market,
-        encrypted_token_account: ctx.accounts.user_eta.key(),
+        user: ctx.accounts.stake_account.owner,
+        market: market.key(),
         stake_account: ctx.accounts.stake_account.key(),
     });
 

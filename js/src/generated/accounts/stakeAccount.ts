@@ -63,70 +63,72 @@ export function getStakeAccountDiscriminatorBytes() {
 
 export type StakeAccount = {
   discriminator: ReadonlyUint8Array;
-  encryptedState: Array<Array<number>>;
+  encryptedOption: Array<number>;
   stateNonce: bigint;
   bump: number;
   owner: Address;
   market: Address;
-  encryptedStateDisclosure: Array<Array<number>>;
+  userPubkey: Array<number>;
+  encryptedOptionDisclosure: Array<number>;
   stateNonceDisclosure: bigint;
   stakedAtTimestamp: Option<bigint>;
   unstakedAtTimestamp: Option<bigint>;
+  amount: bigint;
   revealedAmount: Option<bigint>;
   revealedOption: Option<number>;
   revealedScore: Option<bigint>;
   totalIncremented: boolean;
   unstakeableAtTimestamp: Option<bigint>;
   locked: boolean;
+  stakeReclaimed: boolean;
 };
 
 export type StakeAccountArgs = {
-  encryptedState: Array<Array<number>>;
+  encryptedOption: Array<number>;
   stateNonce: number | bigint;
   bump: number;
   owner: Address;
   market: Address;
-  encryptedStateDisclosure: Array<Array<number>>;
+  userPubkey: Array<number>;
+  encryptedOptionDisclosure: Array<number>;
   stateNonceDisclosure: number | bigint;
   stakedAtTimestamp: OptionOrNullable<number | bigint>;
   unstakedAtTimestamp: OptionOrNullable<number | bigint>;
+  amount: number | bigint;
   revealedAmount: OptionOrNullable<number | bigint>;
   revealedOption: OptionOrNullable<number>;
   revealedScore: OptionOrNullable<number | bigint>;
   totalIncremented: boolean;
   unstakeableAtTimestamp: OptionOrNullable<number | bigint>;
   locked: boolean;
+  stakeReclaimed: boolean;
 };
 
 export function getStakeAccountEncoder(): Encoder<StakeAccountArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      [
-        'encryptedState',
-        getArrayEncoder(getArrayEncoder(getU8Encoder(), { size: 32 }), {
-          size: 2,
-        }),
-      ],
+      ['encryptedOption', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['stateNonce', getU128Encoder()],
       ['bump', getU8Encoder()],
       ['owner', getAddressEncoder()],
       ['market', getAddressEncoder()],
+      ['userPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       [
-        'encryptedStateDisclosure',
-        getArrayEncoder(getArrayEncoder(getU8Encoder(), { size: 32 }), {
-          size: 2,
-        }),
+        'encryptedOptionDisclosure',
+        getArrayEncoder(getU8Encoder(), { size: 32 }),
       ],
       ['stateNonceDisclosure', getU128Encoder()],
       ['stakedAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['unstakedAtTimestamp', getOptionEncoder(getU64Encoder())],
+      ['amount', getU64Encoder()],
       ['revealedAmount', getOptionEncoder(getU64Encoder())],
       ['revealedOption', getOptionEncoder(getU16Encoder())],
       ['revealedScore', getOptionEncoder(getU64Encoder())],
       ['totalIncremented', getBooleanEncoder()],
       ['unstakeableAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['locked', getBooleanEncoder()],
+      ['stakeReclaimed', getBooleanEncoder()],
     ]),
     (value) => ({ ...value, discriminator: STAKE_ACCOUNT_DISCRIMINATOR })
   );
@@ -135,31 +137,27 @@ export function getStakeAccountEncoder(): Encoder<StakeAccountArgs> {
 export function getStakeAccountDecoder(): Decoder<StakeAccount> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    [
-      'encryptedState',
-      getArrayDecoder(getArrayDecoder(getU8Decoder(), { size: 32 }), {
-        size: 2,
-      }),
-    ],
+    ['encryptedOption', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['stateNonce', getU128Decoder()],
     ['bump', getU8Decoder()],
     ['owner', getAddressDecoder()],
     ['market', getAddressDecoder()],
+    ['userPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     [
-      'encryptedStateDisclosure',
-      getArrayDecoder(getArrayDecoder(getU8Decoder(), { size: 32 }), {
-        size: 2,
-      }),
+      'encryptedOptionDisclosure',
+      getArrayDecoder(getU8Decoder(), { size: 32 }),
     ],
     ['stateNonceDisclosure', getU128Decoder()],
     ['stakedAtTimestamp', getOptionDecoder(getU64Decoder())],
     ['unstakedAtTimestamp', getOptionDecoder(getU64Decoder())],
+    ['amount', getU64Decoder()],
     ['revealedAmount', getOptionDecoder(getU64Decoder())],
     ['revealedOption', getOptionDecoder(getU16Decoder())],
     ['revealedScore', getOptionDecoder(getU64Decoder())],
     ['totalIncremented', getBooleanDecoder()],
     ['unstakeableAtTimestamp', getOptionDecoder(getU64Decoder())],
     ['locked', getBooleanDecoder()],
+    ['stakeReclaimed', getBooleanDecoder()],
   ]);
 }
 

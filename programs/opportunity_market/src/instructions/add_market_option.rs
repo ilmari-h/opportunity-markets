@@ -1,11 +1,15 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{
+    transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
+};
 use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, MarketOptionCreatedEvent, StakedError, StakedEvent};
-use crate::state::{CentralState, OpportunityMarket, OpportunityMarketOption, StakeAccount, EncryptedTokenAccount};
+use crate::instructions::init_token_vault::TOKEN_VAULT_SEED;
 use crate::instructions::stake::STAKE_ACCOUNT_SEED;
+use crate::state::{CentralState, OpportunityMarket, OpportunityMarketOption, StakeAccount, TokenVault};
 use crate::COMP_DEF_OFFSET_ADD_OPTION_STAKE;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
 
@@ -39,20 +43,53 @@ pub struct AddMarketOption<'info> {
 
     #[account(
         mut,
-        constraint = source_eta.owner == creator.key() @ ErrorCode::Unauthorized,
-        constraint = source_eta.token_mint == market.mint @ ErrorCode::InvalidMint,
-        constraint = !source_eta.locked @ ErrorCode::Locked,
-    )]
-    pub source_eta: Box<Account<'info, EncryptedTokenAccount>>,
-
-    #[account(
-        mut,
         seeds = [STAKE_ACCOUNT_SEED, creator.key().as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump,
         constraint = stake_account.staked_at_timestamp.is_none() @ ErrorCode::AlreadyPurchased,
         constraint = !stake_account.locked @ ErrorCode::Locked,
     )]
     pub stake_account: Box<Account<'info, StakeAccount>>,
+
+    // SPL token accounts
+    #[account(address = market.mint)]
+    pub token_mint: Box<InterfaceAccount<'info, Mint>>,
+
+    #[account(
+        mut,
+        token::mint = token_mint,
+        token::authority = creator,
+        token::token_program = token_program,
+    )]
+    pub creator_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// Market's ATA for holding staked tokens
+    #[account(
+        mut,
+        associated_token::mint = token_mint,
+        associated_token::authority = market,
+        associated_token::token_program = token_program,
+    )]
+    pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    /// Token vault for fee collection
+    #[account(
+        mut,
+        seeds = [TOKEN_VAULT_SEED, token_mint.key().as_ref()],
+        bump = token_vault.bump,
+        constraint = token_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
+    )]
+    pub token_vault: Box<Account<'info, TokenVault>>,
+
+    /// Token vault ATA for fee tokens
+    #[account(
+        mut,
+        associated_token::mint = token_mint,
+        associated_token::authority = token_vault,
+        associated_token::token_program = token_program,
+    )]
+    pub token_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    pub token_program: Interface<'info, TokenInterface>,
 
     // Arcium accounts
     #[account(
@@ -63,9 +100,9 @@ pub struct AddMarketOption<'info> {
         bump,
         address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
     #[account(address = derive_mxe_pda!())]
-    pub mxe_account: Account<'info, MXEAccount>,
+    pub mxe_account: Box<Account<'info, MXEAccount>>,
     #[account(mut, address = derive_mempool_pda!(mxe_account, ErrorCode::ClusterNotSet))]
     /// CHECK: mempool_account
     pub mempool_account: UncheckedAccount<'info>,
@@ -80,9 +117,9 @@ pub struct AddMarketOption<'info> {
     #[account(mut, address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet))]
     pub cluster_account: Box<Account<'info, Cluster>>,
     #[account(mut, address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS)]
-    pub pool_account: Account<'info, FeePool>,
+    pub pool_account: Box<Account<'info, FeePool>>,
     #[account(mut, address = ARCIUM_CLOCK_ACCOUNT_ADDRESS)]
-    pub clock_account: Account<'info, ClockAccount>,
+    pub clock_account: Box<Account<'info, ClockAccount>>,
     pub system_program: Program<'info, System>,
     pub arcium_program: Program<'info, Arcium>,
 }
@@ -93,11 +130,12 @@ pub fn add_market_option(
     option_index: u16,
     _stake_account_id: u32,
     name: String,
-    amount_ciphertext: [u8; 32],
+    amount: u64,
+    selected_option_ciphertext: [u8; 32],
     input_nonce: u128,
     authorized_reader_nonce: u128,
+    user_pubkey: [u8; 32],
 ) -> Result<()> {
-    let user_pubkey = ctx.accounts.source_eta.user_pubkey;
     let market = &mut ctx.accounts.market;
     let authorized_reader_pubkey = market.authorized_reader_pubkey;
 
@@ -105,6 +143,12 @@ pub fn add_market_option(
     require!(
         option_index == market.total_options + 1,
         ErrorCode::InvalidOptionIndex
+    );
+
+    // Validate minimum deposit
+    require!(
+        amount >= ctx.accounts.central_state.min_option_deposit,
+        ErrorCode::DepositBelowMinimum
     );
 
     // Enforce staking period is not over (if market is open)
@@ -116,6 +160,52 @@ pub fn add_market_option(
             current_timestamp <= stake_end_timestamp,
             ErrorCode::StakingNotActive
         );
+    }
+
+    // Calculate fee
+    let fee = amount
+        .checked_mul(ctx.accounts.token_vault.protocol_fee_bp as u64)
+        .ok_or(ErrorCode::Overflow)?
+        / 10_000;
+    let net_amount = amount
+        .checked_sub(fee)
+        .ok_or(ErrorCode::Overflow)?;
+
+    // Transfer net_amount from creator to market ATA
+    transfer_checked(
+        CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            TransferChecked {
+                from: ctx.accounts.creator_token_account.to_account_info(),
+                mint: ctx.accounts.token_mint.to_account_info(),
+                to: ctx.accounts.market_token_ata.to_account_info(),
+                authority: ctx.accounts.creator.to_account_info(),
+            },
+        ),
+        net_amount,
+        ctx.accounts.token_mint.decimals,
+    )?;
+
+    // Transfer fee from creator to token vault ATA
+    if fee > 0 {
+        transfer_checked(
+            CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                TransferChecked {
+                    from: ctx.accounts.creator_token_account.to_account_info(),
+                    mint: ctx.accounts.token_mint.to_account_info(),
+                    to: ctx.accounts.token_vault_ata.to_account_info(),
+                    authority: ctx.accounts.creator.to_account_info(),
+                },
+            ),
+            fee,
+            ctx.accounts.token_mint.decimals,
+        )?;
+
+        ctx.accounts.token_vault.collected_fees = ctx.accounts.token_vault
+            .collected_fees
+            .checked_add(fee)
+            .ok_or(ErrorCode::Overflow)?;
     }
 
     // Increment total options
@@ -131,43 +221,29 @@ pub fn add_market_option(
     option.creator = ctx.accounts.creator.key();
     option.initialized = false;
 
-    // Lock stake account and set staked timestamp
+    // Set stake account fields
     ctx.accounts.stake_account.staked_at_timestamp = Some(current_timestamp);
+    ctx.accounts.stake_account.amount = net_amount;
+    ctx.accounts.stake_account.user_pubkey = user_pubkey;
     ctx.accounts.stake_account.locked = true;
-
-    let source_eta_key = ctx.accounts.source_eta.key();
-    let source_eta_nonce = ctx.accounts.source_eta.state_nonce;
 
     let stake_account_key = ctx.accounts.stake_account.key();
     let option_key = ctx.accounts.option.key();
 
-    ctx.accounts.source_eta.locked = true;
-
-    // Build args for encrypted computation
+    // Build args for encrypted computation (option encryption only)
     let args = ArgBuilder::new()
-        // Encrypted amount input (Enc<Shared, AddOptionStakeInput>)
+        // Encrypted option input (Enc<Shared, SelectedOption>)
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(input_nonce)
-        .encrypted_u64(amount_ciphertext)
+        .encrypted_u16(selected_option_ciphertext)
 
         // Authorized reader context (Shared) - voluntary disclosure
         .x25519_pubkey(authorized_reader_pubkey)
         .plaintext_u128(authorized_reader_nonce)
 
-        // User's ETA (Enc<Shared, EncryptedTokenBalance>)
-        .x25519_pubkey(user_pubkey)
-        .plaintext_u128(source_eta_nonce)
-        .account(source_eta_key, 8, 32 * 1)
-
         // Stake account context (Shared)
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(ctx.accounts.stake_account.state_nonce)
-
-        // Plaintext: min_deposit from central_state
-        .plaintext_u64(ctx.accounts.central_state.min_option_deposit)
-
-        // Plaintext: selected_option (u64 because no plaintext_u16)
-        .plaintext_u64(option_index as u64)
         .build();
 
     // Queue computation with callback
@@ -180,10 +256,6 @@ pub fn add_market_option(
             computation_offset,
             &ctx.accounts.mxe_account,
             &[
-                CallbackAccount {
-                    pubkey: source_eta_key,
-                    is_writable: true,
-                },
                 CallbackAccount {
                     pubkey: stake_account_key,
                     is_writable: true,
@@ -219,9 +291,6 @@ pub struct AddOptionStakeCallback<'info> {
 
     // Callback accounts
     #[account(mut)]
-    pub source_eta: Box<Account<'info, EncryptedTokenAccount>>,
-
-    #[account(mut)]
     pub stake_account: Box<Account<'info, StakeAccount>>,
 
     #[account(mut)]
@@ -233,48 +302,32 @@ pub fn add_market_option_callback(
     output: SignedComputationOutputs<AddOptionStakeOutput>,
 ) -> Result<()> {
     // Unlock
-    ctx.accounts.source_eta.locked = false;
     ctx.accounts.stake_account.locked = false;
 
-    // Verify output - on error, rollback and return Ok so mutations persist
+    // Verify output
     let res = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
         Ok(AddOptionStakeOutput { field_0 }) => field_0,
         Err(_) => {
-            // Rollback
             ctx.accounts.stake_account.staked_at_timestamp = None;
+            ctx.accounts.stake_account.amount = 0;
             emit_ts!(StakedError {
-                user: ctx.accounts.source_eta.owner,
+                user: ctx.accounts.stake_account.owner,
             });
             return Ok(());
         }
     };
 
-    if res.field_0 {
-        // Rollback
-        ctx.accounts.stake_account.staked_at_timestamp = None;
-        emit_ts!(StakedError {
-            user: ctx.accounts.source_eta.owner,
-        });
-        return Ok(());
-    }
+    let stake_data_mxe = res.field_0;
+    let stake_data_shared = res.field_1;
 
-    let new_user_balance = res.field_1;
-    let stake_data = res.field_2;
-    let stake_data_disclosed = res.field_3;
-
-    // Update source ETA balance
-    ctx.accounts.source_eta.state_nonce = new_user_balance.nonce;
-    ctx.accounts.source_eta.encrypted_state = new_user_balance.ciphertexts;
-    ctx.accounts.source_eta.is_initialized = true;
-
-    // Update stake account encrypted state
-    ctx.accounts.stake_account.state_nonce = stake_data.nonce;
-    ctx.accounts.stake_account.encrypted_state = stake_data.ciphertexts;
-    ctx.accounts.stake_account.state_nonce_disclosure = stake_data_disclosed.nonce;
-    ctx.accounts.stake_account.encrypted_state_disclosure =stake_data_disclosed.ciphertexts;
+    // Update stake account encrypted option data
+    ctx.accounts.stake_account.state_nonce = stake_data_mxe.nonce;
+    ctx.accounts.stake_account.encrypted_option = stake_data_mxe.ciphertexts[0];
+    ctx.accounts.stake_account.state_nonce_disclosure = stake_data_shared.nonce;
+    ctx.accounts.stake_account.encrypted_option_disclosure = stake_data_shared.ciphertexts[0];
 
     // Mark option as initialized
     ctx.accounts.option.initialized = true;
@@ -289,16 +342,14 @@ pub fn add_market_option_callback(
     });
 
     emit_ts!(StakedEvent {
-        user: ctx.accounts.source_eta.owner,
+        user: ctx.accounts.stake_account.owner,
         market: ctx.accounts.stake_account.market,
-        encrypted_token_account: ctx.accounts.source_eta.key(),
         stake_account: ctx.accounts.stake_account.key(),
-        stake_encrypted_state: stake_data.ciphertexts,
-        stake_state_nonce: stake_data.nonce,
-        stake_encrypted_state_disclosure: stake_data_disclosed.ciphertexts,
-        stake_state_disclosure_nonce: stake_data_disclosed.nonce,
-        encrypted_eta_balance: new_user_balance.ciphertexts[0],
-        eta_balance_nonce: new_user_balance.nonce,
+        stake_encrypted_option: stake_data_mxe.ciphertexts[0],
+        stake_state_nonce: stake_data_mxe.nonce,
+        stake_encrypted_option_disclosure: stake_data_shared.ciphertexts[0],
+        stake_state_disclosure_nonce: stake_data_shared.nonce,
+        amount: ctx.accounts.stake_account.amount,
     });
 
     Ok(())

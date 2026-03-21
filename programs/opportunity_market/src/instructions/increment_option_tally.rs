@@ -58,15 +58,16 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: 
         ErrorCode::MarketNotResolved
     );
 
-    let revealed_amount = ctx.accounts.stake_account.revealed_amount.ok_or(ErrorCode::NotRevealed)?;
     let revealed_option = ctx.accounts.stake_account.revealed_option.ok_or(ErrorCode::NotRevealed)?;
     require!(revealed_option == option_index, ErrorCode::InvalidOptionIndex);
 
-    // Initialize total_staked to 0 if None, then add revealed_amount
+    let amount = ctx.accounts.stake_account.amount;
+
+    // Initialize total_staked to 0 if None, then add amount
     let current_total = ctx.accounts.option.total_staked.unwrap_or(0);
     ctx.accounts.option.total_staked = Some(
         current_total
-            .checked_add(revealed_amount)
+            .checked_add(amount)
             .ok_or(ErrorCode::Overflow)?
     );
 
@@ -81,7 +82,7 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: 
         open_timestamp,
         stake_end,
         staked_at_timestamp,
-        revealed_amount,
+        amount,
         market.earliness_cutoff_seconds,
     )?;
 
@@ -91,8 +92,8 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: 
         current_total_score.checked_add(user_score).ok_or(ErrorCode::Overflow)?
     );
 
-    // Store the user's score on their stake account for yield calculation
-    ctx.accounts.stake_account.revealed_score = Some(user_score);
+    // Store the user's score on their stake account for reward calculation
+    ctx.accounts.stake_account.score = Some(user_score);
     ctx.accounts.stake_account.total_incremented = true;
 
     emit_ts!(TallyIncrementedEvent {
@@ -100,7 +101,7 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: 
         market: ctx.accounts.market.key(),
         stake_account: ctx.accounts.stake_account.key(),
         option: option_index,
-        revealed_amount: revealed_amount,
+        amount: amount,
         user_score: user_score,
     });
 
