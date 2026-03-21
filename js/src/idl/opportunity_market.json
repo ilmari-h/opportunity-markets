@@ -30,31 +30,6 @@
           "writable": true
         },
         {
-          "name": "central_state",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  114,
-                  97,
-                  108,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
           "name": "option",
           "writable": true,
           "pda": {
@@ -76,504 +51,22 @@
               },
               {
                 "kind": "arg",
-                "path": "option_index"
+                "path": "option_id"
               }
             ]
           }
-        },
-        {
-          "name": "stake_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  116,
-                  97,
-                  107,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "creator"
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "arg",
-                "path": "stake_account_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_mint"
-        },
-        {
-          "name": "creator_token_account",
-          "writable": true
-        },
-        {
-          "name": "market_token_ata",
-          "docs": [
-            "Market's ATA for holding staked tokens"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "token_vault",
-          "docs": [
-            "Token vault for fee collection"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_vault_ata",
-          "docs": [
-            "Token vault ATA for fee tokens"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "token_vault"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "sign_pda_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  65,
-                  114,
-                  99,
-                  105,
-                  117,
-                  109,
-                  83,
-                  105,
-                  103,
-                  110,
-                  101,
-                  114,
-                  65,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "mempool_account",
-          "writable": true
-        },
-        {
-          "name": "executing_pool",
-          "writable": true
-        },
-        {
-          "name": "computation_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "cluster_account",
-          "writable": true
-        },
-        {
-          "name": "pool_account",
-          "writable": true,
-          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
-        },
-        {
-          "name": "clock_account",
-          "writable": true,
-          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
         },
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         }
       ],
       "args": [
         {
-          "name": "computation_offset",
+          "name": "option_id",
           "type": "u64"
-        },
-        {
-          "name": "option_index",
-          "type": "u16"
-        },
-        {
-          "name": "stake_account_id",
-          "type": "u32"
-        },
-        {
-          "name": "name",
-          "type": "string"
-        },
-        {
-          "name": "amount",
-          "type": "u64"
-        },
-        {
-          "name": "selected_option_ciphertext",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "input_nonce",
-          "type": "u128"
-        },
-        {
-          "name": "authorized_reader_nonce",
-          "type": "u128"
-        },
-        {
-          "name": "user_pubkey",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
         }
       ]
-    },
-    {
-      "name": "add_market_option_as_creator",
-      "discriminator": [
-        216,
-        154,
-        167,
-        90,
-        134,
-        172,
-        43,
-        68
-      ],
-      "accounts": [
-        {
-          "name": "creator",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "market",
-          "writable": true
-        },
-        {
-          "name": "option",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  112,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "arg",
-                "path": "option_index"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "option_index",
-          "type": "u16"
-        },
-        {
-          "name": "name",
-          "type": "string"
-        }
-      ]
-    },
-    {
-      "name": "add_option_stake_callback",
-      "discriminator": [
-        58,
-        174,
-        2,
-        200,
-        118,
-        153,
-        169,
-        10
-      ],
-      "accounts": [
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "computation_account"
-        },
-        {
-          "name": "cluster_account"
-        },
-        {
-          "name": "instructions_sysvar",
-          "address": "Sysvar1nstructions1111111111111111111111111"
-        },
-        {
-          "name": "stake_account",
-          "writable": true
-        },
-        {
-          "name": "option",
-          "writable": true
-        }
-      ],
-      "args": [
-        {
-          "name": "output",
-          "type": {
-            "defined": {
-              "name": "SignedComputationOutputs",
-              "generics": [
-                {
-                  "kind": "type",
-                  "type": {
-                    "defined": {
-                      "name": "AddOptionStakeOutput"
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "add_option_stake_comp_def",
-      "discriminator": [
-        214,
-        157,
-        74,
-        10,
-        70,
-        212,
-        4,
-        46
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "mxe_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account",
-          "writable": true
-        },
-        {
-          "name": "address_lookup_table",
-          "writable": true
-        },
-        {
-          "name": "lut_program",
-          "address": "AddressLookupTab1e1111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
     },
     {
       "name": "claim_fees",
@@ -796,7 +289,7 @@
               },
               {
                 "kind": "arg",
-                "path": "option_index"
+                "path": "option_id"
               }
             ]
           }
@@ -881,8 +374,8 @@
       ],
       "args": [
         {
-          "name": "option_index",
-          "type": "u16"
+          "name": "option_id",
+          "type": "u64"
         },
         {
           "name": "stake_account_id",
@@ -1444,7 +937,7 @@
               },
               {
                 "kind": "arg",
-                "path": "option_index"
+                "path": "option_id"
               }
             ]
           }
@@ -1456,8 +949,8 @@
       ],
       "args": [
         {
-          "name": "option_index",
-          "type": "u16"
+          "name": "option_id",
+          "type": "u64"
         },
         {
           "name": "stake_account_id",
@@ -3362,8 +2855,8 @@
     },
     {
       "code": 6007,
-      "name": "InvalidOptionIndex",
-      "msg": "Invalid option index"
+      "name": "InvalidOptionId",
+      "msg": "Invalid option ID"
     },
     {
       "code": 6008,
@@ -3500,62 +2993,6 @@
             "type": {
               "defined": {
                 "name": "Epoch"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "AddOptionStakeOutput",
-      "docs": [
-        "The output of the callback instruction. Provided as a struct with ordered fields",
-        "as anchor does not support tuples and tuple structs yet."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "AddOptionStakeOutputStruct0"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "AddOptionStakeOutputStruct0",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "name": "field_1",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
               }
             }
           }
@@ -4136,12 +3573,8 @@
             "type": "bool"
           },
           {
-            "name": "index",
-            "type": "u16"
-          },
-          {
-            "name": "name",
-            "type": "string"
+            "name": "id",
+            "type": "u64"
           },
           {
             "name": "timestamp",
@@ -4282,7 +3715,7 @@
           },
           {
             "name": "total_options",
-            "type": "u16"
+            "type": "u64"
           },
           {
             "name": "open_timestamp",
@@ -4366,15 +3799,8 @@
             "type": "pubkey"
           },
           {
-            "name": "index",
-            "type": "u16"
-          },
-          {
-            "name": "name",
-            "docs": [
-              "Name of the option"
-            ],
-            "type": "string"
+            "name": "id",
+            "type": "u64"
           },
           {
             "name": "total_staked",
@@ -4554,7 +3980,7 @@
         "fields": [
           {
             "name": "field_0",
-            "type": "u16"
+            "type": "u64"
           }
         ]
       }
@@ -4577,8 +4003,8 @@
             "type": "pubkey"
           },
           {
-            "name": "option",
-            "type": "u16"
+            "name": "option_id",
+            "type": "u64"
           },
           {
             "name": "reward_amount",
@@ -4855,7 +4281,7 @@
           {
             "name": "revealed_option",
             "type": {
-              "option": "u16"
+              "option": "u64"
             }
           },
           {
@@ -5032,7 +4458,7 @@
           },
           {
             "name": "selected_option",
-            "type": "u16"
+            "type": "u64"
           },
           {
             "name": "timestamp",
@@ -5129,8 +4555,8 @@
             "type": "pubkey"
           },
           {
-            "name": "option",
-            "type": "u16"
+            "name": "option_id",
+            "type": "u64"
           },
           {
             "name": "amount",
@@ -5289,8 +4715,8 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "option_index",
-            "type": "u16"
+            "name": "option_id",
+            "type": "u64"
           },
           {
             "name": "reward_percentage",

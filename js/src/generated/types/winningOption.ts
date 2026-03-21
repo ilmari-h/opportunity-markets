@@ -10,8 +10,8 @@ import {
   combineCodec,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
+  getU64Decoder,
+  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   type FixedSizeCodec,
@@ -19,20 +19,23 @@ import {
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type WinningOption = { optionIndex: number; rewardPercentage: number };
+export type WinningOption = { optionId: bigint; rewardPercentage: number };
 
-export type WinningOptionArgs = WinningOption;
+export type WinningOptionArgs = {
+  optionId: number | bigint;
+  rewardPercentage: number;
+};
 
 export function getWinningOptionEncoder(): FixedSizeEncoder<WinningOptionArgs> {
   return getStructEncoder([
-    ['optionIndex', getU16Encoder()],
+    ['optionId', getU64Encoder()],
     ['rewardPercentage', getU8Encoder()],
   ]);
 }
 
 export function getWinningOptionDecoder(): FixedSizeDecoder<WinningOption> {
   return getStructDecoder([
-    ['optionIndex', getU16Decoder()],
+    ['optionId', getU64Decoder()],
     ['rewardPercentage', getU8Decoder()],
   ]);
 }

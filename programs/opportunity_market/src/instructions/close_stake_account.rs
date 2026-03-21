@@ -9,7 +9,7 @@ use crate::instructions::stake::STAKE_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, OpportunityMarketOption, StakeAccount};
 
 #[derive(Accounts)]
-#[instruction(option_index: u16, stake_account_id: u32)]
+#[instruction(option_id: u64, stake_account_id: u32)]
 pub struct CloseStakeAccount<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
@@ -30,7 +30,7 @@ pub struct CloseStakeAccount<'info> {
     pub stake_account: Account<'info, StakeAccount>,
 
     #[account(
-        seeds = [b"option", market.key().as_ref(), &option_index.to_le_bytes()],
+        seeds = [b"option", market.key().as_ref(), &option_id.to_le_bytes()],
         bump = option.bump,
     )]
     pub option: Account<'info, OpportunityMarketOption>,
@@ -60,7 +60,7 @@ pub struct CloseStakeAccount<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_index: u16, _stake_account_id: u32) -> Result<()> {
+pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _stake_account_id: u32) -> Result<()> {
     let stake_account = &ctx.accounts.stake_account;
     let market = &ctx.accounts.market;
     let option = &ctx.accounts.option;
@@ -89,7 +89,7 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_index: u16, _
             owner: ctx.accounts.owner.key(),
             market: market.key(),
             stake_account: ctx.accounts.stake_account.key(),
-            option: option_index,
+            option_id: option_id,
             stake_amount: stake_account.amount,
             reward_amount: 0u64,
             staked_at_timestamp: stake_account.staked_at_timestamp.unwrap_or(0),
@@ -103,16 +103,16 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_index: u16, _
     // Normal path: winners were selected, stakes must be revealed
     let revealed_option = stake_account.revealed_option.ok_or(ErrorCode::NotRevealed)?;
 
-    // Check that the option_index matches the user's revealed option
+    // Check that the option_id matches the user's revealed option
     require!(
-        revealed_option == option_index,
-        ErrorCode::InvalidOptionIndex
+        revealed_option == option_id,
+        ErrorCode::InvalidOptionId
     );
 
     // Check if this stake was for a winning option and user incremented the tally
     // If so, calculate reward
     let mut user_reward: u64 = 0;
-    if let Some(winning) = market.selected_options.as_ref().and_then(|opts| opts.iter().find(|w| w.option_index == revealed_option)) {
+    if let Some(winning) = market.selected_options.as_ref().and_then(|opts| opts.iter().find(|w| w.option_id == revealed_option)) {
         if stake_account.total_incremented {
             let user_score = stake_account.score.ok_or(ErrorCode::NotRevealed)?;
             let total_score = option.total_score.ok_or(ErrorCode::NotRevealed)?;
@@ -172,7 +172,7 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_index: u16, _
         owner: ctx.accounts.owner.key(),
         market: market.key(),
         stake_account: stake_account.key(),
-        option: option_index,
+        option_id: option_id,
         stake_amount: stake_account.amount,
         reward_amount: user_reward,
         staked_at_timestamp: staked_at_timestamp,

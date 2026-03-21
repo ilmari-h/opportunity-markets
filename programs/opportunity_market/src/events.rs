@@ -35,7 +35,7 @@ pub struct MarketOptionCreatedEvent {
     pub market: Pubkey,
     pub creator: Pubkey,
     pub by_market_creator: bool,
-    pub index: u16, pub name: String,
+    pub id: u64,
     pub timestamp: i64,
 }
 
@@ -58,7 +58,7 @@ pub struct StakeRevealedEvent {
     pub market: Pubkey,
     pub stake_account: Pubkey,
     pub stake_amount: u64,
-    pub selected_option: u16,
+    pub selected_option: u64,
     pub timestamp: i64,
 }
 
@@ -103,7 +103,7 @@ pub struct RewardClaimedEvent {
     pub owner: Pubkey,
     pub market: Pubkey,
     pub stake_account: Pubkey,
-    pub option: u16,
+    pub option_id: u64,
     pub reward_amount: u64,
     pub staked_at_timestamp: u64,
     pub unstaked_at_timestamp: u64,
@@ -126,7 +126,7 @@ pub struct TallyIncrementedEvent {
     pub owner: Pubkey,
     pub market: Pubkey,
     pub stake_account: Pubkey,
-    pub option: u16,
+    pub option_id: u64,
     pub amount: u64,
     pub user_score: u64,
     pub timestamp: i64,

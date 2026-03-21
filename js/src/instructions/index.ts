@@ -5,7 +5,6 @@ export * from "./initCompDef";
 export * from "./stake";
 export * from "./revealStake";
 export * from "./addMarketOption";
-export * from "./addMarketOptionAsCreator";
 export * from "./openMarket";
 export * from "./selectWinningOptions";
 export * from "./extendRevealPeriod";

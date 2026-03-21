@@ -16,10 +16,10 @@ import {
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
   getU32Decoder,
   getU32Encoder,
+  getU64Decoder,
+  getU64Encoder,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -93,12 +93,12 @@ export type IncrementOptionTallyInstruction<
 
 export type IncrementOptionTallyInstructionData = {
   discriminator: ReadonlyUint8Array;
-  optionIndex: number;
+  optionId: bigint;
   stakeAccountId: number;
 };
 
 export type IncrementOptionTallyInstructionDataArgs = {
-  optionIndex: number;
+  optionId: number | bigint;
   stakeAccountId: number;
 };
 
@@ -106,7 +106,7 @@ export function getIncrementOptionTallyInstructionDataEncoder(): FixedSizeEncode
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['optionIndex', getU16Encoder()],
+      ['optionId', getU64Encoder()],
       ['stakeAccountId', getU32Encoder()],
     ]),
     (value) => ({
@@ -119,7 +119,7 @@ export function getIncrementOptionTallyInstructionDataEncoder(): FixedSizeEncode
 export function getIncrementOptionTallyInstructionDataDecoder(): FixedSizeDecoder<IncrementOptionTallyInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['optionIndex', getU16Decoder()],
+    ['optionId', getU64Decoder()],
     ['stakeAccountId', getU32Decoder()],
   ]);
 }
@@ -148,7 +148,7 @@ export type IncrementOptionTallyAsyncInput<
   stakeAccount?: Address<TAccountStakeAccount>;
   option?: Address<TAccountOption>;
   systemProgram?: Address<TAccountSystemProgram>;
-  optionIndex: IncrementOptionTallyInstructionDataArgs['optionIndex'];
+  optionId: IncrementOptionTallyInstructionDataArgs['optionId'];
   stakeAccountId: IncrementOptionTallyInstructionDataArgs['stakeAccountId'];
 };
 
@@ -226,7 +226,7 @@ export async function getIncrementOptionTallyInstructionAsync<
           new Uint8Array([111, 112, 116, 105, 111, 110])
         ),
         getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getU16Encoder().encode(expectSome(args.optionIndex)),
+        getU64Encoder().encode(expectSome(args.optionId)),
       ],
     });
   }
@@ -274,7 +274,7 @@ export type IncrementOptionTallyInput<
   stakeAccount: Address<TAccountStakeAccount>;
   option: Address<TAccountOption>;
   systemProgram?: Address<TAccountSystemProgram>;
-  optionIndex: IncrementOptionTallyInstructionDataArgs['optionIndex'];
+  optionId: IncrementOptionTallyInstructionDataArgs['optionId'];
   stakeAccountId: IncrementOptionTallyInstructionDataArgs['stakeAccountId'];
 };
 

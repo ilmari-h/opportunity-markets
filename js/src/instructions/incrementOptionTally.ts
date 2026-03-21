@@ -9,7 +9,7 @@ export interface IncrementOptionTallyParams extends BaseInstructionParams {
   signer: TransactionSigner;
   owner: Address;
   market: Address;
-  optionIndex: number;
+  optionId: number | bigint;
   stakeAccountId: number;
 }
 

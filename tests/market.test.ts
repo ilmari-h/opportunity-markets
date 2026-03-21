@@ -75,8 +75,8 @@ describe("OpportunityMarket", () => {
     const openTimestamp = await runner.openMarket();
 
     // Add two options
-    const { optionIndex: optionA } = await runner.addOptionAsCreator("Option A");
-    const { optionIndex: optionB } = await runner.addOptionAsCreator("Option B");
+    const { optionId: optionA } = await runner.addOption();
+    const { optionId: optionB } = await runner.addOption();
 
     // Wait for market staking period to be active
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
@@ -90,20 +90,20 @@ describe("OpportunityMarket", () => {
     const purchases = runner.participants.map((userId, idx) => ({
       userId,
       amount: stakeAmounts[idx],
-      optionIndex: idx < numParticipants / 2 ? optionA : optionB,
+      optionId: idx < numParticipants / 2 ? optionA : optionB,
     }));
     const stakeAccountIds = await runner.stakeOnOptionBatch(purchases);
 
     // Verify user can decrypt their own encrypted option choice
     purchases.forEach((purchase, i) => {
       const decrypted = runner.decryptStakeOption(purchase.userId, stakeAccountIds[i]);
-      expect(decrypted.optionIndex).to.equal(BigInt(purchase.optionIndex));
+      expect(decrypted.optionId).to.equal(BigInt(purchase.optionId));
     });
 
     // Verify observer can decrypt disclosed option choices
     purchases.forEach((purchase, i) => {
       const disclosed = runner.decryptDisclosedStakeOption(purchase.userId, stakeAccountIds[i], observer);
-      expect(disclosed.optionIndex).to.equal(BigInt(purchase.optionIndex));
+      expect(disclosed.optionId).to.equal(BigInt(purchase.optionId));
     });
 
     // Market creator selects winning option
@@ -113,7 +113,7 @@ describe("OpportunityMarket", () => {
     // Verify selected option
     const resolvedMarket = await runner.fetchMarket();
     expect(resolvedMarket.data.selectedOptions).to.deep.equal(
-      some([{ optionIndex: winningOptionIndex, rewardPercentage: 100 }])
+      some([{ optionId: BigInt(winningOptionIndex), rewardPercentage: 100 }])
     );
 
     // Reveal stakes for winners
@@ -132,14 +132,14 @@ describe("OpportunityMarket", () => {
     for (let i = 0; i < winners.length; i++) {
       const sa = winnerStakeAccounts[i];
       const stakeAccount = await runner.fetchStakeAccountData(winners[i], sa.id);
-      expect(stakeAccount.data.revealedOption).to.deep.equal(some(winningOptionIndex));
+      expect(stakeAccount.data.revealedOption).to.deep.equal(some(BigInt(winningOptionIndex)));
     }
 
     // Increment option tally for winners
     await runner.incrementOptionTallyBatch(
       winners.map((userId, i) => ({
         userId,
-        optionIndex: winningOptionIndex,
+        optionId: winningOptionIndex,
         stakeAccountId: winnerStakeAccounts[i].id,
       }))
     );
@@ -198,7 +198,7 @@ describe("OpportunityMarket", () => {
     await runner.closeStakeAccountBatch(
       winners.map((userId, i) => ({
         userId,
-        optionIndex: winningOptionIndex,
+        optionId: winningOptionIndex,
         stakeAccountId: winnerStakeAccounts[i].id,
       }))
     );

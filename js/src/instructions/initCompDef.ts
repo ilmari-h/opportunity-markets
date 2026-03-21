@@ -16,7 +16,6 @@ import { PublicKey } from "@solana/web3.js";
 import {
   getStakeCompDefInstruction,
   getRevealStakeCompDefInstruction,
-  getAddOptionStakeCompDefInstruction,
   OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   fetchMXEAccount,
 } from "../generated";
@@ -25,13 +24,11 @@ import { type BaseInstructionParams } from "./instructionParams";
 
 export type CompDefCircuitName =
   | "stake"
-  | "reveal_stake"
-  | "add_option_stake";
+  | "reveal_stake";
 
 export const ALL_COMP_DEF_CIRCUITS: CompDefCircuitName[] = [
   "stake",
   "reveal_stake",
-  "add_option_stake",
 ];
 
 
@@ -93,9 +90,6 @@ export async function getInitCompDefInstruction(
 
     case "reveal_stake":
       return getRevealStakeCompDefInstruction(baseInput, { programAddress: programId });
-
-    case "add_option_stake":
-      return getAddOptionStakeCompDefInstruction(baseInput, { programAddress: programId });
 
     default:
       throw new Error(`Unknown circuit: ${circuitName}`);

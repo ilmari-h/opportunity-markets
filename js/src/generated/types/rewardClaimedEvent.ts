@@ -14,8 +14,6 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
   type Address,
@@ -28,7 +26,7 @@ export type RewardClaimedEvent = {
   owner: Address;
   market: Address;
   stakeAccount: Address;
-  option: number;
+  optionId: bigint;
   rewardAmount: bigint;
   stakedAtTimestamp: bigint;
   unstakedAtTimestamp: bigint;
@@ -41,7 +39,7 @@ export type RewardClaimedEventArgs = {
   owner: Address;
   market: Address;
   stakeAccount: Address;
-  option: number;
+  optionId: number | bigint;
   rewardAmount: number | bigint;
   stakedAtTimestamp: number | bigint;
   unstakedAtTimestamp: number | bigint;
@@ -55,7 +53,7 @@ export function getRewardClaimedEventEncoder(): FixedSizeEncoder<RewardClaimedEv
     ['owner', getAddressEncoder()],
     ['market', getAddressEncoder()],
     ['stakeAccount', getAddressEncoder()],
-    ['option', getU16Encoder()],
+    ['optionId', getU64Encoder()],
     ['rewardAmount', getU64Encoder()],
     ['stakedAtTimestamp', getU64Encoder()],
     ['unstakedAtTimestamp', getU64Encoder()],
@@ -70,7 +68,7 @@ export function getRewardClaimedEventDecoder(): FixedSizeDecoder<RewardClaimedEv
     ['owner', getAddressDecoder()],
     ['market', getAddressDecoder()],
     ['stakeAccount', getAddressDecoder()],
-    ['option', getU16Decoder()],
+    ['optionId', getU64Decoder()],
     ['rewardAmount', getU64Decoder()],
     ['stakedAtTimestamp', getU64Decoder()],
     ['unstakedAtTimestamp', getU64Decoder()],

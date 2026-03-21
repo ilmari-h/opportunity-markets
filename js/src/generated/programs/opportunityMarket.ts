@@ -14,10 +14,7 @@ import {
   type ReadonlyUint8Array,
 } from '@solana/kit';
 import {
-  type ParsedAddMarketOptionAsCreatorInstruction,
   type ParsedAddMarketOptionInstruction,
-  type ParsedAddOptionStakeCallbackInstruction,
-  type ParsedAddOptionStakeCompDefInstruction,
   type ParsedClaimFeesInstruction,
   type ParsedCloseStakeAccountInstruction,
   type ParsedCreateMarketInstruction,
@@ -192,9 +189,6 @@ export function identifyOpportunityMarketAccount(
 
 export enum OpportunityMarketInstruction {
   AddMarketOption,
-  AddMarketOptionAsCreator,
-  AddOptionStakeCallback,
-  AddOptionStakeCompDef,
   ClaimFees,
   CloseStakeAccount,
   CreateMarket,
@@ -234,39 +228,6 @@ export function identifyOpportunityMarketInstruction(
     )
   ) {
     return OpportunityMarketInstruction.AddMarketOption;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([216, 154, 167, 90, 134, 172, 43, 68])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.AddMarketOptionAsCreator;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([58, 174, 2, 200, 118, 153, 169, 10])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.AddOptionStakeCallback;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([214, 157, 74, 10, 70, 212, 4, 46])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.AddOptionStakeCompDef;
   }
   if (
     containsBytes(
@@ -532,15 +493,6 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.AddMarketOption;
     } & ParsedAddMarketOptionInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.AddMarketOptionAsCreator;
-    } & ParsedAddMarketOptionAsCreatorInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.AddOptionStakeCallback;
-    } & ParsedAddOptionStakeCallbackInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.AddOptionStakeCompDef;
-    } & ParsedAddOptionStakeCompDefInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.ClaimFees;
     } & ParsedClaimFeesInstruction<TProgram>)

@@ -7,7 +7,7 @@ use crate::instructions::stake::STAKE_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, OpportunityMarketOption, StakeAccount};
 
 #[derive(Accounts)]
-#[instruction(option_index: u16, stake_account_id: u32)]
+#[instruction(option_id: u64, stake_account_id: u32)]
 pub struct IncrementOptionTally<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
@@ -28,7 +28,7 @@ pub struct IncrementOptionTally<'info> {
 
     #[account(
         mut,
-        seeds = [b"option", market.key().as_ref(), &option_index.to_le_bytes()],
+        seeds = [b"option", market.key().as_ref(), &option_id.to_le_bytes()],
         bump = option.bump,
     )]
     pub option: Account<'info, OpportunityMarketOption>,
@@ -36,7 +36,7 @@ pub struct IncrementOptionTally<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: u16, _stake_account_id: u32) -> Result<()> {
+pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64, _stake_account_id: u32) -> Result<()> {
     let market = &ctx.accounts.market;
 
     require!(!market.reward_withdrawn, ErrorCode::RewardAlreadyWithdrawn);
@@ -59,7 +59,7 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: 
     );
 
     let revealed_option = ctx.accounts.stake_account.revealed_option.ok_or(ErrorCode::NotRevealed)?;
-    require!(revealed_option == option_index, ErrorCode::InvalidOptionIndex);
+    require!(revealed_option == option_id, ErrorCode::InvalidOptionId);
 
     let amount = ctx.accounts.stake_account.amount;
 
@@ -100,7 +100,7 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: 
         owner: ctx.accounts.owner.key(),
         market: ctx.accounts.market.key(),
         stake_account: ctx.accounts.stake_account.key(),
-        option: option_index,
+        option_id: option_id,
         amount: amount,
         user_score: user_score,
     });

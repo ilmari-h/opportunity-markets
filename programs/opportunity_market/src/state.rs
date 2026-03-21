@@ -33,7 +33,7 @@ pub struct CentralState {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, InitSpace)]
 pub struct WinningOption {
-    pub option_index: u16,
+    pub option_id: u64,
     pub reward_percentage: u8,
 }
 
@@ -43,7 +43,7 @@ pub struct OpportunityMarket {
     pub bump: u8,
     pub creator: Pubkey,      // part of PDA seed
     pub index: u64,           // part of PDA seed
-    pub total_options: u16,
+    pub total_options: u64,
 
     // If set, means market is funded and ready to be opened for staking.
     // What actions are possible depends on current timestamp in relation to
@@ -98,7 +98,7 @@ pub struct StakeAccount {
     pub staked_at_timestamp: Option<u64>,
     pub unstaked_at_timestamp: Option<u64>,
     pub amount: u64,                         // plaintext stake amount
-    pub revealed_option: Option<u16>,
+    pub revealed_option: Option<u64>,
     pub score: Option<u64>,
     pub total_incremented: bool,
     pub unstakeable_at_timestamp: Option<u64>,
@@ -111,11 +111,7 @@ pub struct StakeAccount {
 pub struct OpportunityMarketOption {
     pub bump: u8,
     pub creator: Pubkey,
-    pub index: u16,
-
-    /// Name of the option
-    #[max_len(50)]
-    pub name: String,
+    pub id: u64,
 
     /// Total staked for this option (tally)
     pub total_staked: Option<u64>,

@@ -7,8 +7,6 @@
  */
 
 import {
-  addDecoderSizePrefix,
-  addEncoderSizePrefix,
   assertAccountExists,
   assertAccountsExist,
   combineCodec,
@@ -27,16 +25,10 @@ import {
   getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
-  getU32Decoder,
-  getU32Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
-  getUtf8Decoder,
-  getUtf8Encoder,
   transformEncoder,
   type Account,
   type Address,
@@ -67,9 +59,7 @@ export type OpportunityMarketOption = {
   discriminator: ReadonlyUint8Array;
   bump: number;
   creator: Address;
-  index: number;
-  /** Name of the option */
-  name: string;
+  id: bigint;
   /** Total staked for this option (tally) */
   totalStaked: Option<bigint>;
   totalScore: Option<bigint>;
@@ -79,9 +69,7 @@ export type OpportunityMarketOption = {
 export type OpportunityMarketOptionArgs = {
   bump: number;
   creator: Address;
-  index: number;
-  /** Name of the option */
-  name: string;
+  id: number | bigint;
   /** Total staked for this option (tally) */
   totalStaked: OptionOrNullable<number | bigint>;
   totalScore: OptionOrNullable<number | bigint>;
@@ -94,8 +82,7 @@ export function getOpportunityMarketOptionEncoder(): Encoder<OpportunityMarketOp
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['bump', getU8Encoder()],
       ['creator', getAddressEncoder()],
-      ['index', getU16Encoder()],
-      ['name', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
+      ['id', getU64Encoder()],
       ['totalStaked', getOptionEncoder(getU64Encoder())],
       ['totalScore', getOptionEncoder(getU64Encoder())],
       ['initialized', getBooleanEncoder()],
@@ -112,8 +99,7 @@ export function getOpportunityMarketOptionDecoder(): Decoder<OpportunityMarketOp
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['bump', getU8Decoder()],
     ['creator', getAddressDecoder()],
-    ['index', getU16Decoder()],
-    ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+    ['id', getU64Decoder()],
     ['totalStaked', getOptionDecoder(getU64Decoder())],
     ['totalScore', getOptionDecoder(getU64Decoder())],
     ['initialized', getBooleanDecoder()],

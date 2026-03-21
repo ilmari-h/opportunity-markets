@@ -28,8 +28,8 @@ export const OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING = 0x1774; // 
 export const OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP = 0x1775; // 6005
 /** MarketAlreadyOpen: Market is already open */
 export const OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN = 0x1776; // 6006
-/** InvalidOptionIndex: Invalid option index */
-export const OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_INDEX = 0x1777; // 6007
+/** InvalidOptionId: Invalid option ID */
+export const OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_ID = 0x1777; // 6007
 /** MarketNotOpen: Market is not open */
 export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN = 0x1778; // 6008
 /** StakingNotActive: Staking period is not active */
@@ -90,7 +90,7 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_MINT
-  | typeof OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_INDEX
+  | typeof OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_ID
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_WINNING_OPTIONS_INPUT
   | typeof OPPORTUNITY_MARKET_ERROR__LOCKED
@@ -127,7 +127,7 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING]: `Insufficient reward funding`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE]: `Invalid account state`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_MINT]: `Token mint does not match account mint`,
-    [OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_INDEX]: `Invalid option index`,
+    [OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_ID]: `Invalid option ID`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP]: `Timestamp must be in the future`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_WINNING_OPTIONS_INPUT]: `Invalid winning options input`,
     [OPPORTUNITY_MARKET_ERROR__LOCKED]: `Account is locked`,

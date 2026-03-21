@@ -195,7 +195,7 @@ pub fn stake(
         // User's option input (Enc<Shared, SelectedOption>)
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(input_nonce)
-        .encrypted_u16(selected_option_ciphertext)
+        .encrypted_u64(selected_option_ciphertext)
 
         // Authorized reader context (Shared)
         .x25519_pubkey(authorized_reader_pubkey)

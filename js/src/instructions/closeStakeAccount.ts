@@ -11,7 +11,7 @@ export interface CloseStakeAccountParams extends BaseInstructionParams {
   tokenMint: Address;
   ownerTokenAccount: Address;
   tokenProgram: Address;
-  optionIndex: number;
+  optionId: number | bigint;
   stakeAccountId: number;
 }
 

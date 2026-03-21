@@ -16,10 +16,10 @@ import {
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
   getU32Decoder,
   getU32Encoder,
+  getU64Decoder,
+  getU64Encoder,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -105,12 +105,12 @@ export type CloseStakeAccountInstruction<
 
 export type CloseStakeAccountInstructionData = {
   discriminator: ReadonlyUint8Array;
-  optionIndex: number;
+  optionId: bigint;
   stakeAccountId: number;
 };
 
 export type CloseStakeAccountInstructionDataArgs = {
-  optionIndex: number;
+  optionId: number | bigint;
   stakeAccountId: number;
 };
 
@@ -118,7 +118,7 @@ export function getCloseStakeAccountInstructionDataEncoder(): FixedSizeEncoder<C
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['optionIndex', getU16Encoder()],
+      ['optionId', getU64Encoder()],
       ['stakeAccountId', getU32Encoder()],
     ]),
     (value) => ({ ...value, discriminator: CLOSE_STAKE_ACCOUNT_DISCRIMINATOR })
@@ -128,7 +128,7 @@ export function getCloseStakeAccountInstructionDataEncoder(): FixedSizeEncoder<C
 export function getCloseStakeAccountInstructionDataDecoder(): FixedSizeDecoder<CloseStakeAccountInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['optionIndex', getU16Decoder()],
+    ['optionId', getU64Decoder()],
     ['stakeAccountId', getU32Decoder()],
   ]);
 }
@@ -165,7 +165,7 @@ export type CloseStakeAccountAsyncInput<
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  optionIndex: CloseStakeAccountInstructionDataArgs['optionIndex'];
+  optionId: CloseStakeAccountInstructionDataArgs['optionId'];
   stakeAccountId: CloseStakeAccountInstructionDataArgs['stakeAccountId'];
 };
 
@@ -258,7 +258,7 @@ export async function getCloseStakeAccountInstructionAsync<
           new Uint8Array([111, 112, 116, 105, 111, 110])
         ),
         getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getU16Encoder().encode(expectSome(args.optionIndex)),
+        getU64Encoder().encode(expectSome(args.optionId)),
       ],
     });
   }
@@ -331,7 +331,7 @@ export type CloseStakeAccountInput<
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
-  optionIndex: CloseStakeAccountInstructionDataArgs['optionIndex'];
+  optionId: CloseStakeAccountInstructionDataArgs['optionId'];
   stakeAccountId: CloseStakeAccountInstructionDataArgs['stakeAccountId'];
 };
 

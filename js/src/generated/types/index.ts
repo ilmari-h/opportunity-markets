@@ -7,8 +7,6 @@
  */
 
 export * from './activation';
-export * from './addOptionStakeOutput';
-export * from './addOptionStakeOutputStruct0';
 export * from './bN254G2BLSPublicKey';
 export * from './circuitSource';
 export * from './computationDefinitionMeta';

@@ -4,12 +4,12 @@ import {
   type SelectWinningOptionsInstruction,
 } from "../generated";
 import { type BaseInstructionParams } from "./instructionParams";
-import { type WinningOption } from "../generated/types";
+import { type WinningOptionArgs } from "../generated/types";
 
 export interface SelectWinningOptionsParams extends BaseInstructionParams {
   authority: TransactionSigner;
   market: Address;
-  selections: Array<WinningOption>;
+  selections: Array<WinningOptionArgs>;
 }
 
 export function selectWinningOptions(

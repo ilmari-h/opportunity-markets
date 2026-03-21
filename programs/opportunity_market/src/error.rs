@@ -16,8 +16,8 @@ pub enum ErrorCode {
     InvalidTimestamp,
     #[msg("Market is already open")]
     MarketAlreadyOpen,
-    #[msg("Invalid option index")]
-    InvalidOptionIndex,
+    #[msg("Invalid option ID")]
+    InvalidOptionId,
     #[msg("Market is not open")]
     MarketNotOpen,
     #[msg("Staking period is not active")]

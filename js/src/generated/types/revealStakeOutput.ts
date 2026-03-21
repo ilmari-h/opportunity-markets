@@ -10,8 +10,8 @@ import {
   combineCodec,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
+  getU64Decoder,
+  getU64Encoder,
   type FixedSizeCodec,
   type FixedSizeDecoder,
   type FixedSizeEncoder,
@@ -21,16 +21,16 @@ import {
  * The output of the callback instruction. Provided as a struct with ordered fields
  * as anchor does not support tuples and tuple structs yet.
  */
-export type RevealStakeOutput = { field0: number };
+export type RevealStakeOutput = { field0: bigint };
 
-export type RevealStakeOutputArgs = RevealStakeOutput;
+export type RevealStakeOutputArgs = { field0: number | bigint };
 
 export function getRevealStakeOutputEncoder(): FixedSizeEncoder<RevealStakeOutputArgs> {
-  return getStructEncoder([['field0', getU16Encoder()]]);
+  return getStructEncoder([['field0', getU64Encoder()]]);
 }
 
 export function getRevealStakeOutputDecoder(): FixedSizeDecoder<RevealStakeOutput> {
-  return getStructDecoder([['field0', getU16Decoder()]]);
+  return getStructDecoder([['field0', getU64Decoder()]]);
 }
 
 export function getRevealStakeOutputCodec(): FixedSizeCodec<

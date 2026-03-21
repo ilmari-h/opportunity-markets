@@ -15,7 +15,6 @@ pub use state::*;
 
 pub const COMP_DEF_OFFSET_STAKE: u32 = comp_def_offset("stake");
 pub const COMP_DEF_OFFSET_REVEAL_STAKE: u32 = comp_def_offset("reveal_stake");
-pub const COMP_DEF_OFFSET_ADD_OPTION_STAKE: u32 = comp_def_offset("add_option_stake");
 
 declare_id!("bncZ1gDqgqhSWFzcxjeMoCtqN7odS8wYn1nS5tXZ9jA");
 
@@ -25,10 +24,6 @@ pub mod opportunity_market {
 
     pub fn reveal_stake_comp_def(ctx: Context<RevealStakeCompDef>) -> Result<()> {
         instructions::reveal_stake_comp_def(ctx)
-    }
-
-    pub fn add_option_stake_comp_def(ctx: Context<AddOptionStakeCompDef>) -> Result<()> {
-        instructions::add_option_stake_comp_def(ctx)
     }
 
     pub fn init_central_state(
@@ -84,44 +79,9 @@ pub mod opportunity_market {
 
     pub fn add_market_option(
         ctx: Context<AddMarketOption>,
-        computation_offset: u64,
-        option_index: u16,
-        stake_account_id: u32,
-        name: String,
-        amount: u64,
-        selected_option_ciphertext: [u8; 32],
-        input_nonce: u128,
-        authorized_reader_nonce: u128,
-        user_pubkey: [u8; 32],
+        option_id: u64,
     ) -> Result<()> {
-        instructions::add_market_option(
-            ctx,
-            computation_offset,
-            option_index,
-            stake_account_id,
-            name,
-            amount,
-            selected_option_ciphertext,
-            input_nonce,
-            authorized_reader_nonce,
-            user_pubkey,
-        )
-    }
-
-    pub fn add_market_option_as_creator(
-        ctx: Context<AddMarketOptionAsCreator>,
-        option_index: u16,
-        name: String,
-    ) -> Result<()> {
-        instructions::add_market_option_as_creator(ctx, option_index, name)
-    }
-
-    #[arcium_callback(encrypted_ix = "add_option_stake")]
-    pub fn add_option_stake_callback(
-        ctx: Context<AddOptionStakeCallback>,
-        output: SignedComputationOutputs<AddOptionStakeOutput>,
-    ) -> Result<()> {
-        instructions::add_market_option_callback(ctx, output)
+        instructions::add_market_option(ctx, option_id)
     }
 
     pub fn open_market(ctx: Context<OpenMarket>, open_timestamp: u64) -> Result<()> {
@@ -144,12 +104,12 @@ pub mod opportunity_market {
         instructions::increase_reward_pool(ctx, new_reward_amount)
     }
 
-    pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: u16, stake_account_id: u32) -> Result<()> {
-        instructions::increment_option_tally(ctx, option_index, stake_account_id)
+    pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64, stake_account_id: u32) -> Result<()> {
+        instructions::increment_option_tally(ctx, option_id, stake_account_id)
     }
 
-    pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_index: u16, stake_account_id: u32) -> Result<()> {
-        instructions::close_stake_account(ctx, option_index, stake_account_id)
+    pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, stake_account_id: u32) -> Result<()> {
+        instructions::close_stake_account(ctx, option_id, stake_account_id)
     }
 
     pub fn reclaim_stake(ctx: Context<ReclaimStake>, stake_account_id: u32) -> Result<()> {

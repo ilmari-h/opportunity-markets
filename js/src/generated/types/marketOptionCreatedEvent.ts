@@ -7,8 +7,6 @@
  */
 
 import {
-  addDecoderSizePrefix,
-  addEncoderSizePrefix,
   combineCodec,
   getAddressDecoder,
   getAddressEncoder,
@@ -18,16 +16,12 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
-  getU32Decoder,
-  getU32Encoder,
-  getUtf8Decoder,
-  getUtf8Encoder,
+  getU64Decoder,
+  getU64Encoder,
   type Address,
-  type Codec,
-  type Decoder,
-  type Encoder,
+  type FixedSizeCodec,
+  type FixedSizeDecoder,
+  type FixedSizeEncoder,
 } from '@solana/kit';
 
 export type MarketOptionCreatedEvent = {
@@ -35,8 +29,7 @@ export type MarketOptionCreatedEvent = {
   market: Address;
   creator: Address;
   byMarketCreator: boolean;
-  index: number;
-  name: string;
+  id: bigint;
   timestamp: bigint;
 };
 
@@ -45,36 +38,33 @@ export type MarketOptionCreatedEventArgs = {
   market: Address;
   creator: Address;
   byMarketCreator: boolean;
-  index: number;
-  name: string;
+  id: number | bigint;
   timestamp: number | bigint;
 };
 
-export function getMarketOptionCreatedEventEncoder(): Encoder<MarketOptionCreatedEventArgs> {
+export function getMarketOptionCreatedEventEncoder(): FixedSizeEncoder<MarketOptionCreatedEventArgs> {
   return getStructEncoder([
     ['option', getAddressEncoder()],
     ['market', getAddressEncoder()],
     ['creator', getAddressEncoder()],
     ['byMarketCreator', getBooleanEncoder()],
-    ['index', getU16Encoder()],
-    ['name', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
+    ['id', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getMarketOptionCreatedEventDecoder(): Decoder<MarketOptionCreatedEvent> {
+export function getMarketOptionCreatedEventDecoder(): FixedSizeDecoder<MarketOptionCreatedEvent> {
   return getStructDecoder([
     ['option', getAddressDecoder()],
     ['market', getAddressDecoder()],
     ['creator', getAddressDecoder()],
     ['byMarketCreator', getBooleanDecoder()],
-    ['index', getU16Decoder()],
-    ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
+    ['id', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getMarketOptionCreatedEventCodec(): Codec<
+export function getMarketOptionCreatedEventCodec(): FixedSizeCodec<
   MarketOptionCreatedEventArgs,
   MarketOptionCreatedEvent
 > {

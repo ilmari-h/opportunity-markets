@@ -29,7 +29,7 @@ import {
   ensureCentralState,
   initTokenVault,
   getTokenVaultAddress,
-  addMarketOptionAsCreator,
+  addMarketOption,
   initStakeAccount,
   stake,
   selectWinningOptions as selectWinningOptionsIx,
@@ -65,7 +65,7 @@ import { getDeployerKeypair } from "./deployer";
 export interface StakeAccountInfo {
   id: number;
   amount: bigint;
-  optionIndex: number;
+  optionId: number;
   encryptedOption: Array<number>;
   stateNonce: bigint;
   encryptedOptionDisclosure: Array<number>;
@@ -101,7 +101,7 @@ export interface TestRunnerConfig {
 export interface StakePurchase {
   userId: Address;
   amount: bigint;
-  optionIndex: number;
+  optionId: number;
 }
 
 export interface RevealRequest {
@@ -111,13 +111,13 @@ export interface RevealRequest {
 
 export interface TallyIncrement {
   userId: Address;
-  optionIndex: number;
+  optionId: number;
   stakeAccountId: number;
 }
 
 export interface CloseRequest {
   userId: Address;
-  optionIndex: number;
+  optionId: number;
   stakeAccountId: number;
 }
 
@@ -506,7 +506,7 @@ export class TestRunner {
     return timestamp;
   }
 
-  async selectWinningOptions(selections: Array<{ optionIndex: number; rewardPercentage: number }>): Promise<void> {
+  async selectWinningOptions(selections: Array<{ optionId: number; rewardPercentage: number }>): Promise<void> {
     const ix = selectWinningOptionsIx({
       authority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
@@ -518,8 +518,8 @@ export class TestRunner {
     });
   }
 
-  async selectSingleWinningOption(optionIndex: number): Promise<void> {
-    await this.selectWinningOptions([{ optionIndex, rewardPercentage: 100 }]);
+  async selectSingleWinningOption(optionId: number): Promise<void> {
+    await this.selectWinningOptions([{ optionId, rewardPercentage: 100 }]);
   }
 
   async increaseRewardPool(newRewardAmount: bigint): Promise<void> {
@@ -563,21 +563,20 @@ export class TestRunner {
   // Option Management
   // ============================================================================
 
-  async addOptionAsCreator(name: string): Promise<{ optionIndex: number }> {
-    const optionIndex = ++this.optionCount;
+  async addOption(): Promise<{ optionId: number }> {
+    const optionId = ++this.optionCount;
 
-    const addOptionIx = await addMarketOptionAsCreator({
+    const addOptionIx = await addMarketOption({
       creator: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
-      optionIndex,
-      name,
+      optionId,
     });
 
     await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [addOptionIx], {
-      label: `Add option "${name}" (as creator)`,
+      label: `Add option ${optionId}`,
     });
 
-    return { optionIndex };
+    return { optionId };
   }
 
   // ============================================================================
@@ -622,7 +621,7 @@ export class TestRunner {
 
           // Build stake instruction
           const inputNonce = randomBytes(16);
-          const optionCiphertext = cipher.encrypt([BigInt(p.optionIndex)], inputNonce);
+          const optionCiphertext = cipher.encrypt([BigInt(p.optionId)], inputNonce);
           const computationOffset = randomComputationOffset();
 
           const [tokenVaultAddress] = await getTokenVaultAddress(this.mint.address, this.programId);
@@ -671,7 +670,7 @@ export class TestRunner {
           this.addStakeAccount(user, {
             id: stakeAccountId,
             amount: p.amount,
-            optionIndex: p.optionIndex,
+            optionId: p.optionId,
             encryptedOption: stakeAccountData.data.encryptedOption,
             stateNonce: stakeAccountData.data.stateNonce,
             encryptedOptionDisclosure: stakeAccountData.data.encryptedOptionDisclosure,
@@ -690,9 +689,9 @@ export class TestRunner {
   async stakeOnOption(
     userId: Address,
     amount: bigint,
-    optionIndex: number
+    optionId: number
   ): Promise<number> {
-    const [stakeAccountId] = await this.stakeOnOptionBatch([{ userId, amount, optionIndex }]);
+    const [stakeAccountId] = await this.stakeOnOptionBatch([{ userId, amount, optionId }]);
     return stakeAccountId;
   }
 
@@ -776,7 +775,7 @@ export class TestRunner {
           signer: user.solanaKeypair,
           owner: user.solanaKeypair.address,
           market: this.marketAddress,
-          optionIndex: inc.optionIndex,
+          optionId: inc.optionId,
           stakeAccountId: inc.stakeAccountId,
         });
         return { user, ix };
@@ -790,8 +789,8 @@ export class TestRunner {
     }
   }
 
-  async incrementOptionTally(userId: Address, optionIndex: number, stakeAccountId: number): Promise<void> {
-    await this.incrementOptionTallyBatch([{ userId, optionIndex, stakeAccountId }]);
+  async incrementOptionTally(userId: Address, optionId: number, stakeAccountId: number): Promise<void> {
+    await this.incrementOptionTallyBatch([{ userId, optionId, stakeAccountId }]);
   }
 
   async closeStakeAccountBatch(closes: CloseRequest[]): Promise<void> {
@@ -804,7 +803,7 @@ export class TestRunner {
           tokenMint: this.mint.address,
           ownerTokenAccount: user.tokenAccount,
           tokenProgram: TOKEN_PROGRAM_ADDRESS,
-          optionIndex: close.optionIndex,
+          optionId: close.optionId,
           stakeAccountId: close.stakeAccountId,
         });
         return { user, ix };
@@ -818,8 +817,8 @@ export class TestRunner {
     }
   }
 
-  async closeStakeAccount(userId: Address, optionIndex: number, stakeAccountId: number): Promise<void> {
-    await this.closeStakeAccountBatch([{ userId, optionIndex, stakeAccountId }]);
+  async closeStakeAccount(userId: Address, optionId: number, stakeAccountId: number): Promise<void> {
+    await this.closeStakeAccountBatch([{ userId, optionId, stakeAccountId }]);
   }
 
   async reclaimStakeBatch(requests: RevealRequest[]): Promise<void> {
@@ -898,8 +897,8 @@ export class TestRunner {
     return this.getUser(userId).stakeAccounts;
   }
 
-  getUserStakeAccountsForOption(userId: Address, optionIndex: number): StakeAccountInfo[] {
-    return this.getUser(userId).stakeAccounts.filter((sa) => sa.optionIndex === optionIndex);
+  getUserStakeAccountsForOption(userId: Address, optionId: number): StakeAccountInfo[] {
+    return this.getUser(userId).stakeAccounts.filter((sa) => sa.optionId === optionId);
   }
 
   getStakeAccountInfo(userId: Address, stakeAccountId: number): StakeAccountInfo {
@@ -911,7 +910,7 @@ export class TestRunner {
     return stakeAccount;
   }
 
-  decryptStakeOption(userId: Address, stakeAccountId: number): { optionIndex: bigint } {
+  decryptStakeOption(userId: Address, stakeAccountId: number): { optionId: bigint } {
     const user = this.getUser(userId);
     const stakeAccount = this.getStakeAccountInfo(userId, stakeAccountId);
 
@@ -920,7 +919,7 @@ export class TestRunner {
     const decrypted = cipher.decrypt([stakeAccount.encryptedOption], nonceBytes);
 
     return {
-      optionIndex: decrypted[0],
+      optionId: decrypted[0],
     };
   }
 
@@ -928,7 +927,7 @@ export class TestRunner {
     userId: Address,
     stakeAccountId: number,
     readerKeypair: X25519Keypair
-  ): { optionIndex: bigint } {
+  ): { optionId: bigint } {
     const stakeAccount = this.getStakeAccountInfo(userId, stakeAccountId);
 
     const cipher = createCipher(readerKeypair.secretKey, this.mxePublicKey);
@@ -936,7 +935,7 @@ export class TestRunner {
     const decrypted = cipher.decrypt([stakeAccount.encryptedOptionDisclosure], nonceBytes);
 
     return {
-      optionIndex: decrypted[0],
+      optionId: decrypted[0],
     };
   }
 
@@ -982,13 +981,13 @@ export class TestRunner {
     return fetchStakeAccount(this.rpc, address);
   }
 
-  async getOptionAddress(optionIndex: number): Promise<Address> {
-    const [address] = await getOpportunityMarketOptionAddress(this.marketAddress, optionIndex);
+  async getOptionAddress(optionId: number): Promise<Address> {
+    const [address] = await getOpportunityMarketOptionAddress(this.marketAddress, optionId);
     return address;
   }
 
-  async fetchOptionData(optionIndex: number) {
-    const address = await this.getOptionAddress(optionIndex);
+  async fetchOptionData(optionId: number) {
+    const address = await this.getOptionAddress(optionId);
     return fetchOpportunityMarketOption(this.rpc, address);
   }
 
