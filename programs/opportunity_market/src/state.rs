@@ -110,15 +110,10 @@ pub struct StakeAccount {
 #[derive(InitSpace)]
 pub struct OpportunityMarketOption {
     pub bump: u8,
-    pub creator: Pubkey,
     pub id: u64,
 
     /// Total staked for this option (tally)
     pub total_staked: Option<u64>,
 
-    // Scales by time-in-market
     pub total_score: Option<u64>,
-
-    // Whether this option has been fully initialized (set true in MPC callback)
-    pub initialized: bool,
 }

@@ -55,15 +55,12 @@ pub fn add_market_option(
     option.id = option_id;
     option.total_staked = None;
     option.total_score = None;
-    option.creator = ctx.accounts.creator.key();
-    option.initialized = true;
 
     emit_ts!(MarketOptionCreatedEvent {
         option: option.key(),
         market: market.key(),
         creator: ctx.accounts.creator.key(),
         id: option.id,
-        by_market_creator: true
     });
 
     Ok(())

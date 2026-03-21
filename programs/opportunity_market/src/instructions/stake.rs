@@ -190,7 +190,7 @@ pub fn stake(
 
     let stake_account_key = ctx.accounts.stake_account.key();
 
-    // Build args for encrypted computation (option encryption only)
+    // Build args for encrypted computation
     let args = ArgBuilder::new()
         // User's option input (Enc<Shared, SelectedOption>)
         .x25519_pubkey(user_pubkey)

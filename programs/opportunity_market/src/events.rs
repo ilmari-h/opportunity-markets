@@ -34,7 +34,6 @@ pub struct MarketOptionCreatedEvent {
     pub option: Pubkey,
     pub market: Pubkey,
     pub creator: Pubkey,
-    pub by_market_creator: bool,
     pub id: u64,
     pub timestamp: i64,
 }
