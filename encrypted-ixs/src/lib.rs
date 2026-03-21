@@ -4,13 +4,12 @@ use arcis::*;
 mod circuits {
     use arcis::*;
 
-    // Only the selected option is encrypted
     #[derive(Clone, Copy)]
     pub struct SelectedOption {
         pub selected_option: u64,
     }
 
-    // Stake: encrypt the selected option for MXE storage and authorized reader disclosure
+    // Stake: encrypt the selected option
     #[instruction]
     pub fn stake(
         input_ctx: Enc<Shared, SelectedOption>,
