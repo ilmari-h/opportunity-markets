@@ -10,8 +10,6 @@ import {
   combineCodec,
   getAddressDecoder,
   getAddressEncoder,
-  getBooleanDecoder,
-  getBooleanEncoder,
   getI64Decoder,
   getI64Encoder,
   getStructDecoder,
@@ -28,7 +26,6 @@ export type MarketOptionCreatedEvent = {
   option: Address;
   market: Address;
   creator: Address;
-  byMarketCreator: boolean;
   id: bigint;
   timestamp: bigint;
 };
@@ -37,7 +34,6 @@ export type MarketOptionCreatedEventArgs = {
   option: Address;
   market: Address;
   creator: Address;
-  byMarketCreator: boolean;
   id: number | bigint;
   timestamp: number | bigint;
 };
@@ -47,7 +43,6 @@ export function getMarketOptionCreatedEventEncoder(): FixedSizeEncoder<MarketOpt
     ['option', getAddressEncoder()],
     ['market', getAddressEncoder()],
     ['creator', getAddressEncoder()],
-    ['byMarketCreator', getBooleanEncoder()],
     ['id', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
@@ -58,7 +53,6 @@ export function getMarketOptionCreatedEventDecoder(): FixedSizeDecoder<MarketOpt
     ['option', getAddressDecoder()],
     ['market', getAddressDecoder()],
     ['creator', getAddressDecoder()],
-    ['byMarketCreator', getBooleanDecoder()],
     ['id', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);

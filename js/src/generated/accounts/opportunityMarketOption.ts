@@ -15,10 +15,6 @@ import {
   fetchEncodedAccounts,
   fixDecoderSize,
   fixEncoderSize,
-  getAddressDecoder,
-  getAddressEncoder,
-  getBooleanDecoder,
-  getBooleanEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getOptionDecoder,
@@ -58,22 +54,18 @@ export function getOpportunityMarketOptionDiscriminatorBytes() {
 export type OpportunityMarketOption = {
   discriminator: ReadonlyUint8Array;
   bump: number;
-  creator: Address;
   id: bigint;
   /** Total staked for this option (tally) */
   totalStaked: Option<bigint>;
   totalScore: Option<bigint>;
-  initialized: boolean;
 };
 
 export type OpportunityMarketOptionArgs = {
   bump: number;
-  creator: Address;
   id: number | bigint;
   /** Total staked for this option (tally) */
   totalStaked: OptionOrNullable<number | bigint>;
   totalScore: OptionOrNullable<number | bigint>;
-  initialized: boolean;
 };
 
 export function getOpportunityMarketOptionEncoder(): Encoder<OpportunityMarketOptionArgs> {
@@ -81,11 +73,9 @@ export function getOpportunityMarketOptionEncoder(): Encoder<OpportunityMarketOp
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['bump', getU8Encoder()],
-      ['creator', getAddressEncoder()],
       ['id', getU64Encoder()],
       ['totalStaked', getOptionEncoder(getU64Encoder())],
       ['totalScore', getOptionEncoder(getU64Encoder())],
-      ['initialized', getBooleanEncoder()],
     ]),
     (value) => ({
       ...value,
@@ -98,11 +88,9 @@ export function getOpportunityMarketOptionDecoder(): Decoder<OpportunityMarketOp
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['bump', getU8Decoder()],
-    ['creator', getAddressDecoder()],
     ['id', getU64Decoder()],
     ['totalStaked', getOptionDecoder(getU64Decoder())],
     ['totalScore', getOptionDecoder(getU64Decoder())],
-    ['initialized', getBooleanDecoder()],
   ]);
 }
 

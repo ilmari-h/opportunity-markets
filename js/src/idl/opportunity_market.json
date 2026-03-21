@@ -3569,10 +3569,6 @@
             "type": "pubkey"
           },
           {
-            "name": "by_market_creator",
-            "type": "bool"
-          },
-          {
             "name": "id",
             "type": "u64"
           },
@@ -3795,10 +3791,6 @@
             "type": "u8"
           },
           {
-            "name": "creator",
-            "type": "pubkey"
-          },
-          {
             "name": "id",
             "type": "u64"
           },
@@ -3816,10 +3808,6 @@
             "type": {
               "option": "u64"
             }
-          },
-          {
-            "name": "initialized",
-            "type": "bool"
           }
         ]
       }
