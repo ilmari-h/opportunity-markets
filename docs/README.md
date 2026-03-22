@@ -86,7 +86,7 @@ During this time, more options can still be added.
 
 Staking is done with the `stake` instruction. This requires the user to transfer at least the minimum stake amount to the Token Vault account. The user encrypts their option choice, which is then stored in their `StakeAccount`.
 
-The user can claim back their stake amount with a delay by calling the `unstake_early` instruction.
+The user can claim back their stake amount with a delay by calling the `unstake_early` instruction (the delay can be set to zero, we have this mechanism just to allow flexibility for future design).
 After calling that, they must wait a certain period of time before actually claiming back their stake via `do_unstake_early`.
 The latter instruction is permissionless, and can be moved to a "cranker" process to improve UX.
 Users are incentivized to keep their stake in the market as long as possible. More about that in later section [Distributing the Reward](#distributing-the-reward).
@@ -103,7 +103,7 @@ Once the winning options have been selected, those who staked on them are entitl
 
 Before the reward can be claimed however, the option choice of the eligible users must be revealed.
 Revealing must be done for each eligible `StakeAccount` via the instruction `reveal_stake`.
-After that, the total option tally must be incremented via `increment_option_tally`. This increments the user's stake amount in the `OpportunityMarketOptionAccount`, the total sum of which is used for reward calculation.  
+After that, the total option stake tally must be incremented via `increment_option_tally`. This increments the user's stake amount in the `OpportunityMarketOptionAccount`, the total sum of which is used for reward calculation.  
 Both of these operations are permissionless, and can be done by a background "cranker" process.
 
 After all the winning stakes have been revealed and the tallies incremented, eligible users can claim their rewards via the `close_stake_account` instruction.
