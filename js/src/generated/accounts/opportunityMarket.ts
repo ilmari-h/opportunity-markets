@@ -27,8 +27,6 @@ import {
   getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
@@ -70,7 +68,7 @@ export type OpportunityMarket = {
   bump: number;
   creator: Address;
   index: bigint;
-  totalOptions: number;
+  totalOptions: bigint;
   openTimestamp: Option<bigint>;
   timeToStake: bigint;
   timeToReveal: bigint;
@@ -89,7 +87,7 @@ export type OpportunityMarketArgs = {
   bump: number;
   creator: Address;
   index: number | bigint;
-  totalOptions: number;
+  totalOptions: number | bigint;
   openTimestamp: OptionOrNullable<number | bigint>;
   timeToStake: number | bigint;
   timeToReveal: number | bigint;
@@ -111,7 +109,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['bump', getU8Encoder()],
       ['creator', getAddressEncoder()],
       ['index', getU64Encoder()],
-      ['totalOptions', getU16Encoder()],
+      ['totalOptions', getU64Encoder()],
       ['openTimestamp', getOptionEncoder(getU64Encoder())],
       ['timeToStake', getU64Encoder()],
       ['timeToReveal', getU64Encoder()],
@@ -138,7 +136,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['bump', getU8Decoder()],
     ['creator', getAddressDecoder()],
     ['index', getU64Decoder()],
-    ['totalOptions', getU16Decoder()],
+    ['totalOptions', getU64Decoder()],
     ['openTimestamp', getOptionDecoder(getU64Decoder())],
     ['timeToStake', getU64Decoder()],
     ['timeToReveal', getU64Decoder()],

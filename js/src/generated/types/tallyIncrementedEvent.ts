@@ -14,8 +14,6 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
   type Address,
@@ -27,20 +25,24 @@ import {
 export type TallyIncrementedEvent = {
   owner: Address;
   market: Address;
-  shareAccount: Address;
-  option: number;
-  revealedAmount: bigint;
+  stakeAccount: Address;
+  optionId: bigint;
+  userStake: bigint;
   userScore: bigint;
+  totalScore: bigint;
+  totalStake: bigint;
   timestamp: bigint;
 };
 
 export type TallyIncrementedEventArgs = {
   owner: Address;
   market: Address;
-  shareAccount: Address;
-  option: number;
-  revealedAmount: number | bigint;
+  stakeAccount: Address;
+  optionId: number | bigint;
+  userStake: number | bigint;
   userScore: number | bigint;
+  totalScore: number | bigint;
+  totalStake: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -48,10 +50,12 @@ export function getTallyIncrementedEventEncoder(): FixedSizeEncoder<TallyIncreme
   return getStructEncoder([
     ['owner', getAddressEncoder()],
     ['market', getAddressEncoder()],
-    ['shareAccount', getAddressEncoder()],
-    ['option', getU16Encoder()],
-    ['revealedAmount', getU64Encoder()],
+    ['stakeAccount', getAddressEncoder()],
+    ['optionId', getU64Encoder()],
+    ['userStake', getU64Encoder()],
     ['userScore', getU64Encoder()],
+    ['totalScore', getU64Encoder()],
+    ['totalStake', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -60,10 +64,12 @@ export function getTallyIncrementedEventDecoder(): FixedSizeDecoder<TallyIncreme
   return getStructDecoder([
     ['owner', getAddressDecoder()],
     ['market', getAddressDecoder()],
-    ['shareAccount', getAddressDecoder()],
-    ['option', getU16Decoder()],
-    ['revealedAmount', getU64Decoder()],
+    ['stakeAccount', getAddressDecoder()],
+    ['optionId', getU64Decoder()],
+    ['userStake', getU64Decoder()],
     ['userScore', getU64Decoder()],
+    ['totalScore', getU64Decoder()],
+    ['totalStake', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

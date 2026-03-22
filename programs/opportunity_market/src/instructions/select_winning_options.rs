@@ -29,8 +29,8 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
     for (i, sel) in selections.iter().enumerate() {
         // Each option index must be valid
         require!(
-            sel.option_index >= 1 && sel.option_index <= market.total_options,
-            ErrorCode::InvalidOptionIndex
+            sel.option_id >= 1 && sel.option_id <= market.total_options,
+            ErrorCode::InvalidOptionId
         );
         // Percentage must be > 0
         require!(sel.reward_percentage > 0, ErrorCode::InvalidWinningOptionsInput);
@@ -39,7 +39,7 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
         // Check for duplicates
         for other in &selections[..i] {
             require!(
-                sel.option_index != other.option_index,
+                sel.option_id != other.option_id,
                 ErrorCode::InvalidWinningOptionsInput
             );
         }

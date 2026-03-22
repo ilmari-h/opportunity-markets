@@ -14,8 +14,6 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
   type Address,
@@ -27,20 +25,18 @@ import {
 export type StakeRevealedEvent = {
   user: Address;
   market: Address;
-  encryptedTokenAccount: Address;
-  shareAccount: Address;
-  sharesAmount: bigint;
-  selectedOption: number;
+  stakeAccount: Address;
+  stakeAmount: bigint;
+  selectedOption: bigint;
   timestamp: bigint;
 };
 
 export type StakeRevealedEventArgs = {
   user: Address;
   market: Address;
-  encryptedTokenAccount: Address;
-  shareAccount: Address;
-  sharesAmount: number | bigint;
-  selectedOption: number;
+  stakeAccount: Address;
+  stakeAmount: number | bigint;
+  selectedOption: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -48,10 +44,9 @@ export function getStakeRevealedEventEncoder(): FixedSizeEncoder<StakeRevealedEv
   return getStructEncoder([
     ['user', getAddressEncoder()],
     ['market', getAddressEncoder()],
-    ['encryptedTokenAccount', getAddressEncoder()],
-    ['shareAccount', getAddressEncoder()],
-    ['sharesAmount', getU64Encoder()],
-    ['selectedOption', getU16Encoder()],
+    ['stakeAccount', getAddressEncoder()],
+    ['stakeAmount', getU64Encoder()],
+    ['selectedOption', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -60,10 +55,9 @@ export function getStakeRevealedEventDecoder(): FixedSizeDecoder<StakeRevealedEv
   return getStructDecoder([
     ['user', getAddressDecoder()],
     ['market', getAddressDecoder()],
-    ['encryptedTokenAccount', getAddressDecoder()],
-    ['shareAccount', getAddressDecoder()],
-    ['sharesAmount', getU64Decoder()],
-    ['selectedOption', getU16Decoder()],
+    ['stakeAccount', getAddressDecoder()],
+    ['stakeAmount', getU64Decoder()],
+    ['selectedOption', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

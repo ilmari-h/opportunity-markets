@@ -18,6 +18,8 @@ import {
   getStructEncoder,
   getU128Decoder,
   getU128Encoder,
+  getU64Decoder,
+  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   type Address,
@@ -29,28 +31,24 @@ import {
 export type StakedEvent = {
   user: Address;
   market: Address;
-  encryptedTokenAccount: Address;
-  shareAccount: Address;
-  shareEncryptedState: Array<Array<number>>;
-  shareStateNonce: bigint;
-  shareEncryptedStateDisclosure: Array<Array<number>>;
-  shareStateDisclosureNonce: bigint;
-  encryptedEtaBalance: Array<number>;
-  etaBalanceNonce: bigint;
+  stakeAccount: Address;
+  stakeEncryptedOption: Array<number>;
+  stakeStateNonce: bigint;
+  stakeEncryptedOptionDisclosure: Array<number>;
+  stakeStateDisclosureNonce: bigint;
+  amount: bigint;
   timestamp: bigint;
 };
 
 export type StakedEventArgs = {
   user: Address;
   market: Address;
-  encryptedTokenAccount: Address;
-  shareAccount: Address;
-  shareEncryptedState: Array<Array<number>>;
-  shareStateNonce: number | bigint;
-  shareEncryptedStateDisclosure: Array<Array<number>>;
-  shareStateDisclosureNonce: number | bigint;
-  encryptedEtaBalance: Array<number>;
-  etaBalanceNonce: number | bigint;
+  stakeAccount: Address;
+  stakeEncryptedOption: Array<number>;
+  stakeStateNonce: number | bigint;
+  stakeEncryptedOptionDisclosure: Array<number>;
+  stakeStateDisclosureNonce: number | bigint;
+  amount: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -58,24 +56,15 @@ export function getStakedEventEncoder(): FixedSizeEncoder<StakedEventArgs> {
   return getStructEncoder([
     ['user', getAddressEncoder()],
     ['market', getAddressEncoder()],
-    ['encryptedTokenAccount', getAddressEncoder()],
-    ['shareAccount', getAddressEncoder()],
+    ['stakeAccount', getAddressEncoder()],
+    ['stakeEncryptedOption', getArrayEncoder(getU8Encoder(), { size: 32 })],
+    ['stakeStateNonce', getU128Encoder()],
     [
-      'shareEncryptedState',
-      getArrayEncoder(getArrayEncoder(getU8Encoder(), { size: 32 }), {
-        size: 2,
-      }),
+      'stakeEncryptedOptionDisclosure',
+      getArrayEncoder(getU8Encoder(), { size: 32 }),
     ],
-    ['shareStateNonce', getU128Encoder()],
-    [
-      'shareEncryptedStateDisclosure',
-      getArrayEncoder(getArrayEncoder(getU8Encoder(), { size: 32 }), {
-        size: 2,
-      }),
-    ],
-    ['shareStateDisclosureNonce', getU128Encoder()],
-    ['encryptedEtaBalance', getArrayEncoder(getU8Encoder(), { size: 32 })],
-    ['etaBalanceNonce', getU128Encoder()],
+    ['stakeStateDisclosureNonce', getU128Encoder()],
+    ['amount', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -84,24 +73,15 @@ export function getStakedEventDecoder(): FixedSizeDecoder<StakedEvent> {
   return getStructDecoder([
     ['user', getAddressDecoder()],
     ['market', getAddressDecoder()],
-    ['encryptedTokenAccount', getAddressDecoder()],
-    ['shareAccount', getAddressDecoder()],
+    ['stakeAccount', getAddressDecoder()],
+    ['stakeEncryptedOption', getArrayDecoder(getU8Decoder(), { size: 32 })],
+    ['stakeStateNonce', getU128Decoder()],
     [
-      'shareEncryptedState',
-      getArrayDecoder(getArrayDecoder(getU8Decoder(), { size: 32 }), {
-        size: 2,
-      }),
+      'stakeEncryptedOptionDisclosure',
+      getArrayDecoder(getU8Decoder(), { size: 32 }),
     ],
-    ['shareStateNonce', getU128Decoder()],
-    [
-      'shareEncryptedStateDisclosure',
-      getArrayDecoder(getArrayDecoder(getU8Decoder(), { size: 32 }), {
-        size: 2,
-      }),
-    ],
-    ['shareStateDisclosureNonce', getU128Decoder()],
-    ['encryptedEtaBalance', getArrayDecoder(getU8Decoder(), { size: 32 })],
-    ['etaBalanceNonce', getU128Decoder()],
+    ['stakeStateDisclosureNonce', getU128Decoder()],
+    ['amount', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

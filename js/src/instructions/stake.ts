@@ -9,13 +9,20 @@ import { type BaseInstructionParams } from "./instructionParams";
 
 export interface StakeParams extends BaseInstructionParams {
   signer: TransactionSigner;
+  payer: TransactionSigner;
   market: Address;
-  userEta: Address;
-  shareAccountId: number;
-  amountCiphertext: ByteArray;
+  stakeAccountId: number;
+  tokenMint: Address;
+  signerTokenAccount: Address;
+  marketTokenAta: Address;
+  tokenVault: Address;
+  tokenVaultAta: Address;
+  tokenProgram: Address;
+  amount: bigint;
   selectedOptionCiphertext: ByteArray;
   inputNonce: bigint;
   authorizedReaderNonce: bigint;
+  userPubkey: ByteArray;
 }
 
 export async function stake(
@@ -25,26 +32,40 @@ export async function stake(
   const {
     programAddress,
     signer,
+    payer,
     market,
-    userEta,
-    shareAccountId,
-    amountCiphertext,
+    stakeAccountId,
+    tokenMint,
+    signerTokenAccount,
+    marketTokenAta,
+    tokenVault,
+    tokenVaultAta,
+    tokenProgram,
+    amount,
     selectedOptionCiphertext,
     inputNonce,
     authorizedReaderNonce,
+    userPubkey,
   } = input;
 
   return getStakeInstructionAsync(
     {
-      ...getComputeAccounts("buy_opportunity_market_shares", config),
+      ...getComputeAccounts("stake", config),
       signer,
+      payer,
       market,
-      userEta,
-      shareAccountId,
-      amountCiphertext: toNumberArray(amountCiphertext),
+      stakeAccountId,
+      tokenMint,
+      signerTokenAccount,
+      marketTokenAta,
+      tokenVault,
+      tokenVaultAta,
+      tokenProgram,
+      amount,
       selectedOptionCiphertext: toNumberArray(selectedOptionCiphertext),
       inputNonce,
       authorizedReaderNonce,
+      userPubkey: toNumberArray(userPubkey),
     },
     programAddress ? { programAddress } : undefined
   );

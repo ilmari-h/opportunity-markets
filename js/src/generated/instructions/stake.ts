@@ -37,6 +37,7 @@ import {
   type InstructionWithAccounts,
   type InstructionWithData,
   type ReadonlyAccount,
+  type ReadonlySignerAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
   type WritableAccount,
@@ -61,9 +62,15 @@ export function getStakeDiscriminatorBytes() {
 export type StakeInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountSigner extends string | AccountMeta<string> = string,
+  TAccountPayer extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
-  TAccountUserEta extends string | AccountMeta<string> = string,
-  TAccountShareAccount extends string | AccountMeta<string> = string,
+  TAccountStakeAccount extends string | AccountMeta<string> = string,
+  TAccountTokenMint extends string | AccountMeta<string> = string,
+  TAccountSignerTokenAccount extends string | AccountMeta<string> = string,
+  TAccountMarketTokenAta extends string | AccountMeta<string> = string,
+  TAccountTokenVault extends string | AccountMeta<string> = string,
+  TAccountTokenVaultAta extends string | AccountMeta<string> = string,
+  TAccountTokenProgram extends string | AccountMeta<string> = string,
   TAccountSignPdaAccount extends string | AccountMeta<string> = string,
   TAccountMxeAccount extends string | AccountMeta<string> = string,
   TAccountMempoolAccount extends string | AccountMeta<string> = string,
@@ -85,18 +92,37 @@ export type StakeInstruction<
   InstructionWithAccounts<
     [
       TAccountSigner extends string
-        ? WritableSignerAccount<TAccountSigner> &
+        ? ReadonlySignerAccount<TAccountSigner> &
             AccountSignerMeta<TAccountSigner>
         : TAccountSigner,
+      TAccountPayer extends string
+        ? WritableSignerAccount<TAccountPayer> &
+            AccountSignerMeta<TAccountPayer>
+        : TAccountPayer,
       TAccountMarket extends string
         ? ReadonlyAccount<TAccountMarket>
         : TAccountMarket,
-      TAccountUserEta extends string
-        ? WritableAccount<TAccountUserEta>
-        : TAccountUserEta,
-      TAccountShareAccount extends string
-        ? WritableAccount<TAccountShareAccount>
-        : TAccountShareAccount,
+      TAccountStakeAccount extends string
+        ? WritableAccount<TAccountStakeAccount>
+        : TAccountStakeAccount,
+      TAccountTokenMint extends string
+        ? ReadonlyAccount<TAccountTokenMint>
+        : TAccountTokenMint,
+      TAccountSignerTokenAccount extends string
+        ? WritableAccount<TAccountSignerTokenAccount>
+        : TAccountSignerTokenAccount,
+      TAccountMarketTokenAta extends string
+        ? WritableAccount<TAccountMarketTokenAta>
+        : TAccountMarketTokenAta,
+      TAccountTokenVault extends string
+        ? WritableAccount<TAccountTokenVault>
+        : TAccountTokenVault,
+      TAccountTokenVaultAta extends string
+        ? WritableAccount<TAccountTokenVaultAta>
+        : TAccountTokenVaultAta,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
       TAccountSignPdaAccount extends string
         ? WritableAccount<TAccountSignPdaAccount>
         : TAccountSignPdaAccount,
@@ -137,20 +163,22 @@ export type StakeInstruction<
 export type StakeInstructionData = {
   discriminator: ReadonlyUint8Array;
   computationOffset: bigint;
-  shareAccountId: number;
-  amountCiphertext: Array<number>;
+  stakeAccountId: number;
+  amount: bigint;
   selectedOptionCiphertext: Array<number>;
   inputNonce: bigint;
   authorizedReaderNonce: bigint;
+  userPubkey: Array<number>;
 };
 
 export type StakeInstructionDataArgs = {
   computationOffset: number | bigint;
-  shareAccountId: number;
-  amountCiphertext: Array<number>;
+  stakeAccountId: number;
+  amount: number | bigint;
   selectedOptionCiphertext: Array<number>;
   inputNonce: number | bigint;
   authorizedReaderNonce: number | bigint;
+  userPubkey: Array<number>;
 };
 
 export function getStakeInstructionDataEncoder(): FixedSizeEncoder<StakeInstructionDataArgs> {
@@ -158,14 +186,15 @@ export function getStakeInstructionDataEncoder(): FixedSizeEncoder<StakeInstruct
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['computationOffset', getU64Encoder()],
-      ['shareAccountId', getU32Encoder()],
-      ['amountCiphertext', getArrayEncoder(getU8Encoder(), { size: 32 })],
+      ['stakeAccountId', getU32Encoder()],
+      ['amount', getU64Encoder()],
       [
         'selectedOptionCiphertext',
         getArrayEncoder(getU8Encoder(), { size: 32 }),
       ],
       ['inputNonce', getU128Encoder()],
       ['authorizedReaderNonce', getU128Encoder()],
+      ['userPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
     ]),
     (value) => ({ ...value, discriminator: STAKE_DISCRIMINATOR })
   );
@@ -175,11 +204,12 @@ export function getStakeInstructionDataDecoder(): FixedSizeDecoder<StakeInstruct
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['computationOffset', getU64Decoder()],
-    ['shareAccountId', getU32Decoder()],
-    ['amountCiphertext', getArrayDecoder(getU8Decoder(), { size: 32 })],
+    ['stakeAccountId', getU32Decoder()],
+    ['amount', getU64Decoder()],
     ['selectedOptionCiphertext', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['inputNonce', getU128Decoder()],
     ['authorizedReaderNonce', getU128Decoder()],
+    ['userPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
   ]);
 }
 
@@ -195,9 +225,15 @@ export function getStakeInstructionDataCodec(): FixedSizeCodec<
 
 export type StakeAsyncInput<
   TAccountSigner extends string = string,
+  TAccountPayer extends string = string,
   TAccountMarket extends string = string,
-  TAccountUserEta extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
+  TAccountTokenMint extends string = string,
+  TAccountSignerTokenAccount extends string = string,
+  TAccountMarketTokenAta extends string = string,
+  TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
+  TAccountTokenProgram extends string = string,
   TAccountSignPdaAccount extends string = string,
   TAccountMxeAccount extends string = string,
   TAccountMempoolAccount extends string = string,
@@ -211,9 +247,18 @@ export type StakeAsyncInput<
   TAccountArciumProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
+  payer: TransactionSigner<TAccountPayer>;
   market: Address<TAccountMarket>;
-  userEta: Address<TAccountUserEta>;
-  shareAccount?: Address<TAccountShareAccount>;
+  stakeAccount?: Address<TAccountStakeAccount>;
+  tokenMint: Address<TAccountTokenMint>;
+  signerTokenAccount: Address<TAccountSignerTokenAccount>;
+  /** Market's ATA for holding staked tokens */
+  marketTokenAta?: Address<TAccountMarketTokenAta>;
+  /** Token vault for fee collection */
+  tokenVault?: Address<TAccountTokenVault>;
+  /** Token vault ATA for fee tokens */
+  tokenVaultAta?: Address<TAccountTokenVaultAta>;
+  tokenProgram: Address<TAccountTokenProgram>;
   signPdaAccount?: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
   mempoolAccount: Address<TAccountMempoolAccount>;
@@ -226,18 +271,25 @@ export type StakeAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
   computationOffset: StakeInstructionDataArgs['computationOffset'];
-  shareAccountId: StakeInstructionDataArgs['shareAccountId'];
-  amountCiphertext: StakeInstructionDataArgs['amountCiphertext'];
+  stakeAccountId: StakeInstructionDataArgs['stakeAccountId'];
+  amount: StakeInstructionDataArgs['amount'];
   selectedOptionCiphertext: StakeInstructionDataArgs['selectedOptionCiphertext'];
   inputNonce: StakeInstructionDataArgs['inputNonce'];
   authorizedReaderNonce: StakeInstructionDataArgs['authorizedReaderNonce'];
+  userPubkey: StakeInstructionDataArgs['userPubkey'];
 };
 
 export async function getStakeInstructionAsync<
   TAccountSigner extends string,
+  TAccountPayer extends string,
   TAccountMarket extends string,
-  TAccountUserEta extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
+  TAccountTokenMint extends string,
+  TAccountSignerTokenAccount extends string,
+  TAccountMarketTokenAta extends string,
+  TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
+  TAccountTokenProgram extends string,
   TAccountSignPdaAccount extends string,
   TAccountMxeAccount extends string,
   TAccountMempoolAccount extends string,
@@ -253,9 +305,15 @@ export async function getStakeInstructionAsync<
 >(
   input: StakeAsyncInput<
     TAccountSigner,
+    TAccountPayer,
     TAccountMarket,
-    TAccountUserEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
+    TAccountTokenMint,
+    TAccountSignerTokenAccount,
+    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -273,9 +331,15 @@ export async function getStakeInstructionAsync<
   StakeInstruction<
     TProgramAddress,
     TAccountSigner,
+    TAccountPayer,
     TAccountMarket,
-    TAccountUserEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
+    TAccountTokenMint,
+    TAccountSignerTokenAccount,
+    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -295,10 +359,19 @@ export async function getStakeInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    signer: { value: input.signer ?? null, isWritable: true },
+    signer: { value: input.signer ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
-    userEta: { value: input.userEta ?? null, isWritable: true },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
+    tokenMint: { value: input.tokenMint ?? null, isWritable: false },
+    signerTokenAccount: {
+      value: input.signerTokenAccount ?? null,
+      isWritable: true,
+    },
+    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
+    tokenVault: { value: input.tokenVault ?? null, isWritable: true },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },
     mempoolAccount: { value: input.mempoolAccount ?? null, isWritable: true },
@@ -323,18 +396,51 @@ export async function getStakeInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.shareAccount.value) {
-    accounts.shareAccount.value = await getProgramDerivedAddress({
+  if (!accounts.stakeAccount.value) {
+    accounts.stakeAccount.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
         getBytesEncoder().encode(
           new Uint8Array([
-            115, 104, 97, 114, 101, 95, 97, 99, 99, 111, 117, 110, 116,
+            115, 116, 97, 107, 101, 95, 97, 99, 99, 111, 117, 110, 116,
           ])
         ),
         getAddressEncoder().encode(expectAddress(accounts.signer.value)),
         getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getU32Encoder().encode(expectSome(args.shareAccountId)),
+        getU32Encoder().encode(expectSome(args.stakeAccountId)),
+      ],
+    });
+  }
+  if (!accounts.marketTokenAta.value) {
+    accounts.marketTokenAta.value = await getProgramDerivedAddress({
+      programAddress:
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
+      seeds: [
+        getAddressEncoder().encode(expectAddress(accounts.market.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
+      ],
+    });
+  }
+  if (!accounts.tokenVault.value) {
+    accounts.tokenVault.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(
+          new Uint8Array([116, 111, 107, 101, 110, 95, 118, 97, 117, 108, 116])
+        ),
+        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
+      ],
+    });
+  }
+  if (!accounts.tokenVaultAta.value) {
+    accounts.tokenVaultAta.value = await getProgramDerivedAddress({
+      programAddress:
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
+      seeds: [
+        getAddressEncoder().encode(expectAddress(accounts.tokenVault.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
       ],
     });
   }
@@ -372,9 +478,15 @@ export async function getStakeInstructionAsync<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.market),
-      getAccountMeta(accounts.userEta),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
+      getAccountMeta(accounts.tokenMint),
+      getAccountMeta(accounts.signerTokenAccount),
+      getAccountMeta(accounts.marketTokenAta),
+      getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.signPdaAccount),
       getAccountMeta(accounts.mxeAccount),
       getAccountMeta(accounts.mempoolAccount),
@@ -394,9 +506,15 @@ export async function getStakeInstructionAsync<
   } as StakeInstruction<
     TProgramAddress,
     TAccountSigner,
+    TAccountPayer,
     TAccountMarket,
-    TAccountUserEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
+    TAccountTokenMint,
+    TAccountSignerTokenAccount,
+    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -413,9 +531,15 @@ export async function getStakeInstructionAsync<
 
 export type StakeInput<
   TAccountSigner extends string = string,
+  TAccountPayer extends string = string,
   TAccountMarket extends string = string,
-  TAccountUserEta extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
+  TAccountTokenMint extends string = string,
+  TAccountSignerTokenAccount extends string = string,
+  TAccountMarketTokenAta extends string = string,
+  TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
+  TAccountTokenProgram extends string = string,
   TAccountSignPdaAccount extends string = string,
   TAccountMxeAccount extends string = string,
   TAccountMempoolAccount extends string = string,
@@ -429,9 +553,18 @@ export type StakeInput<
   TAccountArciumProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
+  payer: TransactionSigner<TAccountPayer>;
   market: Address<TAccountMarket>;
-  userEta: Address<TAccountUserEta>;
-  shareAccount: Address<TAccountShareAccount>;
+  stakeAccount: Address<TAccountStakeAccount>;
+  tokenMint: Address<TAccountTokenMint>;
+  signerTokenAccount: Address<TAccountSignerTokenAccount>;
+  /** Market's ATA for holding staked tokens */
+  marketTokenAta: Address<TAccountMarketTokenAta>;
+  /** Token vault for fee collection */
+  tokenVault: Address<TAccountTokenVault>;
+  /** Token vault ATA for fee tokens */
+  tokenVaultAta: Address<TAccountTokenVaultAta>;
+  tokenProgram: Address<TAccountTokenProgram>;
   signPdaAccount: Address<TAccountSignPdaAccount>;
   mxeAccount: Address<TAccountMxeAccount>;
   mempoolAccount: Address<TAccountMempoolAccount>;
@@ -444,18 +577,25 @@ export type StakeInput<
   systemProgram?: Address<TAccountSystemProgram>;
   arciumProgram?: Address<TAccountArciumProgram>;
   computationOffset: StakeInstructionDataArgs['computationOffset'];
-  shareAccountId: StakeInstructionDataArgs['shareAccountId'];
-  amountCiphertext: StakeInstructionDataArgs['amountCiphertext'];
+  stakeAccountId: StakeInstructionDataArgs['stakeAccountId'];
+  amount: StakeInstructionDataArgs['amount'];
   selectedOptionCiphertext: StakeInstructionDataArgs['selectedOptionCiphertext'];
   inputNonce: StakeInstructionDataArgs['inputNonce'];
   authorizedReaderNonce: StakeInstructionDataArgs['authorizedReaderNonce'];
+  userPubkey: StakeInstructionDataArgs['userPubkey'];
 };
 
 export function getStakeInstruction<
   TAccountSigner extends string,
+  TAccountPayer extends string,
   TAccountMarket extends string,
-  TAccountUserEta extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
+  TAccountTokenMint extends string,
+  TAccountSignerTokenAccount extends string,
+  TAccountMarketTokenAta extends string,
+  TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
+  TAccountTokenProgram extends string,
   TAccountSignPdaAccount extends string,
   TAccountMxeAccount extends string,
   TAccountMempoolAccount extends string,
@@ -471,9 +611,15 @@ export function getStakeInstruction<
 >(
   input: StakeInput<
     TAccountSigner,
+    TAccountPayer,
     TAccountMarket,
-    TAccountUserEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
+    TAccountTokenMint,
+    TAccountSignerTokenAccount,
+    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -490,9 +636,15 @@ export function getStakeInstruction<
 ): StakeInstruction<
   TProgramAddress,
   TAccountSigner,
+  TAccountPayer,
   TAccountMarket,
-  TAccountUserEta,
-  TAccountShareAccount,
+  TAccountStakeAccount,
+  TAccountTokenMint,
+  TAccountSignerTokenAccount,
+  TAccountMarketTokenAta,
+  TAccountTokenVault,
+  TAccountTokenVaultAta,
+  TAccountTokenProgram,
   TAccountSignPdaAccount,
   TAccountMxeAccount,
   TAccountMempoolAccount,
@@ -511,10 +663,19 @@ export function getStakeInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    signer: { value: input.signer ?? null, isWritable: true },
+    signer: { value: input.signer ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
-    userEta: { value: input.userEta ?? null, isWritable: true },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
+    tokenMint: { value: input.tokenMint ?? null, isWritable: false },
+    signerTokenAccount: {
+      value: input.signerTokenAccount ?? null,
+      isWritable: true,
+    },
+    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
+    tokenVault: { value: input.tokenVault ?? null, isWritable: true },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     signPdaAccount: { value: input.signPdaAccount ?? null, isWritable: true },
     mxeAccount: { value: input.mxeAccount ?? null, isWritable: false },
     mempoolAccount: { value: input.mempoolAccount ?? null, isWritable: true },
@@ -560,9 +721,15 @@ export function getStakeInstruction<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.market),
-      getAccountMeta(accounts.userEta),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
+      getAccountMeta(accounts.tokenMint),
+      getAccountMeta(accounts.signerTokenAccount),
+      getAccountMeta(accounts.marketTokenAta),
+      getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.signPdaAccount),
       getAccountMeta(accounts.mxeAccount),
       getAccountMeta(accounts.mempoolAccount),
@@ -582,9 +749,15 @@ export function getStakeInstruction<
   } as StakeInstruction<
     TProgramAddress,
     TAccountSigner,
+    TAccountPayer,
     TAccountMarket,
-    TAccountUserEta,
-    TAccountShareAccount,
+    TAccountStakeAccount,
+    TAccountTokenMint,
+    TAccountSignerTokenAccount,
+    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
     TAccountSignPdaAccount,
     TAccountMxeAccount,
     TAccountMempoolAccount,
@@ -606,20 +779,29 @@ export type ParsedStakeInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     signer: TAccountMetas[0];
-    market: TAccountMetas[1];
-    userEta: TAccountMetas[2];
-    shareAccount: TAccountMetas[3];
-    signPdaAccount: TAccountMetas[4];
-    mxeAccount: TAccountMetas[5];
-    mempoolAccount: TAccountMetas[6];
-    executingPool: TAccountMetas[7];
-    computationAccount: TAccountMetas[8];
-    compDefAccount: TAccountMetas[9];
-    clusterAccount: TAccountMetas[10];
-    poolAccount: TAccountMetas[11];
-    clockAccount: TAccountMetas[12];
-    systemProgram: TAccountMetas[13];
-    arciumProgram: TAccountMetas[14];
+    payer: TAccountMetas[1];
+    market: TAccountMetas[2];
+    stakeAccount: TAccountMetas[3];
+    tokenMint: TAccountMetas[4];
+    signerTokenAccount: TAccountMetas[5];
+    /** Market's ATA for holding staked tokens */
+    marketTokenAta: TAccountMetas[6];
+    /** Token vault for fee collection */
+    tokenVault: TAccountMetas[7];
+    /** Token vault ATA for fee tokens */
+    tokenVaultAta: TAccountMetas[8];
+    tokenProgram: TAccountMetas[9];
+    signPdaAccount: TAccountMetas[10];
+    mxeAccount: TAccountMetas[11];
+    mempoolAccount: TAccountMetas[12];
+    executingPool: TAccountMetas[13];
+    computationAccount: TAccountMetas[14];
+    compDefAccount: TAccountMetas[15];
+    clusterAccount: TAccountMetas[16];
+    poolAccount: TAccountMetas[17];
+    clockAccount: TAccountMetas[18];
+    systemProgram: TAccountMetas[19];
+    arciumProgram: TAccountMetas[20];
   };
   data: StakeInstructionData;
 };
@@ -632,7 +814,7 @@ export function parseStakeInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 15) {
+  if (instruction.accounts.length < 21) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -646,9 +828,15 @@ export function parseStakeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       signer: getNextAccount(),
+      payer: getNextAccount(),
       market: getNextAccount(),
-      userEta: getNextAccount(),
-      shareAccount: getNextAccount(),
+      stakeAccount: getNextAccount(),
+      tokenMint: getNextAccount(),
+      signerTokenAccount: getNextAccount(),
+      marketTokenAta: getNextAccount(),
+      tokenVault: getNextAccount(),
+      tokenVaultAta: getNextAccount(),
+      tokenProgram: getNextAccount(),
       signPdaAccount: getNextAccount(),
       mxeAccount: getNextAccount(),
       mempoolAccount: getNextAccount(),

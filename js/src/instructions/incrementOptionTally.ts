@@ -9,8 +9,8 @@ export interface IncrementOptionTallyParams extends BaseInstructionParams {
   signer: TransactionSigner;
   owner: Address;
   market: Address;
-  optionIndex: number;
-  shareAccountId: number;
+  optionId: number | bigint;
+  stakeAccountId: number;
 }
 
 export async function incrementOptionTally(

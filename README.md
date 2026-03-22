@@ -4,18 +4,18 @@ Opportunity Markets allow users to influence decision making by staking. Decisio
 
 ### **[Detailed protocol documentation →](./docs/README.md)**
 
-The Opportunity Markets program is deployed on Solana devnet at `bncZ1gDqgqhSWFzcxjeMoCtqN7odS8wYn1nS5tXZ9jA`
+The Opportunity Markets program is deployed on Solana devnet at `BencHEXKYZ8HJ9LCrihgCWAmnqBT1abpsa9FYRs8fK1D`
 
 ## Build & Test
 
-Arcium v0.9.0 cli required.
+Arcium v0.9.2 cli required.
 
 Before testing, make sure you build without the feature `hosted-compdefs`.
 In `programs/opportunity_market/Cargo.toml` make sure it's not in the defaults array.
 
 ### Program keypair
 
-Tests use a deterministic program keypair assumed to be located at `../bncZ1gDqgqhSWFzcxjeMoCtqN7odS8wYn1nS5tXZ9jA.json`. If you don't have this keypair, generate your own and update the
+Tests use a deterministic program keypair assumed to be located at `../BencHEXKYZ8HJ9LCrihgCWAmnqBT1abpsa9FYRs8fK1D.json`. If you don't have this keypair, generate your own and update the
 following to match:
 
 1. `declare_id!()` in `programs/opportunity_market/src/lib.rs`
@@ -44,20 +44,6 @@ arcium build
 ```
 
 - `Arcium.toml` has a bad `program_keypair` path (e.g. trailing whitespace), causing arcium to fall back to a generated keypair.
-
-### Troubleshooting: Tests hang at "Airdropping" or connect to stale validator
-
-If tests hang during `TestRunner.initialize` (at the airdrop step) or comp defs unexpectedly show as "already initialized" on what should be a fresh network, a zombie `solana-test-validator` process from a previous run is likely still holding port 8899. This commonly happens after Ctrl+C'ing a test run.
-
-```bash
-# Check for stale validator
-lsof -i :8899
-
-# Kill it
-kill <PID>
-```
-
-Then re-run the tests.
 
 ## Deployment
 

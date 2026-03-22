@@ -19,7 +19,7 @@ const COMP_DEF_OFFSETS = {
   CLAIM_VOTE_TOKENS: "claim_vote_tokens",
   BUY_OPPORTUNITY_MARKET_SHARES: "buy_opportunity_market_shares",
   INIT_MARKET_SHARES: "init_market_shares",
-  REVEAL_SHARES: "reveal_shares",
+  REVEAL_STAKE: "reveal_stake",
 } as const;
 
 console.log("Computing Arcium addresses...\n");

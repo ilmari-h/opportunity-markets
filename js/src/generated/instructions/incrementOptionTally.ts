@@ -16,10 +16,10 @@ import {
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
   getU32Decoder,
   getU32Encoder,
+  getU64Decoder,
+  getU64Encoder,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -59,7 +59,7 @@ export type IncrementOptionTallyInstruction<
   TAccountSigner extends string | AccountMeta<string> = string,
   TAccountOwner extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
-  TAccountShareAccount extends string | AccountMeta<string> = string,
+  TAccountStakeAccount extends string | AccountMeta<string> = string,
   TAccountOption extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
     '11111111111111111111111111111111',
@@ -78,9 +78,9 @@ export type IncrementOptionTallyInstruction<
       TAccountMarket extends string
         ? ReadonlyAccount<TAccountMarket>
         : TAccountMarket,
-      TAccountShareAccount extends string
-        ? WritableAccount<TAccountShareAccount>
-        : TAccountShareAccount,
+      TAccountStakeAccount extends string
+        ? WritableAccount<TAccountStakeAccount>
+        : TAccountStakeAccount,
       TAccountOption extends string
         ? WritableAccount<TAccountOption>
         : TAccountOption,
@@ -93,21 +93,21 @@ export type IncrementOptionTallyInstruction<
 
 export type IncrementOptionTallyInstructionData = {
   discriminator: ReadonlyUint8Array;
-  optionIndex: number;
-  shareAccountId: number;
+  optionId: bigint;
+  stakeAccountId: number;
 };
 
 export type IncrementOptionTallyInstructionDataArgs = {
-  optionIndex: number;
-  shareAccountId: number;
+  optionId: number | bigint;
+  stakeAccountId: number;
 };
 
 export function getIncrementOptionTallyInstructionDataEncoder(): FixedSizeEncoder<IncrementOptionTallyInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['optionIndex', getU16Encoder()],
-      ['shareAccountId', getU32Encoder()],
+      ['optionId', getU64Encoder()],
+      ['stakeAccountId', getU32Encoder()],
     ]),
     (value) => ({
       ...value,
@@ -119,8 +119,8 @@ export function getIncrementOptionTallyInstructionDataEncoder(): FixedSizeEncode
 export function getIncrementOptionTallyInstructionDataDecoder(): FixedSizeDecoder<IncrementOptionTallyInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['optionIndex', getU16Decoder()],
-    ['shareAccountId', getU32Decoder()],
+    ['optionId', getU64Decoder()],
+    ['stakeAccountId', getU32Decoder()],
   ]);
 }
 
@@ -138,25 +138,25 @@ export type IncrementOptionTallyAsyncInput<
   TAccountSigner extends string = string,
   TAccountOwner extends string = string,
   TAccountMarket extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
   TAccountOption extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
   owner: Address<TAccountOwner>;
   market: Address<TAccountMarket>;
-  shareAccount?: Address<TAccountShareAccount>;
+  stakeAccount?: Address<TAccountStakeAccount>;
   option?: Address<TAccountOption>;
   systemProgram?: Address<TAccountSystemProgram>;
-  optionIndex: IncrementOptionTallyInstructionDataArgs['optionIndex'];
-  shareAccountId: IncrementOptionTallyInstructionDataArgs['shareAccountId'];
+  optionId: IncrementOptionTallyInstructionDataArgs['optionId'];
+  stakeAccountId: IncrementOptionTallyInstructionDataArgs['stakeAccountId'];
 };
 
 export async function getIncrementOptionTallyInstructionAsync<
   TAccountSigner extends string,
   TAccountOwner extends string,
   TAccountMarket extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TAccountOption extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
@@ -165,7 +165,7 @@ export async function getIncrementOptionTallyInstructionAsync<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountOption,
     TAccountSystemProgram
   >,
@@ -176,7 +176,7 @@ export async function getIncrementOptionTallyInstructionAsync<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountOption,
     TAccountSystemProgram
   >
@@ -190,7 +190,7 @@ export async function getIncrementOptionTallyInstructionAsync<
     signer: { value: input.signer ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: false },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     option: { value: input.option ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -203,18 +203,18 @@ export async function getIncrementOptionTallyInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.shareAccount.value) {
-    accounts.shareAccount.value = await getProgramDerivedAddress({
+  if (!accounts.stakeAccount.value) {
+    accounts.stakeAccount.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
         getBytesEncoder().encode(
           new Uint8Array([
-            115, 104, 97, 114, 101, 95, 97, 99, 99, 111, 117, 110, 116,
+            115, 116, 97, 107, 101, 95, 97, 99, 99, 111, 117, 110, 116,
           ])
         ),
         getAddressEncoder().encode(expectAddress(accounts.owner.value)),
         getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getU32Encoder().encode(expectSome(args.shareAccountId)),
+        getU32Encoder().encode(expectSome(args.stakeAccountId)),
       ],
     });
   }
@@ -226,7 +226,7 @@ export async function getIncrementOptionTallyInstructionAsync<
           new Uint8Array([111, 112, 116, 105, 111, 110])
         ),
         getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getU16Encoder().encode(expectSome(args.optionIndex)),
+        getU64Encoder().encode(expectSome(args.optionId)),
       ],
     });
   }
@@ -241,7 +241,7 @@ export async function getIncrementOptionTallyInstructionAsync<
       getAccountMeta(accounts.signer),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.market),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.option),
       getAccountMeta(accounts.systemProgram),
     ],
@@ -254,7 +254,7 @@ export async function getIncrementOptionTallyInstructionAsync<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountOption,
     TAccountSystemProgram
   >);
@@ -264,25 +264,25 @@ export type IncrementOptionTallyInput<
   TAccountSigner extends string = string,
   TAccountOwner extends string = string,
   TAccountMarket extends string = string,
-  TAccountShareAccount extends string = string,
+  TAccountStakeAccount extends string = string,
   TAccountOption extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
   owner: Address<TAccountOwner>;
   market: Address<TAccountMarket>;
-  shareAccount: Address<TAccountShareAccount>;
+  stakeAccount: Address<TAccountStakeAccount>;
   option: Address<TAccountOption>;
   systemProgram?: Address<TAccountSystemProgram>;
-  optionIndex: IncrementOptionTallyInstructionDataArgs['optionIndex'];
-  shareAccountId: IncrementOptionTallyInstructionDataArgs['shareAccountId'];
+  optionId: IncrementOptionTallyInstructionDataArgs['optionId'];
+  stakeAccountId: IncrementOptionTallyInstructionDataArgs['stakeAccountId'];
 };
 
 export function getIncrementOptionTallyInstruction<
   TAccountSigner extends string,
   TAccountOwner extends string,
   TAccountMarket extends string,
-  TAccountShareAccount extends string,
+  TAccountStakeAccount extends string,
   TAccountOption extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
@@ -291,7 +291,7 @@ export function getIncrementOptionTallyInstruction<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountOption,
     TAccountSystemProgram
   >,
@@ -301,7 +301,7 @@ export function getIncrementOptionTallyInstruction<
   TAccountSigner,
   TAccountOwner,
   TAccountMarket,
-  TAccountShareAccount,
+  TAccountStakeAccount,
   TAccountOption,
   TAccountSystemProgram
 > {
@@ -314,7 +314,7 @@ export function getIncrementOptionTallyInstruction<
     signer: { value: input.signer ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: false },
-    shareAccount: { value: input.shareAccount ?? null, isWritable: true },
+    stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     option: { value: input.option ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -338,7 +338,7 @@ export function getIncrementOptionTallyInstruction<
       getAccountMeta(accounts.signer),
       getAccountMeta(accounts.owner),
       getAccountMeta(accounts.market),
-      getAccountMeta(accounts.shareAccount),
+      getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.option),
       getAccountMeta(accounts.systemProgram),
     ],
@@ -351,7 +351,7 @@ export function getIncrementOptionTallyInstruction<
     TAccountSigner,
     TAccountOwner,
     TAccountMarket,
-    TAccountShareAccount,
+    TAccountStakeAccount,
     TAccountOption,
     TAccountSystemProgram
   >);
@@ -366,7 +366,7 @@ export type ParsedIncrementOptionTallyInstruction<
     signer: TAccountMetas[0];
     owner: TAccountMetas[1];
     market: TAccountMetas[2];
-    shareAccount: TAccountMetas[3];
+    stakeAccount: TAccountMetas[3];
     option: TAccountMetas[4];
     systemProgram: TAccountMetas[5];
   };
@@ -397,7 +397,7 @@ export function parseIncrementOptionTallyInstruction<
       signer: getNextAccount(),
       owner: getNextAccount(),
       market: getNextAccount(),
-      shareAccount: getNextAccount(),
+      stakeAccount: getNextAccount(),
       option: getNextAccount(),
       systemProgram: getNextAccount(),
     },

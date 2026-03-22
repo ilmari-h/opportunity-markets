@@ -13,38 +13,17 @@ pub use error::ErrorCode;
 pub use instructions::*;
 pub use state::*;
 
-pub const COMP_DEF_OFFSET_WRAP_ENCRYPTED_TOKENS: u32 = comp_def_offset("wrap_encrypted_tokens");
-pub const COMP_DEF_OFFSET_UNWRAP_ENCRYPTED_TOKENS: u32 = comp_def_offset("unwrap_encrypted_tokens");
-pub const COMP_DEF_OFFSET_BUY_OPPORTUNITY_MARKET_SHARES: u32 = comp_def_offset("buy_opportunity_market_shares");
-pub const COMP_DEF_OFFSET_REVEAL_SHARES: u32 = comp_def_offset("reveal_shares");
-pub const COMP_DEF_OFFSET_UNSTAKE_EARLY: u32 = comp_def_offset("unstake_early");
-pub const COMP_DEF_OFFSET_ADD_OPTION_STAKE: u32 = comp_def_offset("add_option_stake");
-pub const COMP_DEF_OFFSET_CLOSE_EPHEMERAL_ENCRYPTED_TOKEN_ACCOUNT: u32 = comp_def_offset("close_ephemeral_encrypted_token_account");
+pub const COMP_DEF_OFFSET_STAKE: u32 = comp_def_offset("stake");
+pub const COMP_DEF_OFFSET_REVEAL_STAKE: u32 = comp_def_offset("reveal_stake");
 
-declare_id!("bncZ1gDqgqhSWFzcxjeMoCtqN7odS8wYn1nS5tXZ9jA");
+declare_id!("BencHEXKYZ8HJ9LCrihgCWAmnqBT1abpsa9FYRs8fK1D");
 
 #[arcium_program]
 pub mod opportunity_market {
     use super::*;
 
-    pub fn wrap_encrypted_tokens_comp_def(ctx: Context<WrapEncryptedTokensCompDef>) -> Result<()> {
-        instructions::wrap_encrypted_tokens_comp_def(ctx)
-    }
-
-    pub fn unwrap_encrypted_tokens_comp_def(ctx: Context<UnwrapEncryptedTokensCompDef>) -> Result<()> {
-        instructions::unwrap_encrypted_tokens_comp_def(ctx)
-    }
-
-    pub fn reveal_shares_comp_def(ctx: Context<RevealSharesCompDef>) -> Result<()> {
-        instructions::reveal_shares_comp_def(ctx)
-    }
-
-    pub fn unstake_early_comp_def(ctx: Context<UnstakeEarlyCompDef>) -> Result<()> {
-        instructions::unstake_early_comp_def(ctx)
-    }
-
-    pub fn add_option_stake_comp_def(ctx: Context<AddOptionStakeCompDef>) -> Result<()> {
-        instructions::add_option_stake_comp_def(ctx)
+    pub fn reveal_stake_comp_def(ctx: Context<RevealStakeCompDef>) -> Result<()> {
+        instructions::reveal_stake_comp_def(ctx)
     }
 
     pub fn init_central_state(
@@ -100,40 +79,9 @@ pub mod opportunity_market {
 
     pub fn add_market_option(
         ctx: Context<AddMarketOption>,
-        computation_offset: u64,
-        option_index: u16,
-        share_account_id: u32,
-        name: String,
-        amount_ciphertext: [u8; 32],
-        input_nonce: u128,
-        authorized_reader_nonce: u128,
+        option_id: u64,
     ) -> Result<()> {
-        instructions::add_market_option(
-            ctx,
-            computation_offset,
-            option_index,
-            share_account_id,
-            name,
-            amount_ciphertext,
-            input_nonce,
-            authorized_reader_nonce,
-        )
-    }
-
-    pub fn add_market_option_as_creator(
-        ctx: Context<AddMarketOptionAsCreator>,
-        option_index: u16,
-        name: String,
-    ) -> Result<()> {
-        instructions::add_market_option_as_creator(ctx, option_index, name)
-    }
-
-    #[arcium_callback(encrypted_ix = "add_option_stake")]
-    pub fn add_option_stake_callback(
-        ctx: Context<AddOptionStakeCallback>,
-        output: SignedComputationOutputs<AddOptionStakeOutput>,
-    ) -> Result<()> {
-        instructions::add_market_option_callback(ctx, output)
+        instructions::add_market_option(ctx, option_id)
     }
 
     pub fn open_market(ctx: Context<OpenMarket>, open_timestamp: u64) -> Result<()> {
@@ -156,36 +104,28 @@ pub mod opportunity_market {
         instructions::increase_reward_pool(ctx, new_reward_amount)
     }
 
-    pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_index: u16, share_account_id: u32) -> Result<()> {
-        instructions::increment_option_tally(ctx, option_index, share_account_id)
+    pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64, stake_account_id: u32) -> Result<()> {
+        instructions::increment_option_tally(ctx, option_id, stake_account_id)
     }
 
-    pub fn close_share_account(ctx: Context<CloseShareAccount>, option_index: u16, share_account_id: u32) -> Result<()> {
-        instructions::close_share_account(ctx, option_index, share_account_id)
+    pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, stake_account_id: u32) -> Result<()> {
+        instructions::close_stake_account(ctx, option_id, stake_account_id)
     }
 
-    pub fn claim_pending_deposit(ctx: Context<ClaimPendingDeposit>) -> Result<()> {
-        instructions::claim_pending_deposit(ctx)
+    pub fn reclaim_stake(ctx: Context<ReclaimStake>, stake_account_id: u32) -> Result<()> {
+        instructions::reclaim_stake(ctx, stake_account_id)
     }
 
     pub fn claim_fees(ctx: Context<ClaimFees>) -> Result<()> {
         instructions::claim_fees(ctx)
     }
 
-    pub fn init_share_account(
-        ctx: Context<InitShareAccount>,
+    pub fn init_stake_account(
+        ctx: Context<InitStakeAccount>,
         state_nonce: u128,
-        share_account_id: u32,
+        stake_account_id: u32,
     ) -> Result<()> {
-        instructions::init_share_account(ctx, state_nonce, share_account_id)
-    }
-
-    pub fn init_encrypted_token_account(
-        ctx: Context<InitEncryptedTokenAccount>,
-        user_pubkey: [u8; 32],
-        state_nonce: u128,
-    ) -> Result<()> {
-        instructions::init_encrypted_token_account(ctx, user_pubkey, state_nonce)
+        instructions::init_stake_account(ctx, state_nonce, stake_account_id)
     }
 
     pub fn init_token_vault(
@@ -195,136 +135,68 @@ pub mod opportunity_market {
         instructions::init_token_vault(ctx, fund_manager)
     }
 
-    pub fn init_ephemeral_encrypted_token_account(
-        ctx: Context<InitEphemeralEncryptedTokenAccount>,
-        index: u64,
-        state_nonce: u128,
-    ) -> Result<()> {
-        instructions::init_ephemeral_encrypted_token_account(ctx, index, state_nonce)
-    }
-
-    pub fn wrap_encrypted_tokens(
-        ctx: Context<WrapEncryptedTokens>,
-        computation_offset: u64,
-        amount: u64,
-    ) -> Result<()> {
-        instructions::wrap_encrypted_tokens(ctx, computation_offset, amount)
-    }
-
-    #[arcium_callback(encrypted_ix = "wrap_encrypted_tokens")]
-    pub fn wrap_encrypted_tokens_callback(
-        ctx: Context<WrapEncryptedTokensCallback>,
-        output: SignedComputationOutputs<WrapEncryptedTokensOutput>,
-    ) -> Result<()> {
-        instructions::wrap_encrypted_tokens_callback(ctx, output)
-    }
-
-    pub fn unwrap_encrypted_tokens(
-        ctx: Context<UnwrapEncryptedTokens>,
-        computation_offset: u64,
-        amount: u64,
-    ) -> Result<()> {
-        instructions::unwrap_encrypted_tokens(ctx, computation_offset, amount)
-    }
-
-    #[arcium_callback(encrypted_ix = "unwrap_encrypted_tokens")]
-    pub fn unwrap_encrypted_tokens_callback(
-        ctx: Context<UnwrapEncryptedTokensCallback>,
-        output: SignedComputationOutputs<UnwrapEncryptedTokensOutput>,
-    ) -> Result<()> {
-        instructions::unwrap_encrypted_tokens_callback(ctx, output)
-    }
-
-    pub fn buy_opportunity_market_shares_comp_def(ctx: Context<BuyOpportunityMarketSharesCompDef>) -> Result<()> {
-        instructions::buy_opportunity_market_shares_comp_def(ctx)
+    pub fn stake_comp_def(ctx: Context<StakeCompDef>) -> Result<()> {
+        instructions::stake_comp_def(ctx)
     }
 
     pub fn stake(
         ctx: Context<Stake>,
         computation_offset: u64,
-        share_account_id: u32,
-        amount_ciphertext: [u8; 32],
+        stake_account_id: u32,
+        amount: u64,
         selected_option_ciphertext: [u8; 32],
         input_nonce: u128,
         authorized_reader_nonce: u128,
+        user_pubkey: [u8; 32],
     ) -> Result<()> {
         instructions::stake(
             ctx,
             computation_offset,
-            share_account_id,
-            amount_ciphertext,
+            stake_account_id,
+            amount,
             selected_option_ciphertext,
             input_nonce,
             authorized_reader_nonce,
+            user_pubkey,
         )
     }
 
-    #[arcium_callback(encrypted_ix = "buy_opportunity_market_shares")]
-    pub fn buy_opportunity_market_shares_callback(
-        ctx: Context<BuyOpportunityMarketSharesCallback>,
-        output: SignedComputationOutputs<BuyOpportunityMarketSharesOutput>,
+    #[arcium_callback(encrypted_ix = "stake")]
+    pub fn stake_callback(
+        ctx: Context<StakeCallback>,
+        output: SignedComputationOutputs<StakeOutput>,
     ) -> Result<()> {
-        instructions::buy_opportunity_market_shares_callback(ctx, output)
-    }
-    pub fn reveal_shares(
-        ctx: Context<RevealShares>,
-        computation_offset: u64,
-        share_account_id: u32,
-    ) -> Result<()> {
-        instructions::reveal_shares(ctx, computation_offset, share_account_id)
+        instructions::stake_callback(ctx, output)
     }
 
-    #[arcium_callback(encrypted_ix = "reveal_shares")]
-    pub fn reveal_shares_callback(
-        ctx: Context<RevealSharesCallback>,
-        output: SignedComputationOutputs<RevealSharesOutput>,
+    pub fn reveal_stake(
+        ctx: Context<RevealStake>,
+        computation_offset: u64,
+        stake_account_id: u32,
     ) -> Result<()> {
-        instructions::reveal_shares_callback(ctx, output)
+        instructions::reveal_stake(ctx, computation_offset, stake_account_id)
+    }
+
+    #[arcium_callback(encrypted_ix = "reveal_stake")]
+    pub fn reveal_stake_callback(
+        ctx: Context<RevealStakeCallback>,
+        output: SignedComputationOutputs<RevealStakeOutput>,
+    ) -> Result<()> {
+        instructions::reveal_stake_callback(ctx, output)
     }
 
     pub fn unstake_early(
         ctx: Context<UnstakeEarly>,
-        share_account_id: u32,
+        stake_account_id: u32,
     ) -> Result<()> {
-        instructions::unstake_early(ctx, share_account_id)
+        instructions::unstake_early(ctx, stake_account_id)
     }
 
     pub fn do_unstake_early(
         ctx: Context<DoUnstakeEarly>,
-        computation_offset: u64,
-        share_account_id: u32,
-        share_account_owner: Pubkey,
+        stake_account_id: u32,
+        stake_account_owner: Pubkey,
     ) -> Result<()> {
-        instructions::do_unstake_early(ctx, computation_offset, share_account_id, share_account_owner)
-    }
-
-    #[arcium_callback(encrypted_ix = "unstake_early")]
-    pub fn unstake_early_callback(
-        ctx: Context<UnstakeEarlyCallback>,
-        output: SignedComputationOutputs<UnstakeEarlyOutput>,
-    ) -> Result<()> {
-        instructions::unstake_early_callback(ctx, output)
-    }
-
-    pub fn close_ephemeral_encrypted_token_account_comp_def(
-        ctx: Context<CloseEphemeralEncryptedTokenAccountCompDef>,
-    ) -> Result<()> {
-        instructions::close_ephemeral_encrypted_token_account_comp_def(ctx)
-    }
-
-    pub fn close_ephemeral_encrypted_token_account(
-        ctx: Context<CloseEphemeralEncryptedTokenAccount>,
-        computation_offset: u64,
-        index: u64,
-    ) -> Result<()> {
-        instructions::close_ephemeral_encrypted_token_account(ctx, computation_offset, index)
-    }
-
-    #[arcium_callback(encrypted_ix = "close_ephemeral_encrypted_token_account")]
-    pub fn close_ephemeral_encrypted_token_account_callback(
-        ctx: Context<CloseEphemeralEncryptedTokenAccountCallback>,
-        output: SignedComputationOutputs<CloseEphemeralEncryptedTokenAccountOutput>,
-    ) -> Result<()> {
-        instructions::close_ephemeral_encrypted_token_account_callback(ctx, output)
+        instructions::do_unstake_early(ctx, stake_account_id, stake_account_owner)
     }
 }

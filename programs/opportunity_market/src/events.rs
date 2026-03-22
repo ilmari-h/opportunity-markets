@@ -20,8 +20,11 @@ pub struct MarketCreatedEvent {
     pub market: Pubkey,
     pub creator: Pubkey,
     pub index: u64,
+    pub mint: Pubkey,
+    pub reward_amount: u64,
     pub time_to_stake: u64,
     pub time_to_reveal: u64,
+    pub earliness_cutoff_seconds: u64,
     pub market_authority: Option<Pubkey>,
     pub authorized_reader_pubkey: [u8; 32],
     pub unstake_delay_seconds: u64,
@@ -34,18 +37,7 @@ pub struct MarketOptionCreatedEvent {
     pub option: Pubkey,
     pub market: Pubkey,
     pub creator: Pubkey,
-    pub by_market_creator: bool, 
-    pub index: u16, pub name: String,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct EncryptedTokensWrappedEvent {
-    pub encrypted_token_account: Pubkey,
-    pub user: Pubkey,
-    pub deposit_amount: u64,
-    pub encrypted_new_balance: [u8; 32],
-    pub nonce: u128,
+    pub id: u64,
     pub timestamp: i64,
 }
 
@@ -53,14 +45,12 @@ pub struct EncryptedTokensWrappedEvent {
 pub struct StakedEvent {
     pub user: Pubkey,
     pub market: Pubkey,
-    pub encrypted_token_account: Pubkey,
-    pub share_account: Pubkey,
-    pub share_encrypted_state: [[u8; 32]; 2], // share amount and option
-    pub share_state_nonce: u128,
-    pub share_encrypted_state_disclosure: [[u8; 32]; 2],
-    pub share_state_disclosure_nonce: u128,
-    pub encrypted_eta_balance: [u8; 32],
-    pub eta_balance_nonce: u128,
+    pub stake_account: Pubkey,
+    pub stake_encrypted_option: [u8; 32],
+    pub stake_state_nonce: u128,
+    pub stake_encrypted_option_disclosure: [u8; 32],
+    pub stake_state_disclosure_nonce: u128,
+    pub amount: u64,
     pub timestamp: i64,
 }
 
@@ -68,10 +58,9 @@ pub struct StakedEvent {
 pub struct StakeRevealedEvent {
     pub user: Pubkey,
     pub market: Pubkey,
-    pub encrypted_token_account: Pubkey,
-    pub share_account: Pubkey,
-    pub shares_amount: u64,
-    pub selected_option: u16,
+    pub stake_account: Pubkey,
+    pub stake_amount: u64,
+    pub selected_option: u64,
     pub timestamp: i64,
 }
 
@@ -79,8 +68,7 @@ pub struct StakeRevealedEvent {
 pub struct UnstakedEvent {
     pub user: Pubkey,
     pub market: Pubkey,
-    pub encrypted_token_account: Pubkey,
-    pub share_account: Pubkey,
+    pub stake_account: Pubkey,
     pub timestamp: i64,
 }
 
@@ -93,34 +81,6 @@ pub struct StakeRevealedError {
 #[event]
 pub struct StakedError {
     pub user: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct UnstakedError {
-    pub user: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct EncryptedTokensWrappedError {
-    pub user: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct EncryptedTokensUnwrappedError {
-    pub user: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct EncryptedTokensUnwrappedEvent {
-    pub user: Pubkey,
-    pub encrypted_token_account: Pubkey,
-    pub amount_withdrawn: u64,
-    pub encrypted_new_balance: [u8; 32],
-    pub nonce: u128,
     pub timestamp: i64,
 }
 
@@ -144,13 +104,22 @@ pub struct WinningOptionsSelectedEvent {
 pub struct RewardClaimedEvent {
     pub owner: Pubkey,
     pub market: Pubkey,
-    pub share_account: Pubkey,
-    pub option: u16,
+    pub stake_account: Pubkey,
+    pub option_id: u64,
     pub reward_amount: u64,
     pub staked_at_timestamp: u64,
     pub unstaked_at_timestamp: u64,
-    pub revealed_score: u64,
-    pub revealed_amount: u64,
+    pub stake_amount: u64,
+    pub score: u64,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct StakeReclaimedEvent {
+    pub owner: Pubkey,
+    pub market: Pubkey,
+    pub stake_account: Pubkey,
+    pub amount: u64,
     pub timestamp: i64,
 }
 
@@ -158,10 +127,14 @@ pub struct RewardClaimedEvent {
 pub struct TallyIncrementedEvent {
     pub owner: Pubkey,
     pub market: Pubkey,
-    pub share_account: Pubkey,
-    pub option: u16,
-    pub revealed_amount: u64,
+    pub stake_account: Pubkey,
+    pub option_id: u64,
+    pub user_stake: u64,
     pub user_score: u64,
+
+    pub total_score: u64,
+    pub total_stake: u64,
+
     pub timestamp: i64,
 }
 
@@ -192,60 +165,20 @@ pub struct RevealPeriodExtendedEvent {
 }
 
 #[event]
-pub struct PendingDepositClaimedEvent {
-    pub user: Pubkey,
-    pub encrypted_token_account: Pubkey,
-    pub amount: u64,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct EphemeralAccountClosedEvent {
-    pub user: Pubkey,
-    pub encrypted_token_account: Pubkey,
-    pub encrypted_new_balance: [u8; 32],
-    pub nonce: u128,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct EphemeralAccountClosedError {
-    pub user: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
 pub struct UnstakeInitiatedEvent {
     pub user: Pubkey,
     pub market: Pubkey,
-    pub share_account: Pubkey,
+    pub stake_account: Pubkey,
     pub unstakeable_at_timestamp: u64,
     pub timestamp: i64,
 }
 
 #[event]
-pub struct EncryptedTokenAccountInitializedEvent {
-    pub encrypted_token_account: Pubkey,
-    pub owner: Pubkey,
-    pub token_mint: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct EphemeralEncryptedTokenAccountInitializedEvent {
-    pub encrypted_token_account: Pubkey,
-    pub owner: Pubkey,
-    pub token_mint: Pubkey,
-    pub index: u64,
-    pub rent_payer: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct ShareAccountInitializedEvent {
-    pub share_account: Pubkey,
+pub struct StakeAccountInitializedEvent {
+    pub stake_account: Pubkey,
     pub owner: Pubkey,
     pub market: Pubkey,
+    pub account_id: u32,
     pub timestamp: i64,
 }
 

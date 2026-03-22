@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-KEYPAIR_NAME="bncZ1gDqgqhSWFzcxjeMoCtqN7odS8wYn1nS5tXZ9jA"
+KEYPAIR_NAME="BencHEXKYZ8HJ9LCrihgCWAmnqBT1abpsa9FYRs8fK1D"
 KEYPAIR_PATH="../${KEYPAIR_NAME}.json"
 
 # Verify the deterministic keypair exists
@@ -22,3 +22,12 @@ arcium build
 # Test (--skip-build prevents overwriting the keypair)
 echo "Running tests..."
 arcium test --skip-build
+
+# Kill stale solana-test-validator if one is hogging port 8899
+STALE_PID=$(lsof -ti :8899 || true)
+if [ -n "$STALE_PID" ]; then
+  echo "Killing stale solana-test-validator (PID $STALE_PID) on port 8899..."
+  kill $STALE_PID
+  sleep 1
+fi
+

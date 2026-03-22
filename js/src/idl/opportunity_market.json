@@ -1,5 +1,5 @@
 {
-  "address": "bncZ1gDqgqhSWFzcxjeMoCtqN7odS8wYn1nS5tXZ9jA",
+  "address": "BencHEXKYZ8HJ9LCrihgCWAmnqBT1abpsa9FYRs8fK1D",
   "metadata": {
     "name": "opportunity_market",
     "version": "0.1.0",
@@ -30,31 +30,6 @@
           "writable": true
         },
         {
-          "name": "central_state",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  114,
-                  97,
-                  108,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
           "name": "option",
           "writable": true,
           "pda": {
@@ -76,446 +51,22 @@
               },
               {
                 "kind": "arg",
-                "path": "option_index"
+                "path": "option_id"
               }
             ]
           }
-        },
-        {
-          "name": "source_eta",
-          "writable": true
-        },
-        {
-          "name": "share_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  104,
-                  97,
-                  114,
-                  101,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "creator"
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "arg",
-                "path": "share_account_id"
-              }
-            ]
-          }
-        },
-        {
-          "name": "sign_pda_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  65,
-                  114,
-                  99,
-                  105,
-                  117,
-                  109,
-                  83,
-                  105,
-                  103,
-                  110,
-                  101,
-                  114,
-                  65,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "mempool_account",
-          "writable": true
-        },
-        {
-          "name": "executing_pool",
-          "writable": true
-        },
-        {
-          "name": "computation_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "cluster_account",
-          "writable": true
-        },
-        {
-          "name": "pool_account",
-          "writable": true,
-          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
-        },
-        {
-          "name": "clock_account",
-          "writable": true,
-          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
         },
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         }
       ],
       "args": [
         {
-          "name": "computation_offset",
+          "name": "option_id",
           "type": "u64"
-        },
-        {
-          "name": "option_index",
-          "type": "u16"
-        },
-        {
-          "name": "share_account_id",
-          "type": "u32"
-        },
-        {
-          "name": "name",
-          "type": "string"
-        },
-        {
-          "name": "amount_ciphertext",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "input_nonce",
-          "type": "u128"
-        },
-        {
-          "name": "authorized_reader_nonce",
-          "type": "u128"
         }
       ]
-    },
-    {
-      "name": "add_market_option_as_creator",
-      "discriminator": [
-        216,
-        154,
-        167,
-        90,
-        134,
-        172,
-        43,
-        68
-      ],
-      "accounts": [
-        {
-          "name": "creator",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "market",
-          "writable": true
-        },
-        {
-          "name": "option",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  112,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "arg",
-                "path": "option_index"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "option_index",
-          "type": "u16"
-        },
-        {
-          "name": "name",
-          "type": "string"
-        }
-      ]
-    },
-    {
-      "name": "add_option_stake_callback",
-      "discriminator": [
-        58,
-        174,
-        2,
-        200,
-        118,
-        153,
-        169,
-        10
-      ],
-      "accounts": [
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "computation_account"
-        },
-        {
-          "name": "cluster_account"
-        },
-        {
-          "name": "instructions_sysvar",
-          "address": "Sysvar1nstructions1111111111111111111111111"
-        },
-        {
-          "name": "source_eta",
-          "writable": true
-        },
-        {
-          "name": "share_account",
-          "writable": true
-        },
-        {
-          "name": "option",
-          "writable": true
-        }
-      ],
-      "args": [
-        {
-          "name": "output",
-          "type": {
-            "defined": {
-              "name": "SignedComputationOutputs",
-              "generics": [
-                {
-                  "kind": "type",
-                  "type": {
-                    "defined": {
-                      "name": "AddOptionStakeOutput"
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "add_option_stake_comp_def",
-      "discriminator": [
-        214,
-        157,
-        74,
-        10,
-        70,
-        212,
-        4,
-        46
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "mxe_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account",
-          "writable": true
-        },
-        {
-          "name": "address_lookup_table",
-          "writable": true
-        },
-        {
-          "name": "lut_program",
-          "address": "AddressLookupTab1e1111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "buy_opportunity_market_shares_callback",
-      "discriminator": [
-        177,
-        167,
-        6,
-        168,
-        16,
-        41,
-        123,
-        23
-      ],
-      "accounts": [
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "computation_account"
-        },
-        {
-          "name": "cluster_account"
-        },
-        {
-          "name": "instructions_sysvar",
-          "address": "Sysvar1nstructions1111111111111111111111111"
-        },
-        {
-          "name": "user_encrypted_token_account",
-          "writable": true
-        },
-        {
-          "name": "share_account",
-          "writable": true
-        }
-      ],
-      "args": [
-        {
-          "name": "output",
-          "type": {
-            "defined": {
-              "name": "SignedComputationOutputs",
-              "generics": [
-                {
-                  "kind": "type",
-                  "type": {
-                    "defined": {
-                      "name": "BuyOpportunityMarketSharesOutput"
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "buy_opportunity_market_shares_comp_def",
-      "discriminator": [
-        111,
-        144,
-        68,
-        110,
-        33,
-        204,
-        64,
-        235
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "mxe_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account",
-          "writable": true
-        },
-        {
-          "name": "address_lookup_table",
-          "writable": true
-        },
-        {
-          "name": "lut_program",
-          "address": "AddressLookupTab1e1111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
     },
     {
       "name": "claim_fees",
@@ -658,476 +209,16 @@
       "args": []
     },
     {
-      "name": "claim_pending_deposit",
+      "name": "close_stake_account",
       "discriminator": [
+        246,
         236,
-        140,
-        88,
-        225,
-        51,
-        46,
-        77,
-        249
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "token_mint"
-        },
-        {
-          "name": "encrypted_token_account",
-          "writable": true
-        },
-        {
-          "name": "token_vault",
-          "docs": [
-            "Token vault holding all wrapped tokens"
-          ],
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_vault_ata",
-          "docs": [
-            "ATA owned by TokenVault PDA (source of pending tokens)"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "token_vault"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "signer_token_account",
-          "docs": [
-            "Signer's token account (destination for claimed tokens)"
-          ],
-          "writable": true
-        },
-        {
-          "name": "token_program"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "close_ephemeral_encrypted_token_account",
-      "discriminator": [
-        30,
-        176,
-        151,
-        78,
-        234,
-        64,
-        254,
-        63
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "token_mint"
-        },
-        {
-          "name": "regular_encrypted_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  110,
-                  99,
-                  114,
-                  121,
-                  112,
-                  116,
-                  101,
-                  100,
-                  95,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "ephemeral_encrypted_token_account",
-          "docs": [
-            "Ephemeral ETA to close (index != 0), must be owned by signer"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  110,
-                  99,
-                  114,
-                  121,
-                  112,
-                  116,
-                  101,
-                  100,
-                  95,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "arg",
-                "path": "index"
-              }
-            ]
-          }
-        },
-        {
-          "name": "rent_recipient",
-          "writable": true
-        },
-        {
-          "name": "sign_pda_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  65,
-                  114,
-                  99,
-                  105,
-                  117,
-                  109,
-                  83,
-                  105,
-                  103,
-                  110,
-                  101,
-                  114,
-                  65,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "mempool_account",
-          "writable": true
-        },
-        {
-          "name": "executing_pool",
-          "writable": true
-        },
-        {
-          "name": "computation_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "cluster_account",
-          "writable": true
-        },
-        {
-          "name": "pool_account",
-          "writable": true,
-          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
-        },
-        {
-          "name": "clock_account",
-          "writable": true,
-          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        }
-      ],
-      "args": [
-        {
-          "name": "computation_offset",
-          "type": "u64"
-        },
-        {
-          "name": "index",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "close_ephemeral_encrypted_token_account_callback",
-      "discriminator": [
-        169,
-        52,
-        248,
-        50,
-        36,
-        66,
-        181,
-        9
-      ],
-      "accounts": [
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "computation_account"
-        },
-        {
-          "name": "cluster_account"
-        },
-        {
-          "name": "instructions_sysvar",
-          "address": "Sysvar1nstructions1111111111111111111111111"
-        },
-        {
-          "name": "regular_encrypted_token_account",
-          "writable": true
-        },
-        {
-          "name": "ephemeral_encrypted_token_account",
-          "writable": true
-        },
-        {
-          "name": "rent_recipient",
-          "writable": true
-        }
-      ],
-      "args": [
-        {
-          "name": "output",
-          "type": {
-            "defined": {
-              "name": "SignedComputationOutputs",
-              "generics": [
-                {
-                  "kind": "type",
-                  "type": {
-                    "defined": {
-                      "name": "CloseEphemeralEncryptedTokenAccountOutput"
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "close_ephemeral_encrypted_token_account_comp_def",
-      "discriminator": [
-        162,
-        99,
-        122,
-        48,
-        158,
-        203,
-        176,
-        243
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "mxe_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account",
-          "writable": true
-        },
-        {
-          "name": "address_lookup_table",
-          "writable": true
-        },
-        {
-          "name": "lut_program",
-          "address": "AddressLookupTab1e1111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "close_share_account",
-      "discriminator": [
-        67,
-        139,
-        193,
-        149,
-        242,
-        202,
         59,
-        214
+        167,
+        115,
+        135,
+        122,
+        12
       ],
       "accounts": [
         {
@@ -1140,7 +231,7 @@
           "writable": true
         },
         {
-          "name": "share_account",
+          "name": "stake_account",
           "writable": true,
           "pda": {
             "seeds": [
@@ -1148,9 +239,9 @@
                 "kind": "const",
                 "value": [
                   115,
-                  104,
+                  116,
                   97,
-                  114,
+                  107,
                   101,
                   95,
                   97,
@@ -1172,7 +263,7 @@
               },
               {
                 "kind": "arg",
-                "path": "share_account_id"
+                "path": "stake_account_id"
               }
             ]
           }
@@ -1198,7 +289,7 @@
               },
               {
                 "kind": "arg",
-                "path": "option_index"
+                "path": "option_id"
               }
             ]
           }
@@ -1283,11 +374,11 @@
       ],
       "args": [
         {
-          "name": "option_index",
-          "type": "u16"
+          "name": "option_id",
+          "type": "u64"
         },
         {
-          "name": "share_account_id",
+          "name": "stake_account_id",
           "type": "u32"
         }
       ]
@@ -1513,11 +604,7 @@
           "name": "market"
         },
         {
-          "name": "user_eta",
-          "writable": true
-        },
-        {
-          "name": "share_account",
+          "name": "stake_account",
           "writable": true,
           "pda": {
             "seeds": [
@@ -1525,9 +612,9 @@
                 "kind": "const",
                 "value": [
                   115,
-                  104,
+                  116,
                   97,
-                  114,
+                  107,
                   101,
                   95,
                   97,
@@ -1541,7 +628,7 @@
               },
               {
                 "kind": "arg",
-                "path": "share_account_owner"
+                "path": "stake_account_owner"
               },
               {
                 "kind": "account",
@@ -1549,95 +636,96 @@
               },
               {
                 "kind": "arg",
-                "path": "share_account_id"
+                "path": "stake_account_id"
               }
             ]
           }
         },
         {
-          "name": "sign_pda_account",
+          "name": "token_mint"
+        },
+        {
+          "name": "market_token_ata",
+          "docs": [
+            "Market's ATA holding staked tokens"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
               {
-                "kind": "const",
-                "value": [
-                  65,
-                  114,
-                  99,
-                  105,
-                  117,
-                  109,
-                  83,
-                  105,
-                  103,
-                  110,
-                  101,
-                  114,
-                  65,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
               }
-            ]
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
           }
         },
         {
-          "name": "mxe_account"
-        },
-        {
-          "name": "mempool_account",
+          "name": "owner_token_account",
+          "docs": [
+            "Owner's token account to receive refund"
+          ],
           "writable": true
         },
         {
-          "name": "executing_pool",
-          "writable": true
-        },
-        {
-          "name": "computation_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "cluster_account",
-          "writable": true
-        },
-        {
-          "name": "pool_account",
-          "writable": true,
-          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
-        },
-        {
-          "name": "clock_account",
-          "writable": true,
-          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
+          "name": "token_program"
         },
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         }
       ],
       "args": [
         {
-          "name": "computation_offset",
-          "type": "u64"
-        },
-        {
-          "name": "share_account_id",
+          "name": "stake_account_id",
           "type": "u32"
         },
         {
-          "name": "share_account_owner",
+          "name": "stake_account_owner",
           "type": "pubkey"
         }
       ]
@@ -1790,7 +878,7 @@
           "name": "market"
         },
         {
-          "name": "share_account",
+          "name": "stake_account",
           "writable": true,
           "pda": {
             "seeds": [
@@ -1798,9 +886,9 @@
                 "kind": "const",
                 "value": [
                   115,
-                  104,
+                  116,
                   97,
-                  114,
+                  107,
                   101,
                   95,
                   97,
@@ -1822,7 +910,7 @@
               },
               {
                 "kind": "arg",
-                "path": "share_account_id"
+                "path": "stake_account_id"
               }
             ]
           }
@@ -1849,7 +937,7 @@
               },
               {
                 "kind": "arg",
-                "path": "option_index"
+                "path": "option_id"
               }
             ]
           }
@@ -1861,11 +949,11 @@
       ],
       "args": [
         {
-          "name": "option_index",
-          "type": "u16"
+          "name": "option_id",
+          "type": "u64"
         },
         {
-          "name": "share_account_id",
+          "name": "stake_account_id",
           "type": "u32"
         }
       ]
@@ -1939,265 +1027,16 @@
       ]
     },
     {
-      "name": "init_encrypted_token_account",
+      "name": "init_stake_account",
       "discriminator": [
-        50,
-        44,
-        236,
-        188,
-        218,
-        183,
-        120,
-        61
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "token_mint"
-        },
-        {
-          "name": "encrypted_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  110,
-                  99,
-                  114,
-                  121,
-                  112,
-                  116,
-                  101,
-                  100,
-                  95,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              },
-              {
-                "kind": "account",
-                "path": "signer"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "user_pubkey",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
-        },
-        {
-          "name": "state_nonce",
-          "type": "u128"
-        }
-      ]
-    },
-    {
-      "name": "init_ephemeral_encrypted_token_account",
-      "discriminator": [
-        193,
-        174,
-        116,
-        225,
-        159,
-        78,
-        6,
-        234
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "owner"
-        },
-        {
-          "name": "token_mint"
-        },
-        {
-          "name": "source_encrypted_token_account",
-          "docs": [
-            "Source ETA - must be a regular ETA (derived with index 0)"
-          ],
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  110,
-                  99,
-                  114,
-                  121,
-                  112,
-                  116,
-                  101,
-                  100,
-                  95,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              },
-              {
-                "kind": "account",
-                "path": "owner"
-              },
-              {
-                "kind": "const",
-                "value": [
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0,
-                  0
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "ephemeral_encrypted_token_account",
-          "docs": [
-            "New ephemeral ETA - derived with index in seed"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  110,
-                  99,
-                  114,
-                  121,
-                  112,
-                  116,
-                  101,
-                  100,
-                  95,
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  97,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              },
-              {
-                "kind": "account",
-                "path": "owner"
-              },
-              {
-                "kind": "arg",
-                "path": "index"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": [
-        {
-          "name": "index",
-          "type": "u64"
-        },
-        {
-          "name": "state_nonce",
-          "type": "u128"
-        }
-      ]
-    },
-    {
-      "name": "init_share_account",
-      "discriminator": [
-        141,
-        106,
-        216,
-        55,
-        166,
-        167,
-        139,
-        141
+        132,
+        171,
+        255,
+        149,
+        163,
+        37,
+        220,
+        45
       ],
       "accounts": [
         {
@@ -2209,7 +1048,7 @@
           "name": "market"
         },
         {
-          "name": "share_account",
+          "name": "stake_account",
           "writable": true,
           "pda": {
             "seeds": [
@@ -2217,9 +1056,9 @@
                 "kind": "const",
                 "value": [
                   115,
-                  104,
+                  116,
                   97,
-                  114,
+                  107,
                   101,
                   95,
                   97,
@@ -2241,7 +1080,7 @@
               },
               {
                 "kind": "arg",
-                "path": "share_account_id"
+                "path": "stake_account_id"
               }
             ]
           }
@@ -2257,7 +1096,7 @@
           "type": "u128"
         },
         {
-          "name": "share_account_id",
+          "name": "stake_account_id",
           "type": "u32"
         }
       ]
@@ -2446,16 +1285,16 @@
       ]
     },
     {
-      "name": "reveal_shares",
+      "name": "reclaim_stake",
       "discriminator": [
-        35,
         237,
-        35,
-        4,
-        200,
-        197,
-        110,
-        118
+        113,
+        219,
+        76,
+        6,
+        246,
+        223,
+        84
       ],
       "accounts": [
         {
@@ -2470,7 +1309,7 @@
           "name": "market"
         },
         {
-          "name": "share_account",
+          "name": "stake_account",
           "writable": true,
           "pda": {
             "seeds": [
@@ -2478,9 +1317,9 @@
                 "kind": "const",
                 "value": [
                   115,
-                  104,
+                  116,
                   97,
-                  114,
+                  107,
                   101,
                   95,
                   97,
@@ -2502,14 +1341,157 @@
               },
               {
                 "kind": "arg",
-                "path": "share_account_id"
+                "path": "stake_account_id"
               }
             ]
           }
         },
         {
-          "name": "user_eta",
+          "name": "token_mint"
+        },
+        {
+          "name": "market_token_ata",
+          "docs": [
+            "Market's ATA holding staked tokens"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "owner_token_account",
+          "docs": [
+            "Owner's token account to receive staked tokens"
+          ],
           "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "stake_account_id",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "reveal_stake",
+      "discriminator": [
+        107,
+        229,
+        210,
+        77,
+        126,
+        255,
+        243,
+        188
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "owner"
+        },
+        {
+          "name": "market"
+        },
+        {
+          "name": "stake_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  116,
+                  97,
+                  107,
+                  101,
+                  95,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "arg",
+                "path": "stake_account_id"
+              }
+            ]
+          }
         },
         {
           "name": "sign_pda_account",
@@ -2590,22 +1572,22 @@
           "type": "u64"
         },
         {
-          "name": "share_account_id",
+          "name": "stake_account_id",
           "type": "u32"
         }
       ]
     },
     {
-      "name": "reveal_shares_callback",
+      "name": "reveal_stake_callback",
       "discriminator": [
-        181,
-        56,
-        156,
-        218,
-        30,
-        234,
-        255,
-        68
+        79,
+        19,
+        120,
+        162,
+        232,
+        39,
+        206,
+        116
       ],
       "accounts": [
         {
@@ -2629,11 +1611,7 @@
           "address": "Sysvar1nstructions1111111111111111111111111"
         },
         {
-          "name": "share_account",
-          "writable": true
-        },
-        {
-          "name": "user_eta",
+          "name": "stake_account",
           "writable": true
         }
       ],
@@ -2648,7 +1626,7 @@
                   "kind": "type",
                   "type": {
                     "defined": {
-                      "name": "RevealSharesOutput"
+                      "name": "RevealStakeOutput"
                     }
                   }
                 }
@@ -2659,16 +1637,16 @@
       ]
     },
     {
-      "name": "reveal_shares_comp_def",
+      "name": "reveal_stake_comp_def",
       "discriminator": [
-        101,
-        145,
+        197,
+        20,
+        216,
+        132,
         43,
-        177,
-        171,
-        13,
-        172,
-        254
+        99,
+        64,
+        0
       ],
       "accounts": [
         {
@@ -2753,6 +1731,10 @@
       "accounts": [
         {
           "name": "signer",
+          "signer": true
+        },
+        {
+          "name": "payer",
           "writable": true,
           "signer": true
         },
@@ -2760,11 +1742,7 @@
           "name": "market"
         },
         {
-          "name": "user_eta",
-          "writable": true
-        },
-        {
-          "name": "share_account",
+          "name": "stake_account",
           "writable": true,
           "pda": {
             "seeds": [
@@ -2772,9 +1750,9 @@
                 "kind": "const",
                 "value": [
                   115,
-                  104,
+                  116,
                   97,
-                  114,
+                  107,
                   101,
                   95,
                   97,
@@ -2796,10 +1774,171 @@
               },
               {
                 "kind": "arg",
-                "path": "share_account_id"
+                "path": "stake_account_id"
               }
             ]
           }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "signer_token_account",
+          "writable": true
+        },
+        {
+          "name": "market_token_ata",
+          "docs": [
+            "Market's ATA for holding staked tokens"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_vault",
+          "docs": [
+            "Token vault for fee collection"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault_ata",
+          "docs": [
+            "Token vault ATA for fee tokens"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "token_vault"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
         },
         {
           "name": "sign_pda_account",
@@ -2880,17 +2019,12 @@
           "type": "u64"
         },
         {
-          "name": "share_account_id",
+          "name": "stake_account_id",
           "type": "u32"
         },
         {
-          "name": "amount_ciphertext",
-          "type": {
-            "array": [
-              "u8",
-              32
-            ]
-          }
+          "name": "amount",
+          "type": "u64"
         },
         {
           "name": "selected_option_ciphertext",
@@ -2908,8 +2042,121 @@
         {
           "name": "authorized_reader_nonce",
           "type": "u128"
+        },
+        {
+          "name": "user_pubkey",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
         }
       ]
+    },
+    {
+      "name": "stake_callback",
+      "discriminator": [
+        40,
+        220,
+        36,
+        47,
+        6,
+        116,
+        132,
+        89
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "stake_account",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "StakeOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "stake_comp_def",
+      "discriminator": [
+        156,
+        5,
+        60,
+        126,
+        142,
+        149,
+        1,
+        130
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     },
     {
       "name": "transfer_central_state_authority",
@@ -2984,7 +2231,7 @@
           "name": "market"
         },
         {
-          "name": "share_account",
+          "name": "stake_account",
           "writable": true,
           "pda": {
             "seeds": [
@@ -2992,9 +2239,9 @@
                 "kind": "const",
                 "value": [
                   115,
-                  104,
+                  116,
                   97,
-                  114,
+                  107,
                   101,
                   95,
                   97,
@@ -3016,7 +2263,7 @@
               },
               {
                 "kind": "arg",
-                "path": "share_account_id"
+                "path": "stake_account_id"
               }
             ]
           }
@@ -3024,463 +2271,10 @@
       ],
       "args": [
         {
-          "name": "share_account_id",
+          "name": "stake_account_id",
           "type": "u32"
         }
       ]
-    },
-    {
-      "name": "unstake_early_callback",
-      "discriminator": [
-        106,
-        110,
-        72,
-        0,
-        25,
-        127,
-        188,
-        205
-      ],
-      "accounts": [
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "computation_account"
-        },
-        {
-          "name": "cluster_account"
-        },
-        {
-          "name": "instructions_sysvar",
-          "address": "Sysvar1nstructions1111111111111111111111111"
-        },
-        {
-          "name": "user_eta",
-          "writable": true
-        },
-        {
-          "name": "share_account",
-          "writable": true
-        }
-      ],
-      "args": [
-        {
-          "name": "output",
-          "type": {
-            "defined": {
-              "name": "SignedComputationOutputs",
-              "generics": [
-                {
-                  "kind": "type",
-                  "type": {
-                    "defined": {
-                      "name": "UnstakeEarlyOutput"
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "unstake_early_comp_def",
-      "discriminator": [
-        40,
-        120,
-        116,
-        55,
-        117,
-        67,
-        141,
-        9
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "mxe_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account",
-          "writable": true
-        },
-        {
-          "name": "address_lookup_table",
-          "writable": true
-        },
-        {
-          "name": "lut_program",
-          "address": "AddressLookupTab1e1111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "unwrap_encrypted_tokens",
-      "discriminator": [
-        223,
-        93,
-        223,
-        112,
-        29,
-        86,
-        208,
-        219
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "token_mint"
-        },
-        {
-          "name": "encrypted_token_account",
-          "writable": true
-        },
-        {
-          "name": "token_vault",
-          "docs": [
-            "Token vault holding all wrapped tokens"
-          ],
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_vault_ata",
-          "docs": [
-            "ATA owned by TokenVault PDA (source of SPL tokens for withdrawal)"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "token_vault"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "user_token_account",
-          "docs": [
-            "Signer's token account (destination for claimed tokens)"
-          ],
-          "writable": true
-        },
-        {
-          "name": "sign_pda_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  65,
-                  114,
-                  99,
-                  105,
-                  117,
-                  109,
-                  83,
-                  105,
-                  103,
-                  110,
-                  101,
-                  114,
-                  65,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "mempool_account",
-          "writable": true
-        },
-        {
-          "name": "executing_pool",
-          "writable": true
-        },
-        {
-          "name": "computation_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "cluster_account",
-          "writable": true
-        },
-        {
-          "name": "pool_account",
-          "writable": true,
-          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
-        },
-        {
-          "name": "clock_account",
-          "writable": true,
-          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        }
-      ],
-      "args": [
-        {
-          "name": "computation_offset",
-          "type": "u64"
-        },
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "unwrap_encrypted_tokens_callback",
-      "discriminator": [
-        79,
-        46,
-        246,
-        46,
-        89,
-        103,
-        215,
-        38
-      ],
-      "accounts": [
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "computation_account"
-        },
-        {
-          "name": "cluster_account"
-        },
-        {
-          "name": "instructions_sysvar",
-          "address": "Sysvar1nstructions1111111111111111111111111"
-        },
-        {
-          "name": "encrypted_token_account",
-          "writable": true
-        },
-        {
-          "name": "user_token_account",
-          "docs": [
-            "User's token account to receive claimed SPL tokens"
-          ],
-          "writable": true
-        },
-        {
-          "name": "token_vault",
-          "docs": [
-            "Token vault holding all wrapped tokens"
-          ]
-        },
-        {
-          "name": "token_vault_ata",
-          "docs": [
-            "TokenVault's ATA holding SPL tokens (source for withdrawal)"
-          ],
-          "writable": true
-        },
-        {
-          "name": "token_mint",
-          "docs": [
-            "Token mint for transfer_checked"
-          ]
-        },
-        {
-          "name": "token_program",
-          "docs": [
-            "Token program for CPI"
-          ]
-        }
-      ],
-      "args": [
-        {
-          "name": "output",
-          "type": {
-            "defined": {
-              "name": "SignedComputationOutputs",
-              "generics": [
-                {
-                  "kind": "type",
-                  "type": {
-                    "defined": {
-                      "name": "UnwrapEncryptedTokensOutput"
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "unwrap_encrypted_tokens_comp_def",
-      "discriminator": [
-        130,
-        70,
-        53,
-        253,
-        16,
-        169,
-        50,
-        36
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "mxe_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account",
-          "writable": true
-        },
-        {
-          "name": "address_lookup_table",
-          "writable": true
-        },
-        {
-          "name": "lut_program",
-          "address": "AddressLookupTab1e1111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
     },
     {
       "name": "update_central_state",
@@ -3644,320 +2438,6 @@
         }
       ],
       "args": []
-    },
-    {
-      "name": "wrap_encrypted_tokens",
-      "discriminator": [
-        249,
-        160,
-        73,
-        35,
-        110,
-        134,
-        22,
-        106
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "token_mint"
-        },
-        {
-          "name": "encrypted_token_account",
-          "writable": true
-        },
-        {
-          "name": "signer_token_account",
-          "docs": [
-            "The signer's token account (source of SPL tokens)"
-          ],
-          "writable": true
-        },
-        {
-          "name": "token_vault",
-          "docs": [
-            "Token vault holding all wrapped tokens"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_vault_ata",
-          "docs": [
-            "ATA owned by the TokenVault PDA (destination of SPL tokens)"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "token_vault"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "sign_pda_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  65,
-                  114,
-                  99,
-                  105,
-                  117,
-                  109,
-                  83,
-                  105,
-                  103,
-                  110,
-                  101,
-                  114,
-                  65,
-                  99,
-                  99,
-                  111,
-                  117,
-                  110,
-                  116
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "mempool_account",
-          "writable": true
-        },
-        {
-          "name": "executing_pool",
-          "writable": true
-        },
-        {
-          "name": "computation_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "cluster_account",
-          "writable": true
-        },
-        {
-          "name": "pool_account",
-          "writable": true,
-          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
-        },
-        {
-          "name": "clock_account",
-          "writable": true,
-          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        }
-      ],
-      "args": [
-        {
-          "name": "computation_offset",
-          "type": "u64"
-        },
-        {
-          "name": "amount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "wrap_encrypted_tokens_callback",
-      "discriminator": [
-        27,
-        163,
-        220,
-        185,
-        248,
-        98,
-        6,
-        225
-      ],
-      "accounts": [
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "comp_def_account"
-        },
-        {
-          "name": "mxe_account"
-        },
-        {
-          "name": "computation_account"
-        },
-        {
-          "name": "cluster_account"
-        },
-        {
-          "name": "instructions_sysvar",
-          "address": "Sysvar1nstructions1111111111111111111111111"
-        },
-        {
-          "name": "encrypted_token_account",
-          "writable": true
-        }
-      ],
-      "args": [
-        {
-          "name": "output",
-          "type": {
-            "defined": {
-              "name": "SignedComputationOutputs",
-              "generics": [
-                {
-                  "kind": "type",
-                  "type": {
-                    "defined": {
-                      "name": "WrapEncryptedTokensOutput"
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "wrap_encrypted_tokens_comp_def",
-      "discriminator": [
-        197,
-        168,
-        125,
-        251,
-        47,
-        209,
-        49,
-        126
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "mxe_account",
-          "writable": true
-        },
-        {
-          "name": "comp_def_account",
-          "writable": true
-        },
-        {
-          "name": "address_lookup_table",
-          "writable": true
-        },
-        {
-          "name": "lut_program",
-          "address": "AddressLookupTab1e1111111111111111111111111"
-        },
-        {
-          "name": "arcium_program",
-          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -4027,19 +2507,6 @@
       ]
     },
     {
-      "name": "EncryptedTokenAccount",
-      "discriminator": [
-        238,
-        123,
-        84,
-        113,
-        137,
-        77,
-        62,
-        75
-      ]
-    },
-    {
       "name": "FeePool",
       "discriminator": [
         172,
@@ -4092,16 +2559,16 @@
       ]
     },
     {
-      "name": "ShareAccount",
+      "name": "StakeAccount",
       "discriminator": [
-        244,
-        129,
-        214,
-        179,
-        30,
-        194,
-        247,
-        141
+        80,
+        158,
+        67,
+        124,
+        50,
+        189,
+        192,
+        255
       ]
     },
     {
@@ -4119,110 +2586,6 @@
     }
   ],
   "events": [
-    {
-      "name": "EncryptedTokenAccountInitializedEvent",
-      "discriminator": [
-        175,
-        239,
-        246,
-        37,
-        162,
-        72,
-        220,
-        22
-      ]
-    },
-    {
-      "name": "EncryptedTokensUnwrappedError",
-      "discriminator": [
-        153,
-        136,
-        159,
-        1,
-        246,
-        74,
-        54,
-        62
-      ]
-    },
-    {
-      "name": "EncryptedTokensUnwrappedEvent",
-      "discriminator": [
-        234,
-        20,
-        202,
-        239,
-        55,
-        174,
-        44,
-        51
-      ]
-    },
-    {
-      "name": "EncryptedTokensWrappedError",
-      "discriminator": [
-        35,
-        166,
-        13,
-        96,
-        124,
-        82,
-        141,
-        108
-      ]
-    },
-    {
-      "name": "EncryptedTokensWrappedEvent",
-      "discriminator": [
-        86,
-        90,
-        17,
-        55,
-        3,
-        17,
-        143,
-        67
-      ]
-    },
-    {
-      "name": "EphemeralAccountClosedError",
-      "discriminator": [
-        37,
-        64,
-        137,
-        68,
-        134,
-        79,
-        95,
-        129
-      ]
-    },
-    {
-      "name": "EphemeralAccountClosedEvent",
-      "discriminator": [
-        180,
-        171,
-        6,
-        242,
-        30,
-        242,
-        142,
-        127
-      ]
-    },
-    {
-      "name": "EphemeralEncryptedTokenAccountInitializedEvent",
-      "discriminator": [
-        173,
-        82,
-        194,
-        9,
-        161,
-        82,
-        245,
-        72
-      ]
-    },
     {
       "name": "FeesClaimedEvent",
       "discriminator": [
@@ -4273,19 +2636,6 @@
         53,
         78,
         24
-      ]
-    },
-    {
-      "name": "PendingDepositClaimedEvent",
-      "discriminator": [
-        3,
-        237,
-        196,
-        93,
-        240,
-        14,
-        165,
-        15
       ]
     },
     {
@@ -4341,16 +2691,29 @@
       ]
     },
     {
-      "name": "ShareAccountInitializedEvent",
+      "name": "StakeAccountInitializedEvent",
       "discriminator": [
-        94,
+        106,
+        47,
+        162,
+        131,
+        142,
+        181,
+        69,
+        20
+      ]
+    },
+    {
+      "name": "StakeReclaimedEvent",
+      "discriminator": [
+        16,
+        112,
+        61,
+        40,
+        209,
         210,
-        7,
-        154,
-        9,
-        68,
-        108,
-        110
+        190,
+        109
       ]
     },
     {
@@ -4432,19 +2795,6 @@
       ]
     },
     {
-      "name": "UnstakedError",
-      "discriminator": [
-        155,
-        86,
-        205,
-        124,
-        177,
-        215,
-        208,
-        126
-      ]
-    },
-    {
       "name": "UnstakedEvent",
       "discriminator": [
         186,
@@ -4509,8 +2859,8 @@
     },
     {
       "code": 6007,
-      "name": "InvalidOptionIndex",
-      "msg": "Invalid option index"
+      "name": "InvalidOptionId",
+      "msg": "Invalid option ID"
     },
     {
       "code": 6008,
@@ -4530,22 +2880,22 @@
     {
       "code": 6011,
       "name": "AlreadyRevealed",
-      "msg": "Shares already revealed"
+      "msg": "Stake already revealed"
     },
     {
       "code": 6012,
       "name": "MarketNotResolved",
-      "msg": "Staking period not over"
+      "msg": "Market not yet resolved"
     },
     {
       "code": 6013,
       "name": "NotRevealed",
-      "msg": "Shares not yet revealed"
+      "msg": "Stake not yet revealed"
     },
     {
       "code": 6014,
       "name": "TallyAlreadyIncremented",
-      "msg": "Tally already incremented for this share account"
+      "msg": "Tally already incremented for this stake account"
     },
     {
       "code": 6015,
@@ -4565,12 +2915,12 @@
     {
       "code": 6018,
       "name": "AlreadyUnstaked",
-      "msg": "Shares already unstaked"
+      "msg": "Already unstaked"
     },
     {
       "code": 6019,
       "name": "AlreadyPurchased",
-      "msg": "Shares already purchased for this share account"
+      "msg": "Already staked for this stake account"
     },
     {
       "code": 6020,
@@ -4580,7 +2930,7 @@
     {
       "code": 6021,
       "name": "AddOptionStakeFailed",
-      "msg": "Add option stake failed: insufficient balance, shares, or below minimum deposit"
+      "msg": "Add option stake failed: insufficient balance or below minimum deposit"
     },
     {
       "code": 6022,
@@ -4654,80 +3004,6 @@
       }
     },
     {
-      "name": "AddOptionStakeOutput",
-      "docs": [
-        "The output of the callback instruction. Provided as a struct with ordered fields",
-        "as anchor does not support tuples and tuple structs yet."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "AddOptionStakeOutputStruct0"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "AddOptionStakeOutputStruct0",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": "bool"
-          },
-          {
-            "name": "field_1",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "name": "field_2",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "2"
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "name": "field_3",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "2"
-                  }
-                ]
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "ArciumSignerAccount",
       "type": {
         "kind": "struct",
@@ -4749,80 +3025,6 @@
               "u8",
               64
             ]
-          }
-        ]
-      }
-    },
-    {
-      "name": "BuyOpportunityMarketSharesOutput",
-      "docs": [
-        "The output of the callback instruction. Provided as a struct with ordered fields",
-        "as anchor does not support tuples and tuple structs yet."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "BuyOpportunityMarketSharesOutputStruct0"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "BuyOpportunityMarketSharesOutputStruct0",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": "bool"
-          },
-          {
-            "name": "field_1",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "name": "field_2",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "2"
-                  }
-                ]
-              }
-            }
-          },
-          {
-            "name": "field_3",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "2"
-                  }
-                ]
-              }
-            }
           }
         ]
       }
@@ -4932,32 +3134,6 @@
           {
             "name": "bump",
             "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "CloseEphemeralEncryptedTokenAccountOutput",
-      "docs": [
-        "The output of the callback instruction. Provided as a struct with ordered fields",
-        "as anchor does not support tuples and tuple structs yet."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
           }
         ]
       }
@@ -5157,286 +3333,6 @@
       }
     },
     {
-      "name": "EncryptedTokenAccount",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "encrypted_state",
-            "type": {
-              "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                1
-              ]
-            }
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "index",
-            "type": "u64"
-          },
-          {
-            "name": "owner",
-            "type": "pubkey"
-          },
-          {
-            "name": "state_nonce",
-            "type": "u128"
-          },
-          {
-            "name": "token_mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "user_pubkey",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "locked",
-            "type": "bool"
-          },
-          {
-            "name": "pending_deposit",
-            "type": "u64"
-          },
-          {
-            "name": "rent_payer",
-            "type": {
-              "option": "pubkey"
-            }
-          },
-          {
-            "name": "is_initialized",
-            "type": "bool"
-          }
-        ]
-      }
-    },
-    {
-      "name": "EncryptedTokenAccountInitializedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "encrypted_token_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "owner",
-            "type": "pubkey"
-          },
-          {
-            "name": "token_mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "EncryptedTokensUnwrappedError",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "user",
-            "type": "pubkey"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "EncryptedTokensUnwrappedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "user",
-            "type": "pubkey"
-          },
-          {
-            "name": "encrypted_token_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "amount_withdrawn",
-            "type": "u64"
-          },
-          {
-            "name": "encrypted_new_balance",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "nonce",
-            "type": "u128"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "EncryptedTokensWrappedError",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "user",
-            "type": "pubkey"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "EncryptedTokensWrappedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "encrypted_token_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "user",
-            "type": "pubkey"
-          },
-          {
-            "name": "deposit_amount",
-            "type": "u64"
-          },
-          {
-            "name": "encrypted_new_balance",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "nonce",
-            "type": "u128"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "EphemeralAccountClosedError",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "user",
-            "type": "pubkey"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "EphemeralAccountClosedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "user",
-            "type": "pubkey"
-          },
-          {
-            "name": "encrypted_token_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "encrypted_new_balance",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "nonce",
-            "type": "u128"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "EphemeralEncryptedTokenAccountInitializedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "encrypted_token_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "owner",
-            "type": "pubkey"
-          },
-          {
-            "name": "token_mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "index",
-            "type": "u64"
-          },
-          {
-            "name": "rent_payer",
-            "type": "pubkey"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
       "name": "Epoch",
       "docs": [
         "The network epoch"
@@ -5598,11 +3494,23 @@
             "type": "u64"
           },
           {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "reward_amount",
+            "type": "u64"
+          },
+          {
             "name": "time_to_stake",
             "type": "u64"
           },
           {
             "name": "time_to_reveal",
+            "type": "u64"
+          },
+          {
+            "name": "earliness_cutoff_seconds",
             "type": "u64"
           },
           {
@@ -5677,16 +3585,8 @@
             "type": "pubkey"
           },
           {
-            "name": "by_market_creator",
-            "type": "bool"
-          },
-          {
-            "name": "index",
-            "type": "u16"
-          },
-          {
-            "name": "name",
-            "type": "string"
+            "name": "id",
+            "type": "u64"
           },
           {
             "name": "timestamp",
@@ -5827,7 +3727,7 @@
           },
           {
             "name": "total_options",
-            "type": "u16"
+            "type": "u64"
           },
           {
             "name": "open_timestamp",
@@ -5907,38 +3807,19 @@
             "type": "u8"
           },
           {
-            "name": "creator",
-            "type": "pubkey"
+            "name": "id",
+            "type": "u64"
           },
           {
-            "name": "index",
-            "type": "u16"
-          },
-          {
-            "name": "name",
+            "name": "total_staked",
             "docs": [
-              "Name of the option"
+              "Total staked for this option (tally)"
             ],
-            "type": "string"
-          },
-          {
-            "name": "total_shares",
-            "docs": [
-              "Total shares bought for this option (tally)"
-            ],
-            "type": {
-              "option": "u64"
-            }
+            "type": "u64"
           },
           {
             "name": "total_score",
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "initialized",
-            "type": "bool"
+            "type": "u64"
           }
         ]
       }
@@ -6065,30 +3946,6 @@
       }
     },
     {
-      "name": "PendingDepositClaimedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "user",
-            "type": "pubkey"
-          },
-          {
-            "name": "encrypted_token_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "amount",
-            "type": "u64"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
       "name": "RevealPeriodExtendedEvent",
       "type": {
         "kind": "struct",
@@ -6113,7 +3970,7 @@
       }
     },
     {
-      "name": "RevealSharesOutput",
+      "name": "RevealStakeOutput",
       "docs": [
         "The output of the callback instruction. Provided as a struct with ordered fields",
         "as anchor does not support tuples and tuple structs yet."
@@ -6123,41 +3980,7 @@
         "fields": [
           {
             "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "RevealSharesOutputStruct0"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "RevealSharesOutputStruct0",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
             "type": "u64"
-          },
-          {
-            "name": "field_1",
-            "type": "u16"
-          },
-          {
-            "name": "field_2",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
           }
         ]
       }
@@ -6176,12 +3999,12 @@
             "type": "pubkey"
           },
           {
-            "name": "share_account",
+            "name": "stake_account",
             "type": "pubkey"
           },
           {
-            "name": "option",
-            "type": "u16"
+            "name": "option_id",
+            "type": "u64"
           },
           {
             "name": "reward_amount",
@@ -6196,11 +4019,11 @@
             "type": "u64"
           },
           {
-            "name": "revealed_score",
+            "name": "stake_amount",
             "type": "u64"
           },
           {
-            "name": "revealed_amount",
+            "name": "score",
             "type": "u64"
           },
           {
@@ -6305,130 +4128,6 @@
       }
     },
     {
-      "name": "ShareAccount",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "encrypted_state",
-            "type": {
-              "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                2
-              ]
-            }
-          },
-          {
-            "name": "state_nonce",
-            "type": "u128"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "owner",
-            "type": "pubkey"
-          },
-          {
-            "name": "market",
-            "type": "pubkey"
-          },
-          {
-            "name": "encrypted_state_disclosure",
-            "type": {
-              "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                2
-              ]
-            }
-          },
-          {
-            "name": "state_nonce_disclosure",
-            "type": "u128"
-          },
-          {
-            "name": "staked_at_timestamp",
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "unstaked_at_timestamp",
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "revealed_amount",
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "revealed_option",
-            "type": {
-              "option": "u16"
-            }
-          },
-          {
-            "name": "revealed_score",
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "total_incremented",
-            "type": "bool"
-          },
-          {
-            "name": "unstakeable_at_timestamp",
-            "type": {
-              "option": "u64"
-            }
-          },
-          {
-            "name": "locked",
-            "type": "bool"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ShareAccountInitializedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "share_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "owner",
-            "type": "pubkey"
-          },
-          {
-            "name": "market",
-            "type": "pubkey"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
       "name": "SharedEncryptedStruct",
       "generics": [
         {
@@ -6512,6 +4211,219 @@
       }
     },
     {
+      "name": "StakeAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "encrypted_option",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "state_nonce",
+            "type": "u128"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "user_pubkey",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_option_disclosure",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "state_nonce_disclosure",
+            "type": "u128"
+          },
+          {
+            "name": "staked_at_timestamp",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "unstaked_at_timestamp",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "revealed_option",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "score",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "total_incremented",
+            "type": "bool"
+          },
+          {
+            "name": "unstakeable_at_timestamp",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "locked",
+            "type": "bool"
+          },
+          {
+            "name": "stake_reclaimed",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeAccountInitializedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "stake_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "account_id",
+            "type": "u32"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "StakeOutputStruct0"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeOutputStruct0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "1"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "field_1",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "1"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeReclaimedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "stake_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "StakeRevealedError",
       "type": {
         "kind": "struct",
@@ -6541,20 +4453,16 @@
             "type": "pubkey"
           },
           {
-            "name": "encrypted_token_account",
+            "name": "stake_account",
             "type": "pubkey"
           },
           {
-            "name": "share_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "shares_amount",
+            "name": "stake_amount",
             "type": "u64"
           },
           {
             "name": "selected_option",
-            "type": "u16"
+            "type": "u64"
           },
           {
             "name": "timestamp",
@@ -6593,51 +4501,11 @@
             "type": "pubkey"
           },
           {
-            "name": "encrypted_token_account",
+            "name": "stake_account",
             "type": "pubkey"
           },
           {
-            "name": "share_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "share_encrypted_state",
-            "type": {
-              "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                2
-              ]
-            }
-          },
-          {
-            "name": "share_state_nonce",
-            "type": "u128"
-          },
-          {
-            "name": "share_encrypted_state_disclosure",
-            "type": {
-              "array": [
-                {
-                  "array": [
-                    "u8",
-                    32
-                  ]
-                },
-                2
-              ]
-            }
-          },
-          {
-            "name": "share_state_disclosure_nonce",
-            "type": "u128"
-          },
-          {
-            "name": "encrypted_eta_balance",
+            "name": "stake_encrypted_option",
             "type": {
               "array": [
                 "u8",
@@ -6646,8 +4514,25 @@
             }
           },
           {
-            "name": "eta_balance_nonce",
+            "name": "stake_state_nonce",
             "type": "u128"
+          },
+          {
+            "name": "stake_encrypted_option_disclosure",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "stake_state_disclosure_nonce",
+            "type": "u128"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
           },
           {
             "name": "timestamp",
@@ -6670,19 +4555,27 @@
             "type": "pubkey"
           },
           {
-            "name": "share_account",
+            "name": "stake_account",
             "type": "pubkey"
           },
           {
-            "name": "option",
-            "type": "u16"
+            "name": "option_id",
+            "type": "u64"
           },
           {
-            "name": "revealed_amount",
+            "name": "user_stake",
             "type": "u64"
           },
           {
             "name": "user_score",
+            "type": "u64"
+          },
+          {
+            "name": "total_score",
+            "type": "u64"
+          },
+          {
+            "name": "total_stake",
             "type": "u64"
           },
           {
@@ -6733,32 +4626,6 @@
       }
     },
     {
-      "name": "UnstakeEarlyOutput",
-      "docs": [
-        "The output of the callback instruction. Provided as a struct with ordered fields",
-        "as anchor does not support tuples and tuple structs yet."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
       "name": "UnstakeInitiatedEvent",
       "type": {
         "kind": "struct",
@@ -6772,28 +4639,12 @@
             "type": "pubkey"
           },
           {
-            "name": "share_account",
+            "name": "stake_account",
             "type": "pubkey"
           },
           {
             "name": "unstakeable_at_timestamp",
             "type": "u64"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "UnstakedError",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "user",
-            "type": "pubkey"
           },
           {
             "name": "timestamp",
@@ -6816,66 +4667,12 @@
             "type": "pubkey"
           },
           {
-            "name": "encrypted_token_account",
-            "type": "pubkey"
-          },
-          {
-            "name": "share_account",
+            "name": "stake_account",
             "type": "pubkey"
           },
           {
             "name": "timestamp",
             "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "UnwrapEncryptedTokensOutput",
-      "docs": [
-        "The output of the callback instruction. Provided as a struct with ordered fields",
-        "as anchor does not support tuples and tuple structs yet."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "UnwrapEncryptedTokensOutputStruct0"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "UnwrapEncryptedTokensOutputStruct0",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": "bool"
-          },
-          {
-            "name": "field_1",
-            "type": "u64"
-          },
-          {
-            "name": "field_2",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
           }
         ]
       }
@@ -6930,8 +4727,8 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "option_index",
-            "type": "u16"
+            "name": "option_id",
+            "type": "u64"
           },
           {
             "name": "reward_percentage",
@@ -6966,32 +4763,6 @@
           {
             "name": "timestamp",
             "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "WrapEncryptedTokensOutput",
-      "docs": [
-        "The output of the callback instruction. Provided as a struct with ordered fields",
-        "as anchor does not support tuples and tuple structs yet."
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "field_0",
-            "type": {
-              "defined": {
-                "name": "SharedEncryptedStruct",
-                "generics": [
-                  {
-                    "kind": "const",
-                    "value": "1"
-                  }
-                ]
-              }
-            }
           }
         ]
       }

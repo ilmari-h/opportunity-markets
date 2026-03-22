@@ -14,8 +14,6 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
   type Address,
@@ -27,26 +25,26 @@ import {
 export type RewardClaimedEvent = {
   owner: Address;
   market: Address;
-  shareAccount: Address;
-  option: number;
+  stakeAccount: Address;
+  optionId: bigint;
   rewardAmount: bigint;
   stakedAtTimestamp: bigint;
   unstakedAtTimestamp: bigint;
-  revealedScore: bigint;
-  revealedAmount: bigint;
+  stakeAmount: bigint;
+  score: bigint;
   timestamp: bigint;
 };
 
 export type RewardClaimedEventArgs = {
   owner: Address;
   market: Address;
-  shareAccount: Address;
-  option: number;
+  stakeAccount: Address;
+  optionId: number | bigint;
   rewardAmount: number | bigint;
   stakedAtTimestamp: number | bigint;
   unstakedAtTimestamp: number | bigint;
-  revealedScore: number | bigint;
-  revealedAmount: number | bigint;
+  stakeAmount: number | bigint;
+  score: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -54,13 +52,13 @@ export function getRewardClaimedEventEncoder(): FixedSizeEncoder<RewardClaimedEv
   return getStructEncoder([
     ['owner', getAddressEncoder()],
     ['market', getAddressEncoder()],
-    ['shareAccount', getAddressEncoder()],
-    ['option', getU16Encoder()],
+    ['stakeAccount', getAddressEncoder()],
+    ['optionId', getU64Encoder()],
     ['rewardAmount', getU64Encoder()],
     ['stakedAtTimestamp', getU64Encoder()],
     ['unstakedAtTimestamp', getU64Encoder()],
-    ['revealedScore', getU64Encoder()],
-    ['revealedAmount', getU64Encoder()],
+    ['stakeAmount', getU64Encoder()],
+    ['score', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -69,13 +67,13 @@ export function getRewardClaimedEventDecoder(): FixedSizeDecoder<RewardClaimedEv
   return getStructDecoder([
     ['owner', getAddressDecoder()],
     ['market', getAddressDecoder()],
-    ['shareAccount', getAddressDecoder()],
-    ['option', getU16Decoder()],
+    ['stakeAccount', getAddressDecoder()],
+    ['optionId', getU64Decoder()],
     ['rewardAmount', getU64Decoder()],
     ['stakedAtTimestamp', getU64Decoder()],
     ['unstakedAtTimestamp', getU64Decoder()],
-    ['revealedScore', getU64Decoder()],
-    ['revealedAmount', getU64Decoder()],
+    ['stakeAmount', getU64Decoder()],
+    ['score', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

@@ -28,21 +28,21 @@ export const OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING = 0x1774; // 
 export const OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP = 0x1775; // 6005
 /** MarketAlreadyOpen: Market is already open */
 export const OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN = 0x1776; // 6006
-/** InvalidOptionIndex: Invalid option index */
-export const OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_INDEX = 0x1777; // 6007
+/** InvalidOptionId: Invalid option ID */
+export const OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_ID = 0x1777; // 6007
 /** MarketNotOpen: Market is not open */
 export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN = 0x1778; // 6008
 /** StakingNotActive: Staking period is not active */
 export const OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE = 0x1779; // 6009
 /** WinnerAlreadySelected: Market winner already selected */
 export const OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED = 0x177a; // 6010
-/** AlreadyRevealed: Shares already revealed */
+/** AlreadyRevealed: Stake already revealed */
 export const OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED = 0x177b; // 6011
-/** MarketNotResolved: Staking period not over */
+/** MarketNotResolved: Market not yet resolved */
 export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED = 0x177c; // 6012
-/** NotRevealed: Shares not yet revealed */
+/** NotRevealed: Stake not yet revealed */
 export const OPPORTUNITY_MARKET_ERROR__NOT_REVEALED = 0x177d; // 6013
-/** TallyAlreadyIncremented: Tally already incremented for this share account */
+/** TallyAlreadyIncremented: Tally already incremented for this stake account */
 export const OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED = 0x177e; // 6014
 /** Overflow: Arithmetic overflow */
 export const OPPORTUNITY_MARKET_ERROR__OVERFLOW = 0x177f; // 6015
@@ -50,13 +50,13 @@ export const OPPORTUNITY_MARKET_ERROR__OVERFLOW = 0x177f; // 6015
 export const OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED = 0x1780; // 6016
 /** InvalidMint: Token mint does not match account mint */
 export const OPPORTUNITY_MARKET_ERROR__INVALID_MINT = 0x1781; // 6017
-/** AlreadyUnstaked: Shares already unstaked */
+/** AlreadyUnstaked: Already unstaked */
 export const OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED = 0x1782; // 6018
-/** AlreadyPurchased: Shares already purchased for this share account */
+/** AlreadyPurchased: Already staked for this stake account */
 export const OPPORTUNITY_MARKET_ERROR__ALREADY_PURCHASED = 0x1783; // 6019
 /** DepositBelowMinimum: Deposit amount below minimum required for option creation */
 export const OPPORTUNITY_MARKET_ERROR__DEPOSIT_BELOW_MINIMUM = 0x1784; // 6020
-/** AddOptionStakeFailed: Add option stake failed: insufficient balance, shares, or below minimum deposit */
+/** AddOptionStakeFailed: Add option stake failed: insufficient balance or below minimum deposit */
 export const OPPORTUNITY_MARKET_ERROR__ADD_OPTION_STAKE_FAILED = 0x1785; // 6021
 /** Locked: Account is locked */
 export const OPPORTUNITY_MARKET_ERROR__LOCKED = 0x1786; // 6022
@@ -90,7 +90,7 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_MINT
-  | typeof OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_INDEX
+  | typeof OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_ID
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_WINNING_OPTIONS_INPUT
   | typeof OPPORTUNITY_MARKET_ERROR__LOCKED
@@ -116,10 +116,10 @@ let opportunityMarketErrorMessages:
 if (process.env.NODE_ENV !== 'production') {
   opportunityMarketErrorMessages = {
     [OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION]: `Computation aborted`,
-    [OPPORTUNITY_MARKET_ERROR__ADD_OPTION_STAKE_FAILED]: `Add option stake failed: insufficient balance, shares, or below minimum deposit`,
-    [OPPORTUNITY_MARKET_ERROR__ALREADY_PURCHASED]: `Shares already purchased for this share account`,
-    [OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED]: `Shares already revealed`,
-    [OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED]: `Shares already unstaked`,
+    [OPPORTUNITY_MARKET_ERROR__ADD_OPTION_STAKE_FAILED]: `Add option stake failed: insufficient balance or below minimum deposit`,
+    [OPPORTUNITY_MARKET_ERROR__ALREADY_PURCHASED]: `Already staked for this stake account`,
+    [OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED]: `Stake already revealed`,
+    [OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED]: `Already unstaked`,
     [OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED]: `Market cannot be closed before stake period ends`,
     [OPPORTUNITY_MARKET_ERROR__CLUSTER_NOT_SET]: `Cluster not set`,
     [OPPORTUNITY_MARKET_ERROR__DEPOSIT_BELOW_MINIMUM]: `Deposit amount below minimum required for option creation`,
@@ -127,21 +127,21 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING]: `Insufficient reward funding`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE]: `Invalid account state`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_MINT]: `Token mint does not match account mint`,
-    [OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_INDEX]: `Invalid option index`,
+    [OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_ID]: `Invalid option ID`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP]: `Timestamp must be in the future`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_WINNING_OPTIONS_INPUT]: `Invalid winning options input`,
     [OPPORTUNITY_MARKET_ERROR__LOCKED]: `Account is locked`,
     [OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN]: `Market is already open`,
     [OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN]: `Market is not open`,
-    [OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED]: `Staking period not over`,
+    [OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED]: `Market not yet resolved`,
     [OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM]: `No fees to claim`,
-    [OPPORTUNITY_MARKET_ERROR__NOT_REVEALED]: `Shares not yet revealed`,
+    [OPPORTUNITY_MARKET_ERROR__NOT_REVEALED]: `Stake not yet revealed`,
     [OPPORTUNITY_MARKET_ERROR__OVERFLOW]: `Arithmetic overflow`,
     [OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED]: `Reveal period has already ended`,
     [OPPORTUNITY_MARKET_ERROR__REWARD_ALREADY_WITHDRAWN]: `Reward has already been withdrawn`,
     [OPPORTUNITY_MARKET_ERROR__REWARD_AMOUNT_NOT_INCREASED]: `New reward amount must be greater than current`,
     [OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE]: `Staking period is not active`,
-    [OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED]: `Tally already incremented for this share account`,
+    [OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED]: `Tally already incremented for this stake account`,
     [OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED]: `Unauthorized`,
     [OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET]: `Unstake delay period has not passed yet`,
     [OPPORTUNITY_MARKET_ERROR__UNSTAKE_NOT_INITIATED]: `Unstake has not been initiated`,
