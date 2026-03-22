@@ -639,6 +639,7 @@ export class TestRunner {
           const stakeIx = await stake(
             {
               signer: user.solanaKeypair,
+              payer: user.solanaKeypair,
               market: this.marketAddress,
               stakeAccountId,
               tokenMint: this.mint.address,

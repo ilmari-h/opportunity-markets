@@ -14,12 +14,14 @@ use crate::{ID, ID_CONST, ArciumSignerAccount};
 
 pub const STAKE_ACCOUNT_SEED: &[u8] = b"stake_account";
 
-#[queue_computation_accounts("stake", signer)]
+#[queue_computation_accounts("stake", payer)]
 #[derive(Accounts)]
 #[instruction(computation_offset: u64, stake_account_id: u32)]
 pub struct Stake<'info> {
-    #[account(mut)]
     pub signer: Signer<'info>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
 
     #[account(
         constraint = market.open_timestamp.is_some() @ ErrorCode::MarketNotOpen,
@@ -82,7 +84,7 @@ pub struct Stake<'info> {
     #[account(
         init_if_needed,
         space = 9,
-        payer = signer,
+        payer = payer,
         seeds = [&SIGN_PDA_SEED],
         bump,
         address = derive_sign_pda!(),

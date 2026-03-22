@@ -9,6 +9,7 @@ import { type BaseInstructionParams } from "./instructionParams";
 
 export interface StakeParams extends BaseInstructionParams {
   signer: TransactionSigner;
+  payer: TransactionSigner;
   market: Address;
   stakeAccountId: number;
   tokenMint: Address;
@@ -31,6 +32,7 @@ export async function stake(
   const {
     programAddress,
     signer,
+    payer,
     market,
     stakeAccountId,
     tokenMint,
@@ -50,6 +52,7 @@ export async function stake(
     {
       ...getComputeAccounts("stake", config),
       signer,
+      payer,
       market,
       stakeAccountId,
       tokenMint,

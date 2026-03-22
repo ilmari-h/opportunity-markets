@@ -37,6 +37,7 @@ import {
   type InstructionWithAccounts,
   type InstructionWithData,
   type ReadonlyAccount,
+  type ReadonlySignerAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
   type WritableAccount,
@@ -61,6 +62,7 @@ export function getStakeDiscriminatorBytes() {
 export type StakeInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountSigner extends string | AccountMeta<string> = string,
+  TAccountPayer extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
   TAccountStakeAccount extends string | AccountMeta<string> = string,
   TAccountTokenMint extends string | AccountMeta<string> = string,
@@ -90,9 +92,13 @@ export type StakeInstruction<
   InstructionWithAccounts<
     [
       TAccountSigner extends string
-        ? WritableSignerAccount<TAccountSigner> &
+        ? ReadonlySignerAccount<TAccountSigner> &
             AccountSignerMeta<TAccountSigner>
         : TAccountSigner,
+      TAccountPayer extends string
+        ? WritableSignerAccount<TAccountPayer> &
+            AccountSignerMeta<TAccountPayer>
+        : TAccountPayer,
       TAccountMarket extends string
         ? ReadonlyAccount<TAccountMarket>
         : TAccountMarket,
@@ -219,6 +225,7 @@ export function getStakeInstructionDataCodec(): FixedSizeCodec<
 
 export type StakeAsyncInput<
   TAccountSigner extends string = string,
+  TAccountPayer extends string = string,
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
   TAccountTokenMint extends string = string,
@@ -240,6 +247,7 @@ export type StakeAsyncInput<
   TAccountArciumProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
+  payer: TransactionSigner<TAccountPayer>;
   market: Address<TAccountMarket>;
   stakeAccount?: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
@@ -273,6 +281,7 @@ export type StakeAsyncInput<
 
 export async function getStakeInstructionAsync<
   TAccountSigner extends string,
+  TAccountPayer extends string,
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
   TAccountTokenMint extends string,
@@ -296,6 +305,7 @@ export async function getStakeInstructionAsync<
 >(
   input: StakeAsyncInput<
     TAccountSigner,
+    TAccountPayer,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
@@ -321,6 +331,7 @@ export async function getStakeInstructionAsync<
   StakeInstruction<
     TProgramAddress,
     TAccountSigner,
+    TAccountPayer,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
@@ -348,7 +359,8 @@ export async function getStakeInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    signer: { value: input.signer ?? null, isWritable: true },
+    signer: { value: input.signer ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
@@ -466,6 +478,7 @@ export async function getStakeInstructionAsync<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.tokenMint),
@@ -493,6 +506,7 @@ export async function getStakeInstructionAsync<
   } as StakeInstruction<
     TProgramAddress,
     TAccountSigner,
+    TAccountPayer,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
@@ -517,6 +531,7 @@ export async function getStakeInstructionAsync<
 
 export type StakeInput<
   TAccountSigner extends string = string,
+  TAccountPayer extends string = string,
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
   TAccountTokenMint extends string = string,
@@ -538,6 +553,7 @@ export type StakeInput<
   TAccountArciumProgram extends string = string,
 > = {
   signer: TransactionSigner<TAccountSigner>;
+  payer: TransactionSigner<TAccountPayer>;
   market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
@@ -571,6 +587,7 @@ export type StakeInput<
 
 export function getStakeInstruction<
   TAccountSigner extends string,
+  TAccountPayer extends string,
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
   TAccountTokenMint extends string,
@@ -594,6 +611,7 @@ export function getStakeInstruction<
 >(
   input: StakeInput<
     TAccountSigner,
+    TAccountPayer,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
@@ -618,6 +636,7 @@ export function getStakeInstruction<
 ): StakeInstruction<
   TProgramAddress,
   TAccountSigner,
+  TAccountPayer,
   TAccountMarket,
   TAccountStakeAccount,
   TAccountTokenMint,
@@ -644,7 +663,8 @@ export function getStakeInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    signer: { value: input.signer ?? null, isWritable: true },
+    signer: { value: input.signer ?? null, isWritable: false },
+    payer: { value: input.payer ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
@@ -701,6 +721,7 @@ export function getStakeInstruction<
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.signer),
+      getAccountMeta(accounts.payer),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.tokenMint),
@@ -728,6 +749,7 @@ export function getStakeInstruction<
   } as StakeInstruction<
     TProgramAddress,
     TAccountSigner,
+    TAccountPayer,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
@@ -757,28 +779,29 @@ export type ParsedStakeInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     signer: TAccountMetas[0];
-    market: TAccountMetas[1];
-    stakeAccount: TAccountMetas[2];
-    tokenMint: TAccountMetas[3];
-    signerTokenAccount: TAccountMetas[4];
+    payer: TAccountMetas[1];
+    market: TAccountMetas[2];
+    stakeAccount: TAccountMetas[3];
+    tokenMint: TAccountMetas[4];
+    signerTokenAccount: TAccountMetas[5];
     /** Market's ATA for holding staked tokens */
-    marketTokenAta: TAccountMetas[5];
+    marketTokenAta: TAccountMetas[6];
     /** Token vault for fee collection */
-    tokenVault: TAccountMetas[6];
+    tokenVault: TAccountMetas[7];
     /** Token vault ATA for fee tokens */
-    tokenVaultAta: TAccountMetas[7];
-    tokenProgram: TAccountMetas[8];
-    signPdaAccount: TAccountMetas[9];
-    mxeAccount: TAccountMetas[10];
-    mempoolAccount: TAccountMetas[11];
-    executingPool: TAccountMetas[12];
-    computationAccount: TAccountMetas[13];
-    compDefAccount: TAccountMetas[14];
-    clusterAccount: TAccountMetas[15];
-    poolAccount: TAccountMetas[16];
-    clockAccount: TAccountMetas[17];
-    systemProgram: TAccountMetas[18];
-    arciumProgram: TAccountMetas[19];
+    tokenVaultAta: TAccountMetas[8];
+    tokenProgram: TAccountMetas[9];
+    signPdaAccount: TAccountMetas[10];
+    mxeAccount: TAccountMetas[11];
+    mempoolAccount: TAccountMetas[12];
+    executingPool: TAccountMetas[13];
+    computationAccount: TAccountMetas[14];
+    compDefAccount: TAccountMetas[15];
+    clusterAccount: TAccountMetas[16];
+    poolAccount: TAccountMetas[17];
+    clockAccount: TAccountMetas[18];
+    systemProgram: TAccountMetas[19];
+    arciumProgram: TAccountMetas[20];
   };
   data: StakeInstructionData;
 };
@@ -791,7 +814,7 @@ export function parseStakeInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 20) {
+  if (instruction.accounts.length < 21) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -805,6 +828,7 @@ export function parseStakeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       signer: getNextAccount(),
+      payer: getNextAccount(),
       market: getNextAccount(),
       stakeAccount: getNextAccount(),
       tokenMint: getNextAccount(),
