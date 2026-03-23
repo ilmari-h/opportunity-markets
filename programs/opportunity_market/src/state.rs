@@ -114,6 +114,7 @@ pub struct StakeAccount {
     pub locked: bool,
     pub stake_reclaimed: bool,               // whether staked tokens have been returned
     pub pending_stake: bool,                 // true while MPC stake computation is in flight
+    pub pending_reveal: bool,                // true while MPC reveal computation is in flight
 }
 
 #[account]

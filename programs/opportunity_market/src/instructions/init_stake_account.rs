@@ -45,6 +45,7 @@ pub fn init_stake_account(
     stake_account.locked = false;
     stake_account.stake_reclaimed = false;
     stake_account.pending_stake = false;
+    stake_account.pending_reveal = false;
 
     emit_ts!(StakeAccountInitializedEvent {
         stake_account: stake_account.key(),

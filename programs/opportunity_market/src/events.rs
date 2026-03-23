@@ -73,18 +73,6 @@ pub struct UnstakedEvent {
 }
 
 #[event]
-pub struct StakeRevealedError {
-    pub user: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct StakedError {
-    pub user: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
 pub struct MarketOpenedEvent {
     pub market: Pubkey,
     pub creator: Pubkey,

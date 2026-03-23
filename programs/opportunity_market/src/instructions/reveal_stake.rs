@@ -3,7 +3,7 @@ use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
 use crate::error::ErrorCode;
-use crate::events::{emit_ts, StakeRevealedError, StakeRevealedEvent};
+use crate::events::{emit_ts, StakeRevealedEvent};
 use crate::instructions::stake::STAKE_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, StakeAccount};
 use crate::COMP_DEF_OFFSET_REVEAL_STAKE;
@@ -26,7 +26,7 @@ pub struct RevealStake<'info> {
         seeds = [STAKE_ACCOUNT_SEED, owner.key().as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump = stake_account.bump,
         constraint = stake_account.revealed_option.is_none() @ ErrorCode::AlreadyRevealed,
-        constraint = !stake_account.locked @ ErrorCode::Locked,
+        constraint = !stake_account.locked || stake_account.pending_reveal @ ErrorCode::Locked,
     )]
     pub stake_account: Box<Account<'info, StakeAccount>>,
 
@@ -92,6 +92,7 @@ pub fn reveal_stake(
 
     // Lock StakeAccount while MPC computation is pending
     ctx.accounts.stake_account.locked = true;
+    ctx.accounts.stake_account.pending_reveal = true;
 
     let user_pubkey = ctx.accounts.stake_account.user_pubkey;
 
@@ -151,22 +152,19 @@ pub fn reveal_stake_callback(
     ctx: Context<RevealStakeCallback>,
     output: SignedComputationOutputs<RevealStakeOutput>,
 ) -> Result<()> {
-    // Unlock
-    ctx.accounts.stake_account.locked = false;
-
-    // Verify output
+    // Verify output — on failure, revert so the account stays locked
+    // with pending_reveal=true, allowing the user to retry reveal_stake
     let revealed_option = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
     ) {
         Ok(RevealStakeOutput { field_0 }) => field_0,
-        Err(_) => {
-            emit_ts!(StakeRevealedError {
-                user: ctx.accounts.stake_account.owner,
-            });
-            return Ok(());
-        }
+        Err(e) => return Err(e),
     };
+
+    // Unlock only on success
+    ctx.accounts.stake_account.locked = false;
+    ctx.accounts.stake_account.pending_reveal = false;
 
     // Set revealed option
     ctx.accounts.stake_account.revealed_option = Some(revealed_option);
