@@ -11,7 +11,6 @@ export interface CreateMarketParams extends BaseInstructionParams {
   tokenMint: Address;
   tokenProgram: Address;
   marketIndex: bigint;
-  rewardAmount: bigint;
   timeToStake: bigint;
   timeToReveal: bigint;
   marketAuthority: Address | null;
@@ -29,7 +28,6 @@ export async function createMarket(
     tokenMint,
     tokenProgram,
     marketIndex,
-    rewardAmount,
     timeToReveal,
     timeToStake,
     marketAuthority,
@@ -46,7 +44,6 @@ export async function createMarket(
       tokenMint,
       tokenProgram,
       marketIndex,
-      rewardAmount,
       timeToStake,
       timeToReveal,
       marketAuthority,

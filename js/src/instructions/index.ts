@@ -8,7 +8,7 @@ export * from "./addMarketOption";
 export * from "./openMarket";
 export * from "./selectWinningOptions";
 export * from "./endRevealPeriod";
-export * from "./increaseRewardPool";
+export * from "./addReward";
 export * from "./initStakeAccount";
 export * from "./closeStakeAccount";
 export * from "./closeStuckStakeAccount";

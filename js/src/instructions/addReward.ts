@@ -1,23 +1,25 @@
 import { type TransactionSigner, type Address } from "@solana/kit";
 import {
-  getWithdrawRewardInstructionAsync,
-  type WithdrawRewardInstruction,
+  getAddRewardInstructionAsync,
+  type AddRewardInstruction,
 } from "../generated";
 import { type BaseInstructionParams } from "./instructionParams";
 
-export interface WithdrawRewardParams extends BaseInstructionParams {
+export interface AddRewardParams extends BaseInstructionParams {
   sponsor: TransactionSigner;
   market: Address;
   tokenMint: Address;
-  refundTokenAccount: Address;
+  sponsorTokenAccount: Address;
   tokenProgram: Address;
+  amount: bigint;
+  lock: boolean;
 }
 
-export async function withdrawReward(
-  input: WithdrawRewardParams
-): Promise<WithdrawRewardInstruction<string>> {
+export async function addReward(
+  input: AddRewardParams
+): Promise<AddRewardInstruction<string>> {
   const { programAddress, ...params } = input;
-  return getWithdrawRewardInstructionAsync(
+  return getAddRewardInstructionAsync(
     params,
     programAddress ? { programAddress } : undefined
   );

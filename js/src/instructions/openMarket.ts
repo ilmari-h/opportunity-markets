@@ -8,9 +8,6 @@ import { type BaseInstructionParams } from "./instructionParams";
 export interface OpenMarketParams extends BaseInstructionParams {
   creator: TransactionSigner;
   market: Address;
-  tokenMint: Address;
-  marketTokenAta: Address;
-  tokenProgram: Address;
   openTimestamp: bigint;
 }
 
