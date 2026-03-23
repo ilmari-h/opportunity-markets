@@ -681,7 +681,6 @@ describe("OpportunityMarket", () => {
 
     const observer = loadObserverKeypair();
 
-    // Create market with no initial reward (we'll add it unlocked)
     const runner = await TestRunner.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
@@ -862,7 +861,6 @@ describe("OpportunityMarket", () => {
 
     const observer = loadObserverKeypair();
 
-    // Create market with no initial reward — sponsors will add explicitly
     const runner = await TestRunner.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
