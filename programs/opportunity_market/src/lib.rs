@@ -136,9 +136,8 @@ pub mod opportunity_market {
 
     pub fn init_token_vault(
         ctx: Context<InitTokenVault>,
-        fund_manager: Pubkey,
     ) -> Result<()> {
-        instructions::init_token_vault(ctx, fund_manager)
+        instructions::init_token_vault(ctx)
     }
 
     pub fn stake_comp_def(ctx: Context<StakeCompDef>) -> Result<()> {

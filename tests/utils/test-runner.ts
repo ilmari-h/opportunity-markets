@@ -299,7 +299,6 @@ export class TestRunner {
       const initVaultIx = await initTokenVault({
         payer: creatorAccountBase.keypair,
         tokenMint: runner.mint.address,
-        fundManager: creatorAccountBase.keypair.address,
       });
       await sendTransaction(runner.rpc, runner.sendAndConfirm, creatorAccountBase.keypair, [initVaultIx], {
         label: "Init token vault",

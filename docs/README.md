@@ -3,7 +3,7 @@
 
 **In Summary:**
 
-1. A decision maker creates an Opportunity Market and deposits a reward sum
+1. A decision maker creates an Opportunity Market and funds the reward pool (reward can also be deposited by a 3rd party)
     - For example, a VC firm can create an Opportunity Market titled *"Which companies should we invest in next quarter?"*
 2. The market can have an arbitrary number of options to choose from
     - For example, *"Acme Inc"*
@@ -58,6 +58,11 @@ Account representing an option in the market. This account also holds the tally 
 
 Account representing the Opportunity Market itself. This account stores the market configuration and keeps track of current market state.
 
+### `OpportunityMarketSponsor`
+
+Tracks an individual sponsor's contribution to a market's reward pool.
+The sponsored amount can be withdrawn before staking period is over, unless the sponsor chose to mark it as permanently locked.
+
 ### `TokenVault`
 
 Vault account that tracks collected protocol fee amount. One such account per token mint.
@@ -72,11 +77,15 @@ The decision maker creates and configures the market account by calling the `cre
 
 Options can be added at this stage by the creator with the instruction `add_market_option`
 
+### Funding the Reward Pool
+
+Anyone can fund the market via the instruction `add_reward`.
+Rewards can be either locked in permanently or made withdrawable later.
+Withdrawable rewards are only withdrawable before the staking period ends via `withdraw_reward`.
+
 ### Opening the Opportunity Market for Staking
 
-The market creator (or whoever for that matter) sends SPL tokens to the Opportunity Market account's token account to fund the reward pool. The size of the reward pool is configured on creation but can also be extended later via the `increase_reward_pool` instruction.
-
-The market creator then opens the market to staking by calling the `open_market` instruction.
+The market creator opens the market to staking by calling the `open_market` instruction.
 
 ### Staking
 
@@ -96,8 +105,6 @@ Users are incentivized to keep their stake in the market as long as possible. Mo
 The market creator can choose up to 10 winning options and choose how the reward pool is split between them.
 This is done via the `select_winning_option` instruction.
 If the market is configured to allow closing early, this instruction can be called while the staking is still active, ending the staking period immediately.
-
-Instead of selecting any winners, if the market had a small enough number of stakers, the creator can choose to withdraw the reward pool back for themselves and reward no-one by calling `withdraw_reward`.
 
 ### Unstaking
 

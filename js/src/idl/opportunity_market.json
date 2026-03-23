@@ -1453,12 +1453,7 @@
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": [
-        {
-          "name": "fund_manager",
-          "type": "pubkey"
-        }
-      ]
+      "args": []
     },
     {
       "name": "open_market",
@@ -3327,6 +3322,18 @@
           {
             "name": "minimum_initial_reveal_period",
             "type": "u64"
+          },
+          {
+            "name": "_reserved",
+            "docs": [
+              "Reserved for future use"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
           }
         ]
       }
@@ -4912,10 +4919,6 @@
             "type": "u8"
           },
           {
-            "name": "fund_manager",
-            "type": "pubkey"
-          },
-          {
             "name": "mint",
             "type": "pubkey"
           },
@@ -4926,6 +4929,18 @@
           {
             "name": "protocol_fee_bp",
             "type": "u16"
+          },
+          {
+            "name": "_reserved",
+            "docs": [
+              "Reserved for future use"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
           }
         ]
       }

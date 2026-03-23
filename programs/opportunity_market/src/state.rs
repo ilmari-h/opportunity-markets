@@ -4,10 +4,12 @@ use anchor_lang::prelude::*;
 #[derive(InitSpace)]
 pub struct TokenVault {
     pub bump: u8,
-    pub fund_manager: Pubkey,
     pub mint: Pubkey,
     pub collected_fees: u64,
     pub protocol_fee_bp: u16,
+
+    /// Reserved for future use
+    pub _reserved: [u8; 64],
 }
 
 #[account]
@@ -31,6 +33,9 @@ pub struct CentralState {
     pub fee_recipient: Pubkey,
 
     pub minimum_initial_reveal_period: u64,
+
+    /// Reserved for future use
+    pub _reserved: [u8; 64],
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, InitSpace)]

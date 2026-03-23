@@ -17,6 +17,8 @@ import {
   fixEncoderSize,
   getAddressDecoder,
   getAddressEncoder,
+  getArrayDecoder,
+  getArrayEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getStructDecoder,
@@ -60,6 +62,8 @@ export type CentralState = {
   protocolFeeBp: number;
   feeRecipient: Address;
   minimumInitialRevealPeriod: bigint;
+  /** Reserved for future use */
+  reserved: Array<number>;
 };
 
 export type CentralStateArgs = {
@@ -70,6 +74,8 @@ export type CentralStateArgs = {
   protocolFeeBp: number;
   feeRecipient: Address;
   minimumInitialRevealPeriod: number | bigint;
+  /** Reserved for future use */
+  reserved: Array<number>;
 };
 
 export function getCentralStateEncoder(): FixedSizeEncoder<CentralStateArgs> {
@@ -83,6 +89,7 @@ export function getCentralStateEncoder(): FixedSizeEncoder<CentralStateArgs> {
       ['protocolFeeBp', getU16Encoder()],
       ['feeRecipient', getAddressEncoder()],
       ['minimumInitialRevealPeriod', getU64Encoder()],
+      ['reserved', getArrayEncoder(getU8Encoder(), { size: 64 })],
     ]),
     (value) => ({ ...value, discriminator: CENTRAL_STATE_DISCRIMINATOR })
   );
@@ -98,6 +105,7 @@ export function getCentralStateDecoder(): FixedSizeDecoder<CentralState> {
     ['protocolFeeBp', getU16Decoder()],
     ['feeRecipient', getAddressDecoder()],
     ['minimumInitialRevealPeriod', getU64Decoder()],
+    ['reserved', getArrayDecoder(getU8Decoder(), { size: 64 })],
   ]);
 }
 

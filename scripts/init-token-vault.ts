@@ -31,10 +31,9 @@ const PROGRAM_ID = address(process.env.PROGRAM_ID);
 const RPC_URL = process.env.RPC_URL;
 
 const TOKEN_MINT = process.argv[2];
-const FUND_MANAGER = process.argv[3];
 
-if (!TOKEN_MINT || !FUND_MANAGER) {
-  console.error("Usage: npx tsx scripts/init-token-vault.ts <TOKEN_MINT> <FUND_MANAGER>");
+if (!TOKEN_MINT) {
+  console.error("Usage: npx tsx scripts/init-token-vault.ts <TOKEN_MINT>");
   process.exit(1);
 }
 
@@ -72,12 +71,10 @@ async function main() {
   const rpc = createSolanaRpc(RPC_URL);
 
   const tokenMint = address(TOKEN_MINT);
-  const fundManager = address(FUND_MANAGER);
 
   console.log(`Program:      ${PROGRAM_ID}`);
   console.log(`Payer:        ${payer.address}`);
   console.log(`Token mint:   ${tokenMint}`);
-  console.log(`Fund manager: ${fundManager}`);
 
   const [tokenVaultAddress] = await getTokenVaultAddress(tokenMint, PROGRAM_ID);
   console.log(`Token vault:  ${tokenVaultAddress}`);
@@ -93,7 +90,6 @@ async function main() {
     const ix = await initTokenVault({
       payer,
       tokenMint,
-      fundManager,
       programAddress: PROGRAM_ID,
     });
     instructions.push(ix as Instruction);

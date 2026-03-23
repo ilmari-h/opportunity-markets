@@ -55,9 +55,6 @@ pub fn withdraw_reward(ctx: Context<WithdrawReward>) -> Result<()> {
 
     let market = &ctx.accounts.market;
 
-    // Cannot withdraw after winners selected
-    require!(market.selected_options.is_none(), ErrorCode::WinnerAlreadySelected);
-
     // Allow anytime before staking ends
     if let Some(open_timestamp) = market.open_timestamp {
         let clock = Clock::get()?;

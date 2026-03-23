@@ -10,7 +10,6 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
-  getAddressDecoder,
   getAddressEncoder,
   getBytesDecoder,
   getBytesEncoder,
@@ -85,17 +84,13 @@ export type InitTokenVaultInstruction<
 
 export type InitTokenVaultInstructionData = {
   discriminator: ReadonlyUint8Array;
-  fundManager: Address;
 };
 
-export type InitTokenVaultInstructionDataArgs = { fundManager: Address };
+export type InitTokenVaultInstructionDataArgs = {};
 
 export function getInitTokenVaultInstructionDataEncoder(): FixedSizeEncoder<InitTokenVaultInstructionDataArgs> {
   return transformEncoder(
-    getStructEncoder([
-      ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['fundManager', getAddressEncoder()],
-    ]),
+    getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
     (value) => ({ ...value, discriminator: INIT_TOKEN_VAULT_DISCRIMINATOR })
   );
 }
@@ -103,7 +98,6 @@ export function getInitTokenVaultInstructionDataEncoder(): FixedSizeEncoder<Init
 export function getInitTokenVaultInstructionDataDecoder(): FixedSizeDecoder<InitTokenVaultInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['fundManager', getAddressDecoder()],
   ]);
 }
 
@@ -129,7 +123,6 @@ export type InitTokenVaultAsyncInput<
   tokenVault?: Address<TAccountTokenVault>;
   centralState?: Address<TAccountCentralState>;
   systemProgram?: Address<TAccountSystemProgram>;
-  fundManager: InitTokenVaultInstructionDataArgs['fundManager'];
 };
 
 export async function getInitTokenVaultInstructionAsync<
@@ -175,9 +168,6 @@ export async function getInitTokenVaultInstructionAsync<
     ResolvedAccount
   >;
 
-  // Original args.
-  const args = { ...input };
-
   // Resolve default values.
   if (!accounts.tokenVault.value) {
     accounts.tokenVault.value = await getProgramDerivedAddress({
@@ -216,9 +206,7 @@ export async function getInitTokenVaultInstructionAsync<
       getAccountMeta(accounts.centralState),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getInitTokenVaultInstructionDataEncoder().encode(
-      args as InitTokenVaultInstructionDataArgs
-    ),
+    data: getInitTokenVaultInstructionDataEncoder().encode({}),
     programAddress,
   } as InitTokenVaultInstruction<
     TProgramAddress,
@@ -242,7 +230,6 @@ export type InitTokenVaultInput<
   tokenVault: Address<TAccountTokenVault>;
   centralState: Address<TAccountCentralState>;
   systemProgram?: Address<TAccountSystemProgram>;
-  fundManager: InitTokenVaultInstructionDataArgs['fundManager'];
 };
 
 export function getInitTokenVaultInstruction<
@@ -286,9 +273,6 @@ export function getInitTokenVaultInstruction<
     ResolvedAccount
   >;
 
-  // Original args.
-  const args = { ...input };
-
   // Resolve default values.
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
@@ -304,9 +288,7 @@ export function getInitTokenVaultInstruction<
       getAccountMeta(accounts.centralState),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getInitTokenVaultInstructionDataEncoder().encode(
-      args as InitTokenVaultInstructionDataArgs
-    ),
+    data: getInitTokenVaultInstructionDataEncoder().encode({}),
     programAddress,
   } as InitTokenVaultInstruction<
     TProgramAddress,

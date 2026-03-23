@@ -32,11 +32,9 @@ pub struct InitTokenVault<'info> {
 
 pub fn init_token_vault(
     ctx: Context<InitTokenVault>,
-    fund_manager: Pubkey,
 ) -> Result<()> {
     let vault = &mut ctx.accounts.token_vault;
     vault.bump = ctx.bumps.token_vault;
-    vault.fund_manager = fund_manager;
     vault.mint = ctx.accounts.token_mint.key();
     vault.collected_fees = 0;
     vault.protocol_fee_bp = ctx.accounts.central_state.protocol_fee_bp;
