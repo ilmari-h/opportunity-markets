@@ -89,7 +89,7 @@ export function getCentralStateEncoder(): FixedSizeEncoder<CentralStateArgs> {
       ['protocolFeeBp', getU16Encoder()],
       ['feeRecipient', getAddressEncoder()],
       ['minimumInitialRevealPeriod', getU64Encoder()],
-      ['reserved', getArrayEncoder(getU8Encoder(), { size: 64 })],
+      ['reserved', getArrayEncoder(getU8Encoder(), { size: 128 })],
     ]),
     (value) => ({ ...value, discriminator: CENTRAL_STATE_DISCRIMINATOR })
   );
@@ -105,7 +105,7 @@ export function getCentralStateDecoder(): FixedSizeDecoder<CentralState> {
     ['protocolFeeBp', getU16Decoder()],
     ['feeRecipient', getAddressDecoder()],
     ['minimumInitialRevealPeriod', getU64Decoder()],
-    ['reserved', getArrayDecoder(getU8Decoder(), { size: 64 })],
+    ['reserved', getArrayDecoder(getU8Decoder(), { size: 128 })],
   ]);
 }
 

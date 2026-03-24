@@ -78,7 +78,7 @@ export function getTokenVaultEncoder(): FixedSizeEncoder<TokenVaultArgs> {
       ['mint', getAddressEncoder()],
       ['collectedFees', getU64Encoder()],
       ['protocolFeeBp', getU16Encoder()],
-      ['reserved', getArrayEncoder(getU8Encoder(), { size: 64 })],
+      ['reserved', getArrayEncoder(getU8Encoder(), { size: 128 })],
     ]),
     (value) => ({ ...value, discriminator: TOKEN_VAULT_DISCRIMINATOR })
   );
@@ -91,7 +91,7 @@ export function getTokenVaultDecoder(): FixedSizeDecoder<TokenVault> {
     ['mint', getAddressDecoder()],
     ['collectedFees', getU64Decoder()],
     ['protocolFeeBp', getU16Decoder()],
-    ['reserved', getArrayDecoder(getU8Decoder(), { size: 64 })],
+    ['reserved', getArrayDecoder(getU8Decoder(), { size: 128 })],
   ]);
 }
 

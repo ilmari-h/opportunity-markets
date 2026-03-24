@@ -9,7 +9,7 @@ pub struct TokenVault {
     pub protocol_fee_bp: u16,
 
     /// Reserved for future use
-    pub _reserved: [u8; 64],
+    pub _reserved: [u8; 128],
 }
 
 #[account]
@@ -35,7 +35,7 @@ pub struct CentralState {
     pub minimum_initial_reveal_period: u64,
 
     /// Reserved for future use
-    pub _reserved: [u8; 64],
+    pub _reserved: [u8; 128],
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, InitSpace)]
