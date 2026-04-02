@@ -151,10 +151,9 @@ pub struct RewardWithdrawnEvent {
 }
 
 #[event]
-pub struct RevealPeriodExtendedEvent {
+pub struct RevealPeriodEndedEvent {
     pub market: Pubkey,
     pub authority: Pubkey,
-    pub new_time_to_reveal: u64,
     pub timestamp: i64,
 }
 

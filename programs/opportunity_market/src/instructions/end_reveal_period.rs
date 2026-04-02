@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::error::ErrorCode;
-use crate::events::{emit_ts, RevealPeriodExtendedEvent};
+use crate::events::{emit_ts, RevealPeriodEndedEvent};
 use crate::state::OpportunityMarket;
 
 #[derive(Accounts)]
@@ -38,10 +38,9 @@ pub fn end_reveal_period(ctx: Context<EndRevealPeriod>) -> Result<()> {
     // Set reveal period to end now
     market.time_to_reveal = current_timestamp - stake_end;
 
-    emit_ts!(RevealPeriodExtendedEvent {
+    emit_ts!(RevealPeriodEndedEvent {
         market: market.key(),
         authority: ctx.accounts.authority.key(),
-        new_time_to_reveal: market.time_to_reveal,
     });
 
     Ok(())

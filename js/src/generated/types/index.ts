@@ -24,7 +24,7 @@ export * from './offChainCircuitSource';
 export * from './onChainCircuitSource';
 export * from './output';
 export * from './parameter';
-export * from './revealPeriodExtendedEvent';
+export * from './revealPeriodEndedEvent';
 export * from './revealStakeOutput';
 export * from './rewardAddedEvent';
 export * from './rewardClaimedEvent';

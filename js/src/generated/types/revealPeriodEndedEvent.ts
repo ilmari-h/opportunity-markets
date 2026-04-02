@@ -14,52 +14,46 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
-  getU64Decoder,
-  getU64Encoder,
   type Address,
   type FixedSizeCodec,
   type FixedSizeDecoder,
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type RevealPeriodExtendedEvent = {
+export type RevealPeriodEndedEvent = {
   market: Address;
   authority: Address;
-  newTimeToReveal: bigint;
   timestamp: bigint;
 };
 
-export type RevealPeriodExtendedEventArgs = {
+export type RevealPeriodEndedEventArgs = {
   market: Address;
   authority: Address;
-  newTimeToReveal: number | bigint;
   timestamp: number | bigint;
 };
 
-export function getRevealPeriodExtendedEventEncoder(): FixedSizeEncoder<RevealPeriodExtendedEventArgs> {
+export function getRevealPeriodEndedEventEncoder(): FixedSizeEncoder<RevealPeriodEndedEventArgs> {
   return getStructEncoder([
     ['market', getAddressEncoder()],
     ['authority', getAddressEncoder()],
-    ['newTimeToReveal', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getRevealPeriodExtendedEventDecoder(): FixedSizeDecoder<RevealPeriodExtendedEvent> {
+export function getRevealPeriodEndedEventDecoder(): FixedSizeDecoder<RevealPeriodEndedEvent> {
   return getStructDecoder([
     ['market', getAddressDecoder()],
     ['authority', getAddressDecoder()],
-    ['newTimeToReveal', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getRevealPeriodExtendedEventCodec(): FixedSizeCodec<
-  RevealPeriodExtendedEventArgs,
-  RevealPeriodExtendedEvent
+export function getRevealPeriodEndedEventCodec(): FixedSizeCodec<
+  RevealPeriodEndedEventArgs,
+  RevealPeriodEndedEvent
 > {
   return combineCodec(
-    getRevealPeriodExtendedEventEncoder(),
-    getRevealPeriodExtendedEventDecoder()
+    getRevealPeriodEndedEventEncoder(),
+    getRevealPeriodEndedEventDecoder()
   );
 }

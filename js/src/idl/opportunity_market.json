@@ -2910,16 +2910,16 @@
       ]
     },
     {
-      "name": "RevealPeriodExtendedEvent",
+      "name": "RevealPeriodEndedEvent",
       "discriminator": [
-        41,
-        74,
-        137,
-        207,
-        48,
-        102,
-        140,
-        122
+        180,
+        147,
+        61,
+        18,
+        169,
+        220,
+        59,
+        65
       ]
     },
     {
@@ -4230,7 +4230,7 @@
       }
     },
     {
-      "name": "RevealPeriodExtendedEvent",
+      "name": "RevealPeriodEndedEvent",
       "type": {
         "kind": "struct",
         "fields": [
@@ -4241,10 +4241,6 @@
           {
             "name": "authority",
             "type": "pubkey"
-          },
-          {
-            "name": "new_time_to_reveal",
-            "type": "u64"
           },
           {
             "name": "timestamp",
