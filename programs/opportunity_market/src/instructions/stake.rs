@@ -139,10 +139,11 @@ pub fn stake(
     );
 
     // Calculate fee
-    let fee = amount
-        .checked_mul(ctx.accounts.token_vault.protocol_fee_bp as u64)
+    let fee = (amount as u128)
+        .checked_mul(ctx.accounts.token_vault.protocol_fee_bp as u128)
         .ok_or(ErrorCode::Overflow)?
-        / 10_000;
+        .checked_div(10_000)
+        .ok_or(ErrorCode::Overflow)? as u64;
     let net_amount = amount
         .checked_sub(fee)
         .ok_or(ErrorCode::Overflow)?;

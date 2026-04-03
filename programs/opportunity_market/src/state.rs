@@ -30,6 +30,7 @@ pub struct CentralState {
     // Receives claimed fees
     pub fee_recipient: Pubkey,
 
+    // TODO: probably nuke this
     pub minimum_initial_reveal_period: u64,
 
     /// Reserved for future use

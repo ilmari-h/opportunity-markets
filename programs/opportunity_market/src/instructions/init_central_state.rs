@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::constants::MAX_PROTOCOL_FEE_BP;
+use crate::error::ErrorCode;
 use crate::state::CentralState;
 
 #[derive(Accounts)]
@@ -26,6 +28,11 @@ pub fn init_central_state(
     fee_recipient: Pubkey,
     minimum_initial_reveal_period: u64,
 ) -> Result<()> {
+    require!(
+        protocol_fee_bp <= MAX_PROTOCOL_FEE_BP,
+        ErrorCode::ProtocolFeeTooHigh
+    );
+
     let central_state = &mut ctx.accounts.central_state;
     central_state.bump = ctx.bumps.central_state;
     central_state.authority = ctx.accounts.payer.key();

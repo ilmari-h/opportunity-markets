@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+use crate::constants::MAX_PROTOCOL_FEE_BP;
 use crate::error::ErrorCode;
 use crate::state::CentralState;
 
@@ -23,6 +24,11 @@ pub fn update_central_state(
     fee_recipient: Pubkey,
     minimum_initial_reveal_period: u64,
 ) -> Result<()> {
+    require!(
+        protocol_fee_bp <= MAX_PROTOCOL_FEE_BP,
+        ErrorCode::ProtocolFeeTooHigh
+    );
+
     let central_state = &mut ctx.accounts.central_state;
     central_state.earliness_cutoff_seconds = earliness_cutoff_seconds;
     central_state.protocol_fee_bp = protocol_fee_bp;

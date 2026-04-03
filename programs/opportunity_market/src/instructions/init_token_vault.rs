@@ -37,6 +37,8 @@ pub fn init_token_vault(
     vault.bump = ctx.bumps.token_vault;
     vault.mint = ctx.accounts.token_mint.key();
     vault.collected_fees = 0;
+
+    // TODO: should be changeable?
     vault.protocol_fee_bp = ctx.accounts.central_state.protocol_fee_bp;
 
     Ok(())

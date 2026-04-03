@@ -62,4 +62,6 @@ pub enum ErrorCode {
     InvalidWinningOptionsInput,
     #[msg("Stake account is not in a stuck or failed state")]
     StakeNotStuck,
+    #[msg("Protocol fee exceeds maximum 500 bp")]
+    ProtocolFeeTooHigh,
 }

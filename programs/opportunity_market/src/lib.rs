@@ -3,6 +3,7 @@
 use anchor_lang::prelude::*;
 use arcium_anchor::prelude::*;
 
+pub mod constants;
 pub mod error;
 pub mod events;
 pub mod instructions;
