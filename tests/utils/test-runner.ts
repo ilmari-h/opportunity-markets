@@ -41,6 +41,8 @@ import {
   unstakeEarly as unstakeEarlyIx,
   doUnstakeEarly as doUnstakeEarlyIx,
   openMarket as openMarketIx,
+  pauseMarket as pauseMarketIx,
+  resumeMarket as resumeMarketIx,
   addReward as addRewardIx,
   withdrawReward as withdrawRewardIx,
   endRevealPeriod as endRevealPeriodIx,
@@ -79,6 +81,7 @@ interface TestUser {
   x25519Keypair: X25519Keypair;
   tokenAccount: Address;
   stakeAccounts: StakeAccountInfo[];
+  nextStakeAccountId: number;
 }
 
 interface MarketConfig {
@@ -356,6 +359,7 @@ export class TestRunner {
         x25519Keypair: acc.x25519Keypair,
         tokenAccount: acc.tokenAccount,
         stakeAccounts: [],
+        nextStakeAccountId: 0,
       };
       runner.users.set(acc.keypair.address.toString(), user);
     }
@@ -367,6 +371,7 @@ export class TestRunner {
       x25519Keypair: creatorAcc.x25519Keypair,
       tokenAccount: creatorAcc.tokenAccount,
       stakeAccounts: [],
+      nextStakeAccountId: 0,
     };
     // Also add creator to users map so they can be looked up
     runner.users.set(creatorAcc.keypair.address.toString(), runner.marketCreator);
@@ -449,7 +454,7 @@ export class TestRunner {
   }
 
   private getNextStakeAccountId(user: TestUser): number {
-    return user.stakeAccounts.length;
+    return user.nextStakeAccountId++;
   }
 
   private addStakeAccount(user: TestUser, info: StakeAccountInfo): void {
@@ -564,6 +569,28 @@ export class TestRunner {
 
     await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
       label: "End reveal period",
+    });
+  }
+
+  async pauseMarket(): Promise<void> {
+    const ix = pauseMarketIx({
+      authority: this.marketCreator.solanaKeypair,
+      market: this.marketAddress,
+    });
+
+    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
+      label: "Pause market",
+    });
+  }
+
+  async resumeMarket(): Promise<void> {
+    const ix = resumeMarketIx({
+      authority: this.marketCreator.solanaKeypair,
+      market: this.marketAddress,
+    });
+
+    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
+      label: "Resume market",
     });
   }
 

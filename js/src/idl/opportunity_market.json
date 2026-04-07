@@ -1484,6 +1484,30 @@
       ]
     },
     {
+      "name": "pause_market",
+      "discriminator": [
+        216,
+        238,
+        4,
+        164,
+        65,
+        11,
+        162,
+        91
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "reclaim_stake",
       "discriminator": [
         237,
@@ -1629,6 +1653,30 @@
           "type": "u32"
         }
       ]
+    },
+    {
+      "name": "resume_market",
+      "discriminator": [
+        198,
+        120,
+        104,
+        87,
+        44,
+        103,
+        108,
+        143
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "market",
+          "writable": true
+        }
+      ],
+      "args": []
     },
     {
       "name": "reveal_stake",
@@ -2910,6 +2958,32 @@
       ]
     },
     {
+      "name": "MarketPausedEvent",
+      "discriminator": [
+        188,
+        195,
+        34,
+        16,
+        53,
+        37,
+        64,
+        100
+      ]
+    },
+    {
+      "name": "MarketResumedEvent",
+      "discriminator": [
+        34,
+        56,
+        120,
+        78,
+        71,
+        228,
+        93,
+        131
+      ]
+    },
+    {
       "name": "RevealPeriodEndedEvent",
       "discriminator": [
         180,
@@ -3229,6 +3303,21 @@
       "code": 6029,
       "name": "StakeNotStuck",
       "msg": "Stake account is not in a stuck or failed state"
+    },
+    {
+      "code": 6030,
+      "name": "ProtocolFeeTooHigh",
+      "msg": "Protocol fee exceeds maximum 500 bp"
+    },
+    {
+      "code": 6031,
+      "name": "MarketPaused",
+      "msg": "Market staking is currently paused"
+    },
+    {
+      "code": 6032,
+      "name": "MarketNotPaused",
+      "msg": "Market is not paused"
     }
   ],
   "types": [
@@ -3857,6 +3946,38 @@
       }
     },
     {
+      "name": "MarketPausedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MarketResumedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "MxeStatus",
       "docs": [
         "The status of an MXE."
@@ -4051,6 +4172,10 @@
           },
           {
             "name": "allow_closing_early",
+            "type": "bool"
+          },
+          {
+            "name": "paused",
             "type": "bool"
           }
         ]

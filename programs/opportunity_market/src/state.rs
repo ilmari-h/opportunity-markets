@@ -87,6 +87,8 @@ pub struct OpportunityMarket {
     // If false, market can only be closed after stake period ends
     pub allow_closing_early: bool,
 
+    // If true, staking is halted
+    pub paused: bool,
 }
 
 #[account]

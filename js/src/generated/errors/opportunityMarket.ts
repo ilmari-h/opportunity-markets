@@ -74,6 +74,12 @@ export const OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM = 0x178b; // 6027
 export const OPPORTUNITY_MARKET_ERROR__INVALID_WINNING_OPTIONS_INPUT = 0x178c; // 6028
 /** StakeNotStuck: Stake account is not in a stuck or failed state */
 export const OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK = 0x178d; // 6029
+/** ProtocolFeeTooHigh: Protocol fee exceeds maximum 500 bp */
+export const OPPORTUNITY_MARKET_ERROR__PROTOCOL_FEE_TOO_HIGH = 0x178e; // 6030
+/** MarketPaused: Market staking is currently paused */
+export const OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED = 0x178f; // 6031
+/** MarketNotPaused: Market is not paused */
+export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED = 0x1790; // 6032
 
 export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION
@@ -94,10 +100,13 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__LOCKED
   | typeof OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN
   | typeof OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN
+  | typeof OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED
   | typeof OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED
+  | typeof OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED
   | typeof OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM
   | typeof OPPORTUNITY_MARKET_ERROR__NOT_REVEALED
   | typeof OPPORTUNITY_MARKET_ERROR__OVERFLOW
+  | typeof OPPORTUNITY_MARKET_ERROR__PROTOCOL_FEE_TOO_HIGH
   | typeof OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED
   | typeof OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK
   | typeof OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE
@@ -130,10 +139,13 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__LOCKED]: `Account is locked`,
     [OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN]: `Market is already open`,
     [OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN]: `Market is not open`,
+    [OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED]: `Market is not paused`,
     [OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED]: `Market not yet resolved`,
+    [OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED]: `Market staking is currently paused`,
     [OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM]: `No fees to claim`,
     [OPPORTUNITY_MARKET_ERROR__NOT_REVEALED]: `Stake not yet revealed`,
     [OPPORTUNITY_MARKET_ERROR__OVERFLOW]: `Arithmetic overflow`,
+    [OPPORTUNITY_MARKET_ERROR__PROTOCOL_FEE_TOO_HIGH]: `Protocol fee exceeds maximum 500 bp`,
     [OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED]: `Reveal period has already ended`,
     [OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK]: `Stake account is not in a stuck or failed state`,
     [OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE]: `Staking period is not active`,

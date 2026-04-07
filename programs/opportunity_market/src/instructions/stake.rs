@@ -26,6 +26,7 @@ pub struct Stake<'info> {
     #[account(
         constraint = market.open_timestamp.is_some() @ ErrorCode::MarketNotOpen,
         constraint = market.selected_options.is_none() @ ErrorCode::WinnerAlreadySelected,
+        constraint = !market.paused @ ErrorCode::MarketPaused,
     )]
     pub market: Box<Account<'info, OpportunityMarket>>,
 

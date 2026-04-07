@@ -27,7 +27,9 @@ import {
   type ParsedInitStakeAccountInstruction,
   type ParsedInitTokenVaultInstruction,
   type ParsedOpenMarketInstruction,
+  type ParsedPauseMarketInstruction,
   type ParsedReclaimStakeInstruction,
+  type ParsedResumeMarketInstruction,
   type ParsedRevealStakeCallbackInstruction,
   type ParsedRevealStakeCompDefInstruction,
   type ParsedRevealStakeInstruction,
@@ -214,7 +216,9 @@ export enum OpportunityMarketInstruction {
   InitStakeAccount,
   InitTokenVault,
   OpenMarket,
+  PauseMarket,
   ReclaimStake,
+  ResumeMarket,
   RevealStake,
   RevealStakeCallback,
   RevealStakeCompDef,
@@ -379,12 +383,34 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([216, 238, 4, 164, 65, 11, 162, 91])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.PauseMarket;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([237, 113, 219, 76, 6, 246, 223, 84])
       ),
       0
     )
   ) {
     return OpportunityMarketInstruction.ReclaimStake;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([198, 120, 104, 87, 44, 103, 108, 143])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.ResumeMarket;
   }
   if (
     containsBytes(
@@ -555,8 +581,14 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.OpenMarket;
     } & ParsedOpenMarketInstruction<TProgram>)
   | ({
+      instructionType: OpportunityMarketInstruction.PauseMarket;
+    } & ParsedPauseMarketInstruction<TProgram>)
+  | ({
       instructionType: OpportunityMarketInstruction.ReclaimStake;
     } & ParsedReclaimStakeInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.ResumeMarket;
+    } & ParsedResumeMarketInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.RevealStake;
     } & ParsedRevealStakeInstruction<TProgram>)

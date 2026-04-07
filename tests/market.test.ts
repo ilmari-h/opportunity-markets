@@ -10,6 +10,7 @@ import {
   OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE,
   OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET,
   OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
+  OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED,
 } from "../js/src";
 
 import { OpportunityMarket } from "../target/types/opportunity_market";
@@ -992,5 +993,47 @@ describe("OpportunityMarket", () => {
     const vaultAfter = await fetchTokenVault(rpc, tokenVaultAddress);
     expect(vaultAfter.data.collectedFees).to.equal(vaultBefore.data.collectedFees,
       "Vault collected_fees should not have changed");
+  });
+
+  it("pausing blocks staking, resuming allows it again", async () => {
+    const observer = loadObserverKeypair();
+
+    const runner = await TestRunner.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 1,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketConfig: {
+        rewardAmount: 1_000_000_000n,
+        timeToStake: 120n,
+        timeToReveal: 120n,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    const openTimestamp = await runner.openMarket();
+    const { optionId } = await runner.addOption();
+
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    const user = runner.participants[0];
+
+    // Pause market
+    await runner.pauseMarket();
+
+    // Staking should fail while paused
+    await shouldThrowCustomError(
+      () => runner.stakeOnOption(user, 50_000_000n, optionId),
+      OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED
+    );
+
+    // Resume market
+    await runner.resumeMarket();
+
+    // Staking should succeed after resume
+    const stakeAccountId = await runner.stakeOnOption(user, 50_000_000n, optionId);
+    const stakeAccount = await runner.fetchStakeAccountData(user, stakeAccountId);
+    expect(stakeAccount.data.amount > 0n).to.be.true;
   });
 });

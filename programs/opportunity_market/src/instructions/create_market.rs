@@ -77,6 +77,7 @@ pub fn create_market(
     market.unstake_delay_seconds = unstake_delay_seconds;
     market.authorized_reader_pubkey = authorized_reader_pubkey;
     market.allow_closing_early = allow_closing_early;
+    market.paused = false;
 
     emit_ts!(MarketCreatedEvent {
         market: market.key(),

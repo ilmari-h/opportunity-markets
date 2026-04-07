@@ -89,6 +89,14 @@ pub mod opportunity_market {
         instructions::open_market(ctx, open_timestamp)
     }
 
+    pub fn pause_market(ctx: Context<PauseMarket>) -> Result<()> {
+        instructions::pause_market(ctx)
+    }
+
+    pub fn resume_market(ctx: Context<ResumeMarket>) -> Result<()> {
+        instructions::resume_market(ctx)
+    }
+
     pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Vec<WinningOption>) -> Result<()> {
         instructions::select_winning_options(ctx, selections)
     }

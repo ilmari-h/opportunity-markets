@@ -186,6 +186,18 @@ pub struct FeesClaimedEvent {
 }
 
 #[event]
+pub struct MarketPausedEvent {
+    pub market: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct MarketResumedEvent {
+    pub market: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
 pub struct StuckStakeClosedEvent {
     pub owner: Pubkey,
     pub market: Pubkey,

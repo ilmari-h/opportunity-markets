@@ -64,4 +64,8 @@ pub enum ErrorCode {
     StakeNotStuck,
     #[msg("Protocol fee exceeds maximum 500 bp")]
     ProtocolFeeTooHigh,
+    #[msg("Market staking is currently paused")]
+    MarketPaused,
+    #[msg("Market is not paused")]
+    MarketNotPaused,
 }

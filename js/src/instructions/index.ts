@@ -6,6 +6,8 @@ export * from "./stake";
 export * from "./revealStake";
 export * from "./addMarketOption";
 export * from "./openMarket";
+export * from "./pauseMarket";
+export * from "./resumeMarket";
 export * from "./selectWinningOptions";
 export * from "./endRevealPeriod";
 export * from "./addReward";

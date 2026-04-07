@@ -17,6 +17,8 @@ export * from './localCircuitSource';
 export * from './marketCreatedEvent';
 export * from './marketOpenedEvent';
 export * from './marketOptionCreatedEvent';
+export * from './marketPausedEvent';
+export * from './marketResumedEvent';
 export * from './mxeStatus';
 export * from './nodeMetadata';
 export * from './nodeRef';
