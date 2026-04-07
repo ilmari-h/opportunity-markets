@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-KEYPAIR_NAME="BenchJHrXbW61EU6RXxrqnrL73gLBywENegfX3MANxe8"
+KEYPAIR_NAME="BENCHauvSzMY39khAvj43LHRpbVewb76Wv8ETsVuHn8C"
 KEYPAIR_PATH="../${KEYPAIR_NAME}.json"
 
 # Verify the deterministic keypair exists
