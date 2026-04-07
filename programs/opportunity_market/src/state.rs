@@ -17,10 +17,6 @@ pub struct TokenVault {
 pub struct CentralState {
     pub bump: u8,
 
-    // Point at which `earliness` becomes negligible
-    // TODO: move to market level config
-    pub earliness_cutoff_seconds: u64,
-
     // Allowed to update
     pub authority: Pubkey,
 
@@ -29,9 +25,6 @@ pub struct CentralState {
 
     // Receives claimed fees
     pub fee_recipient: Pubkey,
-
-    // TODO: probably nuke this
-    pub minimum_initial_reveal_period: u64,
 
     /// Reserved for future use
     pub _reserved: [u8; 128],

@@ -91,6 +91,7 @@ interface MarketConfig {
   unstakeDelaySeconds: bigint;
   authorizedReaderPubkey: Uint8Array;
   allowClosingEarly: boolean;
+  earlinessCutoffSeconds: bigint;
 }
 
 export interface TestRunnerConfig {
@@ -142,6 +143,7 @@ const DEFAULT_CONFIG: Required<TestRunnerConfig> = {
     timeToReveal: 60n, // 1 minute
     unstakeDelaySeconds: 10n, // 10 seconds
     allowClosingEarly: true, // Allow market to be closed before stake period ends
+    earlinessCutoffSeconds: 0n,
   },
 };
 
@@ -272,10 +274,8 @@ export class TestRunner {
     const deployer = await getDeployerKeypair();
     const centralStateIx = await ensureCentralState(runner.rpc, {
       signer: deployer,
-      earlinessCutoffSeconds: 0n,
       protocolFeeBp: 100,
       feeRecipient: creatorAccountBase.keypair.address,
-      minimumInitialRevealPeriod: 0n,
     });
     if (centralStateIx) {
       await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [centralStateIx], {
@@ -392,6 +392,7 @@ export class TestRunner {
       authorizedReaderPubkey: marketConfig.authorizedReaderPubkey,
       allowClosingEarly: marketConfig.allowClosingEarly,
       revealPeriodAuthority: runner.marketCreator.solanaKeypair.address,
+      earlinessCutoffSeconds: marketConfig.earlinessCutoffSeconds,
     });
 
     await sendTransaction(runner.rpc, runner.sendAndConfirm, runner.marketCreator.solanaKeypair, [createMarketIx], {
@@ -399,7 +400,7 @@ export class TestRunner {
     });
 
     // Get market address from the instruction accounts
-    runner.marketAddress = createMarketIx.accounts[3].address as Address;
+    runner.marketAddress = createMarketIx.accounts[2].address as Address;
     console.log(`  Market created: ${runner.marketAddress}`);
 
     // Add initial reward from creator if configured

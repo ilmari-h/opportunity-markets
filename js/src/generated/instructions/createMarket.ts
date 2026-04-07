@@ -67,7 +67,6 @@ export type CreateMarketInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountCreator extends string | AccountMeta<string> = string,
   TAccountTokenMint extends string | AccountMeta<string> = string,
-  TAccountCentralState extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
   TAccountMarketTokenAta extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
@@ -87,9 +86,6 @@ export type CreateMarketInstruction<
       TAccountTokenMint extends string
         ? ReadonlyAccount<TAccountTokenMint>
         : TAccountTokenMint,
-      TAccountCentralState extends string
-        ? ReadonlyAccount<TAccountCentralState>
-        : TAccountCentralState,
       TAccountMarket extends string
         ? WritableAccount<TAccountMarket>
         : TAccountMarket,
@@ -119,6 +115,7 @@ export type CreateMarketInstructionData = {
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
+  earlinessCutoffSeconds: bigint;
 };
 
 export type CreateMarketInstructionDataArgs = {
@@ -130,6 +127,7 @@ export type CreateMarketInstructionDataArgs = {
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
+  earlinessCutoffSeconds: number | bigint;
 };
 
 export function getCreateMarketInstructionDataEncoder(): Encoder<CreateMarketInstructionDataArgs> {
@@ -144,6 +142,7 @@ export function getCreateMarketInstructionDataEncoder(): Encoder<CreateMarketIns
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['allowClosingEarly', getBooleanEncoder()],
       ['revealPeriodAuthority', getAddressEncoder()],
+      ['earlinessCutoffSeconds', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: CREATE_MARKET_DISCRIMINATOR })
   );
@@ -160,6 +159,7 @@ export function getCreateMarketInstructionDataDecoder(): Decoder<CreateMarketIns
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['allowClosingEarly', getBooleanDecoder()],
     ['revealPeriodAuthority', getAddressDecoder()],
+    ['earlinessCutoffSeconds', getU64Decoder()],
   ]);
 }
 
@@ -176,7 +176,6 @@ export function getCreateMarketInstructionDataCodec(): Codec<
 export type CreateMarketAsyncInput<
   TAccountCreator extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountCentralState extends string = string,
   TAccountMarket extends string = string,
   TAccountMarketTokenAta extends string = string,
   TAccountSystemProgram extends string = string,
@@ -185,7 +184,6 @@ export type CreateMarketAsyncInput<
 > = {
   creator: TransactionSigner<TAccountCreator>;
   tokenMint: Address<TAccountTokenMint>;
-  centralState?: Address<TAccountCentralState>;
   market?: Address<TAccountMarket>;
   /** ATA owned by market PDA, holds reward tokens */
   marketTokenAta?: Address<TAccountMarketTokenAta>;
@@ -200,12 +198,12 @@ export type CreateMarketAsyncInput<
   authorizedReaderPubkey: CreateMarketInstructionDataArgs['authorizedReaderPubkey'];
   allowClosingEarly: CreateMarketInstructionDataArgs['allowClosingEarly'];
   revealPeriodAuthority: CreateMarketInstructionDataArgs['revealPeriodAuthority'];
+  earlinessCutoffSeconds: CreateMarketInstructionDataArgs['earlinessCutoffSeconds'];
 };
 
 export async function getCreateMarketInstructionAsync<
   TAccountCreator extends string,
   TAccountTokenMint extends string,
-  TAccountCentralState extends string,
   TAccountMarket extends string,
   TAccountMarketTokenAta extends string,
   TAccountSystemProgram extends string,
@@ -216,7 +214,6 @@ export async function getCreateMarketInstructionAsync<
   input: CreateMarketAsyncInput<
     TAccountCreator,
     TAccountTokenMint,
-    TAccountCentralState,
     TAccountMarket,
     TAccountMarketTokenAta,
     TAccountSystemProgram,
@@ -229,7 +226,6 @@ export async function getCreateMarketInstructionAsync<
     TProgramAddress,
     TAccountCreator,
     TAccountTokenMint,
-    TAccountCentralState,
     TAccountMarket,
     TAccountMarketTokenAta,
     TAccountSystemProgram,
@@ -245,7 +241,6 @@ export async function getCreateMarketInstructionAsync<
   const originalAccounts = {
     creator: { value: input.creator ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    centralState: { value: input.centralState ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: true },
     marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -264,18 +259,6 @@ export async function getCreateMarketInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
-  if (!accounts.centralState.value) {
-    accounts.centralState.value = await getProgramDerivedAddress({
-      programAddress,
-      seeds: [
-        getBytesEncoder().encode(
-          new Uint8Array([
-            99, 101, 110, 116, 114, 97, 108, 95, 115, 116, 97, 116, 101,
-          ])
-        ),
-      ],
-    });
-  }
   if (!accounts.market.value) {
     accounts.market.value = await getProgramDerivedAddress({
       programAddress,
@@ -316,7 +299,6 @@ export async function getCreateMarketInstructionAsync<
     accounts: [
       getAccountMeta(accounts.creator),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.centralState),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.marketTokenAta),
       getAccountMeta(accounts.systemProgram),
@@ -331,7 +313,6 @@ export async function getCreateMarketInstructionAsync<
     TProgramAddress,
     TAccountCreator,
     TAccountTokenMint,
-    TAccountCentralState,
     TAccountMarket,
     TAccountMarketTokenAta,
     TAccountSystemProgram,
@@ -343,7 +324,6 @@ export async function getCreateMarketInstructionAsync<
 export type CreateMarketInput<
   TAccountCreator extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountCentralState extends string = string,
   TAccountMarket extends string = string,
   TAccountMarketTokenAta extends string = string,
   TAccountSystemProgram extends string = string,
@@ -352,7 +332,6 @@ export type CreateMarketInput<
 > = {
   creator: TransactionSigner<TAccountCreator>;
   tokenMint: Address<TAccountTokenMint>;
-  centralState: Address<TAccountCentralState>;
   market: Address<TAccountMarket>;
   /** ATA owned by market PDA, holds reward tokens */
   marketTokenAta: Address<TAccountMarketTokenAta>;
@@ -367,12 +346,12 @@ export type CreateMarketInput<
   authorizedReaderPubkey: CreateMarketInstructionDataArgs['authorizedReaderPubkey'];
   allowClosingEarly: CreateMarketInstructionDataArgs['allowClosingEarly'];
   revealPeriodAuthority: CreateMarketInstructionDataArgs['revealPeriodAuthority'];
+  earlinessCutoffSeconds: CreateMarketInstructionDataArgs['earlinessCutoffSeconds'];
 };
 
 export function getCreateMarketInstruction<
   TAccountCreator extends string,
   TAccountTokenMint extends string,
-  TAccountCentralState extends string,
   TAccountMarket extends string,
   TAccountMarketTokenAta extends string,
   TAccountSystemProgram extends string,
@@ -383,7 +362,6 @@ export function getCreateMarketInstruction<
   input: CreateMarketInput<
     TAccountCreator,
     TAccountTokenMint,
-    TAccountCentralState,
     TAccountMarket,
     TAccountMarketTokenAta,
     TAccountSystemProgram,
@@ -395,7 +373,6 @@ export function getCreateMarketInstruction<
   TProgramAddress,
   TAccountCreator,
   TAccountTokenMint,
-  TAccountCentralState,
   TAccountMarket,
   TAccountMarketTokenAta,
   TAccountSystemProgram,
@@ -410,7 +387,6 @@ export function getCreateMarketInstruction<
   const originalAccounts = {
     creator: { value: input.creator ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    centralState: { value: input.centralState ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: true },
     marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -443,7 +419,6 @@ export function getCreateMarketInstruction<
     accounts: [
       getAccountMeta(accounts.creator),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.centralState),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.marketTokenAta),
       getAccountMeta(accounts.systemProgram),
@@ -458,7 +433,6 @@ export function getCreateMarketInstruction<
     TProgramAddress,
     TAccountCreator,
     TAccountTokenMint,
-    TAccountCentralState,
     TAccountMarket,
     TAccountMarketTokenAta,
     TAccountSystemProgram,
@@ -475,13 +449,12 @@ export type ParsedCreateMarketInstruction<
   accounts: {
     creator: TAccountMetas[0];
     tokenMint: TAccountMetas[1];
-    centralState: TAccountMetas[2];
-    market: TAccountMetas[3];
+    market: TAccountMetas[2];
     /** ATA owned by market PDA, holds reward tokens */
-    marketTokenAta: TAccountMetas[4];
-    systemProgram: TAccountMetas[5];
-    tokenProgram: TAccountMetas[6];
-    associatedTokenProgram: TAccountMetas[7];
+    marketTokenAta: TAccountMetas[3];
+    systemProgram: TAccountMetas[4];
+    tokenProgram: TAccountMetas[5];
+    associatedTokenProgram: TAccountMetas[6];
   };
   data: CreateMarketInstructionData;
 };
@@ -494,7 +467,7 @@ export function parseCreateMarketInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedCreateMarketInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+  if (instruction.accounts.length < 7) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -509,7 +482,6 @@ export function parseCreateMarketInstruction<
     accounts: {
       creator: getNextAccount(),
       tokenMint: getNextAccount(),
-      centralState: getNextAccount(),
       market: getNextAccount(),
       marketTokenAta: getNextAccount(),
       systemProgram: getNextAccount(),

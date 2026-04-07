@@ -773,31 +773,6 @@
           "name": "token_mint"
         },
         {
-          "name": "central_state",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  114,
-                  97,
-                  108,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
           "name": "market",
           "writable": true,
           "pda": {
@@ -947,6 +922,10 @@
         {
           "name": "reveal_period_authority",
           "type": "pubkey"
+        },
+        {
+          "name": "earliness_cutoff_seconds",
+          "type": "u64"
         }
       ]
     },
@@ -1278,20 +1257,12 @@
       ],
       "args": [
         {
-          "name": "earliness_cutoff_seconds",
-          "type": "u64"
-        },
-        {
           "name": "protocol_fee_bp",
           "type": "u16"
         },
         {
           "name": "fee_recipient",
           "type": "pubkey"
-        },
-        {
-          "name": "minimum_initial_reveal_period",
-          "type": "u64"
         }
       ]
     },
@@ -2602,20 +2573,12 @@
       ],
       "args": [
         {
-          "name": "earliness_cutoff_seconds",
-          "type": "u64"
-        },
-        {
           "name": "protocol_fee_bp",
           "type": "u16"
         },
         {
           "name": "fee_recipient",
           "type": "pubkey"
-        },
-        {
-          "name": "minimum_initial_reveal_period",
-          "type": "u64"
         }
       ]
     },
@@ -3318,6 +3281,11 @@
       "code": 6032,
       "name": "MarketNotPaused",
       "msg": "Market is not paused"
+    },
+    {
+      "code": 6033,
+      "name": "EarlinessCutoffTooLarge",
+      "msg": "Earliness cutoff cannot exceed staking duration"
     }
   ],
   "types": [
@@ -3381,10 +3349,6 @@
             "type": "u8"
           },
           {
-            "name": "earliness_cutoff_seconds",
-            "type": "u64"
-          },
-          {
             "name": "authority",
             "type": "pubkey"
           },
@@ -3395,10 +3359,6 @@
           {
             "name": "fee_recipient",
             "type": "pubkey"
-          },
-          {
-            "name": "minimum_initial_reveal_period",
-            "type": "u64"
           },
           {
             "name": "_reserved",

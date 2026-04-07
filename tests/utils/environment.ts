@@ -244,10 +244,8 @@ export async function createTestEnvironment(
   // Initialize central state
   const initCentralStateIx = await getInitCentralStateInstructionAsync({
     payer: creatorAccount.keypair,
-    earlinessCutoffSeconds: 0n,
     protocolFeeBp: 0,
     feeRecipient: creatorAccount.keypair.address,
-    minimumInitialRevealPeriod: 0n,
   });
 
   const { value: csBlockhash } = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
@@ -277,6 +275,7 @@ export async function createTestEnvironment(
     authorizedReaderPubkey: creatorAccount.x25519Keypair.publicKey,
     allowClosingEarly: true,
     revealPeriodAuthority: creatorAccount.keypair.address,
+    earlinessCutoffSeconds: 0n,
   });
 
   // Get latest blockhash
@@ -313,7 +312,7 @@ export async function createTestEnvironment(
   assertIsTransactionWithBlockhashLifetime(signedTransaction);
   await sendAndConfirmTransaction(signedTransaction, { commitment: "confirmed" });
   // Get market address from the instruction accounts and fetch from chain
-  const marketAddress = createMarketIx.accounts[3].address as Address;
+  const marketAddress = createMarketIx.accounts[2].address as Address;
   const marketAccount = await fetchOpportunityMarket(rpc, marketAddress, { commitment: "confirmed" });
 
   return {

@@ -19,8 +19,6 @@ import {
   getStructEncoder,
   getU16Decoder,
   getU16Encoder,
-  getU64Decoder,
-  getU64Encoder,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -71,27 +69,21 @@ export type UpdateCentralStateInstruction<
 
 export type UpdateCentralStateInstructionData = {
   discriminator: ReadonlyUint8Array;
-  earlinessCutoffSeconds: bigint;
   protocolFeeBp: number;
   feeRecipient: Address;
-  minimumInitialRevealPeriod: bigint;
 };
 
 export type UpdateCentralStateInstructionDataArgs = {
-  earlinessCutoffSeconds: number | bigint;
   protocolFeeBp: number;
   feeRecipient: Address;
-  minimumInitialRevealPeriod: number | bigint;
 };
 
 export function getUpdateCentralStateInstructionDataEncoder(): FixedSizeEncoder<UpdateCentralStateInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['earlinessCutoffSeconds', getU64Encoder()],
       ['protocolFeeBp', getU16Encoder()],
       ['feeRecipient', getAddressEncoder()],
-      ['minimumInitialRevealPeriod', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: UPDATE_CENTRAL_STATE_DISCRIMINATOR })
   );
@@ -100,10 +92,8 @@ export function getUpdateCentralStateInstructionDataEncoder(): FixedSizeEncoder<
 export function getUpdateCentralStateInstructionDataDecoder(): FixedSizeDecoder<UpdateCentralStateInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['earlinessCutoffSeconds', getU64Decoder()],
     ['protocolFeeBp', getU16Decoder()],
     ['feeRecipient', getAddressDecoder()],
-    ['minimumInitialRevealPeriod', getU64Decoder()],
   ]);
 }
 
@@ -123,10 +113,8 @@ export type UpdateCentralStateAsyncInput<
 > = {
   authority: TransactionSigner<TAccountAuthority>;
   centralState?: Address<TAccountCentralState>;
-  earlinessCutoffSeconds: UpdateCentralStateInstructionDataArgs['earlinessCutoffSeconds'];
   protocolFeeBp: UpdateCentralStateInstructionDataArgs['protocolFeeBp'];
   feeRecipient: UpdateCentralStateInstructionDataArgs['feeRecipient'];
-  minimumInitialRevealPeriod: UpdateCentralStateInstructionDataArgs['minimumInitialRevealPeriod'];
 };
 
 export async function getUpdateCentralStateInstructionAsync<
@@ -197,10 +185,8 @@ export type UpdateCentralStateInput<
 > = {
   authority: TransactionSigner<TAccountAuthority>;
   centralState: Address<TAccountCentralState>;
-  earlinessCutoffSeconds: UpdateCentralStateInstructionDataArgs['earlinessCutoffSeconds'];
   protocolFeeBp: UpdateCentralStateInstructionDataArgs['protocolFeeBp'];
   feeRecipient: UpdateCentralStateInstructionDataArgs['feeRecipient'];
-  minimumInitialRevealPeriod: UpdateCentralStateInstructionDataArgs['minimumInitialRevealPeriod'];
 };
 
 export function getUpdateCentralStateInstruction<

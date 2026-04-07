@@ -18,6 +18,7 @@ export interface CreateMarketParams extends BaseInstructionParams {
   authorizedReaderPubkey: ByteArray;
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
+  earlinessCutoffSeconds: bigint;
 }
 
 export async function createMarket(
@@ -35,6 +36,7 @@ export async function createMarket(
     authorizedReaderPubkey,
     allowClosingEarly,
     revealPeriodAuthority,
+    earlinessCutoffSeconds,
     programAddress,
   } = input;
 
@@ -51,6 +53,7 @@ export async function createMarket(
       authorizedReaderPubkey: toNumberArray(authorizedReaderPubkey),
       allowClosingEarly,
       revealPeriodAuthority,
+      earlinessCutoffSeconds,
     },
     programAddress ? { programAddress } : undefined
   );

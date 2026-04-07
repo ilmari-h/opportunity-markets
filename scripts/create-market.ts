@@ -88,10 +88,11 @@ async function main() {
     authorizedReaderPubkey,
     allowClosingEarly: config.allowClosingEarly,
     revealPeriodAuthority: payer.address,
+    earlinessCutoffSeconds: BigInt(config.earlinessCutoffSeconds),
     programAddress: PROGRAM_ID,
   });
 
-  const marketAddress = createMarketIx.accounts[3].address;
+  const marketAddress = createMarketIx.accounts[2].address;
 
   const { value: latestBlockhash } = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
 

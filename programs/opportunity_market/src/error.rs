@@ -68,4 +68,6 @@ pub enum ErrorCode {
     MarketPaused,
     #[msg("Market is not paused")]
     MarketNotPaused,
+    #[msg("Earliness cutoff exceeds staking period")]
+    EarlinessCutoffTooLarge,
 }

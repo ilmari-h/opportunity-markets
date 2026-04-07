@@ -9,10 +9,8 @@ import { type BaseInstructionParams } from "./instructionParams";
 
 export interface EnsureCentralStateParams extends BaseInstructionParams {
   signer: TransactionSigner;
-  earlinessCutoffSeconds: bigint | number;
   protocolFeeBp: number;
   feeRecipient: Address;
-  minimumInitialRevealPeriod: bigint | number;
 }
 
 export async function ensureCentralState(
@@ -28,10 +26,8 @@ export async function ensureCentralState(
   if (existing.exists) {
     const s = existing.data;
     if (
-      s.earlinessCutoffSeconds === BigInt(args.earlinessCutoffSeconds) &&
       s.protocolFeeBp === args.protocolFeeBp &&
-      s.feeRecipient === args.feeRecipient &&
-      s.minimumInitialRevealPeriod === BigInt(args.minimumInitialRevealPeriod)
+      s.feeRecipient === args.feeRecipient
     ) {
       return null;
     }

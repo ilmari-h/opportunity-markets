@@ -5,7 +5,7 @@ use anchor_spl::{
 };
 
 use crate::error::ErrorCode;
-use crate::state::{CentralState, OpportunityMarket};
+use crate::state::OpportunityMarket;
 use crate::events::{emit_ts, MarketCreatedEvent};
 
 #[derive(Accounts)]
@@ -15,12 +15,6 @@ pub struct CreateMarket<'info> {
     pub creator: Signer<'info>,
 
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
-
-    #[account(
-        seeds = [b"central_state"],
-        bump = central_state.bump,
-    )]
-    pub central_state: Box<Account<'info, CentralState>>,
 
     #[account(
         init,
@@ -56,12 +50,16 @@ pub fn create_market(
     authorized_reader_pubkey: [u8; 32],
     allow_closing_early: bool,
     reveal_period_authority: Pubkey,
+    earliness_cutoff_seconds: u64,
 ) -> Result<()> {
-    let central_state = &ctx.accounts.central_state;
+    require!(
+        earliness_cutoff_seconds <= time_to_stake,
+        ErrorCode::EarlinessCutoffTooLarge
+    );
+
     let creator_key = ctx.accounts.creator.key();
     let market = &mut ctx.accounts.market;
     let mint = ctx.accounts.token_mint.key();
-    let earliness_cutoff_seconds = central_state.earliness_cutoff_seconds;
     market.bump = ctx.bumps.market;
     market.creator = creator_key;
     market.index = market_index;

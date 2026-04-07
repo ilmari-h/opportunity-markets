@@ -25,8 +25,6 @@ import {
   getStructEncoder,
   getU16Decoder,
   getU16Encoder,
-  getU64Decoder,
-  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -56,22 +54,18 @@ export function getCentralStateDiscriminatorBytes() {
 export type CentralState = {
   discriminator: ReadonlyUint8Array;
   bump: number;
-  earlinessCutoffSeconds: bigint;
   authority: Address;
   protocolFeeBp: number;
   feeRecipient: Address;
-  minimumInitialRevealPeriod: bigint;
   /** Reserved for future use */
   reserved: Array<number>;
 };
 
 export type CentralStateArgs = {
   bump: number;
-  earlinessCutoffSeconds: number | bigint;
   authority: Address;
   protocolFeeBp: number;
   feeRecipient: Address;
-  minimumInitialRevealPeriod: number | bigint;
   /** Reserved for future use */
   reserved: Array<number>;
 };
@@ -81,11 +75,9 @@ export function getCentralStateEncoder(): FixedSizeEncoder<CentralStateArgs> {
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['bump', getU8Encoder()],
-      ['earlinessCutoffSeconds', getU64Encoder()],
       ['authority', getAddressEncoder()],
       ['protocolFeeBp', getU16Encoder()],
       ['feeRecipient', getAddressEncoder()],
-      ['minimumInitialRevealPeriod', getU64Encoder()],
       ['reserved', getArrayEncoder(getU8Encoder(), { size: 128 })],
     ]),
     (value) => ({ ...value, discriminator: CENTRAL_STATE_DISCRIMINATOR })
@@ -96,11 +88,9 @@ export function getCentralStateDecoder(): FixedSizeDecoder<CentralState> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['bump', getU8Decoder()],
-    ['earlinessCutoffSeconds', getU64Decoder()],
     ['authority', getAddressDecoder()],
     ['protocolFeeBp', getU16Decoder()],
     ['feeRecipient', getAddressDecoder()],
-    ['minimumInitialRevealPeriod', getU64Decoder()],
     ['reserved', getArrayDecoder(getU8Decoder(), { size: 128 })],
   ]);
 }

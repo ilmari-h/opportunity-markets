@@ -24,7 +24,6 @@ if (!process.env.RPC_URL) throw new Error("RPC_URL env var is required");
 
 const PROGRAM_ID = address(process.env.PROGRAM_ID);
 const RPC_URL = process.env.RPC_URL;
-const EARLINESS_CUTOFF_SECONDS = BigInt(config.earlinessCutoffSeconds);
 const MIN_OPTION_DEPOSIT = BigInt(config.minOptionDeposit);
 
 function readSecretKey(path: string): Uint8Array {
@@ -62,16 +61,13 @@ async function main() {
 
   console.log(`Program: ${PROGRAM_ID}`);
   console.log(`Payer:   ${payer.address}`);
-  console.log(`Earliness cutoff ${EARLINESS_CUTOFF_SECONDS.toString()}`)
   console.log(`Min deposit ${MIN_OPTION_DEPOSIT.toString()}`)
 
   const ix = await ensureCentralState(rpc, {
     programAddress: PROGRAM_ID,
     signer: payer,
-    earlinessCutoffSeconds: EARLINESS_CUTOFF_SECONDS,
     protocolFeeBp: 0,
     feeRecipient: payer.address,
-    minimumInitialRevealPeriod: 0n,
   });
 
   if (!ix) {
