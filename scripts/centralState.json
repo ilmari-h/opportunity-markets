@@ -1,4 +1,4 @@
 {
-  "earlinessCutoffSeconds": 3600,
-  "minOptionDeposit": 10000000
+  "protocolFeeBp": 50,
+  "feeRecipient": "GoaHvr9RwFqDHH7aqC8qWKTVgPkKApq5RhKzJvTVNKm5"
 }

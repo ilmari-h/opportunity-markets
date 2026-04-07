@@ -24,7 +24,6 @@ if (!process.env.RPC_URL) throw new Error("RPC_URL env var is required");
 
 const PROGRAM_ID = address(process.env.PROGRAM_ID);
 const RPC_URL = process.env.RPC_URL;
-const MIN_OPTION_DEPOSIT = BigInt(config.minOptionDeposit);
 
 function readSecretKey(path: string): Uint8Array {
   const file = fs.readFileSync(path);
@@ -59,15 +58,18 @@ async function main() {
   const payer = await createKeyPairSignerFromBytes(secretKey);
   const rpc = createSolanaRpc(RPC_URL);
 
-  console.log(`Program: ${PROGRAM_ID}`);
-  console.log(`Payer:   ${payer.address}`);
-  console.log(`Min deposit ${MIN_OPTION_DEPOSIT.toString()}`)
+  const feeRecipient = config.feeRecipient ? address(config.feeRecipient) : payer.address;
+
+  console.log(`Program:        ${PROGRAM_ID}`);
+  console.log(`Payer:          ${payer.address}`);
+  console.log(`Protocol fee:   ${config.protocolFeeBp} bp`);
+  console.log(`Fee recipient:  ${feeRecipient}`);
 
   const ix = await ensureCentralState(rpc, {
     programAddress: PROGRAM_ID,
     signer: payer,
-    protocolFeeBp: 0,
-    feeRecipient: payer.address,
+    protocolFeeBp: config.protocolFeeBp,
+    feeRecipient,
   });
 
   if (!ix) {
