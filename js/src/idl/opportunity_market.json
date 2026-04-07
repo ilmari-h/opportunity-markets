@@ -1,5 +1,5 @@
 {
-  "address": "BencHEXKYZ8HJ9LCrihgCWAmnqBT1abpsa9FYRs8fK1D",
+  "address": "BenchJHrXbW61EU6RXxrqnrL73gLBywENegfX3MANxe8",
   "metadata": {
     "name": "opportunity_market",
     "version": "0.1.0",
@@ -3285,7 +3285,7 @@
     {
       "code": 6033,
       "name": "EarlinessCutoffTooLarge",
-      "msg": "Earliness cutoff cannot exceed staking duration"
+      "msg": "Earliness cutoff exceeds staking period"
     }
   ],
   "types": [

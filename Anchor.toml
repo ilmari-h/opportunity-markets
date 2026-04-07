@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-opportunity_market = "BencHEXKYZ8HJ9LCrihgCWAmnqBT1abpsa9FYRs8fK1D"
+opportunity_market = "BenchJHrXbW61EU6RXxrqnrL73gLBywENegfX3MANxe8"
 
 [registry]
 url = "https://api.apr.dev"

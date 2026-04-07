@@ -80,7 +80,7 @@ export const OPPORTUNITY_MARKET_ERROR__PROTOCOL_FEE_TOO_HIGH = 0x178e; // 6030
 export const OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED = 0x178f; // 6031
 /** MarketNotPaused: Market is not paused */
 export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED = 0x1790; // 6032
-/** EarlinessCutoffTooLarge: Earliness cutoff cannot exceed staking duration */
+/** EarlinessCutoffTooLarge: Earliness cutoff exceeds staking period */
 export const OPPORTUNITY_MARKET_ERROR__EARLINESS_CUTOFF_TOO_LARGE = 0x1791; // 6033
 
 export type OpportunityMarketError =
@@ -132,7 +132,7 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED]: `Market cannot be closed before stake period ends`,
     [OPPORTUNITY_MARKET_ERROR__CLUSTER_NOT_SET]: `Cluster not set`,
     [OPPORTUNITY_MARKET_ERROR__DEPOSIT_BELOW_MINIMUM]: `Deposit amount below minimum required for option creation`,
-    [OPPORTUNITY_MARKET_ERROR__EARLINESS_CUTOFF_TOO_LARGE]: `Earliness cutoff cannot exceed staking duration`,
+    [OPPORTUNITY_MARKET_ERROR__EARLINESS_CUTOFF_TOO_LARGE]: `Earliness cutoff exceeds staking period`,
     [OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_BALANCE]: `Insufficient balance`,
     [OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING]: `Insufficient reward funding`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE]: `Invalid account state`,
