@@ -25,7 +25,7 @@ import {
 export type FeesClaimedEvent = {
   tokenVault: Address;
   mint: Address;
-  feeRecipient: Address;
+  destination: Address;
   amount: bigint;
   timestamp: bigint;
 };
@@ -33,7 +33,7 @@ export type FeesClaimedEvent = {
 export type FeesClaimedEventArgs = {
   tokenVault: Address;
   mint: Address;
-  feeRecipient: Address;
+  destination: Address;
   amount: number | bigint;
   timestamp: number | bigint;
 };
@@ -42,7 +42,7 @@ export function getFeesClaimedEventEncoder(): FixedSizeEncoder<FeesClaimedEventA
   return getStructEncoder([
     ['tokenVault', getAddressEncoder()],
     ['mint', getAddressEncoder()],
-    ['feeRecipient', getAddressEncoder()],
+    ['destination', getAddressEncoder()],
     ['amount', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
@@ -52,7 +52,7 @@ export function getFeesClaimedEventDecoder(): FixedSizeDecoder<FeesClaimedEvent>
   return getStructDecoder([
     ['tokenVault', getAddressDecoder()],
     ['mint', getAddressDecoder()],
-    ['feeRecipient', getAddressDecoder()],
+    ['destination', getAddressDecoder()],
     ['amount', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);

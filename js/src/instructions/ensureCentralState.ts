@@ -10,7 +10,7 @@ import { type BaseInstructionParams } from "./instructionParams";
 export interface EnsureCentralStateParams extends BaseInstructionParams {
   signer: TransactionSigner;
   protocolFeeBp: number;
-  feeRecipient: Address;
+  feeClaimer: Address;
 }
 
 export async function ensureCentralState(
@@ -27,13 +27,13 @@ export async function ensureCentralState(
     const s = existing.data;
     if (
       s.protocolFeeBp === args.protocolFeeBp &&
-      s.feeRecipient === args.feeRecipient
+      s.feeClaimer === args.feeClaimer
     ) {
       return null;
     }
 
     return getUpdateCentralStateInstructionAsync(
-      { authority: signer, ...args },
+      { updateAuthority: signer, ...args },
       config,
     ) as Promise<Instruction>;
   }

@@ -24,7 +24,7 @@ pub struct InitCentralState<'info> {
 pub fn init_central_state(
     ctx: Context<InitCentralState>,
     protocol_fee_bp: u16,
-    fee_recipient: Pubkey,
+    fee_claimer: Pubkey,
 ) -> Result<()> {
     require!(
         protocol_fee_bp <= MAX_PROTOCOL_FEE_BP,
@@ -33,9 +33,9 @@ pub fn init_central_state(
 
     let central_state = &mut ctx.accounts.central_state;
     central_state.bump = ctx.bumps.central_state;
-    central_state.authority = ctx.accounts.payer.key();
+    central_state.update_authority = ctx.accounts.payer.key();
     central_state.protocol_fee_bp = protocol_fee_bp;
-    central_state.fee_recipient = fee_recipient;
+    central_state.fee_claimer = fee_claimer;
 
     Ok(())
 }

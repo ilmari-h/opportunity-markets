@@ -49,17 +49,17 @@ export function getUpdateCentralStateDiscriminatorBytes() {
 
 export type UpdateCentralStateInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
-  TAccountAuthority extends string | AccountMeta<string> = string,
+  TAccountUpdateAuthority extends string | AccountMeta<string> = string,
   TAccountCentralState extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
-      TAccountAuthority extends string
-        ? ReadonlySignerAccount<TAccountAuthority> &
-            AccountSignerMeta<TAccountAuthority>
-        : TAccountAuthority,
+      TAccountUpdateAuthority extends string
+        ? ReadonlySignerAccount<TAccountUpdateAuthority> &
+            AccountSignerMeta<TAccountUpdateAuthority>
+        : TAccountUpdateAuthority,
       TAccountCentralState extends string
         ? WritableAccount<TAccountCentralState>
         : TAccountCentralState,
@@ -70,12 +70,12 @@ export type UpdateCentralStateInstruction<
 export type UpdateCentralStateInstructionData = {
   discriminator: ReadonlyUint8Array;
   protocolFeeBp: number;
-  feeRecipient: Address;
+  feeClaimer: Address;
 };
 
 export type UpdateCentralStateInstructionDataArgs = {
   protocolFeeBp: number;
-  feeRecipient: Address;
+  feeClaimer: Address;
 };
 
 export function getUpdateCentralStateInstructionDataEncoder(): FixedSizeEncoder<UpdateCentralStateInstructionDataArgs> {
@@ -83,7 +83,7 @@ export function getUpdateCentralStateInstructionDataEncoder(): FixedSizeEncoder<
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['protocolFeeBp', getU16Encoder()],
-      ['feeRecipient', getAddressEncoder()],
+      ['feeClaimer', getAddressEncoder()],
     ]),
     (value) => ({ ...value, discriminator: UPDATE_CENTRAL_STATE_DISCRIMINATOR })
   );
@@ -93,7 +93,7 @@ export function getUpdateCentralStateInstructionDataDecoder(): FixedSizeDecoder<
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['protocolFeeBp', getU16Decoder()],
-    ['feeRecipient', getAddressDecoder()],
+    ['feeClaimer', getAddressDecoder()],
   ]);
 }
 
@@ -108,26 +108,29 @@ export function getUpdateCentralStateInstructionDataCodec(): FixedSizeCodec<
 }
 
 export type UpdateCentralStateAsyncInput<
-  TAccountAuthority extends string = string,
+  TAccountUpdateAuthority extends string = string,
   TAccountCentralState extends string = string,
 > = {
-  authority: TransactionSigner<TAccountAuthority>;
+  updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   centralState?: Address<TAccountCentralState>;
   protocolFeeBp: UpdateCentralStateInstructionDataArgs['protocolFeeBp'];
-  feeRecipient: UpdateCentralStateInstructionDataArgs['feeRecipient'];
+  feeClaimer: UpdateCentralStateInstructionDataArgs['feeClaimer'];
 };
 
 export async function getUpdateCentralStateInstructionAsync<
-  TAccountAuthority extends string,
+  TAccountUpdateAuthority extends string,
   TAccountCentralState extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: UpdateCentralStateAsyncInput<TAccountAuthority, TAccountCentralState>,
+  input: UpdateCentralStateAsyncInput<
+    TAccountUpdateAuthority,
+    TAccountCentralState
+  >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
   UpdateCentralStateInstruction<
     TProgramAddress,
-    TAccountAuthority,
+    TAccountUpdateAuthority,
     TAccountCentralState
   >
 > {
@@ -137,7 +140,10 @@ export async function getUpdateCentralStateInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: false },
+    updateAuthority: {
+      value: input.updateAuthority ?? null,
+      isWritable: false,
+    },
     centralState: { value: input.centralState ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
@@ -165,7 +171,7 @@ export async function getUpdateCentralStateInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.updateAuthority),
       getAccountMeta(accounts.centralState),
     ],
     data: getUpdateCentralStateInstructionDataEncoder().encode(
@@ -174,31 +180,31 @@ export async function getUpdateCentralStateInstructionAsync<
     programAddress,
   } as UpdateCentralStateInstruction<
     TProgramAddress,
-    TAccountAuthority,
+    TAccountUpdateAuthority,
     TAccountCentralState
   >);
 }
 
 export type UpdateCentralStateInput<
-  TAccountAuthority extends string = string,
+  TAccountUpdateAuthority extends string = string,
   TAccountCentralState extends string = string,
 > = {
-  authority: TransactionSigner<TAccountAuthority>;
+  updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   centralState: Address<TAccountCentralState>;
   protocolFeeBp: UpdateCentralStateInstructionDataArgs['protocolFeeBp'];
-  feeRecipient: UpdateCentralStateInstructionDataArgs['feeRecipient'];
+  feeClaimer: UpdateCentralStateInstructionDataArgs['feeClaimer'];
 };
 
 export function getUpdateCentralStateInstruction<
-  TAccountAuthority extends string,
+  TAccountUpdateAuthority extends string,
   TAccountCentralState extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: UpdateCentralStateInput<TAccountAuthority, TAccountCentralState>,
+  input: UpdateCentralStateInput<TAccountUpdateAuthority, TAccountCentralState>,
   config?: { programAddress?: TProgramAddress }
 ): UpdateCentralStateInstruction<
   TProgramAddress,
-  TAccountAuthority,
+  TAccountUpdateAuthority,
   TAccountCentralState
 > {
   // Program address.
@@ -207,7 +213,10 @@ export function getUpdateCentralStateInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: false },
+    updateAuthority: {
+      value: input.updateAuthority ?? null,
+      isWritable: false,
+    },
     centralState: { value: input.centralState ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
@@ -221,7 +230,7 @@ export function getUpdateCentralStateInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.updateAuthority),
       getAccountMeta(accounts.centralState),
     ],
     data: getUpdateCentralStateInstructionDataEncoder().encode(
@@ -230,7 +239,7 @@ export function getUpdateCentralStateInstruction<
     programAddress,
   } as UpdateCentralStateInstruction<
     TProgramAddress,
-    TAccountAuthority,
+    TAccountUpdateAuthority,
     TAccountCentralState
   >);
 }
@@ -241,7 +250,7 @@ export type ParsedUpdateCentralStateInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    authority: TAccountMetas[0];
+    updateAuthority: TAccountMetas[0];
     centralState: TAccountMetas[1];
   };
   data: UpdateCentralStateInstructionData;
@@ -267,7 +276,10 @@ export function parseUpdateCentralStateInstruction<
   };
   return {
     programAddress: instruction.programAddress,
-    accounts: { authority: getNextAccount(), centralState: getNextAccount() },
+    accounts: {
+      updateAuthority: getNextAccount(),
+      centralState: getNextAccount(),
+    },
     data: getUpdateCentralStateInstructionDataDecoder().decode(
       instruction.data
     ),

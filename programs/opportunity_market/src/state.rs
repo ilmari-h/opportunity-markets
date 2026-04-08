@@ -6,7 +6,6 @@ pub struct TokenVault {
     pub bump: u8,
     pub mint: Pubkey,
     pub collected_fees: u64,
-    pub protocol_fee_bp: u16,
 
     /// Reserved for future use
     pub _reserved: [u8; 128],
@@ -17,14 +16,13 @@ pub struct TokenVault {
 pub struct CentralState {
     pub bump: u8,
 
-    // Allowed to update
-    pub authority: Pubkey,
+    pub update_authority: Pubkey,
 
     // Protocol fee in basis points (e.g. 100 = 1%)
     pub protocol_fee_bp: u16,
 
-    // Receives claimed fees
-    pub fee_recipient: Pubkey,
+    // Only this address can call claim_fees
+    pub fee_claimer: Pubkey,
 
     /// Reserved for future use
     pub _reserved: [u8; 128],

@@ -8,7 +8,7 @@ use arcium_client::idl::arcium::types::CallbackAccount;
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, StakedEvent};
 use crate::instructions::init_token_vault::TOKEN_VAULT_SEED;
-use crate::state::{OpportunityMarket, StakeAccount, TokenVault};
+use crate::state::{CentralState, OpportunityMarket, StakeAccount, TokenVault};
 use crate::COMP_DEF_OFFSET_STAKE;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
 
@@ -79,6 +79,12 @@ pub struct Stake<'info> {
     )]
     pub token_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    #[account(
+        seeds = [b"central_state"],
+        bump = central_state.bump,
+    )]
+    pub central_state: Box<Account<'info, CentralState>>,
+
     pub token_program: Interface<'info, TokenInterface>,
 
     // Arcium accounts
@@ -141,7 +147,7 @@ pub fn stake(
 
     // Calculate fee
     let fee = (amount as u128)
-        .checked_mul(ctx.accounts.token_vault.protocol_fee_bp as u128)
+        .checked_mul(ctx.accounts.central_state.protocol_fee_bp as u128)
         .ok_or(ErrorCode::Overflow)?
         .checked_div(10_000)
         .ok_or(ErrorCode::Overflow)? as u64;

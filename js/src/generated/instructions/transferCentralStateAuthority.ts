@@ -47,17 +47,17 @@ export function getTransferCentralStateAuthorityDiscriminatorBytes() {
 
 export type TransferCentralStateAuthorityInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
-  TAccountAuthority extends string | AccountMeta<string> = string,
+  TAccountUpdateAuthority extends string | AccountMeta<string> = string,
   TAccountCentralState extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
-      TAccountAuthority extends string
-        ? ReadonlySignerAccount<TAccountAuthority> &
-            AccountSignerMeta<TAccountAuthority>
-        : TAccountAuthority,
+      TAccountUpdateAuthority extends string
+        ? ReadonlySignerAccount<TAccountUpdateAuthority> &
+            AccountSignerMeta<TAccountUpdateAuthority>
+        : TAccountUpdateAuthority,
       TAccountCentralState extends string
         ? WritableAccount<TAccountCentralState>
         : TAccountCentralState,
@@ -105,28 +105,28 @@ export function getTransferCentralStateAuthorityInstructionDataCodec(): FixedSiz
 }
 
 export type TransferCentralStateAuthorityAsyncInput<
-  TAccountAuthority extends string = string,
+  TAccountUpdateAuthority extends string = string,
   TAccountCentralState extends string = string,
 > = {
-  authority: TransactionSigner<TAccountAuthority>;
+  updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   centralState?: Address<TAccountCentralState>;
   newAuthority: TransferCentralStateAuthorityInstructionDataArgs['newAuthority'];
 };
 
 export async function getTransferCentralStateAuthorityInstructionAsync<
-  TAccountAuthority extends string,
+  TAccountUpdateAuthority extends string,
   TAccountCentralState extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: TransferCentralStateAuthorityAsyncInput<
-    TAccountAuthority,
+    TAccountUpdateAuthority,
     TAccountCentralState
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
   TransferCentralStateAuthorityInstruction<
     TProgramAddress,
-    TAccountAuthority,
+    TAccountUpdateAuthority,
     TAccountCentralState
   >
 > {
@@ -136,7 +136,10 @@ export async function getTransferCentralStateAuthorityInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: false },
+    updateAuthority: {
+      value: input.updateAuthority ?? null,
+      isWritable: false,
+    },
     centralState: { value: input.centralState ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
@@ -164,7 +167,7 @@ export async function getTransferCentralStateAuthorityInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.updateAuthority),
       getAccountMeta(accounts.centralState),
     ],
     data: getTransferCentralStateAuthorityInstructionDataEncoder().encode(
@@ -173,33 +176,33 @@ export async function getTransferCentralStateAuthorityInstructionAsync<
     programAddress,
   } as TransferCentralStateAuthorityInstruction<
     TProgramAddress,
-    TAccountAuthority,
+    TAccountUpdateAuthority,
     TAccountCentralState
   >);
 }
 
 export type TransferCentralStateAuthorityInput<
-  TAccountAuthority extends string = string,
+  TAccountUpdateAuthority extends string = string,
   TAccountCentralState extends string = string,
 > = {
-  authority: TransactionSigner<TAccountAuthority>;
+  updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   centralState: Address<TAccountCentralState>;
   newAuthority: TransferCentralStateAuthorityInstructionDataArgs['newAuthority'];
 };
 
 export function getTransferCentralStateAuthorityInstruction<
-  TAccountAuthority extends string,
+  TAccountUpdateAuthority extends string,
   TAccountCentralState extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: TransferCentralStateAuthorityInput<
-    TAccountAuthority,
+    TAccountUpdateAuthority,
     TAccountCentralState
   >,
   config?: { programAddress?: TProgramAddress }
 ): TransferCentralStateAuthorityInstruction<
   TProgramAddress,
-  TAccountAuthority,
+  TAccountUpdateAuthority,
   TAccountCentralState
 > {
   // Program address.
@@ -208,7 +211,10 @@ export function getTransferCentralStateAuthorityInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: false },
+    updateAuthority: {
+      value: input.updateAuthority ?? null,
+      isWritable: false,
+    },
     centralState: { value: input.centralState ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
@@ -222,7 +228,7 @@ export function getTransferCentralStateAuthorityInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.updateAuthority),
       getAccountMeta(accounts.centralState),
     ],
     data: getTransferCentralStateAuthorityInstructionDataEncoder().encode(
@@ -231,7 +237,7 @@ export function getTransferCentralStateAuthorityInstruction<
     programAddress,
   } as TransferCentralStateAuthorityInstruction<
     TProgramAddress,
-    TAccountAuthority,
+    TAccountUpdateAuthority,
     TAccountCentralState
   >);
 }
@@ -242,7 +248,7 @@ export type ParsedTransferCentralStateAuthorityInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    authority: TAccountMetas[0];
+    updateAuthority: TAccountMetas[0];
     centralState: TAccountMetas[1];
   };
   data: TransferCentralStateAuthorityInstructionData;
@@ -268,7 +274,10 @@ export function parseTransferCentralStateAuthorityInstruction<
   };
   return {
     programAddress: instruction.programAddress,
-    accounts: { authority: getNextAccount(), centralState: getNextAccount() },
+    accounts: {
+      updateAuthority: getNextAccount(),
+      centralState: getNextAccount(),
+    },
     data: getTransferCentralStateAuthorityInstructionDataDecoder().decode(
       instruction.data
     ),

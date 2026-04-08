@@ -275,7 +275,7 @@ export class TestRunner {
     const centralStateIx = await ensureCentralState(runner.rpc, {
       signer: deployer,
       protocolFeeBp: 100,
-      feeRecipient: creatorAccountBase.keypair.address,
+      feeClaimer: creatorAccountBase.keypair.address,
     });
     if (centralStateIx) {
       await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [centralStateIx], {
@@ -986,7 +986,7 @@ export class TestRunner {
     const ix = await getClaimFeesInstructionAsync({
       signer: this.marketCreator.solanaKeypair,
       tokenMint: this.mint.address,
-      feeRecipientTokenAccount: this.marketCreator.tokenAccount,
+      destinationTokenAccount: this.marketCreator.tokenAccount,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
     });
 

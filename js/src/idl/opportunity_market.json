@@ -335,7 +335,7 @@
           }
         },
         {
-          "name": "fee_recipient_token_account",
+          "name": "destination_token_account",
           "writable": true
         },
         {
@@ -1261,7 +1261,7 @@
           "type": "u16"
         },
         {
-          "name": "fee_recipient",
+          "name": "fee_claimer",
           "type": "pubkey"
         }
       ]
@@ -1386,31 +1386,6 @@
               {
                 "kind": "account",
                 "path": "token_mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "central_state",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  114,
-                  97,
-                  108,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
               }
             ]
           }
@@ -2156,6 +2131,31 @@
           }
         },
         {
+          "name": "central_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  114,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "token_program"
         },
         {
@@ -2423,7 +2423,7 @@
       ],
       "accounts": [
         {
-          "name": "authority",
+          "name": "update_authority",
           "signer": true
         },
         {
@@ -2541,7 +2541,7 @@
       ],
       "accounts": [
         {
-          "name": "authority",
+          "name": "update_authority",
           "signer": true
         },
         {
@@ -2577,7 +2577,7 @@
           "type": "u16"
         },
         {
-          "name": "fee_recipient",
+          "name": "fee_claimer",
           "type": "pubkey"
         }
       ]
@@ -3349,7 +3349,7 @@
             "type": "u8"
           },
           {
-            "name": "authority",
+            "name": "update_authority",
             "type": "pubkey"
           },
           {
@@ -3357,7 +3357,7 @@
             "type": "u16"
           },
           {
-            "name": "fee_recipient",
+            "name": "fee_claimer",
             "type": "pubkey"
           },
           {
@@ -3684,7 +3684,7 @@
             "type": "pubkey"
           },
           {
-            "name": "fee_recipient",
+            "name": "destination",
             "type": "pubkey"
           },
           {
@@ -5022,10 +5022,6 @@
           {
             "name": "collected_fees",
             "type": "u64"
-          },
-          {
-            "name": "protocol_fee_bp",
-            "type": "u16"
           },
           {
             "name": "_reserved",

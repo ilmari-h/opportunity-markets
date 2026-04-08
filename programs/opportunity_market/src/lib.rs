@@ -30,9 +30,9 @@ pub mod opportunity_market {
     pub fn init_central_state(
         ctx: Context<InitCentralState>,
         protocol_fee_bp: u16,
-        fee_recipient: Pubkey,
+        fee_claimer: Pubkey,
     ) -> Result<()> {
-        instructions::init_central_state(ctx, protocol_fee_bp, fee_recipient)
+        instructions::init_central_state(ctx, protocol_fee_bp, fee_claimer)
     }
 
     pub fn transfer_central_state_authority(
@@ -45,9 +45,9 @@ pub mod opportunity_market {
     pub fn update_central_state(
         ctx: Context<UpdateCentralState>,
         protocol_fee_bp: u16,
-        fee_recipient: Pubkey,
+        fee_claimer: Pubkey,
     ) -> Result<()> {
-        instructions::update_central_state(ctx, protocol_fee_bp, fee_recipient)
+        instructions::update_central_state(ctx, protocol_fee_bp, fee_claimer)
     }
 
     pub fn create_market(

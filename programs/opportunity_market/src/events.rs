@@ -180,7 +180,7 @@ pub struct StakeAccountInitializedEvent {
 pub struct FeesClaimedEvent {
     pub token_vault: Pubkey,
     pub mint: Pubkey,
-    pub fee_recipient: Pubkey,
+    pub destination: Pubkey,
     pub amount: u64,
     pub timestamp: i64,
 }

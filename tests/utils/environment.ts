@@ -245,7 +245,7 @@ export async function createTestEnvironment(
   const initCentralStateIx = await getInitCentralStateInstructionAsync({
     payer: creatorAccount.keypair,
     protocolFeeBp: 0,
-    feeRecipient: creatorAccount.keypair.address,
+    feeClaimer: creatorAccount.keypair.address,
   });
 
   const { value: csBlockhash } = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();

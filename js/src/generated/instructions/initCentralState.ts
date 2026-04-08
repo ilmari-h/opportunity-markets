@@ -76,12 +76,12 @@ export type InitCentralStateInstruction<
 export type InitCentralStateInstructionData = {
   discriminator: ReadonlyUint8Array;
   protocolFeeBp: number;
-  feeRecipient: Address;
+  feeClaimer: Address;
 };
 
 export type InitCentralStateInstructionDataArgs = {
   protocolFeeBp: number;
-  feeRecipient: Address;
+  feeClaimer: Address;
 };
 
 export function getInitCentralStateInstructionDataEncoder(): FixedSizeEncoder<InitCentralStateInstructionDataArgs> {
@@ -89,7 +89,7 @@ export function getInitCentralStateInstructionDataEncoder(): FixedSizeEncoder<In
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['protocolFeeBp', getU16Encoder()],
-      ['feeRecipient', getAddressEncoder()],
+      ['feeClaimer', getAddressEncoder()],
     ]),
     (value) => ({ ...value, discriminator: INIT_CENTRAL_STATE_DISCRIMINATOR })
   );
@@ -99,7 +99,7 @@ export function getInitCentralStateInstructionDataDecoder(): FixedSizeDecoder<In
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['protocolFeeBp', getU16Decoder()],
-    ['feeRecipient', getAddressDecoder()],
+    ['feeClaimer', getAddressDecoder()],
   ]);
 }
 
@@ -122,7 +122,7 @@ export type InitCentralStateAsyncInput<
   centralState?: Address<TAccountCentralState>;
   systemProgram?: Address<TAccountSystemProgram>;
   protocolFeeBp: InitCentralStateInstructionDataArgs['protocolFeeBp'];
-  feeRecipient: InitCentralStateInstructionDataArgs['feeRecipient'];
+  feeClaimer: InitCentralStateInstructionDataArgs['feeClaimer'];
 };
 
 export async function getInitCentralStateInstructionAsync<
@@ -209,7 +209,7 @@ export type InitCentralStateInput<
   centralState: Address<TAccountCentralState>;
   systemProgram?: Address<TAccountSystemProgram>;
   protocolFeeBp: InitCentralStateInstructionDataArgs['protocolFeeBp'];
-  feeRecipient: InitCentralStateInstructionDataArgs['feeRecipient'];
+  feeClaimer: InitCentralStateInstructionDataArgs['feeClaimer'];
 };
 
 export function getInitCentralStateInstruction<

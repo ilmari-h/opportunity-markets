@@ -54,18 +54,18 @@ export function getCentralStateDiscriminatorBytes() {
 export type CentralState = {
   discriminator: ReadonlyUint8Array;
   bump: number;
-  authority: Address;
+  updateAuthority: Address;
   protocolFeeBp: number;
-  feeRecipient: Address;
+  feeClaimer: Address;
   /** Reserved for future use */
   reserved: Array<number>;
 };
 
 export type CentralStateArgs = {
   bump: number;
-  authority: Address;
+  updateAuthority: Address;
   protocolFeeBp: number;
-  feeRecipient: Address;
+  feeClaimer: Address;
   /** Reserved for future use */
   reserved: Array<number>;
 };
@@ -75,9 +75,9 @@ export function getCentralStateEncoder(): FixedSizeEncoder<CentralStateArgs> {
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['bump', getU8Encoder()],
-      ['authority', getAddressEncoder()],
+      ['updateAuthority', getAddressEncoder()],
       ['protocolFeeBp', getU16Encoder()],
-      ['feeRecipient', getAddressEncoder()],
+      ['feeClaimer', getAddressEncoder()],
       ['reserved', getArrayEncoder(getU8Encoder(), { size: 128 })],
     ]),
     (value) => ({ ...value, discriminator: CENTRAL_STATE_DISCRIMINATOR })
@@ -88,9 +88,9 @@ export function getCentralStateDecoder(): FixedSizeDecoder<CentralState> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['bump', getU8Decoder()],
-    ['authority', getAddressDecoder()],
+    ['updateAuthority', getAddressDecoder()],
     ['protocolFeeBp', getU16Decoder()],
-    ['feeRecipient', getAddressDecoder()],
+    ['feeClaimer', getAddressDecoder()],
     ['reserved', getArrayDecoder(getU8Decoder(), { size: 128 })],
   ]);
 }

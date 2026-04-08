@@ -6,13 +6,13 @@ use crate::state::CentralState;
 
 #[derive(Accounts)]
 pub struct UpdateCentralState<'info> {
-    pub authority: Signer<'info>,
+    pub update_authority: Signer<'info>,
 
     #[account(
         mut,
         seeds = [b"central_state"],
         bump = central_state.bump,
-        constraint = central_state.authority == authority.key() @ ErrorCode::Unauthorized,
+        constraint = central_state.update_authority == update_authority.key() @ ErrorCode::Unauthorized,
     )]
     pub central_state: Account<'info, CentralState>,
 }
@@ -20,7 +20,7 @@ pub struct UpdateCentralState<'info> {
 pub fn update_central_state(
     ctx: Context<UpdateCentralState>,
     protocol_fee_bp: u16,
-    fee_recipient: Pubkey,
+    fee_claimer: Pubkey,
 ) -> Result<()> {
     require!(
         protocol_fee_bp <= MAX_PROTOCOL_FEE_BP,
@@ -29,6 +29,7 @@ pub fn update_central_state(
 
     let central_state = &mut ctx.accounts.central_state;
     central_state.protocol_fee_bp = protocol_fee_bp;
-    central_state.fee_recipient = fee_recipient;
+    // TODO: timelock
+    central_state.fee_claimer = fee_claimer;
     Ok(())
 }

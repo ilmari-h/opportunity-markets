@@ -15,9 +15,7 @@ pub struct ClaimFees<'info> {
     #[account(
         seeds = [b"central_state"],
         bump = central_state.bump,
-        constraint = signer.key() == central_state.authority
-            || signer.key() == central_state.fee_recipient
-            @ ErrorCode::Unauthorized,
+        constraint = signer.key() == central_state.fee_claimer @ ErrorCode::Unauthorized,
     )]
     pub central_state: Account<'info, CentralState>,
 
@@ -43,10 +41,9 @@ pub struct ClaimFees<'info> {
     #[account(
         mut,
         token::mint = token_mint,
-        token::authority = central_state.fee_recipient,
         token::token_program = token_program,
     )]
-    pub fee_recipient_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub destination_token_account: InterfaceAccount<'info, TokenAccount>,
 
     pub token_program: Interface<'info, TokenInterface>,
 }
@@ -69,7 +66,7 @@ pub fn claim_fees(ctx: Context<ClaimFees>) -> Result<()> {
             TransferChecked {
                 from: ctx.accounts.token_vault_ata.to_account_info(),
                 mint: ctx.accounts.token_mint.to_account_info(),
-                to: ctx.accounts.fee_recipient_token_account.to_account_info(),
+                to: ctx.accounts.destination_token_account.to_account_info(),
                 authority: ctx.accounts.token_vault.to_account_info(),
             },
             signer_seeds,
@@ -83,7 +80,7 @@ pub fn claim_fees(ctx: Context<ClaimFees>) -> Result<()> {
     emit_ts!(FeesClaimedEvent {
         token_vault: ctx.accounts.token_vault.key(),
         mint: ctx.accounts.token_mint.key(),
-        fee_recipient: ctx.accounts.central_state.fee_recipient,
+        destination: ctx.accounts.destination_token_account.key(),
         amount: fees,
     });
 

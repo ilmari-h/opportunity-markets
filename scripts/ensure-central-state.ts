@@ -58,18 +58,18 @@ async function main() {
   const payer = await createKeyPairSignerFromBytes(secretKey);
   const rpc = createSolanaRpc(RPC_URL);
 
-  const feeRecipient = config.feeRecipient ? address(config.feeRecipient) : payer.address;
+  const feeClaimer = config.feeClaimer ? address(config.feeClaimer) : payer.address;
 
   console.log(`Program:        ${PROGRAM_ID}`);
   console.log(`Payer:          ${payer.address}`);
   console.log(`Protocol fee:   ${config.protocolFeeBp} bp`);
-  console.log(`Fee recipient:  ${feeRecipient}`);
+  console.log(`Fee claimer:    ${feeClaimer}`);
 
   const ix = await ensureCentralState(rpc, {
     programAddress: PROGRAM_ID,
     signer: payer,
     protocolFeeBp: config.protocolFeeBp,
-    feeRecipient,
+    feeClaimer,
   });
 
   if (!ix) {
