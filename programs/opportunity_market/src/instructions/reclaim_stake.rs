@@ -18,7 +18,7 @@ pub struct ReclaimStake<'info> {
     pub owner: UncheckedAccount<'info>,
 
     #[account(
-        constraint = market.selected_options.is_some() @ ErrorCode::MarketNotResolved,
+        constraint = market.open_timestamp.is_some() @ ErrorCode::MarketNotOpen,
     )]
     pub market: Box<Account<'info, OpportunityMarket>>,
 
@@ -63,6 +63,13 @@ pub fn reclaim_stake(
     _stake_account_id: u32,
 ) -> Result<()> {
     let market = &ctx.accounts.market;
+
+    let open_timestamp = market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
+    let stake_end = open_timestamp
+        .checked_add(market.time_to_stake)
+        .ok_or(ErrorCode::Overflow)?;
+    let current_timestamp = Clock::get()?.unix_timestamp as u64;
+    require!(current_timestamp >= stake_end, ErrorCode::StakingNotActive);
 
     let amount = ctx.accounts.stake_account.amount;
 

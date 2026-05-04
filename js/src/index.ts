@@ -15,3 +15,6 @@ export * from "./arcium/awaitFinalizeComputation";
 
 // Export x25519
 export * from "./x25519/keypair";
+
+// Export ed25519 stake-authorization signing helpers
+export * from "./signing";

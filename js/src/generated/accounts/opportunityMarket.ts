@@ -27,6 +27,8 @@ import {
   getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU16Decoder,
+  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
@@ -82,6 +84,8 @@ export type OpportunityMarket = {
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
   paused: boolean;
+  protocolFeeBp: number;
+  collectedFees: bigint;
 };
 
 export type OpportunityMarketArgs = {
@@ -102,6 +106,8 @@ export type OpportunityMarketArgs = {
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
   paused: boolean;
+  protocolFeeBp: number;
+  collectedFees: number | bigint;
 };
 
 export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
@@ -128,6 +134,8 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['allowClosingEarly', getBooleanEncoder()],
       ['paused', getBooleanEncoder()],
+      ['protocolFeeBp', getU16Encoder()],
+      ['collectedFees', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: OPPORTUNITY_MARKET_DISCRIMINATOR })
   );
@@ -156,6 +164,8 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['allowClosingEarly', getBooleanDecoder()],
     ['paused', getBooleanDecoder()],
+    ['protocolFeeBp', getU16Decoder()],
+    ['collectedFees', getU64Decoder()],
   ]);
 }
 

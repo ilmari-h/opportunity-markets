@@ -9,7 +9,7 @@ crate-type = ["cdylib", "lib"]
 name = "opportunity_market"
 
 [features]
-default = ["hosted-compdefs"]
+default = []
 cesscpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
@@ -26,6 +26,7 @@ arcium-client = { default-features = false, version = "0.9.6" }
 arcium-macros = "0.9.6"
 arcium-anchor = "0.9.6"
 anchor-spl = "0.32.1"
+brine-ed25519 = "0.2.0"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

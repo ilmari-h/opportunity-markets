@@ -23,7 +23,7 @@ import {
 } from '@solana/kit';
 
 export type FeesClaimedEvent = {
-  tokenVault: Address;
+  market: Address;
   mint: Address;
   destination: Address;
   amount: bigint;
@@ -31,7 +31,7 @@ export type FeesClaimedEvent = {
 };
 
 export type FeesClaimedEventArgs = {
-  tokenVault: Address;
+  market: Address;
   mint: Address;
   destination: Address;
   amount: number | bigint;
@@ -40,7 +40,7 @@ export type FeesClaimedEventArgs = {
 
 export function getFeesClaimedEventEncoder(): FixedSizeEncoder<FeesClaimedEventArgs> {
   return getStructEncoder([
-    ['tokenVault', getAddressEncoder()],
+    ['market', getAddressEncoder()],
     ['mint', getAddressEncoder()],
     ['destination', getAddressEncoder()],
     ['amount', getU64Encoder()],
@@ -50,7 +50,7 @@ export function getFeesClaimedEventEncoder(): FixedSizeEncoder<FeesClaimedEventA
 
 export function getFeesClaimedEventDecoder(): FixedSizeDecoder<FeesClaimedEvent> {
   return getStructDecoder([
-    ['tokenVault', getAddressDecoder()],
+    ['market', getAddressDecoder()],
     ['mint', getAddressDecoder()],
     ['destination', getAddressDecoder()],
     ['amount', getU64Decoder()],

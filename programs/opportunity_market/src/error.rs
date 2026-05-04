@@ -72,4 +72,8 @@ pub enum ErrorCode {
     EarlinessCutoffTooLarge,
     #[msg("Timelock period has not elapsed yet")]
     TimelockNotElapsed,
+    #[msg("User signature has expired")]
+    SignatureExpired,
+    #[msg("Invalid user signature")]
+    InvalidSignature,
 }

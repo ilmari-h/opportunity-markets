@@ -152,8 +152,8 @@ pub fn reveal_stake_callback(
     ctx: Context<RevealStakeCallback>,
     output: SignedComputationOutputs<RevealStakeOutput>,
 ) -> Result<()> {
-    // Verify output — on failure, revert so the account stays locked
-    // with pending_reveal=true, allowing the user to retry reveal_stake
+    // On failure, revert so the account stays locked ith pending_reveal=true,
+    // allowing the user to retry reveal_stake
     let revealed_option = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,

@@ -1,23 +1,35 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { address, some, isNone, isSome, unwrapOption, createSolanaRpc, createSolanaRpcSubscriptions, sendAndConfirmTransactionFactory } from "@solana/kit";
-import { fetchToken, findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { fetchToken, findAssociatedTokenPda, getTransferInstruction, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { expect } from "chai";
+import { deserializeLE } from "@arcium-hq/client";
+import { randomBytes } from "crypto";
 import {
-  fetchTokenVault,
-  getTokenVaultAddress,
   OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED,
   OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE,
   OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET,
   OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
   OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED,
+  OPPORTUNITY_MARKET_ERROR__INVALID_SIGNATURE,
+  OPPORTUNITY_MARKET_ERROR__SIGNATURE_EXPIRED,
+  initStakeAccount,
+  initStakeDelegate,
+  stakeAsDelegate,
+  signStakeMessage,
+  getStakeDelegateAddress,
+  withdrawStakeDelegate,
+  randomComputationOffset,
+  awaitComputationFinalization,
+  fetchStakeAccount,
 } from "../js/src";
 
 import { OpportunityMarket } from "../target/types/opportunity_market";
 import { TestRunner } from "./utils/test-runner";
 import { initializeAllCompDefs } from "./utils/comp-defs";
 import { sleepUntilOnChainTimestamp } from "./utils/sleep";
-import { generateX25519Keypair, X25519Keypair } from "../js/src/x25519/keypair";
+import { generateX25519Keypair, X25519Keypair, createCipher, nonceToBytes } from "../js/src/x25519/keypair";
+import { sendTransaction } from "./utils/transaction";
 import { shouldThrowCustomError } from "./utils/errors";
 import * as fs from "fs";
 import * as os from "os";
@@ -260,12 +272,11 @@ describe("OpportunityMarket", () => {
     expect(totalGains >= marketFundingAmount - 2n).to.be.true;
     expect(totalGains <= marketFundingAmount).to.be.true;
 
-    // Verify token vault has collected fees
+    // Verify market has collected fees
     const totalExpectedFees = expectedFeePerUser.reduce((sum, f) => sum + f, 0n);
-    const [tokenVaultAddress] = await getTokenVaultAddress(runner.mintAddress, programId);
-    const vaultBefore = await fetchTokenVault(rpc, tokenVaultAddress);
-    expect(vaultBefore.data.collectedFees).to.equal(totalExpectedFees,
-      `Vault should have collected ${totalExpectedFees} in fees`);
+    const marketBefore = await runner.fetchMarket();
+    expect(marketBefore.data.collectedFees).to.equal(totalExpectedFees,
+      `Market should have collected ${totalExpectedFees} in fees`);
 
     // Get fee recipient balance before claiming
     const feeRecipientBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(runner.creator))).data.amount;
@@ -278,9 +289,9 @@ describe("OpportunityMarket", () => {
     expect(feeRecipientBalanceAfter - feeRecipientBalanceBefore).to.equal(totalExpectedFees,
       `Fee recipient should have received ${totalExpectedFees} in fees`);
 
-    // Verify vault fees reset to 0
-    const vaultAfter = await fetchTokenVault(rpc, tokenVaultAddress);
-    expect(vaultAfter.data.collectedFees).to.equal(0n, "Vault collected fees should be 0 after claiming");
+    // Verify market fees reset to 0
+    const marketAfter = await runner.fetchMarket();
+    expect(marketAfter.data.collectedFees).to.equal(0n, "Market collected fees should be 0 after claiming");
   });
 
   it("distributes rewards across multiple winning options", async () => {
@@ -580,8 +591,14 @@ describe("OpportunityMarket", () => {
       `Market should pay out ~${marketFundingAmount}, paid ${marketPaidOut}`
     ).to.be.true;
 
-    // Market ATA should be empty (or nearly empty due to rounding)
-    expect(marketBalanceAfter <= 1n, `Market ATA should be empty, has ${marketBalanceAfter}`).to.be.true;
+    // After all reclaims + reward payouts the market ATA should hold only the
+    // uncollected protocol fees (which sit in the market ATA until claim_fees).
+    const marketState = await runner.fetchMarket();
+    const collectedFees = marketState.data.collectedFees;
+    expect(
+      marketBalanceAfter <= collectedFees + 1n,
+      `Market ATA should hold only collected fees (~${collectedFees}), has ${marketBalanceAfter}`
+    ).to.be.true;
   });
 
   it("prevents closing market early when not allowed", async () => {
@@ -957,14 +974,7 @@ describe("OpportunityMarket", () => {
     const userBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
     const marketAta = await runner.getMarketAta();
     const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
-    const [tokenVaultAddress] = await getTokenVaultAddress(runner.mintAddress, programId);
-    const [tokenVaultAta] = await findAssociatedTokenPda({
-      mint: runner.mintAddress,
-      owner: tokenVaultAddress,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    });
-    const vaultAtaBalanceBefore = (await fetchToken(rpc, tokenVaultAta)).data.amount;
-    const vaultBefore = await fetchTokenVault(rpc, tokenVaultAddress);
+    const marketStateBefore = await runner.fetchMarket();
 
     // Stake and immediately close stuck in the same transaction
     const stakeAccountId = await runner.stakeAndCloseStuck(user, stakeAmount, optionId);
@@ -974,25 +984,20 @@ describe("OpportunityMarket", () => {
     const exists = await runner.accountExists(stakeAccountAddress);
     expect(exists).to.be.false;
 
-    // Verify user token balance is restored (net_amount from market + fee from vault)
+    // Verify user token balance is restored (net + fee both refunded from market ATA)
     const userBalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
     expect(userBalanceAfter).to.equal(userBalanceBefore,
       "User balance should be fully restored after close_stuck");
 
-    // Verify market ATA balance unchanged (net_amount went in and came back out)
+    // Verify market ATA balance unchanged (entire amount went in and came back out)
     const marketBalanceAfter = (await fetchToken(rpc, marketAta)).data.amount;
     expect(marketBalanceAfter).to.equal(marketBalanceBefore,
       "Market ATA balance should be unchanged");
 
-    // Verify vault ATA balance unchanged (fee went in and came back out)
-    const vaultAtaBalanceAfter = (await fetchToken(rpc, tokenVaultAta)).data.amount;
-    expect(vaultAtaBalanceAfter).to.equal(vaultAtaBalanceBefore,
-      "Vault ATA balance should be unchanged");
-
     // Verify collected_fees was NOT incremented (fee never counted as collected)
-    const vaultAfter = await fetchTokenVault(rpc, tokenVaultAddress);
-    expect(vaultAfter.data.collectedFees).to.equal(vaultBefore.data.collectedFees,
-      "Vault collected_fees should not have changed");
+    const marketStateAfter = await runner.fetchMarket();
+    expect(marketStateAfter.data.collectedFees).to.equal(marketStateBefore.data.collectedFees,
+      "Market collected_fees should not have changed");
   });
 
   it("pausing blocks staking, resuming allows it again", async () => {
@@ -1035,5 +1040,337 @@ describe("OpportunityMarket", () => {
     const stakeAccountId = await runner.stakeOnOption(user, 50_000_000n, optionId);
     const stakeAccount = await runner.fetchStakeAccountData(user, stakeAccountId);
     expect(stakeAccount.data.amount > 0n).to.be.true;
+  });
+
+  it("staking on behalf of another user works", async () => {
+    const marketFundingAmount = 1_000_000_000n;
+    const stakeAmount = 100_000_000n;
+
+    const observer = loadObserverKeypair();
+
+    const runner = await TestRunner.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 2,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketConfig: {
+        rewardAmount: marketFundingAmount,
+        timeToStake: 60n,
+        timeToReveal: 60n,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    const openTimestamp = await runner.openMarket();
+    const { optionId } = await runner.addOption();
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    const [userA, userB] = runner.participants;
+    const userASigner = runner.getUserSigner(userA);
+    const userBSigner = runner.getUserSigner(userB);
+    const userATokenAccount = runner.getUserTokenAccount(userA);
+    const userBTokenAccount = runner.getUserTokenAccount(userB);
+    const bX25519 = runner.getUserX25519Keypair(userB);
+    const mxePublicKey = runner.getMxePublicKey();
+    const rpc = runner.getRpc();
+    const sendAndConfirm = runner.getSendAndConfirm();
+    const market = runner.market;
+    const mint = runner.mintAddress;
+    const arciumClusterOffset = runner.getArciumClusterOffset();
+
+    // A inits stake account for B
+    const stakeAccountId = Math.floor(Math.random() * 1_000_000) + 1;
+    const initStakeIx = await initStakeAccount({
+      payer: userASigner,
+      owner: userB,
+      market,
+      stakeAccountId,
+    });
+    await sendTransaction(rpc, sendAndConfirm, userASigner, [initStakeIx], {
+      label: "A inits stake account for B",
+    });
+
+    const stakeAccountAddress = await runner.getStakeAccountAddress(userB, stakeAccountId);
+    const [stakeDelegateAddress] = await getStakeDelegateAddress(stakeAccountAddress, programId);
+    const [stakeDelegateAta] = await findAssociatedTokenPda({
+      mint,
+      owner: stakeDelegateAddress,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    });
+
+    // B inits delegate, registering A as the authority
+    const initDelegateIx = await initStakeDelegate({
+      owner: userBSigner,
+      stakeAccount: stakeAccountAddress,
+      market,
+      mint,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+      authority: userA,
+    });
+    await sendTransaction(rpc, sendAndConfirm, userBSigner, [initDelegateIx], {
+      label: "B inits delegate (authority=A)",
+    });
+
+    // A funds the delegate ATA
+    const fundIx = getTransferInstruction({
+      source: userATokenAccount,
+      destination: stakeDelegateAta,
+      authority: userASigner,
+      amount: stakeAmount,
+    });
+    await sendTransaction(rpc, sendAndConfirm, userASigner, [fundIx], {
+      label: "A funds delegate",
+    });
+
+    // B signs the canonical authorization off-chain
+    const cipher = createCipher(bX25519.secretKey, mxePublicKey);
+    const inputNonceBytes = randomBytes(16);
+    const optionCiphertext = cipher.encrypt([BigInt(optionId)], inputNonceBytes);
+    const inputNonce = deserializeLE(inputNonceBytes);
+    const authorizedReaderNonce = deserializeLE(randomBytes(16));
+    const stateNonce = deserializeLE(randomBytes(16));
+    const signatureExpiryTimestamp = BigInt(Math.floor(Date.now() / 1000) + 3600);
+
+    const protocolFeeBp = 100n;
+    const fee = (stakeAmount * protocolFeeBp) / 10_000n;
+    const netAmount = stakeAmount - fee;
+
+    const signature = await signStakeMessage(
+      {
+        stakeAccount: stakeAccountAddress,
+        netAmount,
+        stateNonce,
+        inputNonce,
+        authorizedReaderNonce,
+        selectedOptionCiphertext: optionCiphertext[0],
+        signatureExpiryTimestamp,
+        userPubkey: bX25519.publicKey,
+      },
+      userBSigner,
+    );
+    expect(signature.signer).to.equal(userB);
+    expect(signature.signature.length).to.equal(64);
+
+    // A submits the stake tx via the delegate path
+    const computationOffset = randomComputationOffset();
+    const [marketAta] = await findAssociatedTokenPda({
+      mint,
+      owner: market,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    });
+    const stakeIx = await stakeAsDelegate(
+      {
+        payer: userASigner,
+        market,
+        stakeAccount: stakeAccountAddress,
+        stakeAccountId,
+        tokenMint: mint,
+        marketTokenAta: marketAta,
+        tokenProgram: TOKEN_PROGRAM_ADDRESS,
+        amount: stakeAmount,
+        signature,
+      },
+      { clusterOffset: arciumClusterOffset, computationOffset, programId },
+    );
+
+    // B closes the now-empty delegate in the same tx, refunding rent to B
+    const withdrawDelegateIx = await withdrawStakeDelegate({
+      owner: userBSigner,
+      stakeAccount: stakeAccountAddress,
+      mint,
+      ownerTokenAccount: userBTokenAccount,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    });
+    const { signature: txSignature } = await sendTransaction(
+      rpc,
+      sendAndConfirm,
+      userASigner,
+      [stakeIx, withdrawDelegateIx],
+      { label: "A submits stake + B closes delegate" },
+    );
+    expect(txSignature).to.be.a("string");
+
+    const result = await awaitComputationFinalization(rpc, computationOffset);
+    expect(result.error, `MPC callback should succeed, got: ${result.error ?? ""}`).to.be.undefined;
+
+    const stakeAccountData = await fetchStakeAccount(rpc, stakeAccountAddress);
+    expect(stakeAccountData.data.owner).to.equal(userB);
+    expect(stakeAccountData.data.amount).to.equal(netAmount);
+    expect(stakeAccountData.data.fee).to.equal(fee);
+    expect(stakeAccountData.data.locked).to.be.false;
+    expect(stakeAccountData.data.pendingStake).to.be.false;
+
+    const decryptCipher = createCipher(bX25519.secretKey, mxePublicKey);
+    const decrypted = decryptCipher.decrypt(
+      [stakeAccountData.data.encryptedOption],
+      nonceToBytes(stakeAccountData.data.stateNonce),
+    );
+    expect(decrypted[0]).to.equal(BigInt(optionId));
+
+    const marketState = await runner.fetchMarket();
+    expect(marketState.data.collectedFees).to.equal(fee);
+  });
+
+  it("staking on behalf of another user fails with incorrect inputs", async () => {
+    const stakeAmount = 100_000_000n;
+    const observer = loadObserverKeypair();
+
+    const runner = await TestRunner.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 2,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketConfig: {
+        rewardAmount: 1_000_000_000n,
+        timeToStake: 60n,
+        timeToReveal: 60n,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    const openTimestamp = await runner.openMarket();
+    const { optionId } = await runner.addOption();
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    const [userA, userB] = runner.participants;
+    const userASigner = runner.getUserSigner(userA);
+    const userBSigner = runner.getUserSigner(userB);
+    const userATokenAccount = runner.getUserTokenAccount(userA);
+    const bX25519 = runner.getUserX25519Keypair(userB);
+    const mxePublicKey = runner.getMxePublicKey();
+    const rpc = runner.getRpc();
+    const sendAndConfirm = runner.getSendAndConfirm();
+    const market = runner.market;
+    const mint = runner.mintAddress;
+    const arciumClusterOffset = runner.getArciumClusterOffset();
+
+    const stakeAccountId = Math.floor(Math.random() * 1_000_000) + 1;
+    const stakeAccountAddress = (await runner.getStakeAccountAddress(userB, stakeAccountId));
+    const [stakeDelegateAddress] = await getStakeDelegateAddress(stakeAccountAddress, programId);
+    const [stakeDelegateAta] = await findAssociatedTokenPda({
+      mint,
+      owner: stakeDelegateAddress,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    });
+    const [marketAta] = await findAssociatedTokenPda({
+      mint,
+      owner: market,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    });
+
+    await sendTransaction(
+      rpc,
+      sendAndConfirm,
+      userASigner,
+      [
+        await initStakeAccount({ payer: userASigner, owner: userB, market, stakeAccountId }),
+      ],
+      { label: "A inits stake account for B" },
+    );
+    await sendTransaction(
+      rpc,
+      sendAndConfirm,
+      userBSigner,
+      [
+        await initStakeDelegate({
+          owner: userBSigner,
+          stakeAccount: stakeAccountAddress,
+          market,
+          mint,
+          tokenProgram: TOKEN_PROGRAM_ADDRESS,
+          authority: userA,
+        }),
+      ],
+      { label: "B inits delegate (authority=A)" },
+    );
+    await sendTransaction(
+      rpc,
+      sendAndConfirm,
+      userASigner,
+      [
+        getTransferInstruction({
+          source: userATokenAccount,
+          destination: stakeDelegateAta,
+          authority: userASigner,
+          amount: stakeAmount,
+        }),
+      ],
+      { label: "A funds delegate" },
+    );
+
+    const cipher = createCipher(bX25519.secretKey, mxePublicKey);
+    const inputNonceBytes = randomBytes(16);
+    const optionCiphertext = cipher.encrypt([BigInt(optionId)], inputNonceBytes);
+    const inputNonce = deserializeLE(inputNonceBytes);
+    const authorizedReaderNonce = deserializeLE(randomBytes(16));
+    const stateNonce = deserializeLE(randomBytes(16));
+
+    const protocolFeeBp = 100n;
+    const fee = (stakeAmount * protocolFeeBp) / 10_000n;
+    const netAmount = stakeAmount - fee;
+
+    const submitStakeWithSignature = async (sig: Awaited<ReturnType<typeof signStakeMessage>>) => {
+      const computationOffset = randomComputationOffset();
+      const stakeIx = await stakeAsDelegate(
+        {
+          payer: userASigner,
+          market,
+          stakeAccount: stakeAccountAddress,
+          stakeAccountId,
+          tokenMint: mint,
+          marketTokenAta: marketAta,
+          tokenProgram: TOKEN_PROGRAM_ADDRESS,
+          amount: stakeAmount,
+          signature: sig,
+        },
+        { clusterOffset: arciumClusterOffset, computationOffset, programId },
+      );
+      await sendTransaction(rpc, sendAndConfirm, userASigner, [stakeIx], {
+        label: "A submits stake (delegate path)",
+      });
+    };
+
+    // B signs expiry T1, A submits with a different (still-far-future) T2 → InvalidSignature
+    const farFutureT1 = BigInt(Math.floor(Date.now() / 1000) + 3600);
+    const farFutureT2 = farFutureT1 + 60n;
+    const tamperedSig = await signStakeMessage(
+      {
+        stakeAccount: stakeAccountAddress,
+        netAmount,
+        stateNonce,
+        inputNonce,
+        authorizedReaderNonce,
+        selectedOptionCiphertext: optionCiphertext[0],
+        signatureExpiryTimestamp: farFutureT1,
+        userPubkey: bX25519.publicKey,
+      },
+      userBSigner,
+    );
+    tamperedSig.payload.signatureExpiryTimestamp = farFutureT2;
+    await shouldThrowCustomError(
+      () => submitStakeWithSignature(tamperedSig),
+      OPPORTUNITY_MARKET_ERROR__INVALID_SIGNATURE,
+    );
+
+    // B signs with a past expiry → SignatureExpired
+    const expiredSig = await signStakeMessage(
+      {
+        stakeAccount: stakeAccountAddress,
+        netAmount,
+        stateNonce,
+        inputNonce,
+        authorizedReaderNonce,
+        selectedOptionCiphertext: optionCiphertext[0],
+        signatureExpiryTimestamp: BigInt(Math.floor(Date.now() / 1000) - 60),
+        userPubkey: bX25519.publicKey,
+      },
+      userBSigner,
+    );
+    await shouldThrowCustomError(
+      () => submitStakeWithSignature(expiredSig),
+      OPPORTUNITY_MARKET_ERROR__SIGNATURE_EXPIRED,
+    );
   });
 });

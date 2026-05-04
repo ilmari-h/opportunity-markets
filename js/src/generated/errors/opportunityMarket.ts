@@ -84,6 +84,10 @@ export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED = 0x1790; // 6032
 export const OPPORTUNITY_MARKET_ERROR__EARLINESS_CUTOFF_TOO_LARGE = 0x1791; // 6033
 /** TimelockNotElapsed: Timelock period has not elapsed yet */
 export const OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED = 0x1792; // 6034
+/** SignatureExpired: User signature has expired */
+export const OPPORTUNITY_MARKET_ERROR__SIGNATURE_EXPIRED = 0x1793; // 6035
+/** InvalidSignature: Invalid user signature */
+export const OPPORTUNITY_MARKET_ERROR__INVALID_SIGNATURE = 0x1794; // 6036
 
 export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION
@@ -100,6 +104,7 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_MINT
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_ID
+  | typeof OPPORTUNITY_MARKET_ERROR__INVALID_SIGNATURE
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP
   | typeof OPPORTUNITY_MARKET_ERROR__INVALID_WINNING_OPTIONS_INPUT
   | typeof OPPORTUNITY_MARKET_ERROR__LOCKED
@@ -113,6 +118,7 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__OVERFLOW
   | typeof OPPORTUNITY_MARKET_ERROR__PROTOCOL_FEE_TOO_HIGH
   | typeof OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED
+  | typeof OPPORTUNITY_MARKET_ERROR__SIGNATURE_EXPIRED
   | typeof OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK
   | typeof OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE
   | typeof OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED
@@ -141,6 +147,7 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE]: `Invalid account state`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_MINT]: `Token mint does not match account mint`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_ID]: `Invalid option ID`,
+    [OPPORTUNITY_MARKET_ERROR__INVALID_SIGNATURE]: `Invalid user signature`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_TIMESTAMP]: `Timestamp must be in the future`,
     [OPPORTUNITY_MARKET_ERROR__INVALID_WINNING_OPTIONS_INPUT]: `Invalid winning options input`,
     [OPPORTUNITY_MARKET_ERROR__LOCKED]: `Account is locked`,
@@ -154,6 +161,7 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__OVERFLOW]: `Arithmetic overflow`,
     [OPPORTUNITY_MARKET_ERROR__PROTOCOL_FEE_TOO_HIGH]: `Protocol fee exceeds maximum 500 bp`,
     [OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED]: `Reveal period has already ended`,
+    [OPPORTUNITY_MARKET_ERROR__SIGNATURE_EXPIRED]: `User signature has expired`,
     [OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK]: `Stake account is not in a stuck or failed state`,
     [OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE]: `Staking period is not active`,
     [OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED]: `Tally already incremented for this stake account`,
