@@ -32,16 +32,15 @@ export interface StakeSignaturePayload {
   selectedOptionCiphertext: ByteArray;
   /** Unix timestamp (seconds) after which the on-chain verifier rejects this signature. */
   signatureExpiryTimestamp: bigint;
-  /** User's x25519 public key — distinct from their Solana wallet pubkey. */
+  /** User's x25519 public key */
   userPubkey: ByteArray;
 }
 
-declare const stakeSignatureBrand: unique symbol;
+const stakeSignatureBrand: unique symbol = Symbol("stakeSignature");
 
 /**
  * A fully-formed authorization for a delegated `stake()` call. Carries the 64-byte ed25519
- * signature alongside the exact payload it commits to. Brand-typed so the higher-level
- * delegated-`stake` wrapper rejects naked byte arrays at the type level.
+ * signature alongside the exact payload it commits to.
  *
  * Construct via {@link signStakeMessage}.
  */
@@ -89,8 +88,7 @@ function copyFixed(
 }
 
 /**
- * Build the canonical 160-byte message for stake() authorization. Exposed for debugging,
- * test fixtures, and any call site that needs to inspect the bytes that will be signed.
+ * Build the canonical 160-byte message for stake() authorization
  */
 export function buildStakeMessage(payload: StakeSignaturePayload): Uint8Array {
   const buf = new Uint8Array(MESSAGE_LENGTH);

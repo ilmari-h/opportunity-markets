@@ -8,11 +8,7 @@ import { type ByteArray, toNumberArray } from "../utils";
 import { type BaseInstructionParams } from "./instructionParams";
 import { type StakeSignature } from "../signing";
 
-/**
- * Accounts and per-tx parameters shared by both `stake` variants. Auth-related fields
- * (signature, expiry, state_nonce) live on the variant-specific input types.
- */
-export interface StakeBaseParams extends BaseInstructionParams {
+interface StakeAccountsAndAmount extends BaseInstructionParams {
   payer: TransactionSigner;
   market: Address;
   /** PDA of the stake_account being staked into. Use `getStakeAccountAddress(owner, market, id)`. */
@@ -21,31 +17,28 @@ export interface StakeBaseParams extends BaseInstructionParams {
   tokenMint: Address;
   marketTokenAta: Address;
   tokenProgram: Address;
+  /** Gross amount (net + fee). Fee is deducted on-chain and credited to `market.collected_fees`. */
   amount: bigint;
+}
+
+/**
+ * Inputs for a stake call where the `payer` is also the stake_account.owner.
+ */
+export interface StakeAsOwnerParams extends StakeAccountsAndAmount {
   selectedOptionCiphertext: ByteArray;
   inputNonce: bigint;
   authorizedReaderNonce: bigint;
   /** User's x25519 public key (NOT their Solana wallet pubkey). */
   userPubkey: ByteArray;
-}
-
-/**
- * Inputs for a stake call where the `payer` is also the stake_account.owner.
- * The on-chain code's owner==payer shortcut skips ed25519 verification, so no
- * pre-signed message is needed; the signature/expiry fields are zeroed.
- */
-export interface StakeAsOwnerParams extends StakeBaseParams {
   /** u128 nonce committed to encrypted-state derivation. */
   stateNonce: bigint;
 }
 
 /**
  * Inputs for a stake call where the `payer` is a third party (the stake_delegate authority).
- * The owner has pre-signed the canonical stake message off-chain; pass that branded
- * {@link StakeSignature} here. `stateNonce`, expiry, and other auth fields are pulled from
- * the signature payload — caller doesn't repeat them.
+ * The owner has pre-signed the canonical stake message off-chain.
  */
-export interface StakeAsDelegateParams extends StakeBaseParams {
+export interface StakeAsDelegateParams extends StakeAccountsAndAmount {
   /** The owner's authorization, produced via `signStakeMessage`. */
   signature: StakeSignature;
 }
@@ -54,8 +47,6 @@ const ZERO_SIGNATURE: number[] = new Array(64).fill(0);
 
 /**
  * Build a stake instruction where the transaction signer is the stake_account.owner.
- * No off-chain ed25519 signature is required — the on-chain code skips verification
- * via the owner==payer shortcut.
  */
 export async function stakeAsOwner(
   input: StakeAsOwnerParams,
@@ -104,8 +95,7 @@ export async function stakeAsOwner(
 /**
  * Build a stake instruction where the transaction signer is the stake_delegate.authority,
  * NOT the stake_account.owner. Requires a {@link StakeSignature} produced by the owner
- * off-chain. State nonce, expiry, and the canonical inputs are pulled from the signature
- * payload to guarantee what's submitted on-chain matches what was signed.
+ * off-chain.
  */
 export async function stakeAsDelegate(
   input: StakeAsDelegateParams,

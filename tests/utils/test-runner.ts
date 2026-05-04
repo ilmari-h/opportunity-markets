@@ -1013,6 +1013,22 @@ export class TestRunner {
     return this.rpc;
   }
 
+  getSendAndConfirm(): SendAndConfirmFn {
+    return this.sendAndConfirm;
+  }
+
+  getArciumClusterOffset(): number {
+    return this.arciumEnv.arciumClusterOffset;
+  }
+
+  getProgramId(): Address {
+    return this.programId;
+  }
+
+  getUserSigner(userId: Address): KeyPairSigner {
+    return this.getUser(userId).solanaKeypair;
+  }
+
   async fetchMarket() {
     return fetchOpportunityMarket(this.rpc, this.marketAddress);
   }
