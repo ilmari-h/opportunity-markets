@@ -8,21 +8,19 @@ import { type ByteArray, toNumberArray } from "../utils";
 import { type BaseInstructionParams } from "./instructionParams";
 
 export interface StakeParams extends BaseInstructionParams {
-  signer: TransactionSigner;
   payer: TransactionSigner;
   market: Address;
+  stakeAccount: Address;
   stakeAccountId: number;
   tokenMint: Address;
-  signerTokenAccount: Address;
   marketTokenAta: Address;
-  tokenVault: Address;
-  tokenVaultAta: Address;
   tokenProgram: Address;
   amount: bigint;
   selectedOptionCiphertext: ByteArray;
   inputNonce: bigint;
   authorizedReaderNonce: bigint;
   userPubkey: ByteArray;
+  stateNonce: bigint;
 }
 
 export async function stake(
@@ -31,41 +29,37 @@ export async function stake(
 ): Promise<StakeInstruction<string>> {
   const {
     programAddress,
-    signer,
     payer,
     market,
+    stakeAccount,
     stakeAccountId,
     tokenMint,
-    signerTokenAccount,
     marketTokenAta,
-    tokenVault,
-    tokenVaultAta,
     tokenProgram,
     amount,
     selectedOptionCiphertext,
     inputNonce,
     authorizedReaderNonce,
     userPubkey,
+    stateNonce,
   } = input;
 
   return getStakeInstructionAsync(
     {
       ...getComputeAccounts("stake", config),
-      signer,
       payer,
       market,
+      stakeAccount,
       stakeAccountId,
       tokenMint,
-      signerTokenAccount,
       marketTokenAta,
-      tokenVault,
-      tokenVaultAta,
       tokenProgram,
       amount,
       selectedOptionCiphertext: toNumberArray(selectedOptionCiphertext),
       inputNonce,
       authorizedReaderNonce,
       userPubkey: toNumberArray(userPubkey),
+      stateNonce,
     },
     programAddress ? { programAddress } : undefined
   );

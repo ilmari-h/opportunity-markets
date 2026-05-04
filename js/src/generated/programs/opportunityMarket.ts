@@ -29,7 +29,7 @@ import {
   type ParsedIncrementOptionTallyInstruction,
   type ParsedInitCentralStateInstruction,
   type ParsedInitStakeAccountInstruction,
-  type ParsedInitTokenVaultInstruction,
+  type ParsedInitStakeDelegateInstruction,
   type ParsedOpenMarketInstruction,
   type ParsedPauseMarketInstruction,
   type ParsedProposeNewFeeClaimerInstruction,
@@ -63,8 +63,8 @@ export enum OpportunityMarketAccount {
   OpportunityMarketOption,
   OpportunityMarketSponsor,
   StakeAccount,
+  StakeDelegate,
   TimelockedAccountChange,
-  TokenVault,
 }
 
 export function identifyOpportunityMarketAccount(
@@ -196,23 +196,23 @@ export function identifyOpportunityMarketAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([212, 10, 35, 97, 66, 60, 169, 214])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketAccount.StakeDelegate;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([212, 170, 131, 144, 16, 51, 205, 22])
       ),
       0
     )
   ) {
     return OpportunityMarketAccount.TimelockedAccountChange;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([121, 7, 84, 254, 151, 228, 43, 144])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketAccount.TokenVault;
   }
   throw new Error(
     'The provided account could not be identified as a opportunityMarket account.'
@@ -235,7 +235,7 @@ export enum OpportunityMarketInstruction {
   IncrementOptionTally,
   InitCentralState,
   InitStakeAccount,
-  InitTokenVault,
+  InitStakeDelegate,
   OpenMarket,
   PauseMarket,
   ProposeNewFeeClaimer,
@@ -427,12 +427,12 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([203, 26, 194, 169, 252, 226, 179, 180])
+        new Uint8Array([153, 134, 247, 50, 147, 198, 224, 251])
       ),
       0
     )
   ) {
-    return OpportunityMarketInstruction.InitTokenVault;
+    return OpportunityMarketInstruction.InitStakeDelegate;
   }
   if (
     containsBytes(
@@ -664,8 +664,8 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.InitStakeAccount;
     } & ParsedInitStakeAccountInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.InitTokenVault;
-    } & ParsedInitTokenVaultInstruction<TProgram>)
+      instructionType: OpportunityMarketInstruction.InitStakeDelegate;
+    } & ParsedInitStakeDelegateInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.OpenMarket;
     } & ParsedOpenMarketInstruction<TProgram>)

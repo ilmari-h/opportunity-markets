@@ -4,8 +4,6 @@ import { address, some, isNone, isSome, unwrapOption, createSolanaRpc, createSol
 import { fetchToken, findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { expect } from "chai";
 import {
-  fetchTokenVault,
-  getTokenVaultAddress,
   OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED,
   OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE,
   OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET,
@@ -260,12 +258,11 @@ describe("OpportunityMarket", () => {
     expect(totalGains >= marketFundingAmount - 2n).to.be.true;
     expect(totalGains <= marketFundingAmount).to.be.true;
 
-    // Verify token vault has collected fees
+    // Verify market has collected fees
     const totalExpectedFees = expectedFeePerUser.reduce((sum, f) => sum + f, 0n);
-    const [tokenVaultAddress] = await getTokenVaultAddress(runner.mintAddress, programId);
-    const vaultBefore = await fetchTokenVault(rpc, tokenVaultAddress);
-    expect(vaultBefore.data.collectedFees).to.equal(totalExpectedFees,
-      `Vault should have collected ${totalExpectedFees} in fees`);
+    const marketBefore = await runner.fetchMarket();
+    expect(marketBefore.data.collectedFees).to.equal(totalExpectedFees,
+      `Market should have collected ${totalExpectedFees} in fees`);
 
     // Get fee recipient balance before claiming
     const feeRecipientBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(runner.creator))).data.amount;
@@ -278,9 +275,9 @@ describe("OpportunityMarket", () => {
     expect(feeRecipientBalanceAfter - feeRecipientBalanceBefore).to.equal(totalExpectedFees,
       `Fee recipient should have received ${totalExpectedFees} in fees`);
 
-    // Verify vault fees reset to 0
-    const vaultAfter = await fetchTokenVault(rpc, tokenVaultAddress);
-    expect(vaultAfter.data.collectedFees).to.equal(0n, "Vault collected fees should be 0 after claiming");
+    // Verify market fees reset to 0
+    const marketAfter = await runner.fetchMarket();
+    expect(marketAfter.data.collectedFees).to.equal(0n, "Market collected fees should be 0 after claiming");
   });
 
   it("distributes rewards across multiple winning options", async () => {
@@ -957,14 +954,7 @@ describe("OpportunityMarket", () => {
     const userBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
     const marketAta = await runner.getMarketAta();
     const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
-    const [tokenVaultAddress] = await getTokenVaultAddress(runner.mintAddress, programId);
-    const [tokenVaultAta] = await findAssociatedTokenPda({
-      mint: runner.mintAddress,
-      owner: tokenVaultAddress,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    });
-    const vaultAtaBalanceBefore = (await fetchToken(rpc, tokenVaultAta)).data.amount;
-    const vaultBefore = await fetchTokenVault(rpc, tokenVaultAddress);
+    const marketStateBefore = await runner.fetchMarket();
 
     // Stake and immediately close stuck in the same transaction
     const stakeAccountId = await runner.stakeAndCloseStuck(user, stakeAmount, optionId);
@@ -974,25 +964,20 @@ describe("OpportunityMarket", () => {
     const exists = await runner.accountExists(stakeAccountAddress);
     expect(exists).to.be.false;
 
-    // Verify user token balance is restored (net_amount from market + fee from vault)
+    // Verify user token balance is restored (net + fee both refunded from market ATA)
     const userBalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
     expect(userBalanceAfter).to.equal(userBalanceBefore,
       "User balance should be fully restored after close_stuck");
 
-    // Verify market ATA balance unchanged (net_amount went in and came back out)
+    // Verify market ATA balance unchanged (entire amount went in and came back out)
     const marketBalanceAfter = (await fetchToken(rpc, marketAta)).data.amount;
     expect(marketBalanceAfter).to.equal(marketBalanceBefore,
       "Market ATA balance should be unchanged");
 
-    // Verify vault ATA balance unchanged (fee went in and came back out)
-    const vaultAtaBalanceAfter = (await fetchToken(rpc, tokenVaultAta)).data.amount;
-    expect(vaultAtaBalanceAfter).to.equal(vaultAtaBalanceBefore,
-      "Vault ATA balance should be unchanged");
-
     // Verify collected_fees was NOT incremented (fee never counted as collected)
-    const vaultAfter = await fetchTokenVault(rpc, tokenVaultAddress);
-    expect(vaultAfter.data.collectedFees).to.equal(vaultBefore.data.collectedFees,
-      "Vault collected_fees should not have changed");
+    const marketStateAfter = await runner.fetchMarket();
+    expect(marketStateAfter.data.collectedFees).to.equal(marketStateBefore.data.collectedFees,
+      "Market collected_fees should not have changed");
   });
 
   it("pausing blocks staking, resuming allows it again", async () => {

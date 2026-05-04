@@ -447,41 +447,54 @@
           "name": "token_mint"
         },
         {
-          "name": "token_vault",
+          "name": "market",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  116,
                   111,
+                  112,
+                  112,
+                  111,
+                  114,
+                  116,
+                  117,
+                  110,
+                  105,
+                  116,
+                  121,
+                  95,
+                  109,
+                  97,
+                  114,
                   107,
                   101,
-                  110,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
                   116
                 ]
               },
               {
                 "kind": "account",
-                "path": "token_mint"
+                "path": "market.creator",
+                "account": "OpportunityMarket"
+              },
+              {
+                "kind": "account",
+                "path": "market.index",
+                "account": "OpportunityMarket"
               }
             ]
           }
         },
         {
-          "name": "token_vault_ata",
+          "name": "market_token_ata",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "token_vault"
+                "path": "market"
               },
               {
                 "kind": "account",
@@ -781,7 +794,7 @@
         {
           "name": "market_token_ata",
           "docs": [
-            "Market's ATA holding staked tokens"
+            "Market's ATA — holds both staked tokens and uncollected fees."
           ],
           "writable": true,
           "pda": {
@@ -844,94 +857,6 @@
             "Signer's token account to receive refund"
           ],
           "writable": true
-        },
-        {
-          "name": "token_vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_vault_ata",
-          "docs": [
-            "Token vault ATA holding fee tokens"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "token_vault"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
         },
         {
           "name": "token_program"
@@ -1066,6 +991,31 @@
                 89
               ]
             }
+          }
+        },
+        {
+          "name": "central_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  114,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
           }
         },
         {
@@ -1690,9 +1640,15 @@
       ],
       "accounts": [
         {
-          "name": "signer",
+          "name": "payer",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "owner",
+          "docs": [
+            "No signature required: this instruction is permissionless."
+          ]
         },
         {
           "name": "market"
@@ -1722,7 +1678,7 @@
               },
               {
                 "kind": "account",
-                "path": "signer"
+                "path": "owner"
               },
               {
                 "kind": "account",
@@ -1742,70 +1698,146 @@
       ],
       "args": [
         {
-          "name": "state_nonce",
-          "type": "u128"
-        },
-        {
           "name": "stake_account_id",
           "type": "u32"
         }
       ]
     },
     {
-      "name": "init_token_vault",
+      "name": "init_stake_delegate",
       "discriminator": [
-        203,
-        26,
-        194,
-        169,
-        252,
-        226,
-        179,
-        180
+        153,
+        134,
+        247,
+        50,
+        147,
+        198,
+        224,
+        251
       ],
       "accounts": [
         {
-          "name": "payer",
+          "name": "owner",
           "writable": true,
           "signer": true
         },
         {
-          "name": "token_mint"
+          "name": "stake_account"
         },
         {
-          "name": "token_vault",
+          "name": "market"
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "stake_delegate",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
+                  115,
                   116,
-                  111,
+                  97,
                   107,
                   101,
-                  110,
                   95,
-                  118,
-                  97,
-                  117,
+                  100,
+                  101,
                   108,
-                  116
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
                 ]
               },
               {
                 "kind": "account",
-                "path": "token_mint"
+                "path": "stake_account"
               }
             ]
           }
+        },
+        {
+          "name": "stake_delegate_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "stake_delegate"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         },
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "authority",
+          "type": {
+            "option": "pubkey"
+          }
+        }
+      ]
     },
     {
       "name": "open_market",
@@ -2544,10 +2576,6 @@
       ],
       "accounts": [
         {
-          "name": "signer",
-          "signer": true
-        },
-        {
           "name": "payer",
           "writable": true,
           "signer": true
@@ -2580,7 +2608,8 @@
               },
               {
                 "kind": "account",
-                "path": "signer"
+                "path": "stake_account.owner",
+                "account": "StakeAccount"
               },
               {
                 "kind": "account",
@@ -2597,13 +2626,102 @@
           "name": "token_mint"
         },
         {
-          "name": "signer_token_account",
-          "writable": true
+          "name": "stake_delegate",
+          "docs": [
+            "Stake delegate PDA — bound to this specific stake_account, funds the",
+            "stake transfer via PDA-signed CPI from `stake_delegate_ata`."
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  116,
+                  97,
+                  107,
+                  101,
+                  95,
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "stake_account"
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_delegate_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "stake_delegate"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
         },
         {
           "name": "market_token_ata",
           "docs": [
-            "Market's ATA for holding staked tokens"
+            "Market's ATA holds staked tokens *and* uncollected fees. Fees are",
+            "tracked logically via `market.collected_fees`; physically they sit",
+            "in this same ATA until claimed."
           ],
           "writable": true,
           "pda": {
@@ -2658,122 +2776,6 @@
                 89
               ]
             }
-          }
-        },
-        {
-          "name": "token_vault",
-          "docs": [
-            "Token vault for fee collection"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_vault_ata",
-          "docs": [
-            "Token vault ATA for fee tokens"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "token_vault"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "central_state",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  114,
-                  97,
-                  108,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
           }
         },
         {
@@ -2890,6 +2892,10 @@
               32
             ]
           }
+        },
+        {
+          "name": "state_nonce",
+          "type": "u128"
         }
       ]
     },
@@ -2933,35 +2939,6 @@
         {
           "name": "stake_account",
           "writable": true
-        },
-        {
-          "name": "token_vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  111,
-                  107,
-                  101,
-                  110,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "market.mint",
-                "account": "OpportunityMarket"
-              }
-            ]
-          }
         }
       ],
       "args": [
@@ -3420,6 +3397,19 @@
       ]
     },
     {
+      "name": "StakeDelegate",
+      "discriminator": [
+        212,
+        10,
+        35,
+        97,
+        66,
+        60,
+        169,
+        214
+      ]
+    },
+    {
       "name": "TimelockedAccountChange",
       "discriminator": [
         212,
@@ -3430,19 +3420,6 @@
         51,
         205,
         22
-      ]
-    },
-    {
-      "name": "TokenVault",
-      "discriminator": [
-        121,
-        7,
-        84,
-        254,
-        151,
-        228,
-        43,
-        144
       ]
     }
   ],
@@ -3627,6 +3604,19 @@
         181,
         69,
         20
+      ]
+    },
+    {
+      "name": "StakeDelegateInitializedEvent",
+      "discriminator": [
+        165,
+        162,
+        62,
+        33,
+        54,
+        113,
+        31,
+        206
       ]
     },
     {
@@ -4387,7 +4377,7 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "token_vault",
+            "name": "market",
             "type": "pubkey"
           },
           {
@@ -4848,6 +4838,14 @@
           {
             "name": "paused",
             "type": "bool"
+          },
+          {
+            "name": "protocol_fee_bp",
+            "type": "u16"
+          },
+          {
+            "name": "collected_fees",
+            "type": "u64"
           }
         ]
       }
@@ -5440,6 +5438,63 @@
       }
     },
     {
+      "name": "StakeDelegate",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "stake_account",
+            "docs": [
+              "The single StakeAccount this delegate is bound to. Funds only ever",
+              "flow into the matching stake() call."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "docs": [
+              "Party authorized to call stake() against this delegate on the owner's",
+              "behalf. Set at init and immutable. Defaults to the stake account's",
+              "owner when caller passes None."
+            ],
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeDelegateInitializedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "stake_delegate",
+            "type": "pubkey"
+          },
+          {
+            "name": "stake_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "StakeOutput",
       "docs": [
         "The output of the callback instruction. Provided as a struct with ordered fields",
@@ -5737,38 +5792,6 @@
           {
             "name": "timestamp",
             "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "TokenVault",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "collected_fees",
-            "type": "u64"
-          },
-          {
-            "name": "_reserved",
-            "docs": [
-              "Reserved for future use"
-            ],
-            "type": {
-              "array": [
-                "u8",
-                128
-              ]
-            }
           }
         ]
       }

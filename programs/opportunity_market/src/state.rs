@@ -2,17 +2,6 @@ use anchor_lang::prelude::*;
 
 #[account]
 #[derive(InitSpace)]
-pub struct TokenVault {
-    pub bump: u8,
-    pub mint: Pubkey,
-    pub collected_fees: u64,
-
-    /// Reserved for future use
-    pub _reserved: [u8; 128],
-}
-
-#[account]
-#[derive(InitSpace)]
 pub struct CentralState {
     pub bump: u8,
 
@@ -80,6 +69,16 @@ pub struct OpportunityMarket {
 
     // If true, staking is halted
     pub paused: bool,
+
+    // Snapshot of CentralState.protocol_fee_bp at market creation time.
+    // Frozen for the life of the market so fee changes don't retroactively
+    // affect already-open markets.
+    pub protocol_fee_bp: u16,
+
+    // Cumulative protocol fees collected from successful stakes. Tokens
+    // physically sit in `market_token_ata`; this counter tracks how much of
+    // that balance is fee-claimable (vs. user-stake-claimable).
+    pub collected_fees: u64,
 }
 
 #[account]
@@ -106,6 +105,19 @@ pub struct StakeAccount {
     pub pending_stake: bool,                 // true while MPC stake computation is in flight
     pub pending_reveal: bool,                // true while MPC reveal computation is in flight
     pub id: u32,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct StakeDelegate {
+    pub bump: u8,
+    /// The single StakeAccount this delegate is bound to. Funds only ever
+    /// flow into the matching stake() call.
+    pub stake_account: Pubkey,
+    /// Party authorized to call stake() against this delegate on the owner's
+    /// behalf. Set at init and immutable. Defaults to the stake account's
+    /// owner when caller passes None.
+    pub authority: Pubkey,
 }
 
 #[account]

@@ -22,12 +22,15 @@ import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import {
   stake,
   initStakeAccount,
-  getTokenVaultAddress,
+  initStakeDelegate,
+  getStakeAccountAddress,
+  getStakeDelegateAddress,
   fetchOpportunityMarket,
   randomComputationOffset,
   createCipher,
   generateX25519Keypair,
 } from "../js/src";
+import { getTransferInstruction } from "@solana-program/token";
 import { randomBytes } from "crypto";
 import * as fs from "fs";
 import * as os from "os";
@@ -135,7 +138,6 @@ async function main() {
   }
 
   // Derive token accounts
-  const [tokenVaultAddress] = await getTokenVaultAddress(tokenMint, PROGRAM_ID);
   const [signerTokenAccount] = await findAssociatedTokenPda({
     mint: tokenMint,
     owner: payer.address,
@@ -145,11 +147,6 @@ async function main() {
   const [marketTokenAta] = await findAssociatedTokenPda({
     mint: tokenMint,
     owner: marketAddress,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
-  const [tokenVaultAta] = await findAssociatedTokenPda({
-    mint: tokenMint,
-    owner: tokenVaultAddress,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
   });
 
@@ -182,9 +179,9 @@ async function main() {
 
   console.log(`\nInitializing stake account (id: ${stakeAccountId})...`);
   const initIx = await initStakeAccount({
-    signer: payer,
+    payer,
+    owner: payer.address,
     market: marketAddress,
-    stateNonce,
     stakeAccountId,
     programAddress: PROGRAM_ID,
   });
@@ -201,6 +198,42 @@ async function main() {
   const initSig = await sendAndConfirmTx(rpc, signedInitTx);
   console.log(`Init stake account sig: ${initSig}`);
 
+  // Init stake delegate + fund its ATA
+  const [stakeAccountAddress] = await getStakeAccountAddress(payer.address, marketAddress, stakeAccountId, PROGRAM_ID);
+  const [stakeDelegateAddress] = await getStakeDelegateAddress(stakeAccountAddress, PROGRAM_ID);
+  const [stakeDelegateAta] = await findAssociatedTokenPda({
+    mint: tokenMint,
+    owner: stakeDelegateAddress,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+  });
+
+  const initDelegateIx = await initStakeDelegate({
+    owner: payer,
+    stakeAccount: stakeAccountAddress,
+    market: marketAddress,
+    mint: tokenMint,
+    tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    authority: null,
+    programAddress: PROGRAM_ID,
+  });
+  const fundDelegateIx = getTransferInstruction({
+    source: signerTokenAccount,
+    destination: stakeDelegateAta,
+    authority: payer,
+    amount,
+  });
+  const { value: latestBlockhashDelegate } = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
+  const signedDelegateTx = await signTransactionMessageWithSigners(
+    pipe(
+      createTransactionMessage({ version: 0 }),
+      (msg) => setTransactionMessageFeePayer(payer.address, msg),
+      (msg) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhashDelegate, msg),
+      (msg) => appendTransactionMessageInstructions([initDelegateIx as Instruction, fundDelegateIx as Instruction], msg)
+    )
+  );
+  await sendAndConfirmTx(rpc, signedDelegateTx);
+  console.log(`Init + fund stake delegate done`);
+
   // Encrypt option choice
   const cipher = createCipher(userX25519Keypair.secretKey, mxePublicKey);
   const inputNonce = randomBytes(16);
@@ -210,21 +243,19 @@ async function main() {
   console.log(`\nStaking ${amount} tokens on option ${optionId}...`);
   const stakeIx = await stake(
     {
-      signer: payer,
       payer,
       market: marketAddress,
+      stakeAccount: stakeAccountAddress,
       stakeAccountId,
       tokenMint,
-      signerTokenAccount,
       marketTokenAta,
-      tokenVault: tokenVaultAddress,
-      tokenVaultAta,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
       amount,
       selectedOptionCiphertext: optionCiphertext[0],
       inputNonce: deserializeLE(inputNonce),
       authorizedReaderNonce: deserializeLE(randomBytes(16)),
       userPubkey: userX25519Keypair.publicKey,
+      stateNonce,
       programAddress: PROGRAM_ID,
     },
     {

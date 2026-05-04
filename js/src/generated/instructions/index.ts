@@ -21,7 +21,7 @@ export * from './finalizeNewUpdateAuthority';
 export * from './incrementOptionTally';
 export * from './initCentralState';
 export * from './initStakeAccount';
-export * from './initTokenVault';
+export * from './initStakeDelegate';
 export * from './openMarket';
 export * from './pauseMarket';
 export * from './proposeNewFeeClaimer';

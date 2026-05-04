@@ -17,5 +17,5 @@ export * from './opportunityMarket';
 export * from './opportunityMarketOption';
 export * from './opportunityMarketSponsor';
 export * from './stakeAccount';
+export * from './stakeDelegate';
 export * from './timelockedAccountChange';
-export * from './tokenVault';

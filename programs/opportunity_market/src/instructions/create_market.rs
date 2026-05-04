@@ -4,9 +4,9 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
-use crate::constants::OPPORTUNITY_MARKET_SEED;
+use crate::constants::{CENTRAL_STATE_SEED, OPPORTUNITY_MARKET_SEED};
 use crate::error::ErrorCode;
-use crate::state::OpportunityMarket;
+use crate::state::{CentralState, OpportunityMarket};
 use crate::events::{emit_ts, MarketCreatedEvent};
 
 #[derive(Accounts)]
@@ -36,6 +36,12 @@ pub struct CreateMarket<'info> {
     )]
     pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    #[account(
+        seeds = [CENTRAL_STATE_SEED],
+        bump = central_state.bump,
+    )]
+    pub central_state: Box<Account<'info, CentralState>>,
+
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -59,6 +65,7 @@ pub fn create_market(
     );
 
     let creator_key = ctx.accounts.creator.key();
+    let protocol_fee_bp = ctx.accounts.central_state.protocol_fee_bp;
     let market = &mut ctx.accounts.market;
     let mint = ctx.accounts.token_mint.key();
     market.bump = ctx.bumps.market;
@@ -77,6 +84,7 @@ pub fn create_market(
     market.authorized_reader_pubkey = authorized_reader_pubkey;
     market.allow_closing_early = allow_closing_early;
     market.paused = false;
+    market.protocol_fee_bp = protocol_fee_bp;
 
     emit_ts!(MarketCreatedEvent {
         market: market.key(),

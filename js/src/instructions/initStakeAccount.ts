@@ -6,9 +6,9 @@ import {
 import { type BaseInstructionParams } from "./instructionParams";
 
 export interface InitStakeAccountParams extends BaseInstructionParams {
-  signer: TransactionSigner;
+  payer: TransactionSigner;
+  owner: Address;
   market: Address;
-  stateNonce: bigint;
   stakeAccountId: number;
 }
 

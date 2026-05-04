@@ -16,8 +16,6 @@ import {
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
-  getU128Decoder,
-  getU128Encoder,
   getU32Decoder,
   getU32Encoder,
   transformEncoder,
@@ -56,7 +54,8 @@ export function getInitStakeAccountDiscriminatorBytes() {
 
 export type InitStakeAccountInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
-  TAccountSigner extends string | AccountMeta<string> = string,
+  TAccountPayer extends string | AccountMeta<string> = string,
+  TAccountOwner extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
   TAccountStakeAccount extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
@@ -66,10 +65,13 @@ export type InitStakeAccountInstruction<
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
-      TAccountSigner extends string
-        ? WritableSignerAccount<TAccountSigner> &
-            AccountSignerMeta<TAccountSigner>
-        : TAccountSigner,
+      TAccountPayer extends string
+        ? WritableSignerAccount<TAccountPayer> &
+            AccountSignerMeta<TAccountPayer>
+        : TAccountPayer,
+      TAccountOwner extends string
+        ? ReadonlyAccount<TAccountOwner>
+        : TAccountOwner,
       TAccountMarket extends string
         ? ReadonlyAccount<TAccountMarket>
         : TAccountMarket,
@@ -85,20 +87,15 @@ export type InitStakeAccountInstruction<
 
 export type InitStakeAccountInstructionData = {
   discriminator: ReadonlyUint8Array;
-  stateNonce: bigint;
   stakeAccountId: number;
 };
 
-export type InitStakeAccountInstructionDataArgs = {
-  stateNonce: number | bigint;
-  stakeAccountId: number;
-};
+export type InitStakeAccountInstructionDataArgs = { stakeAccountId: number };
 
 export function getInitStakeAccountInstructionDataEncoder(): FixedSizeEncoder<InitStakeAccountInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['stateNonce', getU128Encoder()],
       ['stakeAccountId', getU32Encoder()],
     ]),
     (value) => ({ ...value, discriminator: INIT_STAKE_ACCOUNT_DISCRIMINATOR })
@@ -108,7 +105,6 @@ export function getInitStakeAccountInstructionDataEncoder(): FixedSizeEncoder<In
 export function getInitStakeAccountInstructionDataDecoder(): FixedSizeDecoder<InitStakeAccountInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['stateNonce', getU128Decoder()],
     ['stakeAccountId', getU32Decoder()],
   ]);
 }
@@ -124,28 +120,32 @@ export function getInitStakeAccountInstructionDataCodec(): FixedSizeCodec<
 }
 
 export type InitStakeAccountAsyncInput<
-  TAccountSigner extends string = string,
+  TAccountPayer extends string = string,
+  TAccountOwner extends string = string,
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  signer: TransactionSigner<TAccountSigner>;
+  payer: TransactionSigner<TAccountPayer>;
+  /** No signature required: this instruction is permissionless. */
+  owner: Address<TAccountOwner>;
   market: Address<TAccountMarket>;
   stakeAccount?: Address<TAccountStakeAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
-  stateNonce: InitStakeAccountInstructionDataArgs['stateNonce'];
   stakeAccountId: InitStakeAccountInstructionDataArgs['stakeAccountId'];
 };
 
 export async function getInitStakeAccountInstructionAsync<
-  TAccountSigner extends string,
+  TAccountPayer extends string,
+  TAccountOwner extends string,
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: InitStakeAccountAsyncInput<
-    TAccountSigner,
+    TAccountPayer,
+    TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountSystemProgram
@@ -154,7 +154,8 @@ export async function getInitStakeAccountInstructionAsync<
 ): Promise<
   InitStakeAccountInstruction<
     TProgramAddress,
-    TAccountSigner,
+    TAccountPayer,
+    TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountSystemProgram
@@ -166,7 +167,8 @@ export async function getInitStakeAccountInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    signer: { value: input.signer ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -189,7 +191,7 @@ export async function getInitStakeAccountInstructionAsync<
             115, 116, 97, 107, 101, 95, 97, 99, 99, 111, 117, 110, 116,
           ])
         ),
-        getAddressEncoder().encode(expectAddress(accounts.signer.value)),
+        getAddressEncoder().encode(expectAddress(accounts.owner.value)),
         getAddressEncoder().encode(expectAddress(accounts.market.value)),
         getU32Encoder().encode(expectSome(args.stakeAccountId)),
       ],
@@ -203,7 +205,8 @@ export async function getInitStakeAccountInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.signer),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.owner),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.systemProgram),
@@ -214,7 +217,8 @@ export async function getInitStakeAccountInstructionAsync<
     programAddress,
   } as InitStakeAccountInstruction<
     TProgramAddress,
-    TAccountSigner,
+    TAccountPayer,
+    TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountSystemProgram
@@ -222,28 +226,32 @@ export async function getInitStakeAccountInstructionAsync<
 }
 
 export type InitStakeAccountInput<
-  TAccountSigner extends string = string,
+  TAccountPayer extends string = string,
+  TAccountOwner extends string = string,
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  signer: TransactionSigner<TAccountSigner>;
+  payer: TransactionSigner<TAccountPayer>;
+  /** No signature required: this instruction is permissionless. */
+  owner: Address<TAccountOwner>;
   market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
   systemProgram?: Address<TAccountSystemProgram>;
-  stateNonce: InitStakeAccountInstructionDataArgs['stateNonce'];
   stakeAccountId: InitStakeAccountInstructionDataArgs['stakeAccountId'];
 };
 
 export function getInitStakeAccountInstruction<
-  TAccountSigner extends string,
+  TAccountPayer extends string,
+  TAccountOwner extends string,
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: InitStakeAccountInput<
-    TAccountSigner,
+    TAccountPayer,
+    TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountSystemProgram
@@ -251,7 +259,8 @@ export function getInitStakeAccountInstruction<
   config?: { programAddress?: TProgramAddress }
 ): InitStakeAccountInstruction<
   TProgramAddress,
-  TAccountSigner,
+  TAccountPayer,
+  TAccountOwner,
   TAccountMarket,
   TAccountStakeAccount,
   TAccountSystemProgram
@@ -262,7 +271,8 @@ export function getInitStakeAccountInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    signer: { value: input.signer ?? null, isWritable: true },
+    payer: { value: input.payer ?? null, isWritable: true },
+    owner: { value: input.owner ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -284,7 +294,8 @@ export function getInitStakeAccountInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.signer),
+      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.owner),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.systemProgram),
@@ -295,7 +306,8 @@ export function getInitStakeAccountInstruction<
     programAddress,
   } as InitStakeAccountInstruction<
     TProgramAddress,
-    TAccountSigner,
+    TAccountPayer,
+    TAccountOwner,
     TAccountMarket,
     TAccountStakeAccount,
     TAccountSystemProgram
@@ -308,10 +320,12 @@ export type ParsedInitStakeAccountInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    signer: TAccountMetas[0];
-    market: TAccountMetas[1];
-    stakeAccount: TAccountMetas[2];
-    systemProgram: TAccountMetas[3];
+    payer: TAccountMetas[0];
+    /** No signature required: this instruction is permissionless. */
+    owner: TAccountMetas[1];
+    market: TAccountMetas[2];
+    stakeAccount: TAccountMetas[3];
+    systemProgram: TAccountMetas[4];
   };
   data: InitStakeAccountInstructionData;
 };
@@ -324,7 +338,7 @@ export function parseInitStakeAccountInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedInitStakeAccountInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 5) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -337,7 +351,8 @@ export function parseInitStakeAccountInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      signer: getNextAccount(),
+      payer: getNextAccount(),
+      owner: getNextAccount(),
       market: getNextAccount(),
       stakeAccount: getNextAccount(),
       systemProgram: getNextAccount(),
