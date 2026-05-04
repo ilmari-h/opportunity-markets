@@ -130,13 +130,6 @@ export async function sendTransaction(
   }
 
   if (simResult.value.err) {
-    if (!printLogs) {
-      console.error(`${logPrefix}Simulation failed:`, simResult.value.err);
-      if (logs) {
-        console.error(`${logPrefix}Logs:`);
-        logs.forEach((log) => console.error(`${logPrefix}  ${log}`));
-      }
-    }
     throw new OnChainError(simResult.value.err, logs);
   }
 
