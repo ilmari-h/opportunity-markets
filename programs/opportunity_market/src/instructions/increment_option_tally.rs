@@ -84,7 +84,7 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64
         .checked_add(user_score)
         .ok_or(ErrorCode::Overflow)?;
 
-    // Store the user's score on their stake account for reward calculation
+    // Store the user's score in their stake account for reward calculation
     ctx.accounts.stake_account.score = Some(user_score);
     ctx.accounts.stake_account.total_incremented = true;
 

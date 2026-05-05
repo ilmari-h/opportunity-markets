@@ -164,7 +164,6 @@ async function getMXEPublicKeyWithRetry(
     try {
       const mxePublicKey = await getMXEPublicKey(provider, programId);
       if (mxePublicKey) {
-        console.log(`MXE public key: ${Buffer.from(mxePublicKey).toString("hex")}`);
         return mxePublicKey;
       }
     } catch (error) {

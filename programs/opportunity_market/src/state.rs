@@ -112,12 +112,10 @@ pub struct StakeAccount {
 #[derive(InitSpace)]
 pub struct StakeDelegate {
     pub bump: u8,
-    /// The single StakeAccount this delegate is bound to. Funds only ever
-    /// flow into the matching stake() call.
+
     pub stake_account: Pubkey,
-    /// Party authorized to call stake() against this delegate on the owner's
-    /// behalf. Set at init and immutable. Defaults to the stake account's
-    /// owner when caller passes None.
+
+    // Party authorized to stake using this delegate and the bound stake account.
     pub authority: Pubkey,
 }
 
