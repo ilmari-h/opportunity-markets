@@ -70,15 +70,16 @@ pub struct OpportunityMarket {
     // If true, staking is halted
     pub paused: bool,
 
-    // Snapshot of CentralState.protocol_fee_bp at market creation time.
-    // Frozen for the life of the market so fee changes don't retroactively
-    // affect already-open markets.
+    // Snapshot of central state fee taken when market is created.
     pub protocol_fee_bp: u16,
 
     // Cumulative protocol fees collected from successful stakes. Tokens
     // physically sit in `market_token_ata`; this counter tracks how much of
     // that balance is fee-claimable (vs. user-stake-claimable).
     pub collected_fees: u64,
+
+    // Minimum stake amount (in SPL token base units) required for a stake.
+    pub min_stake_amount: u64,
 }
 
 #[account]

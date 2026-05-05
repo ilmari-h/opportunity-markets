@@ -86,6 +86,7 @@ export type OpportunityMarket = {
   paused: boolean;
   protocolFeeBp: number;
   collectedFees: bigint;
+  minStakeAmount: bigint;
 };
 
 export type OpportunityMarketArgs = {
@@ -108,6 +109,7 @@ export type OpportunityMarketArgs = {
   paused: boolean;
   protocolFeeBp: number;
   collectedFees: number | bigint;
+  minStakeAmount: number | bigint;
 };
 
 export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
@@ -136,6 +138,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['paused', getBooleanEncoder()],
       ['protocolFeeBp', getU16Encoder()],
       ['collectedFees', getU64Encoder()],
+      ['minStakeAmount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: OPPORTUNITY_MARKET_DISCRIMINATOR })
   );
@@ -166,6 +169,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['paused', getBooleanDecoder()],
     ['protocolFeeBp', getU16Decoder()],
     ['collectedFees', getU64Decoder()],
+    ['minStakeAmount', getU64Decoder()],
   ]);
 }
 

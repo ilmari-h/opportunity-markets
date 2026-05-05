@@ -115,6 +115,10 @@ pub fn stake(
     owner_signature: [u8; 64],
 ) -> Result<()> {
     require!(amount > 0, ErrorCode::InsufficientBalance);
+    require!(
+        amount >= ctx.accounts.market.min_stake_amount,
+        ErrorCode::StakeBelowMinimum
+    );
 
     // Enforce staking period is active
     let market = &ctx.accounts.market;
@@ -174,11 +178,9 @@ pub fn stake(
             .map_err(|_| error!(ErrorCode::InvalidSignature))?;
     }
 
-    // Transfer the full `amount` (net stake + fee portion) from the
-    // stake_delegate ATA into the market ATA, signed by the stake_delegate
-    // PDA. Fees live in the same ATA — `market.collected_fees` is the
-    // logical bookkeeping (incremented in the callback on success, refunded
-    // alongside the net amount in close_stuck_stake_account on failure).
+    // Transfer the full amount including fees to market ATA.
+    // Fees are tracked in market account.
+    // Stake is tracked in individual stake accounts.
     let stake_account_key = ctx.accounts.stake_account.key();
     let delegate_bump = ctx.accounts.stake_delegate.bump;
     let delegate_seeds: &[&[&[u8]]] = &[&[

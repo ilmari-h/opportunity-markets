@@ -58,6 +58,7 @@ pub fn create_market(
     allow_closing_early: bool,
     reveal_period_authority: Pubkey,
     earliness_cutoff_seconds: u64,
+    min_stake_amount: u64,
 ) -> Result<()> {
     require!(
         earliness_cutoff_seconds <= time_to_stake,
@@ -81,6 +82,7 @@ pub fn create_market(
     market.authorized_reader_pubkey = authorized_reader_pubkey;
     market.allow_closing_early = allow_closing_early;
     market.protocol_fee_bp = protocol_fee_bp;
+    market.min_stake_amount = min_stake_amount;
 
     emit_ts!(MarketCreatedEvent {
         market: market.key(),
@@ -93,7 +95,8 @@ pub fn create_market(
         authorized_reader_pubkey: authorized_reader_pubkey,
         unstake_delay_seconds: unstake_delay_seconds,
         allow_closing_early: allow_closing_early,
-        earliness_cutoff_seconds: earliness_cutoff_seconds
+        earliness_cutoff_seconds: earliness_cutoff_seconds,
+        min_stake_amount: min_stake_amount
     });
 
     Ok(())

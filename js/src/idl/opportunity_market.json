@@ -796,9 +796,6 @@
         },
         {
           "name": "market_token_ata",
-          "docs": [
-            "Market's ATA — holds both staked tokens and uncollected fees."
-          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -1073,6 +1070,10 @@
         },
         {
           "name": "earliness_cutoff_seconds",
+          "type": "u64"
+        },
+        {
+          "name": "min_stake_amount",
           "type": "u64"
         }
       ]
@@ -2638,8 +2639,7 @@
         {
           "name": "stake_delegate",
           "docs": [
-            "Stake delegate PDA — bound to this specific stake_account, funds the",
-            "stake transfer via PDA-signed CPI from `stake_delegate_ata`."
+            "Stake delegate PDA bound to this specific stake_account."
           ],
           "pda": {
             "seeds": [
@@ -2671,6 +2671,9 @@
         },
         {
           "name": "stake_delegate_ata",
+          "docs": [
+            "Funds the stake."
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -4062,6 +4065,11 @@
       "code": 6036,
       "name": "InvalidSignature",
       "msg": "Invalid user signature"
+    },
+    {
+      "code": 6037,
+      "name": "StakeBelowMinimum",
+      "msg": "Stake amount is below the market minimum"
     }
   ],
   "types": [
@@ -4709,6 +4717,10 @@
             "type": "bool"
           },
           {
+            "name": "min_stake_amount",
+            "type": "u64"
+          },
+          {
             "name": "timestamp",
             "type": "i64"
           }
@@ -5006,6 +5018,10 @@
           },
           {
             "name": "collected_fees",
+            "type": "u64"
+          },
+          {
+            "name": "min_stake_amount",
             "type": "u64"
           }
         ]

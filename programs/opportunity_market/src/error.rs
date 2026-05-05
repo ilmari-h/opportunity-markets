@@ -76,4 +76,6 @@ pub enum ErrorCode {
     SignatureExpired,
     #[msg("Invalid user signature")]
     InvalidSignature,
+    #[msg("Stake amount is below the market minimum")]
+    StakeBelowMinimum,
 }

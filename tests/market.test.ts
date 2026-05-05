@@ -13,6 +13,7 @@ import {
   OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED,
   OPPORTUNITY_MARKET_ERROR__INVALID_SIGNATURE,
   OPPORTUNITY_MARKET_ERROR__SIGNATURE_EXPIRED,
+  OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM,
   initStakeAccount,
   initStakeDelegate,
   stakeAsDelegate,
@@ -1372,5 +1373,44 @@ describe("OpportunityMarket", () => {
       () => submitStakeWithSignature(expiredSig),
       OPPORTUNITY_MARKET_ERROR__SIGNATURE_EXPIRED,
     );
+  });
+
+  it("rejects staking below the minimum stake amount", async () => {
+    const minStakeAmount = 100_000_000n;
+
+    const observer = loadObserverKeypair();
+
+    const runner = await TestRunner.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 1,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketConfig: {
+        rewardAmount: 1_000_000_000n,
+        timeToStake: 120n,
+        timeToReveal: 120n,
+        authorizedReaderPubkey: observer.publicKey,
+        minStakeAmount,
+      },
+    });
+
+    const openTimestamp = await runner.openMarket();
+    const { optionId } = await runner.addOption();
+
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    const user = runner.participants[0];
+
+    // Stake just below the minimum should fail
+    await shouldThrowCustomError(
+      () => runner.stakeOnOption(user, minStakeAmount - 1n, optionId),
+      OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM
+    );
+
+    // Stake at exactly the minimum should succeed
+    const stakeAccountId = await runner.stakeOnOption(user, minStakeAmount, optionId);
+    const stakeAccount = await runner.fetchStakeAccountData(user, stakeAccountId);
+    expect(stakeAccount.data.amount > 0n).to.be.true;
   });
 });

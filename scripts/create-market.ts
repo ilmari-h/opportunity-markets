@@ -95,6 +95,7 @@ async function main() {
     allowClosingEarly: config.allowClosingEarly,
     revealPeriodAuthority: payer.address,
     earlinessCutoffSeconds: BigInt(config.earlinessCutoffSeconds),
+    minStakeAmount: BigInt(config.minStakeAmount ?? 0),
     programAddress: PROGRAM_ID,
   });
 

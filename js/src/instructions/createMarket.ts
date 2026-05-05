@@ -19,6 +19,7 @@ export interface CreateMarketParams extends BaseInstructionParams {
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
   earlinessCutoffSeconds: bigint;
+  minStakeAmount: bigint;
 }
 
 export async function createMarket(
@@ -37,6 +38,7 @@ export async function createMarket(
     allowClosingEarly,
     revealPeriodAuthority,
     earlinessCutoffSeconds,
+    minStakeAmount,
     programAddress,
   } = input;
 
@@ -54,6 +56,7 @@ export async function createMarket(
       allowClosingEarly,
       revealPeriodAuthority,
       earlinessCutoffSeconds,
+      minStakeAmount,
     },
     programAddress ? { programAddress } : undefined
   );

@@ -40,6 +40,7 @@ export type MarketCreatedEvent = {
   authorizedReaderPubkey: Array<number>;
   unstakeDelaySeconds: bigint;
   allowClosingEarly: boolean;
+  minStakeAmount: bigint;
   timestamp: bigint;
 };
 
@@ -55,6 +56,7 @@ export type MarketCreatedEventArgs = {
   authorizedReaderPubkey: Array<number>;
   unstakeDelaySeconds: number | bigint;
   allowClosingEarly: boolean;
+  minStakeAmount: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -71,6 +73,7 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
     ['unstakeDelaySeconds', getU64Encoder()],
     ['allowClosingEarly', getBooleanEncoder()],
+    ['minStakeAmount', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -88,6 +91,7 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['unstakeDelaySeconds', getU64Decoder()],
     ['allowClosingEarly', getBooleanDecoder()],
+    ['minStakeAmount', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

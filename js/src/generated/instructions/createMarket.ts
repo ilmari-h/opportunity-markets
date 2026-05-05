@@ -116,6 +116,7 @@ export type CreateMarketInstructionData = {
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
   earlinessCutoffSeconds: bigint;
+  minStakeAmount: bigint;
 };
 
 export type CreateMarketInstructionDataArgs = {
@@ -128,6 +129,7 @@ export type CreateMarketInstructionDataArgs = {
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
   earlinessCutoffSeconds: number | bigint;
+  minStakeAmount: number | bigint;
 };
 
 export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<CreateMarketInstructionDataArgs> {
@@ -143,6 +145,7 @@ export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<Create
       ['allowClosingEarly', getBooleanEncoder()],
       ['revealPeriodAuthority', getAddressEncoder()],
       ['earlinessCutoffSeconds', getU64Encoder()],
+      ['minStakeAmount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: CREATE_MARKET_DISCRIMINATOR })
   );
@@ -160,6 +163,7 @@ export function getCreateMarketInstructionDataDecoder(): FixedSizeDecoder<Create
     ['allowClosingEarly', getBooleanDecoder()],
     ['revealPeriodAuthority', getAddressDecoder()],
     ['earlinessCutoffSeconds', getU64Decoder()],
+    ['minStakeAmount', getU64Decoder()],
   ]);
 }
 
@@ -201,6 +205,7 @@ export type CreateMarketAsyncInput<
   allowClosingEarly: CreateMarketInstructionDataArgs['allowClosingEarly'];
   revealPeriodAuthority: CreateMarketInstructionDataArgs['revealPeriodAuthority'];
   earlinessCutoffSeconds: CreateMarketInstructionDataArgs['earlinessCutoffSeconds'];
+  minStakeAmount: CreateMarketInstructionDataArgs['minStakeAmount'];
 };
 
 export async function getCreateMarketInstructionAsync<
@@ -369,6 +374,7 @@ export type CreateMarketInput<
   allowClosingEarly: CreateMarketInstructionDataArgs['allowClosingEarly'];
   revealPeriodAuthority: CreateMarketInstructionDataArgs['revealPeriodAuthority'];
   earlinessCutoffSeconds: CreateMarketInstructionDataArgs['earlinessCutoffSeconds'];
+  minStakeAmount: CreateMarketInstructionDataArgs['minStakeAmount'];
 };
 
 export function getCreateMarketInstruction<

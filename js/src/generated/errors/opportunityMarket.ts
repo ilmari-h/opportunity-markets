@@ -88,6 +88,8 @@ export const OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED = 0x1792; // 6034
 export const OPPORTUNITY_MARKET_ERROR__SIGNATURE_EXPIRED = 0x1793; // 6035
 /** InvalidSignature: Invalid user signature */
 export const OPPORTUNITY_MARKET_ERROR__INVALID_SIGNATURE = 0x1794; // 6036
+/** StakeBelowMinimum: Stake amount is below the market minimum */
+export const OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM = 0x1795; // 6037
 
 export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION
@@ -119,6 +121,7 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__PROTOCOL_FEE_TOO_HIGH
   | typeof OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED
   | typeof OPPORTUNITY_MARKET_ERROR__SIGNATURE_EXPIRED
+  | typeof OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM
   | typeof OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK
   | typeof OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE
   | typeof OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED
@@ -162,6 +165,7 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__PROTOCOL_FEE_TOO_HIGH]: `Protocol fee exceeds maximum 500 bp`,
     [OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED]: `Reveal period has already ended`,
     [OPPORTUNITY_MARKET_ERROR__SIGNATURE_EXPIRED]: `User signature has expired`,
+    [OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM]: `Stake amount is below the market minimum`,
     [OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK]: `Stake account is not in a stuck or failed state`,
     [OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE]: `Staking period is not active`,
     [OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED]: `Tally already incremented for this stake account`,

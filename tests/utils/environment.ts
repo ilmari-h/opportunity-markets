@@ -276,6 +276,7 @@ export async function createTestEnvironment(
     allowClosingEarly: true,
     revealPeriodAuthority: creatorAccount.keypair.address,
     earlinessCutoffSeconds: 0n,
+    minStakeAmount: 0n,
   });
 
   // Get latest blockhash

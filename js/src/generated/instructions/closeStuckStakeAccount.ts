@@ -150,7 +150,6 @@ export type CloseStuckStakeAccountAsyncInput<
   market: Address<TAccountMarket>;
   stakeAccount?: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market's ATA — holds both staked tokens and uncollected fees. */
   marketTokenAta?: Address<TAccountMarketTokenAta>;
   /** Signer's token account to receive refund */
   signerTokenAccount: Address<TAccountSignerTokenAccount>;
@@ -295,7 +294,6 @@ export type CloseStuckStakeAccountInput<
   market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market's ATA — holds both staked tokens and uncollected fees. */
   marketTokenAta: Address<TAccountMarketTokenAta>;
   /** Signer's token account to receive refund */
   signerTokenAccount: Address<TAccountSignerTokenAccount>;
@@ -408,7 +406,6 @@ export type ParsedCloseStuckStakeAccountInstruction<
     market: TAccountMetas[1];
     stakeAccount: TAccountMetas[2];
     tokenMint: TAccountMetas[3];
-    /** Market's ATA — holds both staked tokens and uncollected fees. */
     marketTokenAta: TAccountMetas[4];
     /** Signer's token account to receive refund */
     signerTokenAccount: TAccountMetas[5];

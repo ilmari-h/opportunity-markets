@@ -28,6 +28,7 @@ pub struct MarketCreatedEvent {
     pub authorized_reader_pubkey: [u8; 32],
     pub unstake_delay_seconds: u64,
     pub allow_closing_early: bool,
+    pub min_stake_amount: u64,
     pub timestamp: i64,
 }
 

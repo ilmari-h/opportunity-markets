@@ -249,11 +249,9 @@ export type StakeAsyncInput<
   market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /**
-   * Stake delegate PDA — bound to this specific stake_account, funds the
-   * stake transfer via PDA-signed CPI from `stake_delegate_ata`.
-   */
+  /** Stake delegate PDA bound to this specific stake_account. */
   stakeDelegate?: Address<TAccountStakeDelegate>;
+  /** Funds the stake. */
   stakeDelegateAta?: Address<TAccountStakeDelegateAta>;
   marketTokenAta?: Address<TAccountMarketTokenAta>;
   tokenProgram: Address<TAccountTokenProgram>;
@@ -530,11 +528,9 @@ export type StakeInput<
   market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /**
-   * Stake delegate PDA — bound to this specific stake_account, funds the
-   * stake transfer via PDA-signed CPI from `stake_delegate_ata`.
-   */
+  /** Stake delegate PDA bound to this specific stake_account. */
   stakeDelegate: Address<TAccountStakeDelegate>;
+  /** Funds the stake. */
   stakeDelegateAta: Address<TAccountStakeDelegateAta>;
   marketTokenAta: Address<TAccountMarketTokenAta>;
   tokenProgram: Address<TAccountTokenProgram>;
@@ -746,11 +742,9 @@ export type ParsedStakeInstruction<
     market: TAccountMetas[1];
     stakeAccount: TAccountMetas[2];
     tokenMint: TAccountMetas[3];
-    /**
-     * Stake delegate PDA — bound to this specific stake_account, funds the
-     * stake transfer via PDA-signed CPI from `stake_delegate_ata`.
-     */
+    /** Stake delegate PDA bound to this specific stake_account. */
     stakeDelegate: TAccountMetas[4];
+    /** Funds the stake. */
     stakeDelegateAta: TAccountMetas[5];
     marketTokenAta: TAccountMetas[6];
     tokenProgram: TAccountMetas[7];

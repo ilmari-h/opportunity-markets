@@ -93,6 +93,7 @@ interface MarketConfig {
   authorizedReaderPubkey: Uint8Array;
   allowClosingEarly: boolean;
   earlinessCutoffSeconds: bigint;
+  minStakeAmount: bigint;
 }
 
 export interface TestRunnerConfig {
@@ -145,6 +146,7 @@ const DEFAULT_CONFIG: Required<TestRunnerConfig> = {
     unstakeDelaySeconds: 10n, // 10 seconds
     allowClosingEarly: true, // Allow market to be closed before stake period ends
     earlinessCutoffSeconds: 0n,
+    minStakeAmount: 0n,
   },
 };
 
@@ -367,6 +369,7 @@ export class TestRunner {
       allowClosingEarly: marketConfig.allowClosingEarly,
       revealPeriodAuthority: runner.marketCreator.solanaKeypair.address,
       earlinessCutoffSeconds: marketConfig.earlinessCutoffSeconds,
+      minStakeAmount: marketConfig.minStakeAmount,
     });
 
     await sendTransaction(runner.rpc, runner.sendAndConfirm, runner.marketCreator.solanaKeypair, [createMarketIx], {
