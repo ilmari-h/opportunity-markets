@@ -6,6 +6,7 @@
  * @see https://github.com/codama-idl/codama
  */
 
+export * from './allowedMint';
 export * from './arciumSignerAccount';
 export * from './centralState';
 export * from './clockAccount';

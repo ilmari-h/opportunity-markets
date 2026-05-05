@@ -21,6 +21,7 @@ import {
   TOKEN_PROGRAM_ADDRESS,
 } from "@solana-program/token";
 import {
+  createAllowedMint,
   createMarket,
   fetchOpportunityMarket,
   getClaimFeesInstructionAsync,
@@ -294,6 +295,16 @@ export class TestRunner {
       creatorAccountBase.keypair.address
     );
     console.log(`  Mint created: ${runner.mint.address}`);
+
+    // Whitelist the mint via the central state update authority
+    console.log("Whitelisting mint...");
+    const allowedMintIx = await createAllowedMint({
+      updateAuthority: deployer,
+      tokenMint: runner.mint.address,
+    });
+    await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [allowedMintIx], {
+      label: "Create allowed mint",
+    });
 
     // Create ATAs and mint tokens for all accounts
     console.log("Creating ATAs and minting tokens...");

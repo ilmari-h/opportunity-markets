@@ -1,5 +1,7 @@
 export * from "./instructionParams";
+export * from "./createAllowedMint";
 export * from "./createMarket";
+export * from "./deleteAllowedMint";
 export * from "./initCompDef";
 export * from "./stake";
 export * from "./revealStake";

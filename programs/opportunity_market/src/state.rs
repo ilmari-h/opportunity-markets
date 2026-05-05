@@ -149,3 +149,10 @@ pub struct TimelockedAccountChange {
     pub execute_after: i64,
 }
 
+#[account]
+#[derive(InitSpace)]
+pub struct AllowedMint {
+    pub bump: u8,
+    pub mint: Pubkey,
+}
+

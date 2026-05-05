@@ -1,4 +1,4 @@
-pub const MAX_PROTOCOL_FEE_BP: u16 = 150;
+pub const MAX_PROTOCOL_FEE_BP: u16 = 500;
 
 /// Fixed timelock delay: 48 hours
 pub const TIMELOCK_DELAY_SECONDS: i64 = 48 * 60 * 60;
@@ -13,3 +13,4 @@ pub const TIMELOCKED_CHANGE_SEED: &[u8] = b"timelocked_change";
 pub const UPDATE_AUTHORITY_SEED: &[u8] = b"update_authority";
 pub const FEE_CLAIMER_SEED: &[u8] = b"fee_claimer";
 pub const STAKE_DELEGATE_SEED: &[u8] = b"stake_delegate";
+pub const ALLOWED_MINT_SEED: &[u8] = b"allowed_mint";

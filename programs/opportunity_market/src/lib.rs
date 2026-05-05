@@ -78,6 +78,14 @@ pub mod opportunity_market {
         instructions::cancel_fee_claimer_change(ctx)
     }
 
+    pub fn create_allowed_mint(ctx: Context<CreateAllowedMint>) -> Result<()> {
+        instructions::create_allowed_mint(ctx)
+    }
+
+    pub fn delete_allowed_mint(ctx: Context<DeleteAllowedMint>) -> Result<()> {
+        instructions::delete_allowed_mint(ctx)
+    }
+
     pub fn create_market(
         ctx: Context<CreateMarket>,
         market_index: u64,

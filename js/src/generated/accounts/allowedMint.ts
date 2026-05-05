@@ -37,110 +37,99 @@ import {
   type ReadonlyUint8Array,
 } from '@solana/kit';
 
-export const STAKE_DELEGATE_DISCRIMINATOR = new Uint8Array([
-  212, 10, 35, 97, 66, 60, 169, 214,
+export const ALLOWED_MINT_DISCRIMINATOR = new Uint8Array([
+  173, 229, 179, 46, 121, 164, 247, 6,
 ]);
 
-export function getStakeDelegateDiscriminatorBytes() {
+export function getAllowedMintDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    STAKE_DELEGATE_DISCRIMINATOR
+    ALLOWED_MINT_DISCRIMINATOR
   );
 }
 
-export type StakeDelegate = {
+export type AllowedMint = {
   discriminator: ReadonlyUint8Array;
   bump: number;
-  stakeAccount: Address;
-  authority: Address;
+  mint: Address;
 };
 
-export type StakeDelegateArgs = {
-  bump: number;
-  stakeAccount: Address;
-  authority: Address;
-};
+export type AllowedMintArgs = { bump: number; mint: Address };
 
-export function getStakeDelegateEncoder(): FixedSizeEncoder<StakeDelegateArgs> {
+export function getAllowedMintEncoder(): FixedSizeEncoder<AllowedMintArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['bump', getU8Encoder()],
-      ['stakeAccount', getAddressEncoder()],
-      ['authority', getAddressEncoder()],
+      ['mint', getAddressEncoder()],
     ]),
-    (value) => ({ ...value, discriminator: STAKE_DELEGATE_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: ALLOWED_MINT_DISCRIMINATOR })
   );
 }
 
-export function getStakeDelegateDecoder(): FixedSizeDecoder<StakeDelegate> {
+export function getAllowedMintDecoder(): FixedSizeDecoder<AllowedMint> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['bump', getU8Decoder()],
-    ['stakeAccount', getAddressDecoder()],
-    ['authority', getAddressDecoder()],
+    ['mint', getAddressDecoder()],
   ]);
 }
 
-export function getStakeDelegateCodec(): FixedSizeCodec<
-  StakeDelegateArgs,
-  StakeDelegate
+export function getAllowedMintCodec(): FixedSizeCodec<
+  AllowedMintArgs,
+  AllowedMint
 > {
-  return combineCodec(getStakeDelegateEncoder(), getStakeDelegateDecoder());
+  return combineCodec(getAllowedMintEncoder(), getAllowedMintDecoder());
 }
 
-export function decodeStakeDelegate<TAddress extends string = string>(
+export function decodeAllowedMint<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress>
-): Account<StakeDelegate, TAddress>;
-export function decodeStakeDelegate<TAddress extends string = string>(
+): Account<AllowedMint, TAddress>;
+export function decodeAllowedMint<TAddress extends string = string>(
   encodedAccount: MaybeEncodedAccount<TAddress>
-): MaybeAccount<StakeDelegate, TAddress>;
-export function decodeStakeDelegate<TAddress extends string = string>(
+): MaybeAccount<AllowedMint, TAddress>;
+export function decodeAllowedMint<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
-): Account<StakeDelegate, TAddress> | MaybeAccount<StakeDelegate, TAddress> {
+): Account<AllowedMint, TAddress> | MaybeAccount<AllowedMint, TAddress> {
   return decodeAccount(
     encodedAccount as MaybeEncodedAccount<TAddress>,
-    getStakeDelegateDecoder()
+    getAllowedMintDecoder()
   );
 }
 
-export async function fetchStakeDelegate<TAddress extends string = string>(
+export async function fetchAllowedMint<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<Account<StakeDelegate, TAddress>> {
-  const maybeAccount = await fetchMaybeStakeDelegate(rpc, address, config);
+): Promise<Account<AllowedMint, TAddress>> {
+  const maybeAccount = await fetchMaybeAllowedMint(rpc, address, config);
   assertAccountExists(maybeAccount);
   return maybeAccount;
 }
 
-export async function fetchMaybeStakeDelegate<TAddress extends string = string>(
+export async function fetchMaybeAllowedMint<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<MaybeAccount<StakeDelegate, TAddress>> {
+): Promise<MaybeAccount<AllowedMint, TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
-  return decodeStakeDelegate(maybeAccount);
+  return decodeAllowedMint(maybeAccount);
 }
 
-export async function fetchAllStakeDelegate(
+export async function fetchAllAllowedMint(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<Account<StakeDelegate>[]> {
-  const maybeAccounts = await fetchAllMaybeStakeDelegate(
-    rpc,
-    addresses,
-    config
-  );
+): Promise<Account<AllowedMint>[]> {
+  const maybeAccounts = await fetchAllMaybeAllowedMint(rpc, addresses, config);
   assertAccountsExist(maybeAccounts);
   return maybeAccounts;
 }
 
-export async function fetchAllMaybeStakeDelegate(
+export async function fetchAllMaybeAllowedMint(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<MaybeAccount<StakeDelegate>[]> {
+): Promise<MaybeAccount<AllowedMint>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
-  return maybeAccounts.map((maybeAccount) => decodeStakeDelegate(maybeAccount));
+  return maybeAccounts.map((maybeAccount) => decodeAllowedMint(maybeAccount));
 }

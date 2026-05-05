@@ -4,9 +4,9 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
-use crate::constants::{CENTRAL_STATE_SEED, OPPORTUNITY_MARKET_SEED};
+use crate::constants::{ALLOWED_MINT_SEED, CENTRAL_STATE_SEED, OPPORTUNITY_MARKET_SEED};
 use crate::error::ErrorCode;
-use crate::state::{CentralState, OpportunityMarket};
+use crate::state::{AllowedMint, CentralState, OpportunityMarket};
 use crate::events::{emit_ts, MarketCreatedEvent};
 
 #[derive(Accounts)]
@@ -41,6 +41,12 @@ pub struct CreateMarket<'info> {
         bump = central_state.bump,
     )]
     pub central_state: Box<Account<'info, CentralState>>,
+
+    #[account(
+        seeds = [ALLOWED_MINT_SEED, token_mint.key().as_ref()],
+        bump = allowed_mint.bump,
+    )]
+    pub allowed_mint: Box<Account<'info, AllowedMint>>,
 
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
