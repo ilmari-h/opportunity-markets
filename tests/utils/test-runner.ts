@@ -21,18 +21,17 @@ import {
   TOKEN_PROGRAM_ADDRESS,
 } from "@solana-program/token";
 import {
-  createAllowedMint,
   createMarket,
-  fetchFeeVault,
   fetchOpportunityMarket,
-  getFeeVaultAddress,
+  fetchTokenVault,
+  getTokenVaultAddress,
   getClaimFeesInstructionAsync,
   randomComputationOffset,
   randomStateNonce,
   ensureCentralState,
   addMarketOption,
   initStakeAccount,
-  initFeeVault,
+  initTokenVault,
   stake as stakeIx,
   selectWinningOptions as selectWinningOptionsIx,
   revealStake,
@@ -296,25 +295,16 @@ export class TestRunner {
     );
     console.log(`  Mint created: ${runner.mint.address}`);
 
-    // Whitelist the mint via the central state update authority
-    console.log("Whitelisting mint...");
-    const allowedMintIx = await createAllowedMint({
+    // Init the per-mint token vault (PDA + ATA in one ix). The vault's
+    // existence whitelists the mint for create_market.
+    console.log("Initializing token vault...");
+    const initTokenVaultIx = await initTokenVault({
       updateAuthority: deployer,
-      tokenMint: runner.mint.address,
-    });
-    await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [allowedMintIx], {
-      label: "Create allowed mint",
-    });
-
-    // Init the per-mint fee vault (PDA + ATA in one ix)
-    console.log("Initializing fee vault...");
-    const initFeeVaultIx = await initFeeVault({
-      payer: deployer,
       tokenMint: runner.mint.address,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
     });
-    await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [initFeeVaultIx], {
-      label: "Init fee vault",
+    await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [initTokenVaultIx], {
+      label: "Init token vault",
     });
 
     // Create ATAs and mint tokens for all accounts
@@ -380,7 +370,6 @@ export class TestRunner {
     const createMarketIx = await createMarket({
       creator: runner.marketCreator.solanaKeypair,
       tokenMint: runner.mint.address,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
       marketIndex,
       timeToStake: marketConfig.timeToStake,
       timeToReveal: marketConfig.timeToReveal,
@@ -770,19 +759,12 @@ export class TestRunner {
     stakeAccountId: number
   ): Promise<void> {
     const executor = this.getUser(executorId);
-
-    const [marketAta] = await findAssociatedTokenPda({
-      mint: this.mint.address,
-      owner: this.marketAddress,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    });
     const owner = this.getUser(stakeOwnerId);
 
     const ix = await doUnstakeEarlyIx({
       signer: executor.solanaKeypair,
       market: this.marketAddress,
       tokenMint: this.mint.address,
-      marketTokenAta: marketAta,
       ownerTokenAccount: owner.tokenAccount,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
       stakeAccountId,
@@ -904,7 +886,7 @@ export class TestRunner {
       this.getArciumConfig(computationOffset)
     );
 
-    // Build close stuck instruction (codama auto-derives feeVault/feeVaultAta from tokenMint)
+    // Build close stuck instruction (codama auto-derives tokenVault/tokenVaultAta from tokenMint)
     const closeStuckIx = await closeStuckStakeAccountIx({
       signer: user.solanaKeypair,
       market: this.marketAddress,
@@ -926,18 +908,11 @@ export class TestRunner {
     for (const r of requests) {
       const user = this.getUser(r.userId);
 
-      const [marketAta] = await findAssociatedTokenPda({
-        mint: this.mint.address,
-        owner: this.marketAddress,
-        tokenProgram: TOKEN_PROGRAM_ADDRESS,
-      });
-
       const ix = await reclaimStakeIx({
         signer: user.solanaKeypair,
         owner: user.solanaKeypair.address,
         market: this.marketAddress,
         tokenMint: this.mint.address,
-        marketTokenAta: marketAta,
         ownerTokenAccount: user.tokenAccount,
         tokenProgram: TOKEN_PROGRAM_ADDRESS,
         stakeAccountId: r.stakeAccountId,
@@ -998,9 +973,9 @@ export class TestRunner {
     return fetchOpportunityMarket(this.rpc, this.marketAddress);
   }
 
-  async fetchFeeVault() {
-    const [feeVaultAddress] = await getFeeVaultAddress(this.mint.address, this.programId);
-    return fetchFeeVault(this.rpc, feeVaultAddress);
+  async fetchTokenVault() {
+    const [tokenVaultAddress] = await getTokenVaultAddress(this.mint.address, this.programId);
+    return fetchTokenVault(this.rpc, tokenVaultAddress);
   }
 
   getMxePublicKey(): Uint8Array {
@@ -1084,13 +1059,14 @@ export class TestRunner {
     return this.marketConfig.unstakeDelaySeconds;
   }
 
-  async getMarketAta(): Promise<Address> {
-    const [marketAta] = await findAssociatedTokenPda({
+  async getTokenVaultAta(): Promise<Address> {
+    const [tokenVaultAddress] = await getTokenVaultAddress(this.mint.address, this.programId);
+    const [tokenVaultAta] = await findAssociatedTokenPda({
       mint: this.mint.address,
-      owner: this.marketAddress,
+      owner: tokenVaultAddress,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
     });
-    return marketAta;
+    return tokenVaultAta;
   }
 
   async getStakeAccountAddress(userId: Address, stakeAccountId: number): Promise<Address> {

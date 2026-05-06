@@ -9,7 +9,6 @@ import { type BaseInstructionParams } from "./instructionParams";
 export interface CreateMarketParams extends BaseInstructionParams {
   creator: TransactionSigner;
   tokenMint: Address;
-  tokenProgram: Address;
   marketIndex: bigint;
   timeToStake: bigint;
   timeToReveal: bigint;
@@ -28,7 +27,6 @@ export async function createMarket(
   const {
     creator,
     tokenMint,
-    tokenProgram,
     marketIndex,
     timeToReveal,
     timeToStake,
@@ -46,7 +44,6 @@ export async function createMarket(
     {
       creator,
       tokenMint,
-      tokenProgram,
       marketIndex,
       timeToStake,
       timeToReveal,

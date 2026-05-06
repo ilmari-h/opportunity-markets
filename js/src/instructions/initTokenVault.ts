@@ -1,20 +1,21 @@
 import { type TransactionSigner, type Address } from "@solana/kit";
 import {
-  getCreateAllowedMintInstructionAsync,
-  type CreateAllowedMintInstruction,
+  getInitTokenVaultInstructionAsync,
+  type InitTokenVaultInstruction,
 } from "../generated";
 import { type BaseInstructionParams } from "./instructionParams";
 
-export interface CreateAllowedMintParams extends BaseInstructionParams {
+export interface InitTokenVaultParams extends BaseInstructionParams {
   updateAuthority: TransactionSigner;
   tokenMint: Address;
+  tokenProgram: Address;
 }
 
-export async function createAllowedMint(
-  input: CreateAllowedMintParams
-): Promise<CreateAllowedMintInstruction<string>> {
+export async function initTokenVault(
+  input: InitTokenVaultParams
+): Promise<InitTokenVaultInstruction<string>> {
   const { programAddress, ...params } = input;
-  return getCreateAllowedMintInstructionAsync(
+  return getInitTokenVaultInstructionAsync(
     params,
     programAddress ? { programAddress } : undefined
   );

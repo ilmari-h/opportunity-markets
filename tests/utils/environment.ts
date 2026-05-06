@@ -266,7 +266,6 @@ export async function createTestEnvironment(
   const createMarketIx = await createMarket({
     creator: creatorAccount.keypair,
     tokenMint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
     marketIndex,
     timeToStake: marketConfig.timeToStake,
     timeToReveal: marketConfig.timeToReveal,

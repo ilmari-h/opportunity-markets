@@ -85,7 +85,6 @@ async function main() {
   const createMarketIx = await createMarket({
     creator: payer,
     tokenMint: address(TOKEN_MINT_ARG),
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
     marketIndex,
     timeToStake: BigInt(config.timeToStake),
     timeToReveal: BigInt(config.timeToReveal),

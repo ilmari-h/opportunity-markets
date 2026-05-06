@@ -179,7 +179,7 @@ pub struct StakeAccountInitializedEvent {
 
 #[event]
 pub struct FeesClaimedEvent {
-    pub fee_vault: Pubkey,
+    pub token_vault: Pubkey,
     pub mint: Pubkey,
     pub destination: Pubkey,
     pub amount: u64,
@@ -187,8 +187,8 @@ pub struct FeesClaimedEvent {
 }
 
 #[event]
-pub struct FeeVaultInitializedEvent {
-    pub fee_vault: Pubkey,
+pub struct TokenVaultInitializedEvent {
+    pub token_vault: Pubkey,
     pub mint: Pubkey,
     pub timestamp: i64,
 }

@@ -3,10 +3,10 @@ use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 
-use crate::constants::SPONSOR_SEED;
+use crate::constants::{SPONSOR_SEED, TOKEN_VAULT_SEED};
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, RewardAddedEvent};
-use crate::state::{OpportunityMarket, OpportunityMarketSponsor};
+use crate::state::{OpportunityMarket, OpportunityMarketSponsor, TokenVault};
 
 #[derive(Accounts)]
 pub struct AddReward<'info> {
@@ -39,14 +39,21 @@ pub struct AddReward<'info> {
     )]
     pub sponsor_token_account: InterfaceAccount<'info, TokenAccount>,
 
-    /// Market's ATA holding reward tokens
+    #[account(
+        seeds = [TOKEN_VAULT_SEED, token_mint.key().as_ref()],
+        bump = token_vault.bump,
+        constraint = token_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
+    )]
+    pub token_vault: Account<'info, TokenVault>,
+
+    /// Token vault ATA holding all program-held tokens for this mint.
     #[account(
         mut,
         associated_token::mint = token_mint,
-        associated_token::authority = market,
+        associated_token::authority = token_vault,
         associated_token::token_program = token_program,
     )]
-    pub market_token_ata: InterfaceAccount<'info, TokenAccount>,
+    pub token_vault_ata: InterfaceAccount<'info, TokenAccount>,
 
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
@@ -79,14 +86,14 @@ pub fn add_reward(ctx: Context<AddReward>, amount: u64, lock: bool) -> Result<()
         sponsor_account.reward_locked = true;
     }
 
-    // Transfer tokens from sponsor to market ATA
+    // Transfer tokens from sponsor to the token vault ATA.
     transfer_checked(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             TransferChecked {
                 from: ctx.accounts.sponsor_token_account.to_account_info(),
                 mint: ctx.accounts.token_mint.to_account_info(),
-                to: ctx.accounts.market_token_ata.to_account_info(),
+                to: ctx.accounts.token_vault_ata.to_account_info(),
                 authority: ctx.accounts.sponsor.to_account_info(),
             },
         ),

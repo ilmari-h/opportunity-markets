@@ -10,7 +10,6 @@ export interface ReclaimStakeParams extends BaseInstructionParams {
   owner: Address;
   market: Address;
   tokenMint: Address;
-  marketTokenAta: Address;
   ownerTokenAccount: Address;
   tokenProgram: Address;
   stakeAccountId: number;

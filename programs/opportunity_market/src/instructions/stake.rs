@@ -5,10 +5,10 @@ use anchor_spl::token_interface::{
 use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
-use crate::constants::{FEE_VAULT_SEED, STAKE_ACCOUNT_SEED};
+use crate::constants::{STAKE_ACCOUNT_SEED, TOKEN_VAULT_SEED};
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, StakedEvent};
-use crate::state::{FeeVault, OpportunityMarket, StakeAccount};
+use crate::state::{OpportunityMarket, StakeAccount, TokenVault};
 use crate::COMP_DEF_OFFSET_STAKE;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
 
@@ -54,31 +54,25 @@ pub struct Stake<'info> {
     )]
     pub signer_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    /// Per-mint vault. Tracks `collected_fees` and owns `token_vault_ata`,
+    /// the single ATA holding all program-held tokens for this mint.
+    #[account(
+        mut,
+        seeds = [TOKEN_VAULT_SEED, token_mint.key().as_ref()],
+        bump = token_vault.bump,
+        constraint = token_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
+    )]
+    pub token_vault: Box<Account<'info, TokenVault>>,
+
+    /// Receives the full staked amount (net + fee). The fee portion is only
+    /// counted toward `token_vault.collected_fees` on a successful callback.
     #[account(
         mut,
         associated_token::mint = token_mint,
-        associated_token::authority = market,
+        associated_token::authority = token_vault,
         associated_token::token_program = token_program,
     )]
-    pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    /// Per-mint fee vault. Tracks `collected_fees` and owns `fee_vault_ata`.
-    #[account(
-        mut,
-        seeds = [FEE_VAULT_SEED, token_mint.key().as_ref()],
-        bump = fee_vault.bump,
-        constraint = fee_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
-    )]
-    pub fee_vault: Box<Account<'info, FeeVault>>,
-
-    /// Receives the fee portion of every stake.
-    #[account(
-        mut,
-        associated_token::mint = token_mint,
-        associated_token::authority = fee_vault,
-        associated_token::token_program = token_program,
-    )]
-    pub fee_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub token_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Interface<'info, TokenInterface>,
 
@@ -155,38 +149,22 @@ pub fn stake(
         .checked_sub(fee)
         .ok_or(ErrorCode::Overflow)?;
 
-    // Net amount → market ATA (claimable by stakers).
+    // Move the full amount into the token vault ATA. Per-stake accounting on
+    // `stake_account.amount` / `stake_account.fee` is what controls how the
+    // tokens may flow back out (reclaim, reward payout, fee claim, refund).
     transfer_checked(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
             TransferChecked {
                 from: ctx.accounts.signer_token_account.to_account_info(),
                 mint: ctx.accounts.token_mint.to_account_info(),
-                to: ctx.accounts.market_token_ata.to_account_info(),
+                to: ctx.accounts.token_vault_ata.to_account_info(),
                 authority: ctx.accounts.signer.to_account_info(),
             },
         ),
-        net_amount,
+        amount,
         ctx.accounts.token_mint.decimals,
     )?;
-
-    // Fee → fee vault ATA. Counted toward `fee_vault.collected_fees` only on
-    // a successful stake_callback so stuck stakes can be refunded cleanly.
-    if fee > 0 {
-        transfer_checked(
-            CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                TransferChecked {
-                    from: ctx.accounts.signer_token_account.to_account_info(),
-                    mint: ctx.accounts.token_mint.to_account_info(),
-                    to: ctx.accounts.fee_vault_ata.to_account_info(),
-                    authority: ctx.accounts.signer.to_account_info(),
-                },
-            ),
-            fee,
-            ctx.accounts.token_mint.decimals,
-        )?;
-    }
 
     // Set stake account fields
     ctx.accounts.stake_account.staked_at_timestamp = Some(current_timestamp);
@@ -198,7 +176,7 @@ pub fn stake(
     ctx.accounts.stake_account.pending_stake = true;
 
     let stake_account_key = ctx.accounts.stake_account.key();
-    let fee_vault_key = ctx.accounts.fee_vault.key();
+    let token_vault_key = ctx.accounts.token_vault.key();
 
     // Build args for encrypted computation
     let args = ArgBuilder::new()
@@ -231,7 +209,7 @@ pub fn stake(
                     is_writable: true,
                 },
                 CallbackAccount {
-                    pubkey: fee_vault_key,
+                    pubkey: token_vault_key,
                     is_writable: true,
                 },
             ],
@@ -264,10 +242,10 @@ pub struct StakeCallback<'info> {
     pub stake_account: Box<Account<'info, StakeAccount>>,
     #[account(
         mut,
-        seeds = [FEE_VAULT_SEED, fee_vault.mint.as_ref()],
-        bump = fee_vault.bump,
+        seeds = [TOKEN_VAULT_SEED, token_vault.mint.as_ref()],
+        bump = token_vault.bump,
     )]
-    pub fee_vault: Box<Account<'info, FeeVault>>,
+    pub token_vault: Box<Account<'info, TokenVault>>,
 }
 
 pub fn stake_callback(
@@ -297,10 +275,12 @@ pub fn stake_callback(
     ctx.accounts.stake_account.state_nonce_disclosure = stake_data_shared.nonce;
     ctx.accounts.stake_account.encrypted_option_disclosure = stake_data_shared.ciphertexts[0];
 
-    // Count fee as collected only on successful stake.
+    // Count fee as collected only on successful stake. The fee tokens are
+    // already in `token_vault_ata` (mixed with stakes); this counter is what
+    // claim_fees uses to know how much of the ATA is fee-claimable.
     let fee = ctx.accounts.stake_account.fee;
     if fee > 0 {
-        ctx.accounts.fee_vault.collected_fees = ctx.accounts.fee_vault
+        ctx.accounts.token_vault.collected_fees = ctx.accounts.token_vault
             .collected_fees
             .checked_add(fee)
             .ok_or(ErrorCode::Overflow)?;

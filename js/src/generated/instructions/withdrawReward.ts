@@ -55,7 +55,8 @@ export type WithdrawRewardInstruction<
   TAccountMarket extends string | AccountMeta<string> = string,
   TAccountSponsorAccount extends string | AccountMeta<string> = string,
   TAccountTokenMint extends string | AccountMeta<string> = string,
-  TAccountMarketTokenAta extends string | AccountMeta<string> = string,
+  TAccountTokenVault extends string | AccountMeta<string> = string,
+  TAccountTokenVaultAta extends string | AccountMeta<string> = string,
   TAccountRefundTokenAccount extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -76,9 +77,12 @@ export type WithdrawRewardInstruction<
       TAccountTokenMint extends string
         ? ReadonlyAccount<TAccountTokenMint>
         : TAccountTokenMint,
-      TAccountMarketTokenAta extends string
-        ? WritableAccount<TAccountMarketTokenAta>
-        : TAccountMarketTokenAta,
+      TAccountTokenVault extends string
+        ? ReadonlyAccount<TAccountTokenVault>
+        : TAccountTokenVault,
+      TAccountTokenVaultAta extends string
+        ? WritableAccount<TAccountTokenVaultAta>
+        : TAccountTokenVaultAta,
       TAccountRefundTokenAccount extends string
         ? WritableAccount<TAccountRefundTokenAccount>
         : TAccountRefundTokenAccount,
@@ -123,7 +127,8 @@ export type WithdrawRewardAsyncInput<
   TAccountMarket extends string = string,
   TAccountSponsorAccount extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountMarketTokenAta extends string = string,
+  TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
   TAccountRefundTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
@@ -131,8 +136,9 @@ export type WithdrawRewardAsyncInput<
   market: Address<TAccountMarket>;
   sponsorAccount?: Address<TAccountSponsorAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market's ATA holding reward tokens */
-  marketTokenAta?: Address<TAccountMarketTokenAta>;
+  tokenVault?: Address<TAccountTokenVault>;
+  /** Token vault ATA holding all program-held tokens for this mint. */
+  tokenVaultAta?: Address<TAccountTokenVaultAta>;
   /** Sponsor's destination for refunded reward tokens */
   refundTokenAccount: Address<TAccountRefundTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
@@ -143,7 +149,8 @@ export async function getWithdrawRewardInstructionAsync<
   TAccountMarket extends string,
   TAccountSponsorAccount extends string,
   TAccountTokenMint extends string,
-  TAccountMarketTokenAta extends string,
+  TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
   TAccountRefundTokenAccount extends string,
   TAccountTokenProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
@@ -153,7 +160,8 @@ export async function getWithdrawRewardInstructionAsync<
     TAccountMarket,
     TAccountSponsorAccount,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
     TAccountRefundTokenAccount,
     TAccountTokenProgram
   >,
@@ -165,7 +173,8 @@ export async function getWithdrawRewardInstructionAsync<
     TAccountMarket,
     TAccountSponsorAccount,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
     TAccountRefundTokenAccount,
     TAccountTokenProgram
   >
@@ -180,7 +189,8 @@ export async function getWithdrawRewardInstructionAsync<
     market: { value: input.market ?? null, isWritable: true },
     sponsorAccount: { value: input.sponsorAccount ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
+    tokenVault: { value: input.tokenVault ?? null, isWritable: false },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
     refundTokenAccount: {
       value: input.refundTokenAccount ?? null,
       isWritable: true,
@@ -205,12 +215,23 @@ export async function getWithdrawRewardInstructionAsync<
       ],
     });
   }
-  if (!accounts.marketTokenAta.value) {
-    accounts.marketTokenAta.value = await getProgramDerivedAddress({
+  if (!accounts.tokenVault.value) {
+    accounts.tokenVault.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(
+          new Uint8Array([116, 111, 107, 101, 110, 95, 118, 97, 117, 108, 116])
+        ),
+        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
+      ],
+    });
+  }
+  if (!accounts.tokenVaultAta.value) {
+    accounts.tokenVaultAta.value = await getProgramDerivedAddress({
       programAddress:
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
-        getAddressEncoder().encode(expectAddress(accounts.market.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenVault.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
       ],
@@ -224,7 +245,8 @@ export async function getWithdrawRewardInstructionAsync<
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.sponsorAccount),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.marketTokenAta),
+      getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
       getAccountMeta(accounts.refundTokenAccount),
       getAccountMeta(accounts.tokenProgram),
     ],
@@ -236,7 +258,8 @@ export async function getWithdrawRewardInstructionAsync<
     TAccountMarket,
     TAccountSponsorAccount,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
     TAccountRefundTokenAccount,
     TAccountTokenProgram
   >);
@@ -247,7 +270,8 @@ export type WithdrawRewardInput<
   TAccountMarket extends string = string,
   TAccountSponsorAccount extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountMarketTokenAta extends string = string,
+  TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
   TAccountRefundTokenAccount extends string = string,
   TAccountTokenProgram extends string = string,
 > = {
@@ -255,8 +279,9 @@ export type WithdrawRewardInput<
   market: Address<TAccountMarket>;
   sponsorAccount: Address<TAccountSponsorAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market's ATA holding reward tokens */
-  marketTokenAta: Address<TAccountMarketTokenAta>;
+  tokenVault: Address<TAccountTokenVault>;
+  /** Token vault ATA holding all program-held tokens for this mint. */
+  tokenVaultAta: Address<TAccountTokenVaultAta>;
   /** Sponsor's destination for refunded reward tokens */
   refundTokenAccount: Address<TAccountRefundTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
@@ -267,7 +292,8 @@ export function getWithdrawRewardInstruction<
   TAccountMarket extends string,
   TAccountSponsorAccount extends string,
   TAccountTokenMint extends string,
-  TAccountMarketTokenAta extends string,
+  TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
   TAccountRefundTokenAccount extends string,
   TAccountTokenProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
@@ -277,7 +303,8 @@ export function getWithdrawRewardInstruction<
     TAccountMarket,
     TAccountSponsorAccount,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
     TAccountRefundTokenAccount,
     TAccountTokenProgram
   >,
@@ -288,7 +315,8 @@ export function getWithdrawRewardInstruction<
   TAccountMarket,
   TAccountSponsorAccount,
   TAccountTokenMint,
-  TAccountMarketTokenAta,
+  TAccountTokenVault,
+  TAccountTokenVaultAta,
   TAccountRefundTokenAccount,
   TAccountTokenProgram
 > {
@@ -302,7 +330,8 @@ export function getWithdrawRewardInstruction<
     market: { value: input.market ?? null, isWritable: true },
     sponsorAccount: { value: input.sponsorAccount ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
+    tokenVault: { value: input.tokenVault ?? null, isWritable: false },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
     refundTokenAccount: {
       value: input.refundTokenAccount ?? null,
       isWritable: true,
@@ -321,7 +350,8 @@ export function getWithdrawRewardInstruction<
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.sponsorAccount),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.marketTokenAta),
+      getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
       getAccountMeta(accounts.refundTokenAccount),
       getAccountMeta(accounts.tokenProgram),
     ],
@@ -333,7 +363,8 @@ export function getWithdrawRewardInstruction<
     TAccountMarket,
     TAccountSponsorAccount,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
     TAccountRefundTokenAccount,
     TAccountTokenProgram
   >);
@@ -349,11 +380,12 @@ export type ParsedWithdrawRewardInstruction<
     market: TAccountMetas[1];
     sponsorAccount: TAccountMetas[2];
     tokenMint: TAccountMetas[3];
-    /** Market's ATA holding reward tokens */
-    marketTokenAta: TAccountMetas[4];
+    tokenVault: TAccountMetas[4];
+    /** Token vault ATA holding all program-held tokens for this mint. */
+    tokenVaultAta: TAccountMetas[5];
     /** Sponsor's destination for refunded reward tokens */
-    refundTokenAccount: TAccountMetas[5];
-    tokenProgram: TAccountMetas[6];
+    refundTokenAccount: TAccountMetas[6];
+    tokenProgram: TAccountMetas[7];
   };
   data: WithdrawRewardInstructionData;
 };
@@ -366,7 +398,7 @@ export function parseWithdrawRewardInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedWithdrawRewardInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 7) {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -383,7 +415,8 @@ export function parseWithdrawRewardInstruction<
       market: getNextAccount(),
       sponsorAccount: getNextAccount(),
       tokenMint: getNextAccount(),
-      marketTokenAta: getNextAccount(),
+      tokenVault: getNextAccount(),
+      tokenVaultAta: getNextAccount(),
       refundTokenAccount: getNextAccount(),
       tokenProgram: getNextAccount(),
     },

@@ -9,7 +9,6 @@ export interface DoUnstakeEarlyParams extends BaseInstructionParams {
   signer: TransactionSigner;
   market: Address;
   tokenMint: Address;
-  marketTokenAta: Address;
   ownerTokenAccount: Address;
   tokenProgram: Address;
   stakeAccountId: number;

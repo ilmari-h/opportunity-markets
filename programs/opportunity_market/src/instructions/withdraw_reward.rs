@@ -5,8 +5,8 @@ use anchor_spl::token_interface::{
 
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, RewardWithdrawnEvent};
-use crate::constants::{OPPORTUNITY_MARKET_SEED, SPONSOR_SEED};
-use crate::state::{OpportunityMarket, OpportunityMarketSponsor};
+use crate::constants::{SPONSOR_SEED, TOKEN_VAULT_SEED};
+use crate::state::{OpportunityMarket, OpportunityMarketSponsor, TokenVault};
 
 #[derive(Accounts)]
 pub struct WithdrawReward<'info> {
@@ -27,14 +27,21 @@ pub struct WithdrawReward<'info> {
     #[account(address = market.mint)]
     pub token_mint: InterfaceAccount<'info, Mint>,
 
-    /// Market's ATA holding reward tokens
+    #[account(
+        seeds = [TOKEN_VAULT_SEED, token_mint.key().as_ref()],
+        bump = token_vault.bump,
+        constraint = token_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
+    )]
+    pub token_vault: Account<'info, TokenVault>,
+
+    /// Token vault ATA holding all program-held tokens for this mint.
     #[account(
         mut,
         associated_token::mint = token_mint,
-        associated_token::authority = market,
+        associated_token::authority = token_vault,
         associated_token::token_program = token_program,
     )]
-    pub market_token_ata: InterfaceAccount<'info, TokenAccount>,
+    pub token_vault_ata: InterfaceAccount<'info, TokenAccount>,
 
     /// Sponsor's destination for refunded reward tokens
     #[account(
@@ -67,28 +74,25 @@ pub fn withdraw_reward(ctx: Context<WithdrawReward>) -> Result<()> {
 
     let reward_amount = sponsor_account.reward_deposited;
 
-    // Transfer sponsor's deposited amount from market ATA to refund account
     if reward_amount > 0 {
-        let creator_key = market.creator;
-        let index_bytes = market.index.to_le_bytes();
-        let bump = market.bump;
-        let signer_seeds: &[&[&[u8]]] = &[&[
-            OPPORTUNITY_MARKET_SEED,
-            creator_key.as_ref(),
-            &index_bytes,
-            &[bump],
+        let vault_bump = ctx.accounts.token_vault.bump;
+        let mint_key = ctx.accounts.token_mint.key();
+        let vault_seeds: &[&[&[u8]]] = &[&[
+            TOKEN_VAULT_SEED,
+            mint_key.as_ref(),
+            &[vault_bump],
         ]];
 
         transfer_checked(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
                 TransferChecked {
-                    from: ctx.accounts.market_token_ata.to_account_info(),
+                    from: ctx.accounts.token_vault_ata.to_account_info(),
                     mint: ctx.accounts.token_mint.to_account_info(),
                     to: ctx.accounts.refund_token_account.to_account_info(),
-                    authority: market.to_account_info(),
+                    authority: ctx.accounts.token_vault.to_account_info(),
                 },
-                signer_seeds,
+                vault_seeds,
             ),
             reward_amount,
             ctx.accounts.token_mint.decimals,

@@ -58,10 +58,9 @@ export type CloseStuckStakeAccountInstruction<
   TAccountMarket extends string | AccountMeta<string> = string,
   TAccountStakeAccount extends string | AccountMeta<string> = string,
   TAccountTokenMint extends string | AccountMeta<string> = string,
-  TAccountMarketTokenAta extends string | AccountMeta<string> = string,
   TAccountSignerTokenAccount extends string | AccountMeta<string> = string,
-  TAccountFeeVault extends string | AccountMeta<string> = string,
-  TAccountFeeVaultAta extends string | AccountMeta<string> = string,
+  TAccountTokenVault extends string | AccountMeta<string> = string,
+  TAccountTokenVaultAta extends string | AccountMeta<string> = string,
   TAccountTokenProgram extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
     '11111111111111111111111111111111',
@@ -83,18 +82,15 @@ export type CloseStuckStakeAccountInstruction<
       TAccountTokenMint extends string
         ? ReadonlyAccount<TAccountTokenMint>
         : TAccountTokenMint,
-      TAccountMarketTokenAta extends string
-        ? WritableAccount<TAccountMarketTokenAta>
-        : TAccountMarketTokenAta,
       TAccountSignerTokenAccount extends string
         ? WritableAccount<TAccountSignerTokenAccount>
         : TAccountSignerTokenAccount,
-      TAccountFeeVault extends string
-        ? WritableAccount<TAccountFeeVault>
-        : TAccountFeeVault,
-      TAccountFeeVaultAta extends string
-        ? WritableAccount<TAccountFeeVaultAta>
-        : TAccountFeeVaultAta,
+      TAccountTokenVault extends string
+        ? WritableAccount<TAccountTokenVault>
+        : TAccountTokenVault,
+      TAccountTokenVaultAta extends string
+        ? WritableAccount<TAccountTokenVaultAta>
+        : TAccountTokenVaultAta,
       TAccountTokenProgram extends string
         ? ReadonlyAccount<TAccountTokenProgram>
         : TAccountTokenProgram,
@@ -149,10 +145,9 @@ export type CloseStuckStakeAccountAsyncInput<
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountMarketTokenAta extends string = string,
   TAccountSignerTokenAccount extends string = string,
-  TAccountFeeVault extends string = string,
-  TAccountFeeVaultAta extends string = string,
+  TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
@@ -160,11 +155,10 @@ export type CloseStuckStakeAccountAsyncInput<
   market: Address<TAccountMarket>;
   stakeAccount?: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  marketTokenAta?: Address<TAccountMarketTokenAta>;
   /** Signer's token account to receive refund */
   signerTokenAccount: Address<TAccountSignerTokenAccount>;
-  feeVault?: Address<TAccountFeeVault>;
-  feeVaultAta?: Address<TAccountFeeVaultAta>;
+  tokenVault?: Address<TAccountTokenVault>;
+  tokenVaultAta?: Address<TAccountTokenVaultAta>;
   tokenProgram: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   stakeAccountId: CloseStuckStakeAccountInstructionDataArgs['stakeAccountId'];
@@ -175,10 +169,9 @@ export async function getCloseStuckStakeAccountInstructionAsync<
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
   TAccountTokenMint extends string,
-  TAccountMarketTokenAta extends string,
   TAccountSignerTokenAccount extends string,
-  TAccountFeeVault extends string,
-  TAccountFeeVaultAta extends string,
+  TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
@@ -188,10 +181,9 @@ export async function getCloseStuckStakeAccountInstructionAsync<
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
     TAccountSignerTokenAccount,
-    TAccountFeeVault,
-    TAccountFeeVaultAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
     TAccountTokenProgram,
     TAccountSystemProgram
   >,
@@ -203,10 +195,9 @@ export async function getCloseStuckStakeAccountInstructionAsync<
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
     TAccountSignerTokenAccount,
-    TAccountFeeVault,
-    TAccountFeeVaultAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
     TAccountTokenProgram,
     TAccountSystemProgram
   >
@@ -221,13 +212,12 @@ export async function getCloseStuckStakeAccountInstructionAsync<
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     signerTokenAccount: {
       value: input.signerTokenAccount ?? null,
       isWritable: true,
     },
-    feeVault: { value: input.feeVault ?? null, isWritable: true },
-    feeVaultAta: { value: input.feeVaultAta ?? null, isWritable: true },
+    tokenVault: { value: input.tokenVault ?? null, isWritable: true },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -255,34 +245,23 @@ export async function getCloseStuckStakeAccountInstructionAsync<
       ],
     });
   }
-  if (!accounts.marketTokenAta.value) {
-    accounts.marketTokenAta.value = await getProgramDerivedAddress({
-      programAddress:
-        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
-      seeds: [
-        getAddressEncoder().encode(expectAddress(accounts.market.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
-        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
-      ],
-    });
-  }
-  if (!accounts.feeVault.value) {
-    accounts.feeVault.value = await getProgramDerivedAddress({
+  if (!accounts.tokenVault.value) {
+    accounts.tokenVault.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
         getBytesEncoder().encode(
-          new Uint8Array([102, 101, 101, 95, 118, 97, 117, 108, 116])
+          new Uint8Array([116, 111, 107, 101, 110, 95, 118, 97, 117, 108, 116])
         ),
         getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
       ],
     });
   }
-  if (!accounts.feeVaultAta.value) {
-    accounts.feeVaultAta.value = await getProgramDerivedAddress({
+  if (!accounts.tokenVaultAta.value) {
+    accounts.tokenVaultAta.value = await getProgramDerivedAddress({
       programAddress:
         'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
       seeds: [
-        getAddressEncoder().encode(expectAddress(accounts.feeVault.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenVault.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
         getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
       ],
@@ -300,10 +279,9 @@ export async function getCloseStuckStakeAccountInstructionAsync<
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.marketTokenAta),
       getAccountMeta(accounts.signerTokenAccount),
-      getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.feeVaultAta),
+      getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
@@ -317,10 +295,9 @@ export async function getCloseStuckStakeAccountInstructionAsync<
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
     TAccountSignerTokenAccount,
-    TAccountFeeVault,
-    TAccountFeeVaultAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
     TAccountTokenProgram,
     TAccountSystemProgram
   >);
@@ -331,10 +308,9 @@ export type CloseStuckStakeAccountInput<
   TAccountMarket extends string = string,
   TAccountStakeAccount extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountMarketTokenAta extends string = string,
   TAccountSignerTokenAccount extends string = string,
-  TAccountFeeVault extends string = string,
-  TAccountFeeVaultAta extends string = string,
+  TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
   TAccountTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
@@ -342,11 +318,10 @@ export type CloseStuckStakeAccountInput<
   market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  marketTokenAta: Address<TAccountMarketTokenAta>;
   /** Signer's token account to receive refund */
   signerTokenAccount: Address<TAccountSignerTokenAccount>;
-  feeVault: Address<TAccountFeeVault>;
-  feeVaultAta: Address<TAccountFeeVaultAta>;
+  tokenVault: Address<TAccountTokenVault>;
+  tokenVaultAta: Address<TAccountTokenVaultAta>;
   tokenProgram: Address<TAccountTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   stakeAccountId: CloseStuckStakeAccountInstructionDataArgs['stakeAccountId'];
@@ -357,10 +332,9 @@ export function getCloseStuckStakeAccountInstruction<
   TAccountMarket extends string,
   TAccountStakeAccount extends string,
   TAccountTokenMint extends string,
-  TAccountMarketTokenAta extends string,
   TAccountSignerTokenAccount extends string,
-  TAccountFeeVault extends string,
-  TAccountFeeVaultAta extends string,
+  TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
   TAccountTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
@@ -370,10 +344,9 @@ export function getCloseStuckStakeAccountInstruction<
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
     TAccountSignerTokenAccount,
-    TAccountFeeVault,
-    TAccountFeeVaultAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
     TAccountTokenProgram,
     TAccountSystemProgram
   >,
@@ -384,10 +357,9 @@ export function getCloseStuckStakeAccountInstruction<
   TAccountMarket,
   TAccountStakeAccount,
   TAccountTokenMint,
-  TAccountMarketTokenAta,
   TAccountSignerTokenAccount,
-  TAccountFeeVault,
-  TAccountFeeVaultAta,
+  TAccountTokenVault,
+  TAccountTokenVaultAta,
   TAccountTokenProgram,
   TAccountSystemProgram
 > {
@@ -401,13 +373,12 @@ export function getCloseStuckStakeAccountInstruction<
     market: { value: input.market ?? null, isWritable: false },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    marketTokenAta: { value: input.marketTokenAta ?? null, isWritable: true },
     signerTokenAccount: {
       value: input.signerTokenAccount ?? null,
       isWritable: true,
     },
-    feeVault: { value: input.feeVault ?? null, isWritable: true },
-    feeVaultAta: { value: input.feeVaultAta ?? null, isWritable: true },
+    tokenVault: { value: input.tokenVault ?? null, isWritable: true },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
     tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
@@ -432,10 +403,9 @@ export function getCloseStuckStakeAccountInstruction<
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.stakeAccount),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.marketTokenAta),
       getAccountMeta(accounts.signerTokenAccount),
-      getAccountMeta(accounts.feeVault),
-      getAccountMeta(accounts.feeVaultAta),
+      getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
       getAccountMeta(accounts.tokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
@@ -449,10 +419,9 @@ export function getCloseStuckStakeAccountInstruction<
     TAccountMarket,
     TAccountStakeAccount,
     TAccountTokenMint,
-    TAccountMarketTokenAta,
     TAccountSignerTokenAccount,
-    TAccountFeeVault,
-    TAccountFeeVaultAta,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
     TAccountTokenProgram,
     TAccountSystemProgram
   >);
@@ -468,13 +437,12 @@ export type ParsedCloseStuckStakeAccountInstruction<
     market: TAccountMetas[1];
     stakeAccount: TAccountMetas[2];
     tokenMint: TAccountMetas[3];
-    marketTokenAta: TAccountMetas[4];
     /** Signer's token account to receive refund */
-    signerTokenAccount: TAccountMetas[5];
-    feeVault: TAccountMetas[6];
-    feeVaultAta: TAccountMetas[7];
-    tokenProgram: TAccountMetas[8];
-    systemProgram: TAccountMetas[9];
+    signerTokenAccount: TAccountMetas[4];
+    tokenVault: TAccountMetas[5];
+    tokenVaultAta: TAccountMetas[6];
+    tokenProgram: TAccountMetas[7];
+    systemProgram: TAccountMetas[8];
   };
   data: CloseStuckStakeAccountInstructionData;
 };
@@ -487,7 +455,7 @@ export function parseCloseStuckStakeAccountInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedCloseStuckStakeAccountInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 10) {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -504,10 +472,9 @@ export function parseCloseStuckStakeAccountInstruction<
       market: getNextAccount(),
       stakeAccount: getNextAccount(),
       tokenMint: getNextAccount(),
-      marketTokenAta: getNextAccount(),
       signerTokenAccount: getNextAccount(),
-      feeVault: getNextAccount(),
-      feeVaultAta: getNextAccount(),
+      tokenVault: getNextAccount(),
+      tokenVaultAta: getNextAccount(),
       tokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },

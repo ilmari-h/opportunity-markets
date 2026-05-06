@@ -6,14 +6,14 @@ import {
 } from "@solana/kit";
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from "../generated";
 
-export const ALLOWED_MINT_SEED = "allowed_mint";
+export const TOKEN_VAULT_SEED = "token_vault";
 
-export async function getAllowedMintAddress(
-  tokenMint: Address,
+export async function getTokenVaultAddress(
+  mint: Address,
   programId: Address = OPPORTUNITY_MARKET_PROGRAM_ADDRESS
 ): Promise<ProgramDerivedAddress> {
   return getProgramDerivedAddress({
     programAddress: programId,
-    seeds: [ALLOWED_MINT_SEED, getAddressEncoder().encode(tokenMint)],
+    seeds: [TOKEN_VAULT_SEED, getAddressEncoder().encode(mint)],
   });
 }

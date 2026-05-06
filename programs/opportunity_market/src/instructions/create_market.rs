@@ -1,13 +1,10 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{
-    associated_token::AssociatedToken,
-    token_interface::{Mint, TokenAccount, TokenInterface},
-};
+use anchor_spl::token_interface::Mint;
 
-use crate::constants::{ALLOWED_MINT_SEED, CENTRAL_STATE_SEED, OPPORTUNITY_MARKET_SEED};
+use crate::constants::{CENTRAL_STATE_SEED, OPPORTUNITY_MARKET_SEED, TOKEN_VAULT_SEED};
 use crate::error::ErrorCode;
-use crate::state::{AllowedMint, CentralState, OpportunityMarket};
 use crate::events::{emit_ts, MarketCreatedEvent};
+use crate::state::{CentralState, OpportunityMarket, TokenVault};
 
 #[derive(Accounts)]
 #[instruction(market_index: u64)]
@@ -26,31 +23,22 @@ pub struct CreateMarket<'info> {
     )]
     pub market: Box<Account<'info, OpportunityMarket>>,
 
-    /// ATA owned by market PDA, holds reward tokens
-    #[account(
-        init,
-        payer = creator,
-        associated_token::mint = token_mint,
-        associated_token::authority = market,
-        associated_token::token_program = token_program,
-    )]
-    pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
-
     #[account(
         seeds = [CENTRAL_STATE_SEED],
         bump = central_state.bump,
     )]
     pub central_state: Box<Account<'info, CentralState>>,
 
+    /// Existence of a TokenVault for this mint is what whitelists it for
+    /// market creation. The vault's ATA holds all program-held tokens.
     #[account(
-        seeds = [ALLOWED_MINT_SEED, token_mint.key().as_ref()],
-        bump = allowed_mint.bump,
+        seeds = [TOKEN_VAULT_SEED, token_mint.key().as_ref()],
+        bump = token_vault.bump,
+        constraint = token_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
     )]
-    pub allowed_mint: Box<Account<'info, AllowedMint>>,
+    pub token_vault: Box<Account<'info, TokenVault>>,
 
     pub system_program: Program<'info, System>,
-    pub token_program: Interface<'info, TokenInterface>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 pub fn create_market(

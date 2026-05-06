@@ -105,7 +105,7 @@ pub struct StakeAccount {
 
 #[account]
 #[derive(InitSpace)]
-pub struct FeeVault {
+pub struct TokenVault {
     pub bump: u8,
     pub mint: Pubkey,
     pub collected_fees: u64,
@@ -142,12 +142,5 @@ pub struct TimelockedAccountChange {
     pub current_value: Pubkey,
     pub proposed_value: Pubkey,
     pub execute_after: i64,
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct AllowedMint {
-    pub bump: u8,
-    pub mint: Pubkey,
 }
 

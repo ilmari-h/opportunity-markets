@@ -12,5 +12,4 @@ pub const SPONSOR_SEED: &[u8] = b"sponsor";
 pub const TIMELOCKED_CHANGE_SEED: &[u8] = b"timelocked_change";
 pub const UPDATE_AUTHORITY_SEED: &[u8] = b"update_authority";
 pub const FEE_CLAIMER_SEED: &[u8] = b"fee_claimer";
-pub const FEE_VAULT_SEED: &[u8] = b"fee_vault";
-pub const ALLOWED_MINT_SEED: &[u8] = b"allowed_mint";
+pub const TOKEN_VAULT_SEED: &[u8] = b"token_vault";

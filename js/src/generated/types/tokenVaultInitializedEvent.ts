@@ -20,40 +20,40 @@ import {
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type FeeVaultInitializedEvent = {
-  feeVault: Address;
+export type TokenVaultInitializedEvent = {
+  tokenVault: Address;
   mint: Address;
   timestamp: bigint;
 };
 
-export type FeeVaultInitializedEventArgs = {
-  feeVault: Address;
+export type TokenVaultInitializedEventArgs = {
+  tokenVault: Address;
   mint: Address;
   timestamp: number | bigint;
 };
 
-export function getFeeVaultInitializedEventEncoder(): FixedSizeEncoder<FeeVaultInitializedEventArgs> {
+export function getTokenVaultInitializedEventEncoder(): FixedSizeEncoder<TokenVaultInitializedEventArgs> {
   return getStructEncoder([
-    ['feeVault', getAddressEncoder()],
+    ['tokenVault', getAddressEncoder()],
     ['mint', getAddressEncoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getFeeVaultInitializedEventDecoder(): FixedSizeDecoder<FeeVaultInitializedEvent> {
+export function getTokenVaultInitializedEventDecoder(): FixedSizeDecoder<TokenVaultInitializedEvent> {
   return getStructDecoder([
-    ['feeVault', getAddressDecoder()],
+    ['tokenVault', getAddressDecoder()],
     ['mint', getAddressDecoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getFeeVaultInitializedEventCodec(): FixedSizeCodec<
-  FeeVaultInitializedEventArgs,
-  FeeVaultInitializedEvent
+export function getTokenVaultInitializedEventCodec(): FixedSizeCodec<
+  TokenVaultInitializedEventArgs,
+  TokenVaultInitializedEvent
 > {
   return combineCodec(
-    getFeeVaultInitializedEventEncoder(),
-    getFeeVaultInitializedEventDecoder()
+    getTokenVaultInitializedEventEncoder(),
+    getTokenVaultInitializedEventDecoder()
   );
 }

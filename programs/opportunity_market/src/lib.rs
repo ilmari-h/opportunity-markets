@@ -78,12 +78,8 @@ pub mod opportunity_market {
         instructions::cancel_fee_claimer_change(ctx)
     }
 
-    pub fn create_allowed_mint(ctx: Context<CreateAllowedMint>) -> Result<()> {
-        instructions::create_allowed_mint(ctx)
-    }
-
-    pub fn delete_allowed_mint(ctx: Context<DeleteAllowedMint>) -> Result<()> {
-        instructions::delete_allowed_mint(ctx)
+    pub fn init_token_vault(ctx: Context<InitTokenVault>) -> Result<()> {
+        instructions::init_token_vault(ctx)
     }
 
     pub fn create_market(
@@ -171,10 +167,6 @@ pub mod opportunity_market {
         stake_account_id: u32,
     ) -> Result<()> {
         instructions::init_stake_account(ctx, stake_account_id)
-    }
-
-    pub fn init_fee_vault(ctx: Context<InitFeeVault>) -> Result<()> {
-        instructions::init_fee_vault(ctx)
     }
 
     pub fn stake_comp_def(ctx: Context<StakeCompDef>) -> Result<()> {

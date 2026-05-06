@@ -21,17 +21,15 @@ import {
   type ParsedClaimFeesInstruction,
   type ParsedCloseStakeAccountInstruction,
   type ParsedCloseStuckStakeAccountInstruction,
-  type ParsedCreateAllowedMintInstruction,
   type ParsedCreateMarketInstruction,
-  type ParsedDeleteAllowedMintInstruction,
   type ParsedDoUnstakeEarlyInstruction,
   type ParsedEndRevealPeriodInstruction,
   type ParsedFinalizeNewFeeClaimerInstruction,
   type ParsedFinalizeNewUpdateAuthorityInstruction,
   type ParsedIncrementOptionTallyInstruction,
   type ParsedInitCentralStateInstruction,
-  type ParsedInitFeeVaultInstruction,
   type ParsedInitStakeAccountInstruction,
+  type ParsedInitTokenVaultInstruction,
   type ParsedOpenMarketInstruction,
   type ParsedPauseMarketInstruction,
   type ParsedProposeNewFeeClaimerInstruction,
@@ -54,37 +52,25 @@ export const OPPORTUNITY_MARKET_PROGRAM_ADDRESS =
   'B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg' as Address<'B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg'>;
 
 export enum OpportunityMarketAccount {
-  AllowedMint,
   ArciumSignerAccount,
   CentralState,
   ClockAccount,
   Cluster,
   ComputationDefinitionAccount,
   FeePool,
-  FeeVault,
   MXEAccount,
   OpportunityMarket,
   OpportunityMarketOption,
   OpportunityMarketSponsor,
   StakeAccount,
   TimelockedAccountChange,
+  TokenVault,
 }
 
 export function identifyOpportunityMarketAccount(
   account: { data: ReadonlyUint8Array } | ReadonlyUint8Array
 ): OpportunityMarketAccount {
   const data = 'data' in account ? account.data : account;
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([173, 229, 179, 46, 121, 164, 247, 6])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketAccount.AllowedMint;
-  }
   if (
     containsBytes(
       data,
@@ -155,17 +141,6 @@ export function identifyOpportunityMarketAccount(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([192, 178, 69, 232, 58, 149, 157, 132])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketAccount.FeeVault;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([103, 26, 85, 250, 179, 159, 17, 117])
       ),
       0
@@ -228,6 +203,17 @@ export function identifyOpportunityMarketAccount(
   ) {
     return OpportunityMarketAccount.TimelockedAccountChange;
   }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([121, 7, 84, 254, 151, 228, 43, 144])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketAccount.TokenVault;
+  }
   throw new Error(
     'The provided account could not be identified as a opportunityMarket account.'
   );
@@ -241,17 +227,15 @@ export enum OpportunityMarketInstruction {
   ClaimFees,
   CloseStakeAccount,
   CloseStuckStakeAccount,
-  CreateAllowedMint,
   CreateMarket,
-  DeleteAllowedMint,
   DoUnstakeEarly,
   EndRevealPeriod,
   FinalizeNewFeeClaimer,
   FinalizeNewUpdateAuthority,
   IncrementOptionTally,
   InitCentralState,
-  InitFeeVault,
   InitStakeAccount,
+  InitTokenVault,
   OpenMarket,
   PauseMarket,
   ProposeNewFeeClaimer,
@@ -355,34 +339,12 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([202, 159, 117, 179, 123, 241, 39, 221])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.CreateAllowedMint;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([103, 226, 97, 235, 200, 188, 251, 254])
       ),
       0
     )
   ) {
     return OpportunityMarketInstruction.CreateMarket;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([218, 173, 29, 245, 31, 123, 117, 224])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.DeleteAllowedMint;
   }
   if (
     containsBytes(
@@ -454,23 +416,23 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([141, 17, 88, 209, 137, 84, 89, 235])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.InitFeeVault;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([132, 171, 255, 149, 163, 37, 220, 45])
       ),
       0
     )
   ) {
     return OpportunityMarketInstruction.InitStakeAccount;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([203, 26, 194, 169, 252, 226, 179, 180])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.InitTokenVault;
   }
   if (
     containsBytes(
@@ -678,14 +640,8 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.CloseStuckStakeAccount;
     } & ParsedCloseStuckStakeAccountInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.CreateAllowedMint;
-    } & ParsedCreateAllowedMintInstruction<TProgram>)
-  | ({
       instructionType: OpportunityMarketInstruction.CreateMarket;
     } & ParsedCreateMarketInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.DeleteAllowedMint;
-    } & ParsedDeleteAllowedMintInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.DoUnstakeEarly;
     } & ParsedDoUnstakeEarlyInstruction<TProgram>)
@@ -705,11 +661,11 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.InitCentralState;
     } & ParsedInitCentralStateInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.InitFeeVault;
-    } & ParsedInitFeeVaultInstruction<TProgram>)
-  | ({
       instructionType: OpportunityMarketInstruction.InitStakeAccount;
     } & ParsedInitStakeAccountInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.InitTokenVault;
+    } & ParsedInitTokenVaultInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.OpenMarket;
     } & ParsedOpenMarketInstruction<TProgram>)

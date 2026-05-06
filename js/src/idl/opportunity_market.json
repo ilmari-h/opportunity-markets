@@ -129,16 +129,43 @@
           "writable": true
         },
         {
-          "name": "market_token_ata",
+          "name": "token_vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault_ata",
           "docs": [
-            "Market's ATA holding reward tokens"
+            "Token vault ATA holding all program-held tokens for this mint."
           ],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "market"
+                "path": "token_vault"
               },
               {
                 "kind": "account",
@@ -450,16 +477,18 @@
           "name": "token_mint"
         },
         {
-          "name": "fee_vault",
+          "name": "token_vault",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  102,
+                  116,
+                  111,
+                  107,
                   101,
-                  101,
+                  110,
                   95,
                   118,
                   97,
@@ -476,13 +505,13 @@
           }
         },
         {
-          "name": "fee_vault_ata",
+          "name": "token_vault_ata",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "fee_vault"
+                "path": "token_vault"
               },
               {
                 "kind": "account",
@@ -632,16 +661,44 @@
           "name": "token_mint"
         },
         {
-          "name": "market_token_ata",
+          "name": "token_vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault_ata",
           "docs": [
-            "Market's ATA holding reward tokens"
+            "Token vault ATA holding all program-held tokens for this mint",
+            "(stakes, rewards, fees)."
           ],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "market"
+                "path": "token_vault"
               },
               {
                 "kind": "account",
@@ -780,63 +837,6 @@
           "name": "token_mint"
         },
         {
-          "name": "market_token_ata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
           "name": "signer_token_account",
           "docs": [
             "Signer's token account to receive refund"
@@ -844,16 +844,18 @@
           "writable": true
         },
         {
-          "name": "fee_vault",
+          "name": "token_vault",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  102,
+                  116,
+                  111,
+                  107,
                   101,
-                  101,
+                  110,
                   95,
                   118,
                   97,
@@ -870,13 +872,13 @@
           }
         },
         {
-          "name": "fee_vault_ata",
+          "name": "token_vault_ata",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "fee_vault"
+                "path": "token_vault"
               },
               {
                 "kind": "account",
@@ -942,91 +944,6 @@
       ]
     },
     {
-      "name": "create_allowed_mint",
-      "discriminator": [
-        202,
-        159,
-        117,
-        179,
-        123,
-        241,
-        39,
-        221
-      ],
-      "accounts": [
-        {
-          "name": "update_authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "central_state"
-          ]
-        },
-        {
-          "name": "central_state",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  114,
-                  97,
-                  108,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_mint"
-        },
-        {
-          "name": "allowed_mint",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  97,
-                  108,
-                  108,
-                  111,
-                  119,
-                  101,
-                  100,
-                  95,
-                  109,
-                  105,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "create_market",
       "discriminator": [
         103,
@@ -1087,66 +1004,6 @@
           }
         },
         {
-          "name": "market_token_ata",
-          "docs": [
-            "ATA owned by market PDA, holds reward tokens"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
           "name": "central_state",
           "pda": {
             "seeds": [
@@ -1172,23 +1029,26 @@
           }
         },
         {
-          "name": "allowed_mint",
+          "name": "token_vault",
+          "docs": [
+            "Existence of a TokenVault for this mint is what whitelists it for",
+            "market creation. The vault's ATA holds all program-held tokens."
+          ],
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  97,
-                  108,
-                  108,
+                  116,
                   111,
-                  119,
+                  107,
                   101,
-                  100,
-                  95,
-                  109,
-                  105,
                   110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
                   116
                 ]
               },
@@ -1202,13 +1062,6 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
         }
       ],
       "args": [
@@ -1258,85 +1111,6 @@
           "type": "u64"
         }
       ]
-    },
-    {
-      "name": "delete_allowed_mint",
-      "discriminator": [
-        218,
-        173,
-        29,
-        245,
-        31,
-        123,
-        117,
-        224
-      ],
-      "accounts": [
-        {
-          "name": "update_authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "central_state"
-          ]
-        },
-        {
-          "name": "central_state",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  99,
-                  101,
-                  110,
-                  116,
-                  114,
-                  97,
-                  108,
-                  95,
-                  115,
-                  116,
-                  97,
-                  116,
-                  101
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "allowed_mint",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  97,
-                  108,
-                  108,
-                  111,
-                  119,
-                  101,
-                  100,
-                  95,
-                  109,
-                  105,
-                  110,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "allowed_mint.mint",
-                "account": "AllowedMint"
-              }
-            ]
-          }
-        }
-      ],
-      "args": []
     },
     {
       "name": "do_unstake_early",
@@ -1401,16 +1175,43 @@
           "name": "token_mint"
         },
         {
-          "name": "market_token_ata",
+          "name": "token_vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault_ata",
           "docs": [
-            "Market's ATA holding staked tokens"
+            "Token vault ATA holding all program-held tokens for this mint."
           ],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "market"
+                "path": "token_vault"
               },
               {
                 "kind": "account",
@@ -1889,124 +1690,6 @@
       ]
     },
     {
-      "name": "init_fee_vault",
-      "discriminator": [
-        141,
-        17,
-        88,
-        209,
-        137,
-        84,
-        89,
-        235
-      ],
-      "accounts": [
-        {
-          "name": "payer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "token_mint"
-        },
-        {
-          "name": "fee_vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  101,
-                  101,
-                  95,
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "fee_vault_ata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "fee_vault"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "token_program"
-        },
-        {
-          "name": "associated_token_program",
-          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "init_stake_account",
       "discriminator": [
         132,
@@ -2082,6 +1765,154 @@
           "type": "u32"
         }
       ]
+    },
+    {
+      "name": "init_token_vault",
+      "discriminator": [
+        203,
+        26,
+        194,
+        169,
+        252,
+        226,
+        179,
+        180
+      ],
+      "accounts": [
+        {
+          "name": "update_authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "central_state"
+          ]
+        },
+        {
+          "name": "central_state",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  101,
+                  110,
+                  116,
+                  114,
+                  97,
+                  108,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "token_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "token_vault"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     },
     {
       "name": "open_market",
@@ -2419,16 +2250,43 @@
           "name": "token_mint"
         },
         {
-          "name": "market_token_ata",
+          "name": "token_vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault_ata",
           "docs": [
-            "Market's ATA holding staked tokens"
+            "Token vault ATA holding all program-held tokens for this mint."
           ],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "market"
+                "path": "token_vault"
               },
               {
                 "kind": "account",
@@ -2890,66 +2748,10 @@
           "writable": true
         },
         {
-          "name": "market_token_ata",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "account",
-                "path": "market"
-              },
-              {
-                "kind": "account",
-                "path": "token_program"
-              },
-              {
-                "kind": "account",
-                "path": "token_mint"
-              }
-            ],
-            "program": {
-              "kind": "const",
-              "value": [
-                140,
-                151,
-                37,
-                143,
-                78,
-                36,
-                137,
-                241,
-                187,
-                61,
-                16,
-                41,
-                20,
-                142,
-                13,
-                131,
-                11,
-                90,
-                19,
-                153,
-                218,
-                255,
-                16,
-                132,
-                4,
-                142,
-                123,
-                216,
-                219,
-                233,
-                248,
-                89
-              ]
-            }
-          }
-        },
-        {
-          "name": "fee_vault",
+          "name": "token_vault",
           "docs": [
-            "Per-mint fee vault. Tracks `collected_fees` and owns `fee_vault_ata`."
+            "Per-mint vault. Tracks `collected_fees` and owns `token_vault_ata`,",
+            "the single ATA holding all program-held tokens for this mint."
           ],
           "writable": true,
           "pda": {
@@ -2957,9 +2759,11 @@
               {
                 "kind": "const",
                 "value": [
-                  102,
+                  116,
+                  111,
+                  107,
                   101,
-                  101,
+                  110,
                   95,
                   118,
                   97,
@@ -2976,16 +2780,17 @@
           }
         },
         {
-          "name": "fee_vault_ata",
+          "name": "token_vault_ata",
           "docs": [
-            "Receives the fee portion of every stake."
+            "Receives the full staked amount (net + fee). The fee portion is only",
+            "counted toward `token_vault.collected_fees` on a successful callback."
           ],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "fee_vault"
+                "path": "token_vault"
               },
               {
                 "kind": "account",
@@ -3194,16 +2999,18 @@
           "writable": true
         },
         {
-          "name": "fee_vault",
+          "name": "token_vault",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  102,
+                  116,
+                  111,
+                  107,
                   101,
-                  101,
+                  110,
                   95,
                   118,
                   97,
@@ -3214,8 +3021,8 @@
               },
               {
                 "kind": "account",
-                "path": "fee_vault.mint",
-                "account": "FeeVault"
+                "path": "token_vault.mint",
+                "account": "TokenVault"
               }
             ]
           }
@@ -3459,16 +3266,43 @@
           "name": "token_mint"
         },
         {
-          "name": "market_token_ata",
+          "name": "token_vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_vault_ata",
           "docs": [
-            "Market's ATA holding reward tokens"
+            "Token vault ATA holding all program-held tokens for this mint."
           ],
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "account",
-                "path": "market"
+                "path": "token_vault"
               },
               {
                 "kind": "account",
@@ -3533,19 +3367,6 @@
     }
   ],
   "accounts": [
-    {
-      "name": "AllowedMint",
-      "discriminator": [
-        173,
-        229,
-        179,
-        46,
-        121,
-        164,
-        247,
-        6
-      ]
-    },
     {
       "name": "ArciumSignerAccount",
       "discriminator": [
@@ -3625,19 +3446,6 @@
       ]
     },
     {
-      "name": "FeeVault",
-      "discriminator": [
-        192,
-        178,
-        69,
-        232,
-        58,
-        149,
-        157,
-        132
-      ]
-    },
-    {
       "name": "MXEAccount",
       "discriminator": [
         103,
@@ -3714,6 +3522,19 @@
         205,
         22
       ]
+    },
+    {
+      "name": "TokenVault",
+      "discriminator": [
+        121,
+        7,
+        84,
+        254,
+        151,
+        228,
+        43,
+        144
+      ]
     }
   ],
   "events": [
@@ -3754,19 +3575,6 @@
         210,
         97,
         148
-      ]
-    },
-    {
-      "name": "FeeVaultInitializedEvent",
-      "discriminator": [
-        219,
-        138,
-        2,
-        184,
-        253,
-        99,
-        165,
-        51
       ]
     },
     {
@@ -3975,6 +3783,19 @@
         32,
         124,
         230
+      ]
+    },
+    {
+      "name": "TokenVaultInitializedEvent",
+      "discriminator": [
+        244,
+        52,
+        88,
+        91,
+        222,
+        253,
+        37,
+        155
       ]
     },
     {
@@ -4308,22 +4129,6 @@
                 "name": "Epoch"
               }
             }
-          }
-        ]
-      }
-    },
-    {
-      "name": "AllowedMint",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "mint",
-            "type": "pubkey"
           }
         ]
       }
@@ -4686,64 +4491,12 @@
       }
     },
     {
-      "name": "FeeVault",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "collected_fees",
-            "type": "u64"
-          },
-          {
-            "name": "_reserved",
-            "docs": [
-              "Reserved for future use"
-            ],
-            "type": {
-              "array": [
-                "u8",
-                128
-              ]
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "FeeVaultInitializedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "fee_vault",
-            "type": "pubkey"
-          },
-          {
-            "name": "mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
       "name": "FeesClaimedEvent",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "fee_vault",
+            "name": "token_vault",
             "type": "pubkey"
           },
           {
@@ -6103,6 +5856,58 @@
           {
             "name": "timestamp",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenVault",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "collected_fees",
+            "type": "u64"
+          },
+          {
+            "name": "_reserved",
+            "docs": [
+              "Reserved for future use"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                128
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenVaultInitializedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "token_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
           }
         ]
       }

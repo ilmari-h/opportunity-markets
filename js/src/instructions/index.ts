@@ -1,7 +1,5 @@
 export * from "./instructionParams";
-export * from "./createAllowedMint";
 export * from "./createMarket";
-export * from "./deleteAllowedMint";
 export * from "./initCompDef";
 export * from "./stake";
 export * from "./revealStake";
@@ -12,8 +10,8 @@ export * from "./resumeMarket";
 export * from "./selectWinningOptions";
 export * from "./endRevealPeriod";
 export * from "./addReward";
-export * from "./initFeeVault";
 export * from "./initStakeAccount";
+export * from "./initTokenVault";
 export * from "./closeStakeAccount";
 export * from "./closeStuckStakeAccount";
 export * from "./reclaimStake";

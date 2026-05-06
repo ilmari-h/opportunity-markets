@@ -39,22 +39,26 @@ import {
   type ResolvedAccount,
 } from '../shared';
 
-export const CREATE_ALLOWED_MINT_DISCRIMINATOR = new Uint8Array([
-  202, 159, 117, 179, 123, 241, 39, 221,
+export const INIT_TOKEN_VAULT_DISCRIMINATOR = new Uint8Array([
+  203, 26, 194, 169, 252, 226, 179, 180,
 ]);
 
-export function getCreateAllowedMintDiscriminatorBytes() {
+export function getInitTokenVaultDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    CREATE_ALLOWED_MINT_DISCRIMINATOR
+    INIT_TOKEN_VAULT_DISCRIMINATOR
   );
 }
 
-export type CreateAllowedMintInstruction<
+export type InitTokenVaultInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountUpdateAuthority extends string | AccountMeta<string> = string,
   TAccountCentralState extends string | AccountMeta<string> = string,
   TAccountTokenMint extends string | AccountMeta<string> = string,
-  TAccountAllowedMint extends string | AccountMeta<string> = string,
+  TAccountTokenVault extends string | AccountMeta<string> = string,
+  TAccountTokenVaultAta extends string | AccountMeta<string> = string,
+  TAccountTokenProgram extends string | AccountMeta<string> = string,
+  TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
+    'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
   TAccountSystemProgram extends string | AccountMeta<string> =
     '11111111111111111111111111111111',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -72,9 +76,18 @@ export type CreateAllowedMintInstruction<
       TAccountTokenMint extends string
         ? ReadonlyAccount<TAccountTokenMint>
         : TAccountTokenMint,
-      TAccountAllowedMint extends string
-        ? WritableAccount<TAccountAllowedMint>
-        : TAccountAllowedMint,
+      TAccountTokenVault extends string
+        ? WritableAccount<TAccountTokenVault>
+        : TAccountTokenVault,
+      TAccountTokenVaultAta extends string
+        ? WritableAccount<TAccountTokenVaultAta>
+        : TAccountTokenVaultAta,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
+      TAccountAssociatedTokenProgram extends string
+        ? ReadonlyAccount<TAccountAssociatedTokenProgram>
+        : TAccountAssociatedTokenProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -82,72 +95,87 @@ export type CreateAllowedMintInstruction<
     ]
   >;
 
-export type CreateAllowedMintInstructionData = {
+export type InitTokenVaultInstructionData = {
   discriminator: ReadonlyUint8Array;
 };
 
-export type CreateAllowedMintInstructionDataArgs = {};
+export type InitTokenVaultInstructionDataArgs = {};
 
-export function getCreateAllowedMintInstructionDataEncoder(): FixedSizeEncoder<CreateAllowedMintInstructionDataArgs> {
+export function getInitTokenVaultInstructionDataEncoder(): FixedSizeEncoder<InitTokenVaultInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
-    (value) => ({ ...value, discriminator: CREATE_ALLOWED_MINT_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: INIT_TOKEN_VAULT_DISCRIMINATOR })
   );
 }
 
-export function getCreateAllowedMintInstructionDataDecoder(): FixedSizeDecoder<CreateAllowedMintInstructionData> {
+export function getInitTokenVaultInstructionDataDecoder(): FixedSizeDecoder<InitTokenVaultInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
   ]);
 }
 
-export function getCreateAllowedMintInstructionDataCodec(): FixedSizeCodec<
-  CreateAllowedMintInstructionDataArgs,
-  CreateAllowedMintInstructionData
+export function getInitTokenVaultInstructionDataCodec(): FixedSizeCodec<
+  InitTokenVaultInstructionDataArgs,
+  InitTokenVaultInstructionData
 > {
   return combineCodec(
-    getCreateAllowedMintInstructionDataEncoder(),
-    getCreateAllowedMintInstructionDataDecoder()
+    getInitTokenVaultInstructionDataEncoder(),
+    getInitTokenVaultInstructionDataDecoder()
   );
 }
 
-export type CreateAllowedMintAsyncInput<
+export type InitTokenVaultAsyncInput<
   TAccountUpdateAuthority extends string = string,
   TAccountCentralState extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountAllowedMint extends string = string,
+  TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   centralState?: Address<TAccountCentralState>;
   tokenMint: Address<TAccountTokenMint>;
-  allowedMint?: Address<TAccountAllowedMint>;
+  tokenVault?: Address<TAccountTokenVault>;
+  tokenVaultAta?: Address<TAccountTokenVaultAta>;
+  tokenProgram: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export async function getCreateAllowedMintInstructionAsync<
+export async function getInitTokenVaultInstructionAsync<
   TAccountUpdateAuthority extends string,
   TAccountCentralState extends string,
   TAccountTokenMint extends string,
-  TAccountAllowedMint extends string,
+  TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
+  TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: CreateAllowedMintAsyncInput<
+  input: InitTokenVaultAsyncInput<
     TAccountUpdateAuthority,
     TAccountCentralState,
     TAccountTokenMint,
-    TAccountAllowedMint,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
-  CreateAllowedMintInstruction<
+  InitTokenVaultInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
     TAccountCentralState,
     TAccountTokenMint,
-    TAccountAllowedMint,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >
 > {
@@ -160,7 +188,13 @@ export async function getCreateAllowedMintInstructionAsync<
     updateAuthority: { value: input.updateAuthority ?? null, isWritable: true },
     centralState: { value: input.centralState ?? null, isWritable: false },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    allowedMint: { value: input.allowedMint ?? null, isWritable: true },
+    tokenVault: { value: input.tokenVault ?? null, isWritable: true },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -181,18 +215,31 @@ export async function getCreateAllowedMintInstructionAsync<
       ],
     });
   }
-  if (!accounts.allowedMint.value) {
-    accounts.allowedMint.value = await getProgramDerivedAddress({
+  if (!accounts.tokenVault.value) {
+    accounts.tokenVault.value = await getProgramDerivedAddress({
       programAddress,
       seeds: [
         getBytesEncoder().encode(
-          new Uint8Array([
-            97, 108, 108, 111, 119, 101, 100, 95, 109, 105, 110, 116,
-          ])
+          new Uint8Array([116, 111, 107, 101, 110, 95, 118, 97, 117, 108, 116])
         ),
         getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
       ],
     });
+  }
+  if (!accounts.tokenVaultAta.value) {
+    accounts.tokenVaultAta.value = await getProgramDerivedAddress({
+      programAddress:
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
+      seeds: [
+        getAddressEncoder().encode(expectAddress(accounts.tokenVault.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
+      ],
+    });
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
   }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
@@ -205,57 +252,78 @@ export async function getCreateAllowedMintInstructionAsync<
       getAccountMeta(accounts.updateAuthority),
       getAccountMeta(accounts.centralState),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.allowedMint),
+      getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getCreateAllowedMintInstructionDataEncoder().encode({}),
+    data: getInitTokenVaultInstructionDataEncoder().encode({}),
     programAddress,
-  } as CreateAllowedMintInstruction<
+  } as InitTokenVaultInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
     TAccountCentralState,
     TAccountTokenMint,
-    TAccountAllowedMint,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >);
 }
 
-export type CreateAllowedMintInput<
+export type InitTokenVaultInput<
   TAccountUpdateAuthority extends string = string,
   TAccountCentralState extends string = string,
   TAccountTokenMint extends string = string,
-  TAccountAllowedMint extends string = string,
+  TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   centralState: Address<TAccountCentralState>;
   tokenMint: Address<TAccountTokenMint>;
-  allowedMint: Address<TAccountAllowedMint>;
+  tokenVault: Address<TAccountTokenVault>;
+  tokenVaultAta: Address<TAccountTokenVaultAta>;
+  tokenProgram: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
-export function getCreateAllowedMintInstruction<
+export function getInitTokenVaultInstruction<
   TAccountUpdateAuthority extends string,
   TAccountCentralState extends string,
   TAccountTokenMint extends string,
-  TAccountAllowedMint extends string,
+  TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
+  TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: CreateAllowedMintInput<
+  input: InitTokenVaultInput<
     TAccountUpdateAuthority,
     TAccountCentralState,
     TAccountTokenMint,
-    TAccountAllowedMint,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
-): CreateAllowedMintInstruction<
+): InitTokenVaultInstruction<
   TProgramAddress,
   TAccountUpdateAuthority,
   TAccountCentralState,
   TAccountTokenMint,
-  TAccountAllowedMint,
+  TAccountTokenVault,
+  TAccountTokenVaultAta,
+  TAccountTokenProgram,
+  TAccountAssociatedTokenProgram,
   TAccountSystemProgram
 > {
   // Program address.
@@ -267,7 +335,13 @@ export function getCreateAllowedMintInstruction<
     updateAuthority: { value: input.updateAuthority ?? null, isWritable: true },
     centralState: { value: input.centralState ?? null, isWritable: false },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
-    allowedMint: { value: input.allowedMint ?? null, isWritable: true },
+    tokenVault: { value: input.tokenVault ?? null, isWritable: true },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -276,6 +350,10 @@ export function getCreateAllowedMintInstruction<
   >;
 
   // Resolve default values.
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -287,22 +365,28 @@ export function getCreateAllowedMintInstruction<
       getAccountMeta(accounts.updateAuthority),
       getAccountMeta(accounts.centralState),
       getAccountMeta(accounts.tokenMint),
-      getAccountMeta(accounts.allowedMint),
+      getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
-    data: getCreateAllowedMintInstructionDataEncoder().encode({}),
+    data: getInitTokenVaultInstructionDataEncoder().encode({}),
     programAddress,
-  } as CreateAllowedMintInstruction<
+  } as InitTokenVaultInstruction<
     TProgramAddress,
     TAccountUpdateAuthority,
     TAccountCentralState,
     TAccountTokenMint,
-    TAccountAllowedMint,
+    TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >);
 }
 
-export type ParsedCreateAllowedMintInstruction<
+export type ParsedInitTokenVaultInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -311,21 +395,24 @@ export type ParsedCreateAllowedMintInstruction<
     updateAuthority: TAccountMetas[0];
     centralState: TAccountMetas[1];
     tokenMint: TAccountMetas[2];
-    allowedMint: TAccountMetas[3];
-    systemProgram: TAccountMetas[4];
+    tokenVault: TAccountMetas[3];
+    tokenVaultAta: TAccountMetas[4];
+    tokenProgram: TAccountMetas[5];
+    associatedTokenProgram: TAccountMetas[6];
+    systemProgram: TAccountMetas[7];
   };
-  data: CreateAllowedMintInstructionData;
+  data: InitTokenVaultInstructionData;
 };
 
-export function parseCreateAllowedMintInstruction<
+export function parseInitTokenVaultInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedCreateAllowedMintInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 5) {
+): ParsedInitTokenVaultInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -341,9 +428,12 @@ export function parseCreateAllowedMintInstruction<
       updateAuthority: getNextAccount(),
       centralState: getNextAccount(),
       tokenMint: getNextAccount(),
-      allowedMint: getNextAccount(),
+      tokenVault: getNextAccount(),
+      tokenVaultAta: getNextAccount(),
+      tokenProgram: getNextAccount(),
+      associatedTokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
-    data: getCreateAllowedMintInstructionDataDecoder().decode(instruction.data),
+    data: getInitTokenVaultInstructionDataDecoder().decode(instruction.data),
   };
 }

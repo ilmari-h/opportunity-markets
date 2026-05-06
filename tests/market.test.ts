@@ -189,7 +189,7 @@ describe("OpportunityMarket", () => {
 
     // Get token balances before closing (after reclaim, so only reward transfer remains)
     const rpc = runner.getRpc();
-    const marketAta = await runner.getMarketAta();
+    const marketAta = await runner.getTokenVaultAta();
 
     const balancesBefore = await Promise.all(
       winners.map(async (userId) => ({
@@ -265,7 +265,7 @@ describe("OpportunityMarket", () => {
 
     // Verify the fee vault has collected fees
     const totalExpectedFees = expectedFeePerUser.reduce((sum, f) => sum + f, 0n);
-    const vaultBefore = await runner.fetchFeeVault();
+    const vaultBefore = await runner.fetchTokenVault();
     expect(vaultBefore.data.collectedFees).to.equal(totalExpectedFees,
       `Fee vault should have collected ${totalExpectedFees} in fees`);
 
@@ -281,7 +281,7 @@ describe("OpportunityMarket", () => {
       `Fee recipient should have received ${totalExpectedFees} in fees`);
 
     // Verify fee vault counter reset to 0
-    const vaultAfter = await runner.fetchFeeVault();
+    const vaultAfter = await runner.fetchTokenVault();
     expect(vaultAfter.data.collectedFees).to.equal(0n, "Fee vault collected fees should be 0 after claiming");
   });
 
@@ -543,7 +543,7 @@ describe("OpportunityMarket", () => {
     // Get balances before closing
     const rpc = runner.getRpc();
     const userBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
-    const marketAta = await runner.getMarketAta();
+    const marketAta = await runner.getTokenVaultAta();
     const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
 
     // Close ALL stake accounts (both winning and losing)
@@ -582,12 +582,14 @@ describe("OpportunityMarket", () => {
       `Market should pay out ~${marketFundingAmount}, paid ${marketPaidOut}`
     ).to.be.true;
 
-    // Fees live in the fee vault ATA, not in the market ATA, so after all
-    // reclaims + reward payouts the market ATA should be empty (within a
-    // 1-unit rounding margin).
+    // After all reclaims + reward payouts the only thing left in the
+    // token vault ATA is the collected protocol fees (which sit there
+    // until claim_fees runs).
+    const vaultAfter = await runner.fetchTokenVault();
+    const collectedFees = vaultAfter.data.collectedFees;
     expect(
-      marketBalanceAfter <= 1n,
-      `Market ATA should be drained, has ${marketBalanceAfter}`
+      marketBalanceAfter <= collectedFees + 1n,
+      `Token vault ATA should hold only collected fees (~${collectedFees}), has ${marketBalanceAfter}`
     ).to.be.true;
   });
 
@@ -908,7 +910,7 @@ describe("OpportunityMarket", () => {
     expect(unlockedBalanceBefore - unlockedBalanceAfterAdd).to.equal(unlockedAmount);
 
     // Verify market ATA holds total reward
-    const marketAta = await runner.getMarketAta();
+    const marketAta = await runner.getTokenVaultAta();
     const marketAtaBalance = (await fetchToken(rpc, marketAta)).data.amount;
     expect(marketAtaBalance).to.equal(lockedAmount + unlockedAmount);
 
@@ -962,9 +964,9 @@ describe("OpportunityMarket", () => {
 
     // Record balances before
     const userBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
-    const marketAta = await runner.getMarketAta();
-    const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
-    const vaultBefore = await runner.fetchFeeVault();
+    const tokenVaultAta = await runner.getTokenVaultAta();
+    const vaultAtaBalanceBefore = (await fetchToken(rpc, tokenVaultAta)).data.amount;
+    const vaultBefore = await runner.fetchTokenVault();
 
     // Stake and immediately close stuck in the same transaction
     const stakeAccountId = await runner.stakeAndCloseStuck(user, stakeAmount, optionId);
@@ -974,20 +976,20 @@ describe("OpportunityMarket", () => {
     const exists = await runner.accountExists(stakeAccountAddress);
     expect(exists).to.be.false;
 
-    // Verify user token balance is restored (net + fee both refunded)
+    // Verify user token balance is restored (full amount refunded)
     const userBalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
     expect(userBalanceAfter).to.equal(userBalanceBefore,
       "User balance should be fully restored after close_stuck");
 
-    // Verify market ATA balance unchanged (net amount went in and came back out)
-    const marketBalanceAfter = (await fetchToken(rpc, marketAta)).data.amount;
-    expect(marketBalanceAfter).to.equal(marketBalanceBefore,
-      "Market ATA balance should be unchanged");
+    // Verify token vault ATA balance unchanged (full amount went in and came back out)
+    const vaultAtaBalanceAfter = (await fetchToken(rpc, tokenVaultAta)).data.amount;
+    expect(vaultAtaBalanceAfter).to.equal(vaultAtaBalanceBefore,
+      "Token vault ATA balance should be unchanged");
 
-    // Verify fee vault collected_fees was NOT incremented (fee never counted as collected)
-    const vaultAfter = await runner.fetchFeeVault();
+    // Verify token vault collected_fees was NOT incremented (fee never counted as collected)
+    const vaultAfter = await runner.fetchTokenVault();
     expect(vaultAfter.data.collectedFees).to.equal(vaultBefore.data.collectedFees,
-      "Fee vault collected_fees should not have changed");
+      "Token vault collected_fees should not have changed");
   });
 
   it("pausing blocks staking, resuming allows it again", async () => {
