@@ -1,12 +1,15 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{CENTRAL_STATE_SEED, MAX_PROTOCOL_FEE_BP};
+use crate::constants::{CENTRAL_STATE_SEED, DEPLOYER_AUTHORITY, MAX_PROTOCOL_FEE_BP};
 use crate::error::ErrorCode;
 use crate::state::CentralState;
 
 #[derive(Accounts)]
 pub struct InitCentralState<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        address = DEPLOYER_AUTHORITY @ ErrorCode::Unauthorized,
+    )]
     pub payer: Signer<'info>,
 
     #[account(

@@ -1,4 +1,10 @@
+use anchor_lang::prelude::Pubkey;
+use anchor_lang::pubkey;
+
 pub const MAX_PROTOCOL_FEE_BP: u16 = 500;
+
+/// Must match the keypair used to deploy the program. Update before mainnet deploy.
+pub const DEPLOYER_AUTHORITY: Pubkey = pubkey!("GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq");
 
 /// Fixed timelock delay: 48 hours
 pub const TIMELOCK_DELAY_SECONDS: i64 = 48 * 60 * 60;
