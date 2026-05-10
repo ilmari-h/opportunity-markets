@@ -1,6 +1,6 @@
 # Security Statement
 
-### What is at stake?
+### What we want to secure
 
 Our contract is meant to secure a large amount of user capital in the form of staked SPL tokens.
 Users can deposit any amount of tokens in the program and should always be able to withdraw their stake later.
@@ -11,7 +11,7 @@ Market sponsors should be able to deposit a market reward (can choose either per
 
 We are looking to go live on Solana mainnet as soon as possible, so a security audit is critical to ensure the safety of our users' funds.
 
-### What we have done
+### What we have done for security
 
 Our protocol is build with the Anchor framework and follows best security practices against most common threats.
 We have carefully designed the instructions to enforce account ownership rules (using PDA seeds constraints and `constraint` macros etc.).
@@ -19,7 +19,7 @@ We have considered common threats like re-initialization attacks by correct use 
 Change of authority accounts is time-gated and cancellable.
 We have comprehensive test coverage of our protocol including number of unhappy paths and edge-cases.
 
-### Specific Areas of Concern
+### Specific areas of concern
 
 We use Arcium for shared encrypted on-chain state.
 Arcium uses a transaction callback pattern, meaning that some operations that would be atomic within a single transaction, now take one transaction to begin and another transaction to finalize. This leaves an in-between state of waiting for the callback to come, leading to a number of edge-cases.
