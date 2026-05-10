@@ -4,6 +4,8 @@ Opportunity Markets allow users to influence decision making by staking. Decisio
 
 ### **[Detailed protocol documentation →](./docs/README.md)**
 
+### **[Security statement for auditors! →](./docs/security/README.md)**
+
 The Opportunity Markets program is deployed on Solana devnet at `B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg`
 
 ## Build & Test

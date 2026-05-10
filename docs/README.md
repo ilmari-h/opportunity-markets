@@ -37,9 +37,9 @@ Staking data is confidential while the market is open, allowing the creator to t
 The protocol is implemented as a Solana smart contract. 
 Confidential staking is implemented with Arcium.
 
-## PDAs
+## Account Structure
 
-Program Derived Accounts and what purpose they serve in the protocol.
+Description of Opportunity Market protocol Solana PDA account structure.
 
 ### `StakeAccount`
 
@@ -93,7 +93,9 @@ Once the market is open, users can stake on options.
 The market is open for a certain period of time, the length of which is configured upon market creation.
 During this time, more options can still be added.
 
-Staking is done with the `stake` instruction. This requires the user to transfer at least the minimum stake amount to the Token Vault account. The user encrypts their option choice, which is then stored in their `StakeAccount`.
+Staking is done with the `stake` instruction. This transfers SPL tokens to the Token Vault account. The user encrypts their option choice, which is then stored in their `StakeAccount`.
+
+The stake is finalized by an Arcium callback transaction that the Arcium network invokes after encrypted circuit completes.
 
 The user can claim back their stake amount with a delay by calling the `unstake_early` instruction (the delay can be set to zero, we have this mechanism just to allow flexibility for future design).
 After the delay has passed that, the stake can be claimed via `do_unstake_early`.
