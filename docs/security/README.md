@@ -7,7 +7,7 @@ Users can deposit any amount of tokens in the program and should always be able 
 Users should never face the risk of loss-of-funds.
 Users should only ever get their initial stake deposit back OR additionally be rewarded fairly according to the rules of the protocol.
 
-Market sponsors should be able to deposit a market reward, optionally locked in or withdrawable by default, and trust that after the market is resolved, the reward is split according to the rules of the protocol and cannot be stolen by exploit.
+Market sponsors should be able to deposit a market reward (can choose either permanently locked or withdrawable), and trust that after the market is resolved, the reward is split according to the rules of the protocol and cannot be stolen by exploit.
 
 We are looking to go live on Solana mainnet as soon as possible, so a security audit is critical to ensure the safety of our users' funds.
 
