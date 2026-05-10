@@ -24,10 +24,10 @@ We have comprehensive test coverage of our protocol including number of unhappy 
 We use Arcium for shared encrypted on-chain state.
 Arcium uses a transaction callback pattern, meaning that some operations that would be atomic within a single transaction, now take one transaction to begin and another transaction to finalize. This leaves an in-between state of waiting for the callback to come, leading to a number of edge-cases.
 
-We operate under the assumption that Arciumn callback transactions can fail to run after initial invocation.
-Therefore, if the operation is never finalized, there must be an escape hatch from this in-between state.
-We assume that the callback will not continue to fail forever after some number of retries.
+We operate under the assumption that invoking an Arcium computation does not guarantee the callback transaction to ever run.
+If the operation started by the instruction invoking the callback is never finalized, there must be some escape hatch from this in-between state.
+We assume that the callback will not continue to fail forever after some number of retries by calling the instruction that invokes it.
 
-Example of this escape-hatch implementation is the `close_stuck_stake_account` instruction for the case that the callback of the `stake` instruction fails to run.
+Example of this escape hatch implementation is the `close_stuck_stake_account` instruction for the case that the callback of the `stake` instruction fails to run.
 
-There is no separate escape-hatch instruction for the `reveal_stake` instruction, but instead this instruction can be invoked again to retry the callback as many times as needed.
+There is no separate escape hatch instruction for the `reveal_stake` instruction, but instead this instruction can be called again to retry the callback as many times as needed.
