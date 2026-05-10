@@ -24,7 +24,7 @@ pub fn open_market(ctx: Context<OpenMarket>, open_timestamp: u64) -> Result<()> 
 
     require!(
         open_timestamp > current_timestamp,
-        ErrorCode::InvalidTimestamp
+        ErrorCode::InvalidParameters
     );
 
     // Set open_timestamp and transition state to Funded

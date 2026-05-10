@@ -23,15 +23,16 @@ import {
 import {
   createMarket,
   fetchOpportunityMarket,
+  fetchTokenVault,
+  getTokenVaultAddress,
   getClaimFeesInstructionAsync,
   randomComputationOffset,
   randomStateNonce,
   ensureCentralState,
-  initTokenVault,
-  getTokenVaultAddress,
   addMarketOption,
   initStakeAccount,
-  stake,
+  initTokenVault,
+  stake as stakeIx,
   selectWinningOptions as selectWinningOptionsIx,
   revealStake,
   incrementOptionTally,
@@ -92,6 +93,7 @@ interface MarketConfig {
   authorizedReaderPubkey: Uint8Array;
   allowClosingEarly: boolean;
   earlinessCutoffSeconds: bigint;
+  minStakeAmount: bigint;
 }
 
 export interface TestRunnerConfig {
@@ -144,6 +146,7 @@ const DEFAULT_CONFIG: Required<TestRunnerConfig> = {
     unstakeDelaySeconds: 10n, // 10 seconds
     allowClosingEarly: true, // Allow market to be closed before stake period ends
     earlinessCutoffSeconds: 0n,
+    minStakeAmount: 0n,
   },
 };
 
@@ -161,7 +164,6 @@ async function getMXEPublicKeyWithRetry(
     try {
       const mxePublicKey = await getMXEPublicKey(provider, programId);
       if (mxePublicKey) {
-        console.log(`MXE public key: ${Buffer.from(mxePublicKey).toString("hex")}`);
         return mxePublicKey;
       }
     } catch (error) {
@@ -276,6 +278,10 @@ export class TestRunner {
       signer: deployer,
       protocolFeeBp: 100,
       feeClaimer: creatorAccountBase.keypair.address,
+
+      // Tests use short windows.
+      minTimeToStakeSeconds: 1n,
+      minTimeToRevealSeconds: 1n,
     });
     if (centralStateIx) {
       await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [centralStateIx], {
@@ -293,32 +299,17 @@ export class TestRunner {
     );
     console.log(`  Mint created: ${runner.mint.address}`);
 
-    // Initialize token vault (if not already initialized)
-    const [tokenVaultAddress] = await getTokenVaultAddress(runner.mint.address, programId);
-    const tokenVaultAccount = await runner.rpc.getAccountInfo(tokenVaultAddress).send();
-    if (!tokenVaultAccount.value) {
-      console.log("Initializing token vault...");
-      const initVaultIx = await initTokenVault({
-        payer: creatorAccountBase.keypair,
-        tokenMint: runner.mint.address,
-      });
-      await sendTransaction(runner.rpc, runner.sendAndConfirm, creatorAccountBase.keypair, [initVaultIx], {
-        label: "Init token vault",
-      });
-      console.log(`  Token vault created: ${tokenVaultAddress}`);
-    } else {
-      console.log("Token vault already exists, skipping initialization...");
-    }
-
-    // Create token vault ATA for this mint
-    console.log("Creating token vault ATA...");
-    await createAta(
-      runner.rpc,
-      runner.sendAndConfirm,
-      creatorAccountBase.keypair,
-      runner.mint.address,
-      tokenVaultAddress
-    );
+    // Init the per-mint token vault (PDA + ATA in one ix). The vault's
+    // existence whitelists the mint for create_market.
+    console.log("Initializing token vault...");
+    const initTokenVaultIx = await initTokenVault({
+      updateAuthority: deployer,
+      tokenMint: runner.mint.address,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    });
+    await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [initTokenVaultIx], {
+      label: "Init token vault",
+    });
 
     // Create ATAs and mint tokens for all accounts
     console.log("Creating ATAs and minting tokens...");
@@ -383,16 +374,16 @@ export class TestRunner {
     const createMarketIx = await createMarket({
       creator: runner.marketCreator.solanaKeypair,
       tokenMint: runner.mint.address,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
       marketIndex,
       timeToStake: marketConfig.timeToStake,
       timeToReveal: marketConfig.timeToReveal,
-      marketAuthority: null,
+      marketAuthority: runner.marketCreator.solanaKeypair.address,
       unstakeDelaySeconds: marketConfig.unstakeDelaySeconds,
       authorizedReaderPubkey: marketConfig.authorizedReaderPubkey,
       allowClosingEarly: marketConfig.allowClosingEarly,
       revealPeriodAuthority: runner.marketCreator.solanaKeypair.address,
       earlinessCutoffSeconds: marketConfig.earlinessCutoffSeconds,
+      minStakeAmount: marketConfig.minStakeAmount,
     });
 
     await sendTransaction(runner.rpc, runner.sendAndConfirm, runner.marketCreator.solanaKeypair, [createMarketIx], {
@@ -512,7 +503,7 @@ export class TestRunner {
 
   async selectWinningOptions(selections: Array<{ optionId: number; rewardPercentage: number }>): Promise<void> {
     const ix = selectWinningOptionsIx({
-      authority: this.marketCreator.solanaKeypair,
+      marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
       selections,
     });
@@ -575,7 +566,7 @@ export class TestRunner {
 
   async pauseMarket(): Promise<void> {
     const ix = pauseMarketIx({
-      authority: this.marketCreator.solanaKeypair,
+      marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
     });
 
@@ -586,7 +577,7 @@ export class TestRunner {
 
   async resumeMarket(): Promise<void> {
     const ix = resumeMarketIx({
-      authority: this.marketCreator.solanaKeypair,
+      marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
     });
 
@@ -607,7 +598,7 @@ export class TestRunner {
     this.usedOptionIds.add(optionId);
 
     const addOptionIx = await addMarketOption({
-      creator: this.marketCreator.solanaKeypair,
+      marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
       optionId,
     });
@@ -647,65 +638,53 @@ export class TestRunner {
           const stakeAccountId = this.getNextStakeAccountId(user);
           const stakeAccountNonce = deserializeLE(randomBytes(16));
 
-          // Init stake account
+          const [stakeAccountAddress] = await getStakeAccountAddressPda(p.userId, this.marketAddress, stakeAccountId);
+
+          // 1. init_stake_account
           const initIx = await initStakeAccount({
-            signer: user.solanaKeypair,
+            payer: user.solanaKeypair,
+            owner: user.solanaKeypair.address,
             market: this.marketAddress,
-            stateNonce: stakeAccountNonce,
             stakeAccountId,
           });
 
-          await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [initIx], {
-            label: `Init stake account`,
-          });
-
-          // Build stake instruction
+          // 2. stake
           const inputNonce = randomBytes(16);
           const optionCiphertext = cipher.encrypt([BigInt(p.optionId)], inputNonce);
           const computationOffset = randomComputationOffset();
 
-          const [tokenVaultAddress] = await getTokenVaultAddress(this.mint.address, this.programId);
-          const [marketAta] = await findAssociatedTokenPda({
-            mint: this.mint.address,
-            owner: this.marketAddress,
-            tokenProgram: TOKEN_PROGRAM_ADDRESS,
-          });
-          const [tokenVaultAta] = await findAssociatedTokenPda({
-            mint: this.mint.address,
-            owner: tokenVaultAddress,
-            tokenProgram: TOKEN_PROGRAM_ADDRESS,
-          });
-
-          const stakeIx = await stake(
+          const stakeInstruction = await stakeIx(
             {
               signer: user.solanaKeypair,
               payer: user.solanaKeypair,
               market: this.marketAddress,
+              stakeAccount: stakeAccountAddress,
               stakeAccountId,
               tokenMint: this.mint.address,
               signerTokenAccount: user.tokenAccount,
-              marketTokenAta: marketAta,
-              tokenVault: tokenVaultAddress,
-              tokenVaultAta,
               tokenProgram: TOKEN_PROGRAM_ADDRESS,
               amount: p.amount,
               selectedOptionCiphertext: optionCiphertext[0],
               inputNonce: deserializeLE(inputNonce),
               authorizedReaderNonce: deserializeLE(randomBytes(16)),
               userPubkey: user.x25519Keypair.publicKey,
+              stateNonce: stakeAccountNonce,
             },
             this.getArciumConfig(computationOffset)
           );
 
-          await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [stakeIx], {
-            label: `Stake on option`,
-          });
+          await sendTransaction(
+            this.rpc,
+            this.sendAndConfirm,
+            user.solanaKeypair,
+            [initIx, stakeInstruction],
+            { label: "Stake on option" }
+          );
 
           const result = await awaitComputationFinalization(this.rpc, computationOffset);
           this.assertComputationSucceeded(result, "stakeOnOption");
 
           // Fetch the stake account to get the encrypted state
-          const [stakeAccountAddress] = await getStakeAccountAddressPda(p.userId, this.marketAddress, stakeAccountId);
           const stakeAccountData = await fetchStakeAccount(this.rpc, stakeAccountAddress);
 
           this.addStakeAccount(user, {
@@ -784,19 +763,12 @@ export class TestRunner {
     stakeAccountId: number
   ): Promise<void> {
     const executor = this.getUser(executorId);
-
-    const [marketAta] = await findAssociatedTokenPda({
-      mint: this.mint.address,
-      owner: this.marketAddress,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    });
     const owner = this.getUser(stakeOwnerId);
 
     const ix = await doUnstakeEarlyIx({
       signer: executor.solanaKeypair,
       market: this.marketAddress,
       tokenMint: this.mint.address,
-      marketTokenAta: marketAta,
       ownerTokenAccount: owner.tokenAccount,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
       stakeAccountId,
@@ -881,9 +853,9 @@ export class TestRunner {
 
     // Init stake account
     const initIx = await initStakeAccount({
-      signer: user.solanaKeypair,
+      payer: user.solanaKeypair,
+      owner: user.solanaKeypair.address,
       market: this.marketAddress,
-      stateNonce: stakeAccountNonce,
       stakeAccountId,
     });
 
@@ -891,45 +863,34 @@ export class TestRunner {
       label: `Init stake account`,
     });
 
+    const [stakeAccountAddress] = await getStakeAccountAddressPda(userId, this.marketAddress, stakeAccountId);
+
     // Build stake instruction
     const inputNonce = randomBytes(16);
     const optionCiphertext = cipher.encrypt([BigInt(optionId)], inputNonce);
     const computationOffset = randomComputationOffset();
 
-    const [tokenVaultAddress] = await getTokenVaultAddress(this.mint.address, this.programId);
-    const [marketAta] = await findAssociatedTokenPda({
-      mint: this.mint.address,
-      owner: this.marketAddress,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    });
-    const [tokenVaultAta] = await findAssociatedTokenPda({
-      mint: this.mint.address,
-      owner: tokenVaultAddress,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    });
-
-    const stakeIx = await stake(
+    const stakeInstruction = await stakeIx(
       {
         signer: user.solanaKeypair,
         payer: user.solanaKeypair,
         market: this.marketAddress,
+        stakeAccount: stakeAccountAddress,
         stakeAccountId,
         tokenMint: this.mint.address,
         signerTokenAccount: user.tokenAccount,
-        marketTokenAta: marketAta,
-        tokenVault: tokenVaultAddress,
-        tokenVaultAta,
         tokenProgram: TOKEN_PROGRAM_ADDRESS,
         amount,
         selectedOptionCiphertext: optionCiphertext[0],
         inputNonce: deserializeLE(inputNonce),
         authorizedReaderNonce: deserializeLE(randomBytes(16)),
         userPubkey: user.x25519Keypair.publicKey,
+        stateNonce: stakeAccountNonce,
       },
       this.getArciumConfig(computationOffset)
     );
 
-    // Build close stuck instruction
+    // Build close stuck instruction (codama auto-derives tokenVault/tokenVaultAta from tokenMint)
     const closeStuckIx = await closeStuckStakeAccountIx({
       signer: user.solanaKeypair,
       market: this.marketAddress,
@@ -940,7 +901,7 @@ export class TestRunner {
     });
 
     // Send both in the same transaction
-    await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [stakeIx, closeStuckIx], {
+    await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [stakeInstruction, closeStuckIx], {
       label: `Stake + close stuck stake account`,
     });
 
@@ -951,18 +912,11 @@ export class TestRunner {
     for (const r of requests) {
       const user = this.getUser(r.userId);
 
-      const [marketAta] = await findAssociatedTokenPda({
-        mint: this.mint.address,
-        owner: this.marketAddress,
-        tokenProgram: TOKEN_PROGRAM_ADDRESS,
-      });
-
       const ix = await reclaimStakeIx({
         signer: user.solanaKeypair,
         owner: user.solanaKeypair.address,
         market: this.marketAddress,
         tokenMint: this.mint.address,
-        marketTokenAta: marketAta,
         ownerTokenAccount: user.tokenAccount,
         tokenProgram: TOKEN_PROGRAM_ADDRESS,
         stakeAccountId: r.stakeAccountId,
@@ -1003,8 +957,29 @@ export class TestRunner {
     return this.rpc;
   }
 
+  getSendAndConfirm(): SendAndConfirmFn {
+    return this.sendAndConfirm;
+  }
+
+  getArciumClusterOffset(): number {
+    return this.arciumEnv.arciumClusterOffset;
+  }
+
+  getProgramId(): Address {
+    return this.programId;
+  }
+
+  getUserSigner(userId: Address): KeyPairSigner {
+    return this.getUser(userId).solanaKeypair;
+  }
+
   async fetchMarket() {
     return fetchOpportunityMarket(this.rpc, this.marketAddress);
+  }
+
+  async fetchTokenVault() {
+    const [tokenVaultAddress] = await getTokenVaultAddress(this.mint.address, this.programId);
+    return fetchTokenVault(this.rpc, tokenVaultAddress);
   }
 
   getMxePublicKey(): Uint8Array {
@@ -1088,13 +1063,14 @@ export class TestRunner {
     return this.marketConfig.unstakeDelaySeconds;
   }
 
-  async getMarketAta(): Promise<Address> {
-    const [marketAta] = await findAssociatedTokenPda({
+  async getTokenVaultAta(): Promise<Address> {
+    const [tokenVaultAddress] = await getTokenVaultAddress(this.mint.address, this.programId);
+    const [tokenVaultAta] = await findAssociatedTokenPda({
       mint: this.mint.address,
-      owner: this.marketAddress,
+      owner: tokenVaultAddress,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
     });
-    return marketAta;
+    return tokenVaultAta;
   }
 
   async getStakeAccountAddress(userId: Address, stakeAccountId: number): Promise<Address> {

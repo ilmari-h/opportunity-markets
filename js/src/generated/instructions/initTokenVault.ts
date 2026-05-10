@@ -51,9 +51,14 @@ export function getInitTokenVaultDiscriminatorBytes() {
 
 export type InitTokenVaultInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
-  TAccountPayer extends string | AccountMeta<string> = string,
+  TAccountUpdateAuthority extends string | AccountMeta<string> = string,
+  TAccountCentralState extends string | AccountMeta<string> = string,
   TAccountTokenMint extends string | AccountMeta<string> = string,
   TAccountTokenVault extends string | AccountMeta<string> = string,
+  TAccountTokenVaultAta extends string | AccountMeta<string> = string,
+  TAccountTokenProgram extends string | AccountMeta<string> = string,
+  TAccountAssociatedTokenProgram extends string | AccountMeta<string> =
+    'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
   TAccountSystemProgram extends string | AccountMeta<string> =
     '11111111111111111111111111111111',
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -61,16 +66,28 @@ export type InitTokenVaultInstruction<
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
-      TAccountPayer extends string
-        ? WritableSignerAccount<TAccountPayer> &
-            AccountSignerMeta<TAccountPayer>
-        : TAccountPayer,
+      TAccountUpdateAuthority extends string
+        ? WritableSignerAccount<TAccountUpdateAuthority> &
+            AccountSignerMeta<TAccountUpdateAuthority>
+        : TAccountUpdateAuthority,
+      TAccountCentralState extends string
+        ? ReadonlyAccount<TAccountCentralState>
+        : TAccountCentralState,
       TAccountTokenMint extends string
         ? ReadonlyAccount<TAccountTokenMint>
         : TAccountTokenMint,
       TAccountTokenVault extends string
         ? WritableAccount<TAccountTokenVault>
         : TAccountTokenVault,
+      TAccountTokenVaultAta extends string
+        ? WritableAccount<TAccountTokenVaultAta>
+        : TAccountTokenVaultAta,
+      TAccountTokenProgram extends string
+        ? ReadonlyAccount<TAccountTokenProgram>
+        : TAccountTokenProgram,
+      TAccountAssociatedTokenProgram extends string
+        ? ReadonlyAccount<TAccountAssociatedTokenProgram>
+        : TAccountAssociatedTokenProgram,
       TAccountSystemProgram extends string
         ? ReadonlyAccount<TAccountSystemProgram>
         : TAccountSystemProgram,
@@ -108,37 +125,57 @@ export function getInitTokenVaultInstructionDataCodec(): FixedSizeCodec<
 }
 
 export type InitTokenVaultAsyncInput<
-  TAccountPayer extends string = string,
+  TAccountUpdateAuthority extends string = string,
+  TAccountCentralState extends string = string,
   TAccountTokenMint extends string = string,
   TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  payer: TransactionSigner<TAccountPayer>;
+  updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
+  centralState?: Address<TAccountCentralState>;
   tokenMint: Address<TAccountTokenMint>;
   tokenVault?: Address<TAccountTokenVault>;
+  tokenVaultAta?: Address<TAccountTokenVaultAta>;
+  tokenProgram: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
 export async function getInitTokenVaultInstructionAsync<
-  TAccountPayer extends string,
+  TAccountUpdateAuthority extends string,
+  TAccountCentralState extends string,
   TAccountTokenMint extends string,
   TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
+  TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: InitTokenVaultAsyncInput<
-    TAccountPayer,
+    TAccountUpdateAuthority,
+    TAccountCentralState,
     TAccountTokenMint,
     TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): Promise<
   InitTokenVaultInstruction<
     TProgramAddress,
-    TAccountPayer,
+    TAccountUpdateAuthority,
+    TAccountCentralState,
     TAccountTokenMint,
     TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >
 > {
@@ -148,9 +185,16 @@ export async function getInitTokenVaultInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    payer: { value: input.payer ?? null, isWritable: true },
+    updateAuthority: { value: input.updateAuthority ?? null, isWritable: true },
+    centralState: { value: input.centralState ?? null, isWritable: false },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
     tokenVault: { value: input.tokenVault ?? null, isWritable: true },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -159,6 +203,18 @@ export async function getInitTokenVaultInstructionAsync<
   >;
 
   // Resolve default values.
+  if (!accounts.centralState.value) {
+    accounts.centralState.value = await getProgramDerivedAddress({
+      programAddress,
+      seeds: [
+        getBytesEncoder().encode(
+          new Uint8Array([
+            99, 101, 110, 116, 114, 97, 108, 95, 115, 116, 97, 116, 101,
+          ])
+        ),
+      ],
+    });
+  }
   if (!accounts.tokenVault.value) {
     accounts.tokenVault.value = await getProgramDerivedAddress({
       programAddress,
@@ -170,6 +226,21 @@ export async function getInitTokenVaultInstructionAsync<
       ],
     });
   }
+  if (!accounts.tokenVaultAta.value) {
+    accounts.tokenVaultAta.value = await getProgramDerivedAddress({
+      programAddress:
+        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>,
+      seeds: [
+        getAddressEncoder().encode(expectAddress(accounts.tokenVault.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenProgram.value)),
+        getAddressEncoder().encode(expectAddress(accounts.tokenMint.value)),
+      ],
+    });
+  }
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -178,53 +249,81 @@ export async function getInitTokenVaultInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.updateAuthority),
+      getAccountMeta(accounts.centralState),
       getAccountMeta(accounts.tokenMint),
       getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
     data: getInitTokenVaultInstructionDataEncoder().encode({}),
     programAddress,
   } as InitTokenVaultInstruction<
     TProgramAddress,
-    TAccountPayer,
+    TAccountUpdateAuthority,
+    TAccountCentralState,
     TAccountTokenMint,
     TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >);
 }
 
 export type InitTokenVaultInput<
-  TAccountPayer extends string = string,
+  TAccountUpdateAuthority extends string = string,
+  TAccountCentralState extends string = string,
   TAccountTokenMint extends string = string,
   TAccountTokenVault extends string = string,
+  TAccountTokenVaultAta extends string = string,
+  TAccountTokenProgram extends string = string,
+  TAccountAssociatedTokenProgram extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  payer: TransactionSigner<TAccountPayer>;
+  updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
+  centralState: Address<TAccountCentralState>;
   tokenMint: Address<TAccountTokenMint>;
   tokenVault: Address<TAccountTokenVault>;
+  tokenVaultAta: Address<TAccountTokenVaultAta>;
+  tokenProgram: Address<TAccountTokenProgram>;
+  associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
 };
 
 export function getInitTokenVaultInstruction<
-  TAccountPayer extends string,
+  TAccountUpdateAuthority extends string,
+  TAccountCentralState extends string,
   TAccountTokenMint extends string,
   TAccountTokenVault extends string,
+  TAccountTokenVaultAta extends string,
+  TAccountTokenProgram extends string,
+  TAccountAssociatedTokenProgram extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: InitTokenVaultInput<
-    TAccountPayer,
+    TAccountUpdateAuthority,
+    TAccountCentralState,
     TAccountTokenMint,
     TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >,
   config?: { programAddress?: TProgramAddress }
 ): InitTokenVaultInstruction<
   TProgramAddress,
-  TAccountPayer,
+  TAccountUpdateAuthority,
+  TAccountCentralState,
   TAccountTokenMint,
   TAccountTokenVault,
+  TAccountTokenVaultAta,
+  TAccountTokenProgram,
+  TAccountAssociatedTokenProgram,
   TAccountSystemProgram
 > {
   // Program address.
@@ -233,9 +332,16 @@ export function getInitTokenVaultInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    payer: { value: input.payer ?? null, isWritable: true },
+    updateAuthority: { value: input.updateAuthority ?? null, isWritable: true },
+    centralState: { value: input.centralState ?? null, isWritable: false },
     tokenMint: { value: input.tokenMint ?? null, isWritable: false },
     tokenVault: { value: input.tokenVault ?? null, isWritable: true },
+    tokenVaultAta: { value: input.tokenVaultAta ?? null, isWritable: true },
+    tokenProgram: { value: input.tokenProgram ?? null, isWritable: false },
+    associatedTokenProgram: {
+      value: input.associatedTokenProgram ?? null,
+      isWritable: false,
+    },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -244,6 +350,10 @@ export function getInitTokenVaultInstruction<
   >;
 
   // Resolve default values.
+  if (!accounts.associatedTokenProgram.value) {
+    accounts.associatedTokenProgram.value =
+      'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address<'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;
@@ -252,18 +362,26 @@ export function getInitTokenVaultInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.payer),
+      getAccountMeta(accounts.updateAuthority),
+      getAccountMeta(accounts.centralState),
       getAccountMeta(accounts.tokenMint),
       getAccountMeta(accounts.tokenVault),
+      getAccountMeta(accounts.tokenVaultAta),
+      getAccountMeta(accounts.tokenProgram),
+      getAccountMeta(accounts.associatedTokenProgram),
       getAccountMeta(accounts.systemProgram),
     ],
     data: getInitTokenVaultInstructionDataEncoder().encode({}),
     programAddress,
   } as InitTokenVaultInstruction<
     TProgramAddress,
-    TAccountPayer,
+    TAccountUpdateAuthority,
+    TAccountCentralState,
     TAccountTokenMint,
     TAccountTokenVault,
+    TAccountTokenVaultAta,
+    TAccountTokenProgram,
+    TAccountAssociatedTokenProgram,
     TAccountSystemProgram
   >);
 }
@@ -274,10 +392,14 @@ export type ParsedInitTokenVaultInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    payer: TAccountMetas[0];
-    tokenMint: TAccountMetas[1];
-    tokenVault: TAccountMetas[2];
-    systemProgram: TAccountMetas[3];
+    updateAuthority: TAccountMetas[0];
+    centralState: TAccountMetas[1];
+    tokenMint: TAccountMetas[2];
+    tokenVault: TAccountMetas[3];
+    tokenVaultAta: TAccountMetas[4];
+    tokenProgram: TAccountMetas[5];
+    associatedTokenProgram: TAccountMetas[6];
+    systemProgram: TAccountMetas[7];
   };
   data: InitTokenVaultInstructionData;
 };
@@ -290,7 +412,7 @@ export function parseInitTokenVaultInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedInitTokenVaultInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 4) {
+  if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -303,9 +425,13 @@ export function parseInitTokenVaultInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      payer: getNextAccount(),
+      updateAuthority: getNextAccount(),
+      centralState: getNextAccount(),
       tokenMint: getNextAccount(),
       tokenVault: getNextAccount(),
+      tokenVaultAta: getNextAccount(),
+      tokenProgram: getNextAccount(),
+      associatedTokenProgram: getNextAccount(),
       systemProgram: getNextAccount(),
     },
     data: getInitTokenVaultInstructionDataDecoder().decode(instruction.data),

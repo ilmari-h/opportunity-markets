@@ -17,7 +17,7 @@ pub use state::*;
 pub const COMP_DEF_OFFSET_STAKE: u32 = comp_def_offset("stake");
 pub const COMP_DEF_OFFSET_REVEAL_STAKE: u32 = comp_def_offset("reveal_stake");
 
-declare_id!("BENCHauvSzMY39khAvj43LHRpbVewb76Wv8ETsVuHn8C");
+declare_id!("B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg");
 
 #[arcium_program]
 pub mod opportunity_market {
@@ -31,15 +31,30 @@ pub mod opportunity_market {
         ctx: Context<InitCentralState>,
         protocol_fee_bp: u16,
         fee_claimer: Pubkey,
+        min_time_to_stake_seconds: u64,
+        min_time_to_reveal_seconds: u64,
     ) -> Result<()> {
-        instructions::init_central_state(ctx, protocol_fee_bp, fee_claimer)
+        instructions::init_central_state(
+            ctx,
+            protocol_fee_bp,
+            fee_claimer,
+            min_time_to_stake_seconds,
+            min_time_to_reveal_seconds,
+        )
     }
 
     pub fn update_central_state(
         ctx: Context<UpdateCentralState>,
         protocol_fee_bp: u16,
+        min_time_to_stake_seconds: u64,
+        min_time_to_reveal_seconds: u64,
     ) -> Result<()> {
-        instructions::update_central_state(ctx, protocol_fee_bp)
+        instructions::update_central_state(
+            ctx,
+            protocol_fee_bp,
+            min_time_to_stake_seconds,
+            min_time_to_reveal_seconds,
+        )
     }
 
     pub fn propose_new_update_authority(
@@ -78,17 +93,22 @@ pub mod opportunity_market {
         instructions::cancel_fee_claimer_change(ctx)
     }
 
+    pub fn init_token_vault(ctx: Context<InitTokenVault>) -> Result<()> {
+        instructions::init_token_vault(ctx)
+    }
+
     pub fn create_market(
         ctx: Context<CreateMarket>,
         market_index: u64,
         time_to_stake: u64,
         time_to_reveal: u64,
-        market_authority: Option<Pubkey>,
+        market_authority: Pubkey,
         unstake_delay_seconds: u64,
         authorized_reader_pubkey: [u8; 32],
         allow_closing_early: bool,
         reveal_period_authority: Pubkey,
         earliness_cutoff_seconds: u64,
+        min_stake_amount: u64,
     ) -> Result<()> {
         instructions::create_market(
             ctx,
@@ -101,13 +121,11 @@ pub mod opportunity_market {
             allow_closing_early,
             reveal_period_authority,
             earliness_cutoff_seconds,
+            min_stake_amount,
         )
     }
 
-    pub fn add_market_option(
-        ctx: Context<AddMarketOption>,
-        option_id: u64,
-    ) -> Result<()> {
+    pub fn add_market_option(ctx: Context<AddMarketOption>, option_id: u64) -> Result<()> {
         instructions::add_market_option(ctx, option_id)
     }
 
@@ -161,16 +179,9 @@ pub mod opportunity_market {
 
     pub fn init_stake_account(
         ctx: Context<InitStakeAccount>,
-        state_nonce: u128,
         stake_account_id: u32,
     ) -> Result<()> {
-        instructions::init_stake_account(ctx, state_nonce, stake_account_id)
-    }
-
-    pub fn init_token_vault(
-        ctx: Context<InitTokenVault>,
-    ) -> Result<()> {
-        instructions::init_token_vault(ctx)
+        instructions::init_stake_account(ctx, stake_account_id)
     }
 
     pub fn stake_comp_def(ctx: Context<StakeCompDef>) -> Result<()> {
@@ -186,6 +197,7 @@ pub mod opportunity_market {
         input_nonce: u128,
         authorized_reader_nonce: u128,
         user_pubkey: [u8; 32],
+        state_nonce: u128,
     ) -> Result<()> {
         instructions::stake(
             ctx,
@@ -196,6 +208,7 @@ pub mod opportunity_market {
             input_nonce,
             authorized_reader_nonce,
             user_pubkey,
+            state_nonce,
         )
     }
 

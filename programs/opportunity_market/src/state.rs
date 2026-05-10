@@ -2,17 +2,6 @@ use anchor_lang::prelude::*;
 
 #[account]
 #[derive(InitSpace)]
-pub struct TokenVault {
-    pub bump: u8,
-    pub mint: Pubkey,
-    pub collected_fees: u64,
-
-    /// Reserved for future use
-    pub _reserved: [u8; 128],
-}
-
-#[account]
-#[derive(InitSpace)]
 pub struct CentralState {
     pub bump: u8,
 
@@ -24,8 +13,11 @@ pub struct CentralState {
     // Only this address can call claim_fees
     pub fee_claimer: Pubkey,
 
-    /// Reserved for future use
-    pub _reserved: [u8; 128],
+    // Minimum time_to_stake (seconds) accepted by create_market.
+    pub min_time_to_stake_seconds: u64,
+
+    // Minimum time_to_reveal (seconds) accepted by create_market.
+    pub min_time_to_reveal_seconds: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, InitSpace)]
@@ -80,6 +72,12 @@ pub struct OpportunityMarket {
 
     // If true, staking is halted
     pub paused: bool,
+
+    // Snapshot of central state fee taken when market is created.
+    pub protocol_fee_bp: u16,
+
+    // Minimum stake amount (in SPL token base units) required for a stake.
+    pub min_stake_amount: u64,
 }
 
 #[account]
@@ -106,6 +104,14 @@ pub struct StakeAccount {
     pub pending_stake: bool,                 // true while MPC stake computation is in flight
     pub pending_reveal: bool,                // true while MPC reveal computation is in flight
     pub id: u32,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct TokenVault {
+    pub bump: u8,
+    pub mint: Pubkey,
+    pub collected_fees: u64,
 }
 
 #[account]

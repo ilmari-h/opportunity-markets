@@ -27,7 +27,7 @@ pub fn end_reveal_period(ctx: Context<EndRevealPeriod>) -> Result<()> {
         .ok_or(ErrorCode::Overflow)?;
 
     // Must be in the reveal period
-    require!(current_timestamp >= stake_end, ErrorCode::StakingNotActive);
+    require!(current_timestamp >= stake_end, ErrorCode::StakeWindowMismatch);
 
     let reveal_end = stake_end
         .checked_add(market.time_to_reveal)

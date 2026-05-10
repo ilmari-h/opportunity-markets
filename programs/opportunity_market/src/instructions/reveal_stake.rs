@@ -79,7 +79,8 @@ pub fn reveal_stake(
     let reveal_start = market
         .open_timestamp
         .ok_or(ErrorCode::MarketNotOpen)?
-        .saturating_add(market.time_to_stake);
+        .checked_add(market.time_to_stake)
+        .ok_or(ErrorCode::Overflow)?;
 
     require!(current_timestamp >= reveal_start, ErrorCode::MarketNotResolved);
     require!(
@@ -152,8 +153,8 @@ pub fn reveal_stake_callback(
     ctx: Context<RevealStakeCallback>,
     output: SignedComputationOutputs<RevealStakeOutput>,
 ) -> Result<()> {
-    // Verify output — on failure, revert so the account stays locked
-    // with pending_reveal=true, allowing the user to retry reveal_stake
+    // On failure, revert so the account stays locked ith pending_reveal=true,
+    // allowing the user to retry reveal_stake
     let revealed_option = match output.verify_output(
         &ctx.accounts.cluster_account,
         &ctx.accounts.computation_account,
@@ -161,6 +162,14 @@ pub fn reveal_stake_callback(
         Ok(RevealStakeOutput { field_0 }) => field_0,
         Err(e) => return Err(e),
     };
+
+    // Only run on the queue-time stake_account. 
+    // A late callback delivered after close_stake_account + re-init would see pending_reveal=false
+    require!(
+        ctx.accounts.stake_account.pending_reveal
+            && ctx.accounts.stake_account.revealed_option.is_none(),
+        ErrorCode::InvalidAccountState
+    );
 
     // Unlock only on success
     ctx.accounts.stake_account.locked = false;

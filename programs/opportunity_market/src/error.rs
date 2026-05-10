@@ -12,16 +12,18 @@ pub enum ErrorCode {
     InsufficientBalance,
     #[msg("Insufficient reward funding")]
     InsufficientRewardFunding,
-    #[msg("Timestamp must be in the future")]
-    InvalidTimestamp,
+    #[msg("Invalid parameters")]
+    InvalidParameters,
     #[msg("Market is already open")]
     MarketAlreadyOpen,
     #[msg("Invalid option ID")]
     InvalidOptionId,
     #[msg("Market is not open")]
     MarketNotOpen,
-    #[msg("Staking period is not active")]
-    StakingNotActive,
+    #[msg("Stake window error")]
+    StakeWindowMismatch,
+    #[msg("Stake account has no recorded stake")]
+    NoStake,
     #[msg("Market winner already selected")]
     WinnerAlreadySelected,
     #[msg("Stake already revealed")]
@@ -58,18 +60,14 @@ pub enum ErrorCode {
     ClosingEarlyNotAllowed,
     #[msg("No fees to claim")]
     NoFeesToClaim,
-    #[msg("Invalid winning options input")]
-    InvalidWinningOptionsInput,
     #[msg("Stake account is not in a stuck or failed state")]
     StakeNotStuck,
-    #[msg("Protocol fee exceeds maximum 500 bp")]
-    ProtocolFeeTooHigh,
     #[msg("Market staking is currently paused")]
     MarketPaused,
     #[msg("Market is not paused")]
     MarketNotPaused,
-    #[msg("Earliness cutoff exceeds staking period")]
-    EarlinessCutoffTooLarge,
     #[msg("Timelock period has not elapsed yet")]
     TimelockNotElapsed,
+    #[msg("Stake amount is below the market minimum")]
+    StakeBelowMinimum,
 }

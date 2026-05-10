@@ -17,8 +17,6 @@ import {
   fixEncoderSize,
   getAddressDecoder,
   getAddressEncoder,
-  getArrayDecoder,
-  getArrayEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getStructDecoder,
@@ -54,16 +52,12 @@ export type TokenVault = {
   bump: number;
   mint: Address;
   collectedFees: bigint;
-  /** Reserved for future use */
-  reserved: Array<number>;
 };
 
 export type TokenVaultArgs = {
   bump: number;
   mint: Address;
   collectedFees: number | bigint;
-  /** Reserved for future use */
-  reserved: Array<number>;
 };
 
 export function getTokenVaultEncoder(): FixedSizeEncoder<TokenVaultArgs> {
@@ -73,7 +67,6 @@ export function getTokenVaultEncoder(): FixedSizeEncoder<TokenVaultArgs> {
       ['bump', getU8Encoder()],
       ['mint', getAddressEncoder()],
       ['collectedFees', getU64Encoder()],
-      ['reserved', getArrayEncoder(getU8Encoder(), { size: 128 })],
     ]),
     (value) => ({ ...value, discriminator: TOKEN_VAULT_DISCRIMINATOR })
   );
@@ -85,7 +78,6 @@ export function getTokenVaultDecoder(): FixedSizeDecoder<TokenVault> {
     ['bump', getU8Decoder()],
     ['mint', getAddressDecoder()],
     ['collectedFees', getU64Decoder()],
-    ['reserved', getArrayDecoder(getU8Decoder(), { size: 128 })],
   ]);
 }
 

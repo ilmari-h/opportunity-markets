@@ -24,10 +24,11 @@ pub struct MarketCreatedEvent {
     pub time_to_stake: u64,
     pub time_to_reveal: u64,
     pub earliness_cutoff_seconds: u64,
-    pub market_authority: Option<Pubkey>,
+    pub market_authority: Pubkey,
     pub authorized_reader_pubkey: [u8; 32],
     pub unstake_delay_seconds: u64,
     pub allow_closing_early: bool,
+    pub min_stake_amount: u64,
     pub timestamp: i64,
 }
 
@@ -35,7 +36,7 @@ pub struct MarketCreatedEvent {
 pub struct MarketOptionCreatedEvent {
     pub option: Pubkey,
     pub market: Pubkey,
-    pub creator: Pubkey,
+    pub market_authority: Pubkey,
     pub id: u64,
     pub timestamp: i64,
 }
@@ -85,7 +86,7 @@ pub struct MarketOpenedEvent {
 #[event]
 pub struct WinningOptionsSelectedEvent {
     pub market: Pubkey,
-    pub authority: Pubkey,
+    pub market_authority: Pubkey,
     pub selected_options: Vec<WinningOption>,
     pub timestamp: i64,
 }
@@ -186,6 +187,13 @@ pub struct FeesClaimedEvent {
 }
 
 #[event]
+pub struct TokenVaultInitializedEvent {
+    pub token_vault: Pubkey,
+    pub mint: Pubkey,
+    pub timestamp: i64,
+}
+
+#[event]
 pub struct MarketPausedEvent {
     pub market: Pubkey,
     pub timestamp: i64,
@@ -235,3 +243,4 @@ pub struct AccountChangeCancelledEvent {
     pub proposed_value: Pubkey,
     pub timestamp: i64,
 }
+

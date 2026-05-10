@@ -4,7 +4,7 @@ Opportunity Markets allow users to influence decision making by staking. Decisio
 
 ### **[Detailed protocol documentation →](./docs/README.md)**
 
-The Opportunity Markets program is deployed on Solana devnet at `BENCHauvSzMY39khAvj43LHRpbVewb76Wv8ETsVuHn8C`
+The Opportunity Markets program is deployed on Solana devnet at `B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg`
 
 ## Build & Test
 
@@ -15,7 +15,7 @@ In `programs/opportunity_market/Cargo.toml` make sure it's not in the defaults a
 
 ### Program keypair
 
-Tests use a deterministic program keypair assumed to be located at `../BENCHauvSzMY39khAvj43LHRpbVewb76Wv8ETsVuHn8C.json`. If you don't have this keypair, generate your own and update the
+Tests use a deterministic program keypair assumed to be located at `../B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg.json`. If you don't have this keypair, generate your own and update the
 following to match:
 
 1. `declare_id!()` in `programs/opportunity_market/src/lib.rs`

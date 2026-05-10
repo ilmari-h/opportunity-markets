@@ -17,9 +17,9 @@ pub struct ClaimFees<'info> {
         bump = central_state.bump,
         constraint = signer.key() == central_state.fee_claimer @ ErrorCode::Unauthorized,
     )]
-    pub central_state: Account<'info, CentralState>,
+    pub central_state: Box<Account<'info, CentralState>>,
 
-    pub token_mint: InterfaceAccount<'info, Mint>,
+    pub token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
@@ -28,7 +28,7 @@ pub struct ClaimFees<'info> {
         constraint = token_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
         constraint = token_vault.collected_fees > 0 @ ErrorCode::NoFeesToClaim,
     )]
-    pub token_vault: Account<'info, TokenVault>,
+    pub token_vault: Box<Account<'info, TokenVault>>,
 
     #[account(
         mut,
@@ -36,23 +36,22 @@ pub struct ClaimFees<'info> {
         associated_token::authority = token_vault,
         associated_token::token_program = token_program,
     )]
-    pub token_vault_ata: InterfaceAccount<'info, TokenAccount>,
+    pub token_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
         token::mint = token_mint,
         token::token_program = token_program,
     )]
-    pub destination_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub destination_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Interface<'info, TokenInterface>,
 }
 
 pub fn claim_fees(ctx: Context<ClaimFees>) -> Result<()> {
-    let token_vault = &ctx.accounts.token_vault;
-    let fees = token_vault.collected_fees;
+    let fees = ctx.accounts.token_vault.collected_fees;
 
-    let vault_bump = token_vault.bump;
+    let vault_bump = ctx.accounts.token_vault.bump;
     let mint_key = ctx.accounts.token_mint.key();
     let signer_seeds: &[&[&[u8]]] = &[&[
         TOKEN_VAULT_SEED,

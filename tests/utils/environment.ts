@@ -246,6 +246,8 @@ export async function createTestEnvironment(
     payer: creatorAccount.keypair,
     protocolFeeBp: 0,
     feeClaimer: creatorAccount.keypair.address,
+    minTimeToStakeSeconds: 1n,
+    minTimeToRevealSeconds: 1n,
   });
 
   const { value: csBlockhash } = await rpc.getLatestBlockhash({ commitment: "confirmed" }).send();
@@ -266,16 +268,16 @@ export async function createTestEnvironment(
   const createMarketIx = await createMarket({
     creator: creatorAccount.keypair,
     tokenMint: mint.address,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
     marketIndex,
     timeToStake: marketConfig.timeToStake,
     timeToReveal: marketConfig.timeToReveal,
-    marketAuthority: null,
+    marketAuthority: creatorAccount.keypair.address,
     unstakeDelaySeconds: marketConfig.unstakeDelaySeconds,
     authorizedReaderPubkey: creatorAccount.x25519Keypair.publicKey,
     allowClosingEarly: true,
     revealPeriodAuthority: creatorAccount.keypair.address,
     earlinessCutoffSeconds: 0n,
+    minStakeAmount: 0n,
   });
 
   // Get latest blockhash

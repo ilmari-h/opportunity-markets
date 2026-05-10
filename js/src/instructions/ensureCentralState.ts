@@ -11,13 +11,22 @@ export interface EnsureCentralStateParams extends BaseInstructionParams {
   signer: TransactionSigner;
   protocolFeeBp: number;
   feeClaimer: Address;
+  minTimeToStakeSeconds: bigint;
+  minTimeToRevealSeconds: bigint;
 }
 
 export async function ensureCentralState(
   rpc: Parameters<typeof fetchMaybeCentralState>[0],
   params: EnsureCentralStateParams,
 ): Promise<Instruction | null> {
-  const { programAddress, signer, protocolFeeBp, feeClaimer } = params;
+  const {
+    programAddress,
+    signer,
+    protocolFeeBp,
+    feeClaimer,
+    minTimeToStakeSeconds,
+    minTimeToRevealSeconds,
+  } = params;
   const config = programAddress ? { programAddress } : undefined;
 
   const [centralStateAddress] = await getCentralStateAddress(programAddress);
@@ -25,18 +34,33 @@ export async function ensureCentralState(
 
   if (existing.exists) {
     const s = existing.data;
-    if (s.protocolFeeBp === protocolFeeBp) {
+    if (
+      s.protocolFeeBp === protocolFeeBp &&
+      s.minTimeToStakeSeconds === minTimeToStakeSeconds &&
+      s.minTimeToRevealSeconds === minTimeToRevealSeconds
+    ) {
       return null;
     }
 
     return getUpdateCentralStateInstructionAsync(
-      { updateAuthority: signer, protocolFeeBp },
+      {
+        updateAuthority: signer,
+        protocolFeeBp,
+        minTimeToStakeSeconds,
+        minTimeToRevealSeconds,
+      },
       config,
     ) as Promise<Instruction>;
   }
 
   return getInitCentralStateInstructionAsync(
-    { payer: signer, protocolFeeBp, feeClaimer },
+    {
+      payer: signer,
+      protocolFeeBp,
+      feeClaimer,
+      minTimeToStakeSeconds,
+      minTimeToRevealSeconds,
+    },
     config,
   ) as Promise<Instruction>;
 }

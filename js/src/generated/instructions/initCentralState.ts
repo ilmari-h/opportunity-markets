@@ -19,6 +19,8 @@ import {
   getStructEncoder,
   getU16Decoder,
   getU16Encoder,
+  getU64Decoder,
+  getU64Encoder,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -50,7 +52,8 @@ export function getInitCentralStateDiscriminatorBytes() {
 
 export type InitCentralStateInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
-  TAccountPayer extends string | AccountMeta<string> = string,
+  TAccountPayer extends string | AccountMeta<string> =
+    'GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq',
   TAccountCentralState extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
     '11111111111111111111111111111111',
@@ -77,11 +80,15 @@ export type InitCentralStateInstructionData = {
   discriminator: ReadonlyUint8Array;
   protocolFeeBp: number;
   feeClaimer: Address;
+  minTimeToStakeSeconds: bigint;
+  minTimeToRevealSeconds: bigint;
 };
 
 export type InitCentralStateInstructionDataArgs = {
   protocolFeeBp: number;
   feeClaimer: Address;
+  minTimeToStakeSeconds: number | bigint;
+  minTimeToRevealSeconds: number | bigint;
 };
 
 export function getInitCentralStateInstructionDataEncoder(): FixedSizeEncoder<InitCentralStateInstructionDataArgs> {
@@ -90,6 +97,8 @@ export function getInitCentralStateInstructionDataEncoder(): FixedSizeEncoder<In
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['protocolFeeBp', getU16Encoder()],
       ['feeClaimer', getAddressEncoder()],
+      ['minTimeToStakeSeconds', getU64Encoder()],
+      ['minTimeToRevealSeconds', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: INIT_CENTRAL_STATE_DISCRIMINATOR })
   );
@@ -100,6 +109,8 @@ export function getInitCentralStateInstructionDataDecoder(): FixedSizeDecoder<In
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['protocolFeeBp', getU16Decoder()],
     ['feeClaimer', getAddressDecoder()],
+    ['minTimeToStakeSeconds', getU64Decoder()],
+    ['minTimeToRevealSeconds', getU64Decoder()],
   ]);
 }
 
@@ -118,11 +129,13 @@ export type InitCentralStateAsyncInput<
   TAccountCentralState extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  payer: TransactionSigner<TAccountPayer>;
+  payer?: TransactionSigner<TAccountPayer>;
   centralState?: Address<TAccountCentralState>;
   systemProgram?: Address<TAccountSystemProgram>;
   protocolFeeBp: InitCentralStateInstructionDataArgs['protocolFeeBp'];
   feeClaimer: InitCentralStateInstructionDataArgs['feeClaimer'];
+  minTimeToStakeSeconds: InitCentralStateInstructionDataArgs['minTimeToStakeSeconds'];
+  minTimeToRevealSeconds: InitCentralStateInstructionDataArgs['minTimeToRevealSeconds'];
 };
 
 export async function getInitCentralStateInstructionAsync<
@@ -164,6 +177,10 @@ export async function getInitCentralStateInstructionAsync<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.payer.value) {
+    accounts.payer.value =
+      'GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq' as Address<'GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq'>;
+  }
   if (!accounts.centralState.value) {
     accounts.centralState.value = await getProgramDerivedAddress({
       programAddress,
@@ -205,11 +222,13 @@ export type InitCentralStateInput<
   TAccountCentralState extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  payer: TransactionSigner<TAccountPayer>;
+  payer?: TransactionSigner<TAccountPayer>;
   centralState: Address<TAccountCentralState>;
   systemProgram?: Address<TAccountSystemProgram>;
   protocolFeeBp: InitCentralStateInstructionDataArgs['protocolFeeBp'];
   feeClaimer: InitCentralStateInstructionDataArgs['feeClaimer'];
+  minTimeToStakeSeconds: InitCentralStateInstructionDataArgs['minTimeToStakeSeconds'];
+  minTimeToRevealSeconds: InitCentralStateInstructionDataArgs['minTimeToRevealSeconds'];
 };
 
 export function getInitCentralStateInstruction<
@@ -249,6 +268,10 @@ export function getInitCentralStateInstruction<
   const args = { ...input };
 
   // Resolve default values.
+  if (!accounts.payer.value) {
+    accounts.payer.value =
+      'GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq' as Address<'GrSg7Cw3vDKCyqFXy3djdADAuZpiK37rmHh7LY3dN3Gq'>;
+  }
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
       '11111111111111111111111111111111' as Address<'11111111111111111111111111111111'>;

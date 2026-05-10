@@ -43,6 +43,7 @@ export * from './stakeRevealedEvent';
 export * from './stuckStakeClosedEvent';
 export * from './tallyIncrementedEvent';
 export * from './timestamp';
+export * from './tokenVaultInitializedEvent';
 export * from './unstakedEvent';
 export * from './unstakeInitiatedEvent';
 export * from './utilityPubkeys';

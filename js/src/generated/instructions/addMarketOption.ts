@@ -54,7 +54,7 @@ export function getAddMarketOptionDiscriminatorBytes() {
 
 export type AddMarketOptionInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
-  TAccountCreator extends string | AccountMeta<string> = string,
+  TAccountMarketAuthority extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
   TAccountOption extends string | AccountMeta<string> = string,
   TAccountSystemProgram extends string | AccountMeta<string> =
@@ -64,10 +64,10 @@ export type AddMarketOptionInstruction<
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
-      TAccountCreator extends string
-        ? WritableSignerAccount<TAccountCreator> &
-            AccountSignerMeta<TAccountCreator>
-        : TAccountCreator,
+      TAccountMarketAuthority extends string
+        ? WritableSignerAccount<TAccountMarketAuthority> &
+            AccountSignerMeta<TAccountMarketAuthority>
+        : TAccountMarketAuthority,
       TAccountMarket extends string
         ? WritableAccount<TAccountMarket>
         : TAccountMarket,
@@ -116,12 +116,12 @@ export function getAddMarketOptionInstructionDataCodec(): FixedSizeCodec<
 }
 
 export type AddMarketOptionAsyncInput<
-  TAccountCreator extends string = string,
+  TAccountMarketAuthority extends string = string,
   TAccountMarket extends string = string,
   TAccountOption extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  creator: TransactionSigner<TAccountCreator>;
+  marketAuthority: TransactionSigner<TAccountMarketAuthority>;
   market: Address<TAccountMarket>;
   option?: Address<TAccountOption>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -129,14 +129,14 @@ export type AddMarketOptionAsyncInput<
 };
 
 export async function getAddMarketOptionInstructionAsync<
-  TAccountCreator extends string,
+  TAccountMarketAuthority extends string,
   TAccountMarket extends string,
   TAccountOption extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: AddMarketOptionAsyncInput<
-    TAccountCreator,
+    TAccountMarketAuthority,
     TAccountMarket,
     TAccountOption,
     TAccountSystemProgram
@@ -145,7 +145,7 @@ export async function getAddMarketOptionInstructionAsync<
 ): Promise<
   AddMarketOptionInstruction<
     TProgramAddress,
-    TAccountCreator,
+    TAccountMarketAuthority,
     TAccountMarket,
     TAccountOption,
     TAccountSystemProgram
@@ -157,7 +157,7 @@ export async function getAddMarketOptionInstructionAsync<
 
   // Original accounts.
   const originalAccounts = {
-    creator: { value: input.creator ?? null, isWritable: true },
+    marketAuthority: { value: input.marketAuthority ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: true },
     option: { value: input.option ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -191,7 +191,7 @@ export async function getAddMarketOptionInstructionAsync<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.creator),
+      getAccountMeta(accounts.marketAuthority),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.option),
       getAccountMeta(accounts.systemProgram),
@@ -202,7 +202,7 @@ export async function getAddMarketOptionInstructionAsync<
     programAddress,
   } as AddMarketOptionInstruction<
     TProgramAddress,
-    TAccountCreator,
+    TAccountMarketAuthority,
     TAccountMarket,
     TAccountOption,
     TAccountSystemProgram
@@ -210,12 +210,12 @@ export async function getAddMarketOptionInstructionAsync<
 }
 
 export type AddMarketOptionInput<
-  TAccountCreator extends string = string,
+  TAccountMarketAuthority extends string = string,
   TAccountMarket extends string = string,
   TAccountOption extends string = string,
   TAccountSystemProgram extends string = string,
 > = {
-  creator: TransactionSigner<TAccountCreator>;
+  marketAuthority: TransactionSigner<TAccountMarketAuthority>;
   market: Address<TAccountMarket>;
   option: Address<TAccountOption>;
   systemProgram?: Address<TAccountSystemProgram>;
@@ -223,14 +223,14 @@ export type AddMarketOptionInput<
 };
 
 export function getAddMarketOptionInstruction<
-  TAccountCreator extends string,
+  TAccountMarketAuthority extends string,
   TAccountMarket extends string,
   TAccountOption extends string,
   TAccountSystemProgram extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
   input: AddMarketOptionInput<
-    TAccountCreator,
+    TAccountMarketAuthority,
     TAccountMarket,
     TAccountOption,
     TAccountSystemProgram
@@ -238,7 +238,7 @@ export function getAddMarketOptionInstruction<
   config?: { programAddress?: TProgramAddress }
 ): AddMarketOptionInstruction<
   TProgramAddress,
-  TAccountCreator,
+  TAccountMarketAuthority,
   TAccountMarket,
   TAccountOption,
   TAccountSystemProgram
@@ -249,7 +249,7 @@ export function getAddMarketOptionInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    creator: { value: input.creator ?? null, isWritable: true },
+    marketAuthority: { value: input.marketAuthority ?? null, isWritable: true },
     market: { value: input.market ?? null, isWritable: true },
     option: { value: input.option ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -271,7 +271,7 @@ export function getAddMarketOptionInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.creator),
+      getAccountMeta(accounts.marketAuthority),
       getAccountMeta(accounts.market),
       getAccountMeta(accounts.option),
       getAccountMeta(accounts.systemProgram),
@@ -282,7 +282,7 @@ export function getAddMarketOptionInstruction<
     programAddress,
   } as AddMarketOptionInstruction<
     TProgramAddress,
-    TAccountCreator,
+    TAccountMarketAuthority,
     TAccountMarket,
     TAccountOption,
     TAccountSystemProgram
@@ -295,7 +295,7 @@ export type ParsedAddMarketOptionInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    creator: TAccountMetas[0];
+    marketAuthority: TAccountMetas[0];
     market: TAccountMetas[1];
     option: TAccountMetas[2];
     systemProgram: TAccountMetas[3];
@@ -324,7 +324,7 @@ export function parseAddMarketOptionInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      creator: getNextAccount(),
+      marketAuthority: getNextAccount(),
       market: getNextAccount(),
       option: getNextAccount(),
       systemProgram: getNextAccount(),

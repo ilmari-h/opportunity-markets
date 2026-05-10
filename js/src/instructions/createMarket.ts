@@ -9,16 +9,16 @@ import { type BaseInstructionParams } from "./instructionParams";
 export interface CreateMarketParams extends BaseInstructionParams {
   creator: TransactionSigner;
   tokenMint: Address;
-  tokenProgram: Address;
   marketIndex: bigint;
   timeToStake: bigint;
   timeToReveal: bigint;
-  marketAuthority: Address | null;
+  marketAuthority: Address;
   unstakeDelaySeconds: bigint;
   authorizedReaderPubkey: ByteArray;
   allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
   earlinessCutoffSeconds: bigint;
+  minStakeAmount: bigint;
 }
 
 export async function createMarket(
@@ -27,7 +27,6 @@ export async function createMarket(
   const {
     creator,
     tokenMint,
-    tokenProgram,
     marketIndex,
     timeToReveal,
     timeToStake,
@@ -37,6 +36,7 @@ export async function createMarket(
     allowClosingEarly,
     revealPeriodAuthority,
     earlinessCutoffSeconds,
+    minStakeAmount,
     programAddress,
   } = input;
 
@@ -44,7 +44,6 @@ export async function createMarket(
     {
       creator,
       tokenMint,
-      tokenProgram,
       marketIndex,
       timeToStake,
       timeToReveal,
@@ -54,6 +53,7 @@ export async function createMarket(
       allowClosingEarly,
       revealPeriodAuthority,
       earlinessCutoffSeconds,
+      minStakeAmount,
     },
     programAddress ? { programAddress } : undefined
   );

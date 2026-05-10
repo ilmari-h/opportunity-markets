@@ -5,8 +5,8 @@ use anchor_spl::token_interface::{
 
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, UnstakedEvent};
-use crate::constants::{OPPORTUNITY_MARKET_SEED, STAKE_ACCOUNT_SEED};
-use crate::state::{OpportunityMarket, StakeAccount};
+use crate::constants::{STAKE_ACCOUNT_SEED, TOKEN_VAULT_SEED};
+use crate::state::{OpportunityMarket, StakeAccount, TokenVault};
 
 #[derive(Accounts)]
 #[instruction(stake_account_id: u32, stake_account_owner: Pubkey)]
@@ -34,14 +34,21 @@ pub struct DoUnstakeEarly<'info> {
     #[account(address = market.mint)]
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// Market's ATA holding staked tokens
+    #[account(
+        seeds = [TOKEN_VAULT_SEED, token_mint.key().as_ref()],
+        bump = token_vault.bump,
+        constraint = token_vault.mint == token_mint.key() @ ErrorCode::InvalidMint,
+    )]
+    pub token_vault: Box<Account<'info, TokenVault>>,
+
+    /// Token vault ATA holding all program-held tokens for this mint.
     #[account(
         mut,
         associated_token::mint = token_mint,
-        associated_token::authority = market,
+        associated_token::authority = token_vault,
         associated_token::token_program = token_program,
     )]
-    pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub token_vault_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// Owner's token account to receive refund
     #[account(
@@ -66,11 +73,13 @@ pub fn do_unstake_early(
     let open_timestamp = market.open_timestamp.ok_or_else(|| ErrorCode::MarketNotOpen)?;
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
-    let stake_end_timestamp = open_timestamp + market.time_to_stake;
+    let stake_end_timestamp = open_timestamp
+        .checked_add(market.time_to_stake)
+        .ok_or(ErrorCode::Overflow)?;
 
     require!(
         current_timestamp <= stake_end_timestamp,
-        ErrorCode::StakingNotActive
+        ErrorCode::StakeWindowMismatch
     );
 
     // Enforce unstake delay has passed
@@ -83,27 +92,24 @@ pub fn do_unstake_early(
 
     let amount = ctx.accounts.stake_account.amount;
 
-    // Transfer staked tokens from market ATA back to owner
-    let creator_key = market.creator;
-    let index_bytes = market.index.to_le_bytes();
-    let bump = market.bump;
-    let signer_seeds: &[&[&[u8]]] = &[&[
-        OPPORTUNITY_MARKET_SEED,
-        creator_key.as_ref(),
-        &index_bytes,
-        &[bump],
+    let vault_bump = ctx.accounts.token_vault.bump;
+    let mint_key = ctx.accounts.token_mint.key();
+    let vault_seeds: &[&[&[u8]]] = &[&[
+        TOKEN_VAULT_SEED,
+        mint_key.as_ref(),
+        &[vault_bump],
     ]];
 
     transfer_checked(
         CpiContext::new_with_signer(
             ctx.accounts.token_program.to_account_info(),
             TransferChecked {
-                from: ctx.accounts.market_token_ata.to_account_info(),
+                from: ctx.accounts.token_vault_ata.to_account_info(),
                 mint: ctx.accounts.token_mint.to_account_info(),
                 to: ctx.accounts.owner_token_account.to_account_info(),
-                authority: market.to_account_info(),
+                authority: ctx.accounts.token_vault.to_account_info(),
             },
-            signer_seeds,
+            vault_seeds,
         ),
         amount,
         ctx.accounts.token_mint.decimals,

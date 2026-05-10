@@ -1,23 +1,26 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { address, some, isNone, isSome, unwrapOption, createSolanaRpc, createSolanaRpcSubscriptions, sendAndConfirmTransactionFactory } from "@solana/kit";
-import { fetchToken, findAssociatedTokenPda, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
+import { fetchToken, findAssociatedTokenPda, getTransferInstruction, TOKEN_PROGRAM_ADDRESS } from "@solana-program/token";
 import { expect } from "chai";
+import { deserializeLE } from "@arcium-hq/client";
+import { randomBytes } from "crypto";
 import {
-  fetchTokenVault,
-  getTokenVaultAddress,
   OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED,
-  OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE,
+  OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH,
   OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET,
   OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
   OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED,
+  OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM,
+  fetchStakeAccount,
 } from "../js/src";
 
 import { OpportunityMarket } from "../target/types/opportunity_market";
 import { TestRunner } from "./utils/test-runner";
 import { initializeAllCompDefs } from "./utils/comp-defs";
 import { sleepUntilOnChainTimestamp } from "./utils/sleep";
-import { generateX25519Keypair, X25519Keypair } from "../js/src/x25519/keypair";
+import { generateX25519Keypair, X25519Keypair, createCipher, nonceToBytes } from "../js/src/x25519/keypair";
+import { sendTransaction } from "./utils/transaction";
 import { shouldThrowCustomError } from "./utils/errors";
 import * as fs from "fs";
 import * as os from "os";
@@ -186,7 +189,7 @@ describe("OpportunityMarket", () => {
 
     // Get token balances before closing (after reclaim, so only reward transfer remains)
     const rpc = runner.getRpc();
-    const marketAta = await runner.getMarketAta();
+    const marketAta = await runner.getTokenVaultAta();
 
     const balancesBefore = await Promise.all(
       winners.map(async (userId) => ({
@@ -260,12 +263,11 @@ describe("OpportunityMarket", () => {
     expect(totalGains >= marketFundingAmount - 2n).to.be.true;
     expect(totalGains <= marketFundingAmount).to.be.true;
 
-    // Verify token vault has collected fees
+    // Verify the fee vault has collected fees
     const totalExpectedFees = expectedFeePerUser.reduce((sum, f) => sum + f, 0n);
-    const [tokenVaultAddress] = await getTokenVaultAddress(runner.mintAddress, programId);
-    const vaultBefore = await fetchTokenVault(rpc, tokenVaultAddress);
+    const vaultBefore = await runner.fetchTokenVault();
     expect(vaultBefore.data.collectedFees).to.equal(totalExpectedFees,
-      `Vault should have collected ${totalExpectedFees} in fees`);
+      `Fee vault should have collected ${totalExpectedFees} in fees`);
 
     // Get fee recipient balance before claiming
     const feeRecipientBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(runner.creator))).data.amount;
@@ -278,9 +280,9 @@ describe("OpportunityMarket", () => {
     expect(feeRecipientBalanceAfter - feeRecipientBalanceBefore).to.equal(totalExpectedFees,
       `Fee recipient should have received ${totalExpectedFees} in fees`);
 
-    // Verify vault fees reset to 0
-    const vaultAfter = await fetchTokenVault(rpc, tokenVaultAddress);
-    expect(vaultAfter.data.collectedFees).to.equal(0n, "Vault collected fees should be 0 after claiming");
+    // Verify fee vault counter reset to 0
+    const vaultAfter = await runner.fetchTokenVault();
+    expect(vaultAfter.data.collectedFees).to.equal(0n, "Fee vault collected fees should be 0 after claiming");
   });
 
   it("distributes rewards across multiple winning options", async () => {
@@ -541,7 +543,7 @@ describe("OpportunityMarket", () => {
     // Get balances before closing
     const rpc = runner.getRpc();
     const userBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
-    const marketAta = await runner.getMarketAta();
+    const marketAta = await runner.getTokenVaultAta();
     const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
 
     // Close ALL stake accounts (both winning and losing)
@@ -580,8 +582,15 @@ describe("OpportunityMarket", () => {
       `Market should pay out ~${marketFundingAmount}, paid ${marketPaidOut}`
     ).to.be.true;
 
-    // Market ATA should be empty (or nearly empty due to rounding)
-    expect(marketBalanceAfter <= 1n, `Market ATA should be empty, has ${marketBalanceAfter}`).to.be.true;
+    // After all reclaims + reward payouts the only thing left in the
+    // token vault ATA is the collected protocol fees (which sit there
+    // until claim_fees runs).
+    const vaultAfter = await runner.fetchTokenVault();
+    const collectedFees = vaultAfter.data.collectedFees;
+    expect(
+      marketBalanceAfter <= collectedFees + 1n,
+      `Token vault ATA should hold only collected fees (~${collectedFees}), has ${marketBalanceAfter}`
+    ).to.be.true;
   });
 
   it("prevents closing market early when not allowed", async () => {
@@ -761,7 +770,7 @@ describe("OpportunityMarket", () => {
     // Try to stake before staking period starts — should fail
     await shouldThrowCustomError(
       () => runner.stakeOnOption(user, 50_000_000n, optionA),
-      OPPORTUNITY_MARKET_ERROR__STAKING_NOT_ACTIVE
+      OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH
     );
   });
 
@@ -901,7 +910,7 @@ describe("OpportunityMarket", () => {
     expect(unlockedBalanceBefore - unlockedBalanceAfterAdd).to.equal(unlockedAmount);
 
     // Verify market ATA holds total reward
-    const marketAta = await runner.getMarketAta();
+    const marketAta = await runner.getTokenVaultAta();
     const marketAtaBalance = (await fetchToken(rpc, marketAta)).data.amount;
     expect(marketAtaBalance).to.equal(lockedAmount + unlockedAmount);
 
@@ -955,16 +964,9 @@ describe("OpportunityMarket", () => {
 
     // Record balances before
     const userBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
-    const marketAta = await runner.getMarketAta();
-    const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
-    const [tokenVaultAddress] = await getTokenVaultAddress(runner.mintAddress, programId);
-    const [tokenVaultAta] = await findAssociatedTokenPda({
-      mint: runner.mintAddress,
-      owner: tokenVaultAddress,
-      tokenProgram: TOKEN_PROGRAM_ADDRESS,
-    });
+    const tokenVaultAta = await runner.getTokenVaultAta();
     const vaultAtaBalanceBefore = (await fetchToken(rpc, tokenVaultAta)).data.amount;
-    const vaultBefore = await fetchTokenVault(rpc, tokenVaultAddress);
+    const vaultBefore = await runner.fetchTokenVault();
 
     // Stake and immediately close stuck in the same transaction
     const stakeAccountId = await runner.stakeAndCloseStuck(user, stakeAmount, optionId);
@@ -974,25 +976,20 @@ describe("OpportunityMarket", () => {
     const exists = await runner.accountExists(stakeAccountAddress);
     expect(exists).to.be.false;
 
-    // Verify user token balance is restored (net_amount from market + fee from vault)
+    // Verify user token balance is restored (full amount refunded)
     const userBalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
     expect(userBalanceAfter).to.equal(userBalanceBefore,
       "User balance should be fully restored after close_stuck");
 
-    // Verify market ATA balance unchanged (net_amount went in and came back out)
-    const marketBalanceAfter = (await fetchToken(rpc, marketAta)).data.amount;
-    expect(marketBalanceAfter).to.equal(marketBalanceBefore,
-      "Market ATA balance should be unchanged");
-
-    // Verify vault ATA balance unchanged (fee went in and came back out)
+    // Verify token vault ATA balance unchanged (full amount went in and came back out)
     const vaultAtaBalanceAfter = (await fetchToken(rpc, tokenVaultAta)).data.amount;
     expect(vaultAtaBalanceAfter).to.equal(vaultAtaBalanceBefore,
-      "Vault ATA balance should be unchanged");
+      "Token vault ATA balance should be unchanged");
 
-    // Verify collected_fees was NOT incremented (fee never counted as collected)
-    const vaultAfter = await fetchTokenVault(rpc, tokenVaultAddress);
+    // Verify token vault collected_fees was NOT incremented (fee never counted as collected)
+    const vaultAfter = await runner.fetchTokenVault();
     expect(vaultAfter.data.collectedFees).to.equal(vaultBefore.data.collectedFees,
-      "Vault collected_fees should not have changed");
+      "Token vault collected_fees should not have changed");
   });
 
   it("pausing blocks staking, resuming allows it again", async () => {
@@ -1033,6 +1030,45 @@ describe("OpportunityMarket", () => {
 
     // Staking should succeed after resume
     const stakeAccountId = await runner.stakeOnOption(user, 50_000_000n, optionId);
+    const stakeAccount = await runner.fetchStakeAccountData(user, stakeAccountId);
+    expect(stakeAccount.data.amount > 0n).to.be.true;
+  });
+
+  it("rejects staking below the minimum stake amount", async () => {
+    const minStakeAmount = 100_000_000n;
+
+    const observer = loadObserverKeypair();
+
+    const runner = await TestRunner.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 1,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketConfig: {
+        rewardAmount: 1_000_000_000n,
+        timeToStake: 120n,
+        timeToReveal: 120n,
+        authorizedReaderPubkey: observer.publicKey,
+        minStakeAmount,
+      },
+    });
+
+    const openTimestamp = await runner.openMarket();
+    const { optionId } = await runner.addOption();
+
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    const user = runner.participants[0];
+
+    // Stake just below the minimum should fail
+    await shouldThrowCustomError(
+      () => runner.stakeOnOption(user, minStakeAmount - 1n, optionId),
+      OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM
+    );
+
+    // Stake at exactly the minimum should succeed
+    const stakeAccountId = await runner.stakeOnOption(user, minStakeAmount, optionId);
     const stakeAccount = await runner.fetchStakeAccountData(user, stakeAccountId);
     expect(stakeAccount.data.amount > 0n).to.be.true;
   });

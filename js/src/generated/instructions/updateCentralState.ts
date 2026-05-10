@@ -17,6 +17,8 @@ import {
   getStructEncoder,
   getU16Decoder,
   getU16Encoder,
+  getU64Decoder,
+  getU64Encoder,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -68,15 +70,23 @@ export type UpdateCentralStateInstruction<
 export type UpdateCentralStateInstructionData = {
   discriminator: ReadonlyUint8Array;
   protocolFeeBp: number;
+  minTimeToStakeSeconds: bigint;
+  minTimeToRevealSeconds: bigint;
 };
 
-export type UpdateCentralStateInstructionDataArgs = { protocolFeeBp: number };
+export type UpdateCentralStateInstructionDataArgs = {
+  protocolFeeBp: number;
+  minTimeToStakeSeconds: number | bigint;
+  minTimeToRevealSeconds: number | bigint;
+};
 
 export function getUpdateCentralStateInstructionDataEncoder(): FixedSizeEncoder<UpdateCentralStateInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['protocolFeeBp', getU16Encoder()],
+      ['minTimeToStakeSeconds', getU64Encoder()],
+      ['minTimeToRevealSeconds', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: UPDATE_CENTRAL_STATE_DISCRIMINATOR })
   );
@@ -86,6 +96,8 @@ export function getUpdateCentralStateInstructionDataDecoder(): FixedSizeDecoder<
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['protocolFeeBp', getU16Decoder()],
+    ['minTimeToStakeSeconds', getU64Decoder()],
+    ['minTimeToRevealSeconds', getU64Decoder()],
   ]);
 }
 
@@ -106,6 +118,8 @@ export type UpdateCentralStateAsyncInput<
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   centralState?: Address<TAccountCentralState>;
   protocolFeeBp: UpdateCentralStateInstructionDataArgs['protocolFeeBp'];
+  minTimeToStakeSeconds: UpdateCentralStateInstructionDataArgs['minTimeToStakeSeconds'];
+  minTimeToRevealSeconds: UpdateCentralStateInstructionDataArgs['minTimeToRevealSeconds'];
 };
 
 export async function getUpdateCentralStateInstructionAsync<
@@ -183,6 +197,8 @@ export type UpdateCentralStateInput<
   updateAuthority: TransactionSigner<TAccountUpdateAuthority>;
   centralState: Address<TAccountCentralState>;
   protocolFeeBp: UpdateCentralStateInstructionDataArgs['protocolFeeBp'];
+  minTimeToStakeSeconds: UpdateCentralStateInstructionDataArgs['minTimeToStakeSeconds'];
+  minTimeToRevealSeconds: UpdateCentralStateInstructionDataArgs['minTimeToRevealSeconds'];
 };
 
 export function getUpdateCentralStateInstruction<

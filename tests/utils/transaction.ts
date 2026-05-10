@@ -22,8 +22,10 @@ import {
  */
 export class OnChainError extends Error {
   readonly code: number | null;
+  readonly raw: TransactionError;
+  readonly logs: readonly string[] | null;
 
-  constructor(err: TransactionError) {
+  constructor(err: TransactionError, logs: readonly string[] | null = null) {
     let code: number | null = null;
 
     if (typeof err === "object" && "InstructionError" in err) {
@@ -33,9 +35,17 @@ export class OnChainError extends Error {
       }
     }
 
-    super(`OnChainError: ${code}`);
+    const rawJson = JSON.stringify(err, (_k, v) =>
+      typeof v === "bigint" ? v.toString() : v
+    );
+    const logsBlock = logs && logs.length > 0
+      ? `\n  Logs:\n${logs.map((l) => `    ${l}`).join("\n")}`
+      : "";
+    super(`OnChainError: code=${code} raw=${rawJson}${logsBlock}`);
     this.name = "OnChainError";
     this.code = code;
+    this.raw = err;
+    this.logs = logs;
   }
 }
 
@@ -120,7 +130,7 @@ export async function sendTransaction(
   }
 
   if (simResult.value.err) {
-    throw new OnChainError(simResult.value.err);
+    throw new OnChainError(simResult.value.err, logs);
   }
 
   // Send and confirm

@@ -85,16 +85,16 @@ async function main() {
   const createMarketIx = await createMarket({
     creator: payer,
     tokenMint: address(TOKEN_MINT_ARG),
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
     marketIndex,
     timeToStake: BigInt(config.timeToStake),
     timeToReveal: BigInt(config.timeToReveal),
-    marketAuthority: config.marketAuthority ? address(config.marketAuthority) : null,
+    marketAuthority: config.marketAuthority ? address(config.marketAuthority) : payer.address,
     unstakeDelaySeconds: BigInt(config.unstakeDelaySeconds),
     authorizedReaderPubkey,
     allowClosingEarly: config.allowClosingEarly,
     revealPeriodAuthority: payer.address,
     earlinessCutoffSeconds: BigInt(config.earlinessCutoffSeconds),
+    minStakeAmount: BigInt(config.minStakeAmount ?? 0),
     programAddress: PROGRAM_ID,
   });
 

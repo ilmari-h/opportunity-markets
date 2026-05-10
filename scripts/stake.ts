@@ -22,7 +22,7 @@ import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import {
   stake,
   initStakeAccount,
-  getTokenVaultAddress,
+  getStakeAccountAddress,
   fetchOpportunityMarket,
   randomComputationOffset,
   createCipher,
@@ -135,23 +135,12 @@ async function main() {
   }
 
   // Derive token accounts
-  const [tokenVaultAddress] = await getTokenVaultAddress(tokenMint, PROGRAM_ID);
   const [signerTokenAccount] = await findAssociatedTokenPda({
     mint: tokenMint,
     owner: payer.address,
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
   });
   console.log(`Signer ATA: ${signerTokenAccount}`);
-  const [marketTokenAta] = await findAssociatedTokenPda({
-    mint: tokenMint,
-    owner: marketAddress,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
-  const [tokenVaultAta] = await findAssociatedTokenPda({
-    mint: tokenMint,
-    owner: tokenVaultAddress,
-    tokenProgram: TOKEN_PROGRAM_ADDRESS,
-  });
 
   // Ensure staker's associated token account exists
   const signerAtaAccount = await rpc.getAccountInfo(signerTokenAccount, { encoding: "base64" }).send();
@@ -182,9 +171,9 @@ async function main() {
 
   console.log(`\nInitializing stake account (id: ${stakeAccountId})...`);
   const initIx = await initStakeAccount({
-    signer: payer,
+    payer,
+    owner: payer.address,
     market: marketAddress,
-    stateNonce,
     stakeAccountId,
     programAddress: PROGRAM_ID,
   });
@@ -201,6 +190,8 @@ async function main() {
   const initSig = await sendAndConfirmTx(rpc, signedInitTx);
   console.log(`Init stake account sig: ${initSig}`);
 
+  const [stakeAccountAddress] = await getStakeAccountAddress(payer.address, marketAddress, stakeAccountId, PROGRAM_ID);
+
   // Encrypt option choice
   const cipher = createCipher(userX25519Keypair.secretKey, mxePublicKey);
   const inputNonce = randomBytes(16);
@@ -213,18 +204,17 @@ async function main() {
       signer: payer,
       payer,
       market: marketAddress,
+      stakeAccount: stakeAccountAddress,
       stakeAccountId,
       tokenMint,
       signerTokenAccount,
-      marketTokenAta,
-      tokenVault: tokenVaultAddress,
-      tokenVaultAta,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
       amount,
       selectedOptionCiphertext: optionCiphertext[0],
       inputNonce: deserializeLE(inputNonce),
       authorizedReaderNonce: deserializeLE(randomBytes(16)),
       userPubkey: userX25519Keypair.publicKey,
+      stateNonce,
       programAddress: PROGRAM_ID,
     },
     {

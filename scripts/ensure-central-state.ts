@@ -60,16 +60,23 @@ async function main() {
 
   const feeClaimer = config.feeClaimer ? address(config.feeClaimer) : payer.address;
 
-  console.log(`Program:        ${PROGRAM_ID}`);
-  console.log(`Payer:          ${payer.address}`);
-  console.log(`Protocol fee:   ${config.protocolFeeBp} bp`);
-  console.log(`Fee claimer:    ${feeClaimer}`);
+  const minTimeToStakeSeconds = BigInt(config.minTimeToStakeSeconds);
+  const minTimeToRevealSeconds = BigInt(config.minTimeToRevealSeconds);
+
+  console.log(`Program:                ${PROGRAM_ID}`);
+  console.log(`Payer:                  ${payer.address}`);
+  console.log(`Protocol fee:           ${config.protocolFeeBp} bp`);
+  console.log(`Fee claimer:            ${feeClaimer}`);
+  console.log(`Min time to stake (s):  ${minTimeToStakeSeconds}`);
+  console.log(`Min time to reveal (s): ${minTimeToRevealSeconds}`);
 
   const ix = await ensureCentralState(rpc, {
     programAddress: PROGRAM_ID,
     signer: payer,
     protocolFeeBp: config.protocolFeeBp,
     feeClaimer,
+    minTimeToStakeSeconds,
+    minTimeToRevealSeconds,
   });
 
   if (!ix) {

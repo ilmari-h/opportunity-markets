@@ -6,20 +6,17 @@ import {
 import { type BaseInstructionParams } from "./instructionParams";
 
 export interface InitTokenVaultParams extends BaseInstructionParams {
-  payer: TransactionSigner;
+  updateAuthority: TransactionSigner;
   tokenMint: Address;
+  tokenProgram: Address;
 }
 
 export async function initTokenVault(
   input: InitTokenVaultParams
 ): Promise<InitTokenVaultInstruction<string>> {
-  const { programAddress, payer, tokenMint } = input;
-
+  const { programAddress, ...params } = input;
   return getInitTokenVaultInstructionAsync(
-    {
-      payer,
-      tokenMint,
-    },
+    params,
     programAddress ? { programAddress } : undefined
   );
 }

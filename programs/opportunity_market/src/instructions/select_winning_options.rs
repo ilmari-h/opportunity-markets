@@ -6,11 +6,10 @@ use crate::state::{OpportunityMarket, WinningOption};
 
 #[derive(Accounts)]
 pub struct SelectWinningOptions<'info> {
-    pub authority: Signer<'info>,
+    pub market_authority: Signer<'info>,
     #[account(
         mut,
-        constraint = market.creator == authority.key()
-            || market.market_authority == authority.key() @ ErrorCode::Unauthorized,
+        has_one = market_authority @ ErrorCode::Unauthorized,
     )]
     pub market: Account<'info, OpportunityMarket>,
 }
@@ -21,26 +20,26 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
     require!(market.selected_options.is_none(), ErrorCode::WinnerAlreadySelected);
 
     // Validate selection count
-    require!(!selections.is_empty() && selections.len() <= 10, ErrorCode::InvalidWinningOptionsInput);
+    require!(!selections.is_empty() && selections.len() <= 10, ErrorCode::InvalidParameters);
 
     // Validate each selection
     let mut percentage_sum: u16 = 0;
     for (i, sel) in selections.iter().enumerate() {
         // Percentage must be > 0
-        require!(sel.reward_percentage > 0, ErrorCode::InvalidWinningOptionsInput);
+        require!(sel.reward_percentage > 0, ErrorCode::InvalidParameters);
         percentage_sum += sel.reward_percentage as u16;
 
         // Check for duplicates
         for other in &selections[..i] {
             require!(
                 sel.option_id != other.option_id,
-                ErrorCode::InvalidWinningOptionsInput
+                ErrorCode::InvalidParameters
             );
         }
     }
 
     // Percentages must sum to 100
-    require!(percentage_sum == 100, ErrorCode::InvalidWinningOptionsInput);
+    require!(percentage_sum == 100, ErrorCode::InvalidParameters);
 
     // Enforce market was opened
     let open_timestamp = market.open_timestamp.ok_or_else(|| ErrorCode::MarketNotOpen)?;
@@ -49,11 +48,13 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
 
     require!(
         current_timestamp >= open_timestamp,
-        ErrorCode::InvalidTimestamp
+        ErrorCode::InvalidParameters
     );
 
     // Check if closing early is allowed
-    let stake_end_timestamp = open_timestamp + market.time_to_stake;
+    let stake_end_timestamp = open_timestamp
+        .checked_add(market.time_to_stake)
+        .ok_or(ErrorCode::Overflow)?;
     if !market.allow_closing_early {
         require!(
             current_timestamp >= stake_end_timestamp,
@@ -63,7 +64,9 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
 
     // If staking is still open, close it by setting time_to_stake to end now
     if current_timestamp < stake_end_timestamp {
-        market.time_to_stake = current_timestamp - open_timestamp;
+        market.time_to_stake = current_timestamp
+            .checked_sub(open_timestamp)
+            .ok_or(ErrorCode::Overflow)?;
     }
 
     // Save the selected options
@@ -71,7 +74,7 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
 
     emit_ts!(WinningOptionsSelectedEvent{
         market: market.key(),
-        authority: ctx.accounts.authority.key(),
+        market_authority: ctx.accounts.market_authority.key(),
         selected_options: selections,
     });
 

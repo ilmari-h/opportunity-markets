@@ -20,13 +20,17 @@ pub struct UpdateCentralState<'info> {
 pub fn update_central_state(
     ctx: Context<UpdateCentralState>,
     protocol_fee_bp: u16,
+    min_time_to_stake_seconds: u64,
+    min_time_to_reveal_seconds: u64,
 ) -> Result<()> {
     require!(
         protocol_fee_bp <= MAX_PROTOCOL_FEE_BP,
-        ErrorCode::ProtocolFeeTooHigh
+        ErrorCode::InvalidParameters
     );
 
     let central_state = &mut ctx.accounts.central_state;
     central_state.protocol_fee_bp = protocol_fee_bp;
+    central_state.min_time_to_stake_seconds = min_time_to_stake_seconds;
+    central_state.min_time_to_reveal_seconds = min_time_to_reveal_seconds;
     Ok(())
 }

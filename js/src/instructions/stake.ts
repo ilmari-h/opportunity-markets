@@ -11,41 +11,43 @@ export interface StakeParams extends BaseInstructionParams {
   signer: TransactionSigner;
   payer: TransactionSigner;
   market: Address;
+  /** PDA of the stake_account being staked into. Use `getStakeAccountAddress(owner, market, id)`. */
+  stakeAccount: Address;
   stakeAccountId: number;
   tokenMint: Address;
   signerTokenAccount: Address;
-  marketTokenAta: Address;
-  tokenVault: Address;
-  tokenVaultAta: Address;
   tokenProgram: Address;
+  /** Gross amount (net + fee). Fee is deducted on-chain and routed to the fee vault ATA. */
   amount: bigint;
   selectedOptionCiphertext: ByteArray;
   inputNonce: bigint;
   authorizedReaderNonce: bigint;
+  /** User's x25519 public key (NOT their Solana wallet pubkey). */
   userPubkey: ByteArray;
+  /** u128 nonce committed to encrypted-state derivation. */
+  stateNonce: bigint;
 }
 
 export async function stake(
   input: StakeParams,
-  config: ArciumConfig
+  config: ArciumConfig,
 ): Promise<StakeInstruction<string>> {
   const {
     programAddress,
     signer,
     payer,
     market,
+    stakeAccount,
     stakeAccountId,
     tokenMint,
     signerTokenAccount,
-    marketTokenAta,
-    tokenVault,
-    tokenVaultAta,
     tokenProgram,
     amount,
     selectedOptionCiphertext,
     inputNonce,
     authorizedReaderNonce,
     userPubkey,
+    stateNonce,
   } = input;
 
   return getStakeInstructionAsync(
@@ -54,19 +56,18 @@ export async function stake(
       signer,
       payer,
       market,
+      stakeAccount,
       stakeAccountId,
       tokenMint,
       signerTokenAccount,
-      marketTokenAta,
-      tokenVault,
-      tokenVaultAta,
       tokenProgram,
       amount,
       selectedOptionCiphertext: toNumberArray(selectedOptionCiphertext),
       inputNonce,
       authorizedReaderNonce,
       userPubkey: toNumberArray(userPubkey),
+      stateNonce,
     },
-    programAddress ? { programAddress } : undefined
+    programAddress ? { programAddress } : undefined,
   );
 }

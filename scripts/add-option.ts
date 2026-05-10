@@ -78,7 +78,7 @@ async function main() {
   console.log(`Option ID: ${optionId}`);
 
   const ix = await addMarketOption({
-    creator: payer,
+    marketAuthority: payer,
     market: marketAddress,
     optionId,
     programAddress: PROGRAM_ID,

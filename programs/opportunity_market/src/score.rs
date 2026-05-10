@@ -9,13 +9,15 @@ pub const PRECISION: u64 = 10_000;
 
 pub fn calculate_user_score_components(
     market_opened: u64,
-    market_closed: u64,
+    reveal_start: u64,
     user_staked_at: u64,
+    user_stake_end: u64,
     stake_amount: u64,
     earliness_cutoff_seconds: u64,
 ) -> Result<(u64, u64, u64)> {
     let earliness_cutoff = earliness_cutoff_seconds.max(1);
-    let total_market_time = market_closed
+
+    let total_stake_period = reveal_start
         .checked_sub(market_opened)
         .ok_or(ErrorCode::Overflow)?;
 
@@ -24,7 +26,7 @@ pub fn calculate_user_score_components(
         .ok_or(ErrorCode::Overflow)?
         .max(1);
 
-    let actual_stake_duration = market_closed
+    let actual_stake_duration = user_stake_end
         .checked_sub(user_staked_at)
         .ok_or(ErrorCode::Overflow)?;
 
@@ -41,25 +43,28 @@ pub fn calculate_user_score_components(
         )
         .ok_or(ErrorCode::Overflow)?;
 
+    // No `.max(1)` here: an early unstake should be allowed to score 0 on the
+    // time component, otherwise the reward formula always pays a sliver to
+    // someone who never actually committed capital.
     let stake_time_percentage = (actual_stake_duration as u128)
         .checked_mul(100)
         .ok_or(ErrorCode::Overflow)?
-        .checked_div((total_market_time.max(1)) as u128)
-        .ok_or(ErrorCode::Overflow)?
-        .max(1) as u64;
+        .checked_div((total_stake_period.max(1)) as u128)
+        .ok_or(ErrorCode::Overflow)? as u64;
 
     Ok((stake_amount, stake_time_percentage, earliness_factor))
 }
 
 pub fn calculate_user_score(
     market_opened: u64,
-    market_closed: u64,
+    reveal_start: u64,
     user_staked_at: u64,
+    user_stake_end: u64,
     stake_amount: u64,
     earliness_cutoff_seconds: u64,
 ) -> Result<u64> {
     let (amount, time_pct, earliness) =
-        calculate_user_score_components(market_opened, market_closed, user_staked_at, stake_amount, earliness_cutoff_seconds)?;
+        calculate_user_score_components(market_opened, reveal_start, user_staked_at, user_stake_end, stake_amount, earliness_cutoff_seconds)?;
 
     // score = amount * time_pct * earliness / PRECISION
     // Use u128 intermediate to avoid overflow

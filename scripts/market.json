@@ -8,5 +8,6 @@
   "authorizedReaderKeypairPath": "./scripts/example-x25519-keypair.json",
   "allowClosingEarly": true,
   "marketAuthority": null,
-  "earlinessCutoffSeconds": 0
+  "earlinessCutoffSeconds": 0,
+  "minStakeAmount": 0
 }

@@ -5,7 +5,7 @@ use anchor_spl::token_interface::{
 
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, StuckStakeClosedEvent};
-use crate::constants::{OPPORTUNITY_MARKET_SEED, STAKE_ACCOUNT_SEED, TOKEN_VAULT_SEED};
+use crate::constants::{STAKE_ACCOUNT_SEED, TOKEN_VAULT_SEED};
 use crate::state::{OpportunityMarket, StakeAccount, TokenVault};
 
 #[derive(Accounts)]
@@ -28,15 +28,6 @@ pub struct CloseStuckStakeAccount<'info> {
     #[account(address = market.mint)]
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// Market's ATA holding staked tokens
-    #[account(
-        mut,
-        associated_token::mint = token_mint,
-        associated_token::authority = market,
-        associated_token::token_program = token_program,
-    )]
-    pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
-
     /// Signer's token account to receive refund
     #[account(
         mut,
@@ -54,7 +45,6 @@ pub struct CloseStuckStakeAccount<'info> {
     )]
     pub token_vault: Box<Account<'info, TokenVault>>,
 
-    /// Token vault ATA holding fee tokens
     #[account(
         mut,
         associated_token::mint = token_mint,
@@ -79,37 +69,9 @@ pub fn close_stuck_stake_account(
     let market = &ctx.accounts.market;
     let amount = stake_account.amount;
     let fee = stake_account.fee;
+    let total_refund = amount.checked_add(fee).ok_or(ErrorCode::Overflow)?;
 
-    // Transfer net_amount from market ATA back to signer
-    if amount > 0 {
-        let creator_key = market.creator;
-        let index_bytes = market.index.to_le_bytes();
-        let bump = market.bump;
-        let market_seeds: &[&[&[u8]]] = &[&[
-            OPPORTUNITY_MARKET_SEED,
-            creator_key.as_ref(),
-            &index_bytes,
-            &[bump],
-        ]];
-
-        transfer_checked(
-            CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
-                TransferChecked {
-                    from: ctx.accounts.market_token_ata.to_account_info(),
-                    mint: ctx.accounts.token_mint.to_account_info(),
-                    to: ctx.accounts.signer_token_account.to_account_info(),
-                    authority: market.to_account_info(),
-                },
-                market_seeds,
-            ),
-            amount,
-            ctx.accounts.token_mint.decimals,
-        )?;
-    }
-
-    // Transfer fee from vault ATA back to signer
-    if fee > 0 {
+    if total_refund > 0 {
         let vault_bump = ctx.accounts.token_vault.bump;
         let mint_key = ctx.accounts.token_mint.key();
         let vault_seeds: &[&[&[u8]]] = &[&[
@@ -129,12 +91,13 @@ pub fn close_stuck_stake_account(
                 },
                 vault_seeds,
             ),
-            fee,
+            total_refund,
             ctx.accounts.token_mint.decimals,
         )?;
     }
 
-    // PDA closed via `close = signer` constraint
+    // The failed stake never incremented `token_vault.collected_fees`
+    // (callback never ran), so no counter update is needed.
 
     emit_ts!(StuckStakeClosedEvent {
         owner: ctx.accounts.signer.key(),
