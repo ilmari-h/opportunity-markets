@@ -14,8 +14,8 @@ We are looking to go live on Solana mainnet as soon as possible, so a security a
 ### What we have done
 
 Our protocol is build with the Anchor framework and follows best security practices against most common threats.
-For example, use of built-in account constraints to restrict access, use of PDA seeds for the same purpose.
-We have considered common threats like re-initialization attacks.
+We have carefully designed the instructions to enforce account ownership rules (using PDA seeds constraints and `constraint` macros etc.).
+We have considered common threats like re-initialization attacks by correct use of `init` vs `init_if_needed`.
 Change of authority accounts is time-gated and cancellable.
 We have comprehensive test coverage of our protocol including number of unhappy paths and edge-cases.
 
