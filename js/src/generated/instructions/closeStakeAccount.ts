@@ -159,10 +159,7 @@ export type CloseStakeAccountAsyncInput<
   stakeAccount?: Address<TAccountStakeAccount>;
   option?: Address<TAccountOption>;
   tokenMint: Address<TAccountTokenMint>;
-  /**
-   * Market-owned ATA holding all program-held tokens for this market
-   * (stakes, rewards, fees).
-   */
+  /** Market-owned ATA holding all program-held tokens for this market */
   marketTokenAta?: Address<TAccountMarketTokenAta>;
   /** Owner's token account to receive rewards */
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
@@ -328,10 +325,7 @@ export type CloseStakeAccountInput<
   stakeAccount: Address<TAccountStakeAccount>;
   option: Address<TAccountOption>;
   tokenMint: Address<TAccountTokenMint>;
-  /**
-   * Market-owned ATA holding all program-held tokens for this market
-   * (stakes, rewards, fees).
-   */
+  /** Market-owned ATA holding all program-held tokens for this market */
   marketTokenAta: Address<TAccountMarketTokenAta>;
   /** Owner's token account to receive rewards */
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
@@ -452,10 +446,7 @@ export type ParsedCloseStakeAccountInstruction<
     stakeAccount: TAccountMetas[2];
     option: TAccountMetas[3];
     tokenMint: TAccountMetas[4];
-    /**
-     * Market-owned ATA holding all program-held tokens for this market
-     * (stakes, rewards, fees).
-     */
+    /** Market-owned ATA holding all program-held tokens for this market */
     marketTokenAta: TAccountMetas[5];
     /** Owner's token account to receive rewards */
     ownerTokenAccount: TAccountMetas[6];

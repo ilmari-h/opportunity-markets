@@ -25,8 +25,9 @@ import {
   fetchOpportunityMarket,
   getPlatformConfigAddress,
   getClaimFeesInstructionAsync,
+  getClaimCreatorFeesInstructionAsync,
   randomComputationOffset,
-  ensurePlatformConfig,
+  createPlatformConfig,
   addMarketOption,
   initStakeAccount,
   initAllowedMint,
@@ -93,15 +94,21 @@ interface MarketConfig {
   allowClosingEarly: boolean;
   earlinessCutoffSeconds: bigint;
   minStakeAmount: bigint;
+  marketFeeClaimer?: Address;
 }
 
-export interface TestRunnerConfig {
+export interface PlatformConfigArgs {
   rpcUrl?: string;
   wsUrl?: string;
   numParticipants?: number;
   airdropLamports?: bigint;
   initialTokenAmount?: bigint;
   marketConfig?: Partial<MarketConfig>;
+  platformFeeBp?: number;
+  rewardPoolFeeBp?: number;
+  creatorFeeBp?: number;
+  maxSelectOptionsSeconds?: bigint;
+  name?: string;
 }
 
 // Batch input types
@@ -132,22 +139,31 @@ export interface CloseRequest {
 // Default Configuration
 // ============================================================================
 
-const DEFAULT_CONFIG: Required<TestRunnerConfig> = {
+const DEFAULT_CONFIG: Required<Omit<PlatformConfigArgs, "name">> = {
   rpcUrl: "http://127.0.0.1:8899",
   wsUrl: "ws://127.0.0.1:8900",
   numParticipants: 2,
-  airdropLamports: 2_000_000_000n, // 2 SOL
-  initialTokenAmount: 1_000_000_000n, // 1 billion tokens per account
+  airdropLamports: 2_000_000_000n,
+  initialTokenAmount: 1_000_000_000n,
+  platformFeeBp: 100,
+  rewardPoolFeeBp: 0,
+  creatorFeeBp: 0,
+  maxSelectOptionsSeconds: 3600n,
   marketConfig: {
     rewardAmount: 1_000_000_000n,
-    timeToStake: 120n, // 2 minutes
-    timeToReveal: 60n, // 1 minute
-    unstakeDelaySeconds: 10n, // 10 seconds
-    allowClosingEarly: true, // Allow market to be closed before stake period ends
+    timeToStake: 120n,
+    timeToReveal: 60n,
+    unstakeDelaySeconds: 10n,
+    allowClosingEarly: true,
     earlinessCutoffSeconds: 0n,
     minStakeAmount: 0n,
   },
 };
+
+let nextPlatformIndex = 0;
+function generatePlatformName(): string {
+  return `platform-${nextPlatformIndex++}`;
+}
 
 // ============================================================================
 // Helper: getMXEPublicKeyWithRetry (kept as-is per requirements)
@@ -178,10 +194,10 @@ async function getMXEPublicKeyWithRetry(
 }
 
 // ============================================================================
-// TestRunner Class
+// Platform Class
 // ============================================================================
 
-export class TestRunner {
+export class Platform {
   // Infrastructure
   private rpc: Rpc<SolanaRpcApi>;
   private rpcSubscriptions: ReturnType<typeof createSolanaRpcSubscriptions>;
@@ -196,6 +212,7 @@ export class TestRunner {
   private mint: KeyPairSigner;
   private marketAddress: Address;
   private platformConfigAddress: Address;
+  private platformName: string;
   private marketCreator: TestUser;
   private marketConfig: MarketConfig;
   private usedOptionIds: Set<number>;
@@ -217,9 +234,9 @@ export class TestRunner {
   static async initialize(
     provider: anchor.AnchorProvider,
     programId: Address,
-    config: TestRunnerConfig = {}
-  ): Promise<TestRunner> {
-    const runner = new TestRunner();
+    config: PlatformConfigArgs = {}
+  ): Promise<Platform> {
+    const runner = new Platform();
 
     const mergedConfig = {
       ...DEFAULT_CONFIG,
@@ -227,7 +244,19 @@ export class TestRunner {
       marketConfig: { ...DEFAULT_CONFIG.marketConfig, ...config.marketConfig },
     };
 
-    const { rpcUrl, wsUrl, numParticipants, airdropLamports, initialTokenAmount, marketConfig } = mergedConfig;
+    const {
+      rpcUrl,
+      wsUrl,
+      numParticipants,
+      airdropLamports,
+      initialTokenAmount,
+      marketConfig,
+      platformFeeBp,
+      rewardPoolFeeBp,
+      creatorFeeBp,
+      maxSelectOptionsSeconds,
+    } = mergedConfig;
+    const platformName = config.name ?? generatePlatformName();
 
     // Store config
     runner.marketConfig = marketConfig as MarketConfig;
@@ -270,25 +299,29 @@ export class TestRunner {
     );
     await Promise.all(airdropPromises);
 
-    // The deployer keypair owns the platform (stable across tests so the
-    // PDA stays the same).
     const deployer = await getDeployerKeypair();
-    const [platformConfigAddress] = await getPlatformConfigAddress(deployer.address, programId);
+    const [platformConfigAddress] = await getPlatformConfigAddress(
+      deployer.address,
+      platformName,
+      programId,
+    );
     runner.platformConfigAddress = platformConfigAddress;
+    runner.platformName = platformName;
 
-    const platformConfigIx = await ensurePlatformConfig(runner.rpc, {
+    const platformConfigIx = await createPlatformConfig(runner.rpc, {
       signer: deployer,
-      platformFeeBp: 100,
-      rewardPoolFeeBp: 0,
+      name: platformName,
+      platformFeeBp,
+      rewardPoolFeeBp,
+      creatorFeeBp,
       feeClaimAuthority: creatorAccountBase.keypair.address,
       minTimeToStakeSeconds: 1n,
       minTimeToRevealSeconds: 1n,
+      maxSelectOptionsSeconds,
     });
-    if (platformConfigIx) {
-      await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [platformConfigIx], {
-        label: "Ensure platform config",
-      });
-    }
+    await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [platformConfigIx], {
+      label: `Create platform config (${platformName})`,
+    });
 
     console.log("Creating SPL token mint...");
     runner.mint = await createTokenMint(
@@ -384,6 +417,8 @@ export class TestRunner {
       revealPeriodAuthority: runner.marketCreator.solanaKeypair.address,
       earlinessCutoffSeconds: marketConfig.earlinessCutoffSeconds,
       minStakeAmount: marketConfig.minStakeAmount,
+      marketFeeClaimer:
+        marketConfig.marketFeeClaimer ?? runner.marketCreator.solanaKeypair.address,
     });
 
     await sendTransaction(runner.rpc, runner.sendAndConfirm, runner.marketCreator.solanaKeypair, [createMarketIx], {
@@ -955,6 +990,20 @@ export class TestRunner {
     });
   }
 
+  async claimCreatorFees(destinationTokenAccount?: Address): Promise<void> {
+    const ix = await getClaimCreatorFeesInstructionAsync({
+      signer: this.marketCreator.solanaKeypair,
+      market: this.marketAddress,
+      tokenMint: this.mint.address,
+      destinationTokenAccount: destinationTokenAccount ?? this.marketCreator.tokenAccount,
+      tokenProgram: TOKEN_PROGRAM_ADDRESS,
+    });
+
+    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
+      label: "Claim creator fees",
+    });
+  }
+
   // ============================================================================
   // Utility Methods for Tests
   // ============================================================================
@@ -985,6 +1034,10 @@ export class TestRunner {
 
   get platformConfig(): Address {
     return this.platformConfigAddress;
+  }
+
+  get name(): string {
+    return this.platformName;
   }
 
   getMxePublicKey(): Uint8Array {

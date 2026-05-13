@@ -82,6 +82,8 @@ export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED = 0x178f; // 6031
 export const OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED = 0x1790; // 6032
 /** StakeBelowMinimum: Stake amount is below the market minimum */
 export const OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM = 0x1791; // 6033
+/** SelectOptionsDeadlinePassed: Deadline for selecting winning options has passed */
+export const OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED = 0x1792; // 6034
 
 export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION
@@ -109,6 +111,7 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__NOT_REVEALED
   | typeof OPPORTUNITY_MARKET_ERROR__OVERFLOW
   | typeof OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED
+  | typeof OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED
   | typeof OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM
   | typeof OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK
   | typeof OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH
@@ -149,6 +152,7 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__NOT_REVEALED]: `Stake not yet revealed`,
     [OPPORTUNITY_MARKET_ERROR__OVERFLOW]: `Arithmetic overflow`,
     [OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED]: `Reveal period has already ended`,
+    [OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED]: `Deadline for selecting winning options has passed`,
     [OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM]: `Stake amount is below the market minimum`,
     [OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK]: `Stake account is not in a stuck or failed state`,
     [OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH]: `Stake window error`,

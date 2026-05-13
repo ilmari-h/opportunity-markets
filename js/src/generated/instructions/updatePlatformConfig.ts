@@ -70,15 +70,19 @@ export type UpdatePlatformConfigInstructionData = {
   discriminator: ReadonlyUint8Array;
   platformFeeBp: number;
   rewardPoolFeeBp: number;
+  creatorFeeBp: number;
   minTimeToStakeSeconds: bigint;
   minTimeToRevealSeconds: bigint;
+  maxSelectOptionsSeconds: bigint;
 };
 
 export type UpdatePlatformConfigInstructionDataArgs = {
   platformFeeBp: number;
   rewardPoolFeeBp: number;
+  creatorFeeBp: number;
   minTimeToStakeSeconds: number | bigint;
   minTimeToRevealSeconds: number | bigint;
+  maxSelectOptionsSeconds: number | bigint;
 };
 
 export function getUpdatePlatformConfigInstructionDataEncoder(): FixedSizeEncoder<UpdatePlatformConfigInstructionDataArgs> {
@@ -87,8 +91,10 @@ export function getUpdatePlatformConfigInstructionDataEncoder(): FixedSizeEncode
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['platformFeeBp', getU16Encoder()],
       ['rewardPoolFeeBp', getU16Encoder()],
+      ['creatorFeeBp', getU16Encoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minTimeToRevealSeconds', getU64Encoder()],
+      ['maxSelectOptionsSeconds', getU64Encoder()],
     ]),
     (value) => ({
       ...value,
@@ -102,8 +108,10 @@ export function getUpdatePlatformConfigInstructionDataDecoder(): FixedSizeDecode
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['platformFeeBp', getU16Decoder()],
     ['rewardPoolFeeBp', getU16Decoder()],
+    ['creatorFeeBp', getU16Decoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minTimeToRevealSeconds', getU64Decoder()],
+    ['maxSelectOptionsSeconds', getU64Decoder()],
   ]);
 }
 
@@ -125,8 +133,10 @@ export type UpdatePlatformConfigInput<
   platformConfig: Address<TAccountPlatformConfig>;
   platformFeeBp: UpdatePlatformConfigInstructionDataArgs['platformFeeBp'];
   rewardPoolFeeBp: UpdatePlatformConfigInstructionDataArgs['rewardPoolFeeBp'];
+  creatorFeeBp: UpdatePlatformConfigInstructionDataArgs['creatorFeeBp'];
   minTimeToStakeSeconds: UpdatePlatformConfigInstructionDataArgs['minTimeToStakeSeconds'];
   minTimeToRevealSeconds: UpdatePlatformConfigInstructionDataArgs['minTimeToRevealSeconds'];
+  maxSelectOptionsSeconds: UpdatePlatformConfigInstructionDataArgs['maxSelectOptionsSeconds'];
 };
 
 export function getUpdatePlatformConfigInstruction<

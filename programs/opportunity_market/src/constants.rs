@@ -1,6 +1,12 @@
 pub const MAX_PLATFORM_FEE_BP: u16 = 300;
 
-/// 100%
+pub const MAX_CREATOR_FEE_BP: u16 = 500;
+
+/// Minimum and maximum length (in bytes) of a platform name.
+pub const MIN_PLATFORM_NAME_LEN: usize = 3;
+pub const MAX_PLATFORM_NAME_LEN: usize = 20;
+
+/// total fee = platform fee + creator fee + reward pool fee
 pub const MAX_TOTAL_FEE_BP: u16 = 10_000;
 
 /// Fixed timelock delay: 48 hours

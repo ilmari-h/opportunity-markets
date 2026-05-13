@@ -10,10 +10,11 @@ import {
   OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
   OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED,
   OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM,
+  OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED,
 } from "../js/src";
 
 import { OpportunityMarket } from "../target/types/opportunity_market";
-import { TestRunner } from "./utils/test-runner";
+import { Platform } from "./utils/platform";
 import { initializeAllCompDefs } from "./utils/comp-defs";
 import { sleepUntilOnChainTimestamp } from "./utils/sleep";
 import { generateX25519Keypair, X25519Keypair } from "../js/src/x25519/keypair";
@@ -61,15 +62,19 @@ describe("OpportunityMarket", () => {
   it("passes full opportunity market flow", async () => {
     const marketFundingAmount = 1_000_000_000n;
     const numParticipants = 4;
+    const platformFeeBp = 100n; // 1%
+    const creatorFeeBp = 50n;  // 0.5%
 
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants,
       airdropLamports: 2_000_000_000n,
       initialTokenAmount: 2_000_000_000n,
+      platformFeeBp: Number(platformFeeBp),
+      creatorFeeBp: Number(creatorFeeBp),
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake: 120n,
@@ -79,71 +84,98 @@ describe("OpportunityMarket", () => {
     });
 
     // Open market
-    const openTimestamp = await runner.openMarket();
+    const openTimestamp = await platform.openMarket();
 
     // Add two options
-    const { optionId: optionA } = await runner.addOption();
-    const { optionId: optionB } = await runner.addOption();
+    const { optionId: optionA } = await platform.addOption();
+    const { optionId: optionB } = await platform.addOption();
 
     // Wait for market staking period to be active
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Define voting: first half vote Option A, second half vote Option B
     const stakeAmounts = [50_000_000n, 75_000_000n, 100_000_000n, 60_000_000n];
-    const protocolFeeBp = 100n; // 1% fee configured in TestRunner
-    const expectedFeePerUser = stakeAmounts.map(a => a * protocolFeeBp / 10_000n);
-    const expectedNetPerUser = stakeAmounts.map((a, i) => a - expectedFeePerUser[i]);
+    const expectedPlatformFeePerUser = stakeAmounts.map(a => a * platformFeeBp / 10_000n);
+    const expectedCreatorFeePerUser = stakeAmounts.map(a => a * creatorFeeBp / 10_000n);
+    const expectedNetPerUser = stakeAmounts.map(
+      (a, i) => a - expectedPlatformFeePerUser[i] - expectedCreatorFeePerUser[i],
+    );
 
-    const purchases = runner.participants.map((userId, idx) => ({
+    const purchases = platform.participants.map((userId, idx) => ({
       userId,
       amount: stakeAmounts[idx],
       optionId: idx < numParticipants / 2 ? optionA : optionB,
     }));
-    const stakeAccountIds = await runner.stakeOnOptionBatch(purchases);
+    const stakeAccountIds = await platform.stakeOnOptionBatch(purchases);
 
     // Verify user can decrypt their own encrypted option choice
     purchases.forEach((purchase, i) => {
-      const decrypted = runner.decryptStakeOption(purchase.userId, stakeAccountIds[i]);
+      const decrypted = platform.decryptStakeOption(purchase.userId, stakeAccountIds[i]);
       expect(decrypted.optionId).to.equal(BigInt(purchase.optionId));
     });
 
     // Verify observer can decrypt disclosed option choices
     purchases.forEach((purchase, i) => {
-      const disclosed = runner.decryptDisclosedStakeOption(purchase.userId, stakeAccountIds[i], observer);
+      const disclosed = platform.decryptDisclosedStakeOption(purchase.userId, stakeAccountIds[i], observer);
       expect(disclosed.optionId).to.equal(BigInt(purchase.optionId));
     });
 
+    // Negative check: creator fees cannot be claimed before winners are selected
+    await shouldThrowCustomError(
+      () => platform.claimCreatorFees(),
+      OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED,
+    );
+
     // Market creator selects winning option
     const winningOptionIndex = optionA;
-    await runner.selectSingleWinningOption(winningOptionIndex);
+    await platform.selectSingleWinningOption(winningOptionIndex);
 
     // Verify selected option
-    const resolvedMarket = await runner.fetchMarket();
+    const resolvedMarket = await platform.fetchMarket();
     expect(resolvedMarket.data.selectedOptions).to.deep.equal(
       some([{ optionId: BigInt(winningOptionIndex), rewardPercentage: 100 }])
     );
 
-    // Reveal stakes for winners
-    const winners = runner.participants.filter(
-      (userId) => runner.getUserStakeAccountsForOption(userId, winningOptionIndex).length > 0
-    );
-    const winnerStakeAccounts = winners.map(
-      (userId) => runner.getUserStakeAccountsForOption(userId, winningOptionIndex)[0]
+    // After winners are selected but before winners close their stake accounts,
+    // the market creator can claim the accumulated creator fees.
+    const totalExpectedCreatorFees = expectedCreatorFeePerUser.reduce((sum, f) => sum + f, 0n);
+    const rpcForCreatorFee = platform.getRpc();
+    const creatorBalanceBeforeCreatorFee = (
+      await fetchToken(rpcForCreatorFee, platform.getUserTokenAccount(platform.creator))
+    ).data.amount;
+    await platform.claimCreatorFees();
+    const creatorBalanceAfterCreatorFee = (
+      await fetchToken(rpcForCreatorFee, platform.getUserTokenAccount(platform.creator))
+    ).data.amount;
+    expect(creatorBalanceAfterCreatorFee - creatorBalanceBeforeCreatorFee).to.equal(
+      totalExpectedCreatorFees,
+      `Market creator should have received ${totalExpectedCreatorFees} in creator fees`,
     );
 
-    await runner.revealStakeBatch(
+    const marketAfterCreatorClaim = await platform.fetchMarket();
+    expect(marketAfterCreatorClaim.data.collectedCreatorFees).to.equal(0n);
+
+    // Reveal stakes for winners
+    const winners = platform.participants.filter(
+      (userId) => platform.getUserStakeAccountsForOption(userId, winningOptionIndex).length > 0
+    );
+    const winnerStakeAccounts = winners.map(
+      (userId) => platform.getUserStakeAccountsForOption(userId, winningOptionIndex)[0]
+    );
+
+    await platform.revealStakeBatch(
       winners.map((userId, i) => ({ userId, stakeAccountId: winnerStakeAccounts[i].id }))
     );
 
     // Verify revealed option for winners
     for (let i = 0; i < winners.length; i++) {
       const sa = winnerStakeAccounts[i];
-      const stakeAccount = await runner.fetchStakeAccountData(winners[i], sa.id);
+      const stakeAccount = await platform.fetchStakeAccountData(winners[i], sa.id);
       expect(stakeAccount.data.revealedOption).to.deep.equal(some(BigInt(winningOptionIndex)));
     }
 
     // Increment option tally for winners
-    await runner.incrementOptionTallyBatch(
+    await platform.incrementOptionTallyBatch(
       winners.map((userId, i) => ({
         userId,
         optionId: winningOptionIndex,
@@ -156,11 +188,11 @@ describe("OpportunityMarket", () => {
       const idx = purchases.findIndex(p => p.userId === winners[winnerStakeAccounts.indexOf(sa)]);
       return sum + expectedNetPerUser[idx];
     }, 0n);
-    const optionAccount = await runner.fetchOptionData(winningOptionIndex);
+    const optionAccount = await platform.fetchOptionData(winningOptionIndex);
     expect(optionAccount.data.totalStaked).to.equal(totalWinningStaked);
 
     // Reclaim staked tokens for winners
-    await runner.reclaimStakeBatch(
+    await platform.reclaimStakeBatch(
       winners.map((userId, i) => ({
         userId,
         stakeAccountId: winnerStakeAccounts[i].id,
@@ -168,35 +200,35 @@ describe("OpportunityMarket", () => {
     );
 
     // Get timestamps for reward calculation
-    const updatedMarket = await runner.fetchMarket();
+    const updatedMarket = await platform.fetchMarket();
     const marketCloseTimestamp =
       BigInt(unwrapOption(updatedMarket.data.openTimestamp) ?? 0n) + updatedMarket.data.timeToStake;
 
     const winnerTimestamps = await Promise.all(
       winners.map(async (userId, i) => {
-        const stakeAccount = await runner.fetchStakeAccountData(userId, winnerStakeAccounts[i].id);
+        const stakeAccount = await platform.fetchStakeAccountData(userId, winnerStakeAccounts[i].id);
         const ts = stakeAccount.data.stakedAtTimestamp;
         if (!isSome(ts)) throw new Error("stakedAtTimestamp is None");
         return ts.value;
       })
     );
 
-    await runner.endRevealPeriod();
+    await platform.endRevealPeriod();
 
     // Get token balances before closing (after reclaim, so only reward transfer remains)
-    const rpc = runner.getRpc();
-    const marketAta = await runner.getMarketAta();
+    const rpc = platform.getRpc();
+    const marketAta = await platform.getMarketAta();
 
     const balancesBefore = await Promise.all(
       winners.map(async (userId) => ({
         userId,
-        balance: (await fetchToken(rpc, runner.getUserTokenAccount(userId))).data.amount,
+        balance: (await fetchToken(rpc, platform.getUserTokenAccount(userId))).data.amount,
       }))
     );
     const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
 
     // Close stake accounts for winners (transfers reward only)
-    await runner.closeStakeAccountBatch(
+    await platform.closeStakeAccountBatch(
       winners.map((userId, i) => ({
         userId,
         optionId: winningOptionIndex,
@@ -206,8 +238,8 @@ describe("OpportunityMarket", () => {
 
     // Verify stake accounts were closed
     for (let i = 0; i < winners.length; i++) {
-      const addr = await runner.getStakeAccountAddress(winners[i], winnerStakeAccounts[i].id);
-      const exists = await runner.accountExists(addr);
+      const addr = await platform.getStakeAccountAddress(winners[i], winnerStakeAccounts[i].id);
+      const exists = await platform.accountExists(addr);
       expect(exists).to.be.false;
     }
 
@@ -215,7 +247,7 @@ describe("OpportunityMarket", () => {
     const balancesAfter = await Promise.all(
       winners.map(async (userId) => ({
         userId,
-        balance: (await fetchToken(rpc, runner.getUserTokenAccount(userId))).data.amount,
+        balance: (await fetchToken(rpc, platform.getUserTokenAccount(userId))).data.amount,
       }))
     );
     const marketBalanceAfter = (await fetchToken(rpc, marketAta)).data.amount;
@@ -259,24 +291,24 @@ describe("OpportunityMarket", () => {
     expect(totalGains >= marketFundingAmount - 2n).to.be.true;
     expect(totalGains <= marketFundingAmount).to.be.true;
 
-    // Verify the fee vault has collected fees
-    const totalExpectedFees = expectedFeePerUser.reduce((sum, f) => sum + f, 0n);
-    const marketBefore = await runner.fetchMarket();
-    expect(marketBefore.data.collectedPlatformFees).to.equal(totalExpectedFees,
-      `Market should have collected ${totalExpectedFees} in platform fees`);
+    // Verify the fee vault has collected platform fees
+    const totalExpectedPlatformFees = expectedPlatformFeePerUser.reduce((sum, f) => sum + f, 0n);
+    const marketBefore = await platform.fetchMarket();
+    expect(marketBefore.data.collectedPlatformFees).to.equal(totalExpectedPlatformFees,
+      `Market should have collected ${totalExpectedPlatformFees} in platform fees`);
 
     // Get fee recipient balance before claiming
-    const feeRecipientBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(runner.creator))).data.amount;
+    const feeRecipientBalanceBefore = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
 
     // Claim fees
-    await runner.claimFees();
+    await platform.claimFees();
 
     // Verify fee recipient received the fees
-    const feeRecipientBalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(runner.creator))).data.amount;
-    expect(feeRecipientBalanceAfter - feeRecipientBalanceBefore).to.equal(totalExpectedFees,
-      `Fee recipient should have received ${totalExpectedFees} in fees`);
+    const feeRecipientBalanceAfter = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
+    expect(feeRecipientBalanceAfter - feeRecipientBalanceBefore).to.equal(totalExpectedPlatformFees,
+      `Fee recipient should have received ${totalExpectedPlatformFees} in fees`);
 
-    const marketAfter = await runner.fetchMarket();
+    const marketAfter = await platform.fetchMarket();
     expect(marketAfter.data.collectedPlatformFees).to.equal(0n, "Market collected platform fees should be 0 after claiming");
   });
 
@@ -286,7 +318,7 @@ describe("OpportunityMarket", () => {
 
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 2,
@@ -300,14 +332,14 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await runner.openMarket();
+    const openTimestamp = await platform.openMarket();
 
-    const [user1, user2] = runner.participants;
+    const [user1, user2] = platform.participants;
 
     // Create 7 options: A-G
     const options: number[] = [];
     for (let i = 0; i < 7; i++) {
-      const { optionId } = await runner.addOption();
+      const { optionId } = await platform.addOption();
       options.push(optionId);
     }
     const [optA, optB, optC, _optD, optE, optF, optG] = options;
@@ -316,28 +348,28 @@ describe("OpportunityMarket", () => {
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // User 1 stakes on A, B, C
-    const u1StakeIds = await runner.stakeOnOptionBatch([
+    const u1StakeIds = await platform.stakeOnOptionBatch([
       { userId: user1, amount: stakeAmount, optionId: optA },
       { userId: user1, amount: stakeAmount, optionId: optB },
       { userId: user1, amount: stakeAmount, optionId: optC },
     ]);
 
     // User 2 stakes on E, F, G
-    const u2StakeIds = await runner.stakeOnOptionBatch([
+    const u2StakeIds = await platform.stakeOnOptionBatch([
       { userId: user2, amount: stakeAmount, optionId: optE },
       { userId: user2, amount: stakeAmount, optionId: optF },
       { userId: user2, amount: stakeAmount, optionId: optG },
     ]);
 
     // Creator selects 3 winning options with different percentages: A=50%, B=30%, E=20%
-    await runner.selectWinningOptions([
+    await platform.selectWinningOptions([
       { optionId: optA, rewardPercentage: 50 },
       { optionId: optB, rewardPercentage: 30 },
       { optionId: optE, rewardPercentage: 20 },
     ]);
 
     // Verify selected options
-    const resolvedMarket = await runner.fetchMarket();
+    const resolvedMarket = await platform.fetchMarket();
     expect(resolvedMarket.data.selectedOptions).to.deep.equal(some([
       { optionId: BigInt(optA), rewardPercentage: 50 },
       { optionId: BigInt(optB), rewardPercentage: 30 },
@@ -345,60 +377,60 @@ describe("OpportunityMarket", () => {
     ]));
 
     // selectWinningOptions with allow_closing_early shortens time_to_stake, so reveal window starts now.
-    const updatedMarket = await runner.fetchMarket();
+    const updatedMarket = await platform.fetchMarket();
     const updatedOpenTs = Number(unwrapOption(updatedMarket.data.openTimestamp) ?? 0n);
     const revealStart = updatedOpenTs + Number(updatedMarket.data.timeToStake);
     await sleepUntilOnChainTimestamp(revealStart + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Reveal all stake accounts
     await Promise.all([
-      runner.revealStakeBatch(u1StakeIds.map(sid => ({ userId: user1, stakeAccountId: sid }))),
-      runner.revealStakeBatch(u2StakeIds.map(sid => ({ userId: user2, stakeAccountId: sid }))),
+      platform.revealStakeBatch(u1StakeIds.map(sid => ({ userId: user1, stakeAccountId: sid }))),
+      platform.revealStakeBatch(u2StakeIds.map(sid => ({ userId: user2, stakeAccountId: sid }))),
     ]);
 
     // Increment tally for winning stake accounts only
     // User 1: A (stake 0), B (stake 1) — C is a loser
     // User 2: E (stake 0) — F, G are losers
     await Promise.all([
-      runner.incrementOptionTally(user1, optA, u1StakeIds[0]),
-      runner.incrementOptionTally(user1, optB, u1StakeIds[1]),
-      runner.incrementOptionTally(user2, optE, u2StakeIds[0]),
+      platform.incrementOptionTally(user1, optA, u1StakeIds[0]),
+      platform.incrementOptionTally(user1, optB, u1StakeIds[1]),
+      platform.incrementOptionTally(user2, optE, u2StakeIds[0]),
     ]);
 
     // Reclaim staked tokens for all accounts
-    await runner.reclaimStakeBatch([
+    await platform.reclaimStakeBatch([
       ...u1StakeIds.map(sid => ({ userId: user1, stakeAccountId: sid })),
       ...u2StakeIds.map(sid => ({ userId: user2, stakeAccountId: sid })),
     ]);
 
-    await runner.endRevealPeriod();
+    await platform.endRevealPeriod();
 
-    const rpc = runner.getRpc();
+    const rpc = platform.getRpc();
 
     // Get user1 balance before closing
-    const u1BalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user1))).data.amount;
+    const u1BalanceBefore = (await fetchToken(rpc, platform.getUserTokenAccount(user1))).data.amount;
 
     // Close all user1 stake accounts (A, B winning; C losing)
-    await runner.closeStakeAccountBatch([
+    await platform.closeStakeAccountBatch([
       { userId: user1, optionId: optA, stakeAccountId: u1StakeIds[0] },
       { userId: user1, optionId: optB, stakeAccountId: u1StakeIds[1] },
       { userId: user1, optionId: optC, stakeAccountId: u1StakeIds[2] },
     ]);
 
-    const u1BalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(user1))).data.amount;
+    const u1BalanceAfter = (await fetchToken(rpc, platform.getUserTokenAccount(user1))).data.amount;
     const u1Gain = u1BalanceAfter - u1BalanceBefore;
 
     // Get user2 balance before closing
-    const u2BalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user2))).data.amount;
+    const u2BalanceBefore = (await fetchToken(rpc, platform.getUserTokenAccount(user2))).data.amount;
 
     // Close all user2 stake accounts (E winning; F, G losing)
-    await runner.closeStakeAccountBatch([
+    await platform.closeStakeAccountBatch([
       { userId: user2, optionId: optE, stakeAccountId: u2StakeIds[0] },
       { userId: user2, optionId: optF, stakeAccountId: u2StakeIds[1] },
       { userId: user2, optionId: optG, stakeAccountId: u2StakeIds[2] },
     ]);
 
-    const u2BalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(user2))).data.amount;
+    const u2BalanceAfter = (await fetchToken(rpc, platform.getUserTokenAccount(user2))).data.amount;
     const u2Gain = u2BalanceAfter - u2BalanceBefore;
 
     // User 1 should receive rewards from A (50%) and B (30%) = 80% of total
@@ -427,8 +459,8 @@ describe("OpportunityMarket", () => {
     // All stake accounts should be closed
     for (const [userId, stakeIds] of [[user1, u1StakeIds], [user2, u2StakeIds]] as const) {
       for (const sid of stakeIds) {
-        const addr = await runner.getStakeAccountAddress(userId, sid);
-        expect(await runner.accountExists(addr)).to.be.false;
+        const addr = await platform.getStakeAccountAddress(userId, sid);
+        expect(await platform.accountExists(addr)).to.be.false;
       }
     }
   });
@@ -439,7 +471,7 @@ describe("OpportunityMarket", () => {
 
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 1,
@@ -454,20 +486,20 @@ describe("OpportunityMarket", () => {
     });
 
     // Open market
-    const openTimestamp = await runner.openMarket();
+    const openTimestamp = await platform.openMarket();
 
     // Get the single participant
-    const user = runner.participants[0];
+    const user = platform.participants[0];
 
     // Create 2 options
-    const { optionId: optionA } = await runner.addOption();
-    const { optionId: optionB } = await runner.addOption();
+    const { optionId: optionA } = await platform.addOption();
+    const { optionId: optionB } = await platform.addOption();
 
     // Wait for market staking period to be active
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // User stakes on both options twice (4 stake accounts total)
-    const stakeAccountIds = await runner.stakeOnOptionBatch([
+    const stakeAccountIds = await platform.stakeOnOptionBatch([
       { userId: user, amount: stakeAmount, optionId: optionA },
       { userId: user, amount: stakeAmount, optionId: optionB },
       { userId: user, amount: stakeAmount, optionId: optionA },
@@ -476,7 +508,7 @@ describe("OpportunityMarket", () => {
     const [sa0, sa1, sa2, sa3] = stakeAccountIds;
 
     // User now has 4 stake accounts
-    const userStakeAccounts = runner.getUserStakeAccounts(user);
+    const userStakeAccounts = platform.getUserStakeAccounts(user);
     expect(userStakeAccounts.length).to.equal(4);
 
     // Verify user can decrypt all stake accounts
@@ -487,40 +519,40 @@ describe("OpportunityMarket", () => {
       { id: sa3, optionId: optionB },
     ];
     expectedStakes.forEach(({ id, optionId }) => {
-      const decrypted = runner.decryptStakeOption(user, id);
+      const decrypted = platform.decryptStakeOption(user, id);
       expect(decrypted.optionId).to.equal(BigInt(optionId));
     });
 
     // Verify observer can decrypt all disclosed stakes
     expectedStakes.forEach(({ id, optionId }) => {
-      const disclosed = runner.decryptDisclosedStakeOption(user, id, observer);
+      const disclosed = platform.decryptDisclosedStakeOption(user, id, observer);
       expect(disclosed.optionId).to.equal(BigInt(optionId));
     });
 
     // Market creator selects winning option (Option A)
     const winningOptionId = optionA;
-    await runner.selectSingleWinningOption(winningOptionId);
+    await platform.selectSingleWinningOption(winningOptionId);
 
     // Wait for reveal window to start (selectSingleWinningOption truncates time_to_stake)
-    const updatedMarket = await runner.fetchMarket();
+    const updatedMarket = await platform.fetchMarket();
     const marketOpenTs = Number(unwrapOption(updatedMarket.data.openTimestamp) ?? 0n);
     const revealStart = marketOpenTs + Number(updatedMarket.data.timeToStake);
     await sleepUntilOnChainTimestamp(revealStart + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Reveal ALL stake accounts sequentially
     for (const sa of userStakeAccounts) {
-      await runner.revealStake(user, sa.id);
+      await platform.revealStake(user, sa.id);
     }
 
     // Verify all stakes are revealed
     for (const sa of userStakeAccounts) {
-      const stakeAccount = await runner.fetchStakeAccountData(user, sa.id);
+      const stakeAccount = await platform.fetchStakeAccountData(user, sa.id);
       expect(stakeAccount.data.revealedOption).to.deep.equal(some(BigInt(sa.optionId)));
     }
 
     // Increment tally for winning option stake accounts
-    const winningStakeAccounts = runner.getUserStakeAccountsForOption(user, winningOptionId);
-    await runner.incrementOptionTallyBatch(
+    const winningStakeAccounts = platform.getUserStakeAccountsForOption(user, winningOptionId);
+    await platform.incrementOptionTallyBatch(
       winningStakeAccounts.map((sa) => ({
         userId: user,
         optionId: winningOptionId,
@@ -529,20 +561,20 @@ describe("OpportunityMarket", () => {
     );
 
     // Reclaim staked tokens for all accounts
-    await runner.reclaimStakeBatch(
+    await platform.reclaimStakeBatch(
       userStakeAccounts.map((sa) => ({ userId: user, stakeAccountId: sa.id }))
     );
 
-    await runner.endRevealPeriod();
+    await platform.endRevealPeriod();
 
     // Get balances before closing
-    const rpc = runner.getRpc();
-    const userBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
-    const marketAta = await runner.getMarketAta();
+    const rpc = platform.getRpc();
+    const userBalanceBefore = (await fetchToken(rpc, platform.getUserTokenAccount(user))).data.amount;
+    const marketAta = await platform.getMarketAta();
     const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
 
     // Close ALL stake accounts (both winning and losing)
-    await runner.closeStakeAccountBatch(
+    await platform.closeStakeAccountBatch(
       userStakeAccounts.map((sa) => ({
         userId: user,
         optionId: sa.optionId,
@@ -552,13 +584,13 @@ describe("OpportunityMarket", () => {
 
     // Verify all stake accounts were closed
     for (const sa of userStakeAccounts) {
-      const addr = await runner.getStakeAccountAddress(user, sa.id);
-      const exists = await runner.accountExists(addr);
+      const addr = await platform.getStakeAccountAddress(user, sa.id);
+      const exists = await platform.accountExists(addr);
       expect(exists).to.be.false;
     }
 
     // Get balances after closing
-    const userBalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
+    const userBalanceAfter = (await fetchToken(rpc, platform.getUserTokenAccount(user))).data.amount;
     const marketBalanceAfter = (await fetchToken(rpc, marketAta)).data.amount;
 
     // Calculate gains
@@ -577,7 +609,7 @@ describe("OpportunityMarket", () => {
       `Market should pay out ~${marketFundingAmount}, paid ${marketPaidOut}`
     ).to.be.true;
 
-    const marketStateAfter = await runner.fetchMarket();
+    const marketStateAfter = await platform.fetchMarket();
     const collectedFees = marketStateAfter.data.collectedPlatformFees;
     expect(
       marketBalanceAfter <= collectedFees + 1n,
@@ -591,7 +623,7 @@ describe("OpportunityMarket", () => {
 
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 1,
@@ -607,23 +639,23 @@ describe("OpportunityMarket", () => {
     });
 
     // Open market
-    const openTimestamp = await runner.openMarket();
+    const openTimestamp = await platform.openMarket();
 
     // Add options as creator
-    const { optionId: optionA } = await runner.addOption();
-    await runner.addOption();
+    const { optionId: optionA } = await platform.addOption();
+    await platform.addOption();
 
     // Wait for staking period to be active
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Try to select option before stake period ends - should fail
     await shouldThrowCustomError(
-      () => runner.selectSingleWinningOption(optionA),
+      () => platform.selectSingleWinningOption(optionA),
       OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED
     );
 
     // Verify market is still open (no selected option)
-    let market = await runner.fetchMarket();
+    let market = await platform.fetchMarket();
     expect(isNone(market.data.selectedOptions)).to.be.true;
 
     // Wait for stake period to end
@@ -631,10 +663,10 @@ describe("OpportunityMarket", () => {
     await sleepUntilOnChainTimestamp(stakeEndTimestamp + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Now selecting option should succeed
-    await runner.selectSingleWinningOption(optionA);
+    await platform.selectSingleWinningOption(optionA);
 
     // Verify option was selected
-    market = await runner.fetchMarket();
+    market = await platform.fetchMarket();
     expect(market.data.selectedOptions).to.deep.equal(some([{ optionId: BigInt(optionA), rewardPercentage: 100 }]));
   });
 
@@ -644,7 +676,7 @@ describe("OpportunityMarket", () => {
 
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 1,
@@ -658,23 +690,23 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await runner.openMarket();
+    const openTimestamp = await platform.openMarket();
 
     // Add an option so staking can happen
-    await runner.addOption();
+    await platform.addOption();
 
     // Wait for staking period to be active
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Verify initial reward amount
-    let market = await runner.fetchMarket();
+    let market = await platform.fetchMarket();
     expect(market.data.rewardAmount).to.equal(initialReward);
 
     // Add more reward from creator
-    await runner.addReward(runner.creator, additionalReward);
+    await platform.addReward(platform.creator, additionalReward);
 
     // Verify updated reward amount
-    market = await runner.fetchMarket();
+    market = await platform.fetchMarket();
     expect(market.data.rewardAmount).to.equal(initialReward + additionalReward);
   });
 
@@ -683,7 +715,7 @@ describe("OpportunityMarket", () => {
 
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 1,
@@ -698,34 +730,34 @@ describe("OpportunityMarket", () => {
     });
 
     // Add reward unlocked (lock=false)
-    await runner.addReward(runner.creator, marketFundingAmount, false);
+    await platform.addReward(platform.creator, marketFundingAmount, false);
 
-    const openTimestamp = await runner.openMarket();
+    const openTimestamp = await platform.openMarket();
 
     // Add options
-    await runner.addOption();
-    await runner.addOption();
+    await platform.addOption();
+    await platform.addOption();
 
     // Wait for staking period to be active
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Verify reward amount
-    let market = await runner.fetchMarket();
+    let market = await platform.fetchMarket();
     expect(market.data.rewardAmount).to.equal(marketFundingAmount);
 
     // Get creator balance before withdrawal
-    const rpc = runner.getRpc();
-    const creatorBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(runner.creator))).data.amount;
+    const rpc = platform.getRpc();
+    const creatorBalanceBefore = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
 
     // Withdraw reward (unlocked sponsor can withdraw)
-    await runner.withdrawReward();
+    await platform.withdrawReward();
 
     // Verify creator received the reward tokens back
-    const creatorBalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(runner.creator))).data.amount;
+    const creatorBalanceAfter = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
     expect(creatorBalanceAfter - creatorBalanceBefore).to.equal(marketFundingAmount);
 
     // Verify market state
-    market = await runner.fetchMarket();
+    market = await platform.fetchMarket();
     expect(market.data.rewardAmount).to.equal(0n);
     expect(isNone(market.data.selectedOptions)).to.be.true;
   });
@@ -735,7 +767,7 @@ describe("OpportunityMarket", () => {
 
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 1,
@@ -751,17 +783,17 @@ describe("OpportunityMarket", () => {
 
     // Open market with a timestamp far in the future so staking is not yet active
     const futureTimestamp = BigInt(Math.floor(Date.now() / 1000) + 600);
-    await runner.openMarket(futureTimestamp);
+    await platform.openMarket(futureTimestamp);
 
-    const user = runner.participants[0];
+    const user = platform.participants[0];
 
     // Add options
-    const { optionId: optionA } = await runner.addOption();
-    await runner.addOption();
+    const { optionId: optionA } = await platform.addOption();
+    await platform.addOption();
 
     // Try to stake before staking period starts — should fail
     await shouldThrowCustomError(
-      () => runner.stakeOnOption(user, 50_000_000n, optionA),
+      () => platform.stakeOnOption(user, 50_000_000n, optionA),
       OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH
     );
   });
@@ -774,7 +806,7 @@ describe("OpportunityMarket", () => {
 
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 2,
@@ -790,70 +822,73 @@ describe("OpportunityMarket", () => {
     });
 
     // Open market
-    const openTimestamp = await runner.openMarket();
+    const openTimestamp = await platform.openMarket();
 
-    const [staker, executor] = runner.participants;
+    const [staker, executor] = platform.participants;
 
     // Add options
-    const { optionId: optionA } = await runner.addOption();
-    await runner.addOption();
+    const { optionId: optionA } = await platform.addOption();
+    await platform.addOption();
 
     // Wait for staking period and stake
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
-    const rpc = runner.getRpc();
-    const balanceBeforeStake = (await fetchToken(rpc, runner.getUserTokenAccount(staker))).data.amount;
+    const rpc = platform.getRpc();
+    const balanceBeforeStake = (await fetchToken(rpc, platform.getUserTokenAccount(staker))).data.amount;
 
-    const stakeAccountId = await runner.stakeOnOption(staker, stakeAmount, optionA);
+    const stakeAccountId = await platform.stakeOnOption(staker, stakeAmount, optionA);
 
     // Verify token balance decreased after staking
-    const balanceAfterStake = (await fetchToken(rpc, runner.getUserTokenAccount(staker))).data.amount;
+    const balanceAfterStake = (await fetchToken(rpc, platform.getUserTokenAccount(staker))).data.amount;
     expect(balanceBeforeStake - balanceAfterStake).to.equal(stakeAmount);
 
     // Verify initial state
-    let stakeAccount = await runner.fetchStakeAccountData(staker, stakeAccountId);
+    let stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
     expect(isNone(stakeAccount.data.unstakeableAtTimestamp)).to.be.true;
     expect(isNone(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
 
     // Initiate early unstake (sets unstakeableAtTimestamp)
-    await runner.unstakeEarly(staker, stakeAccountId);
+    await platform.unstakeEarly(staker, stakeAccountId);
 
-    stakeAccount = await runner.fetchStakeAccountData(staker, stakeAccountId);
+    stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
     expect(isSome(stakeAccount.data.unstakeableAtTimestamp)).to.be.true;
     expect(isNone(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
 
     // Execute unstake too early — should fail
     await shouldThrowCustomError(
-      () => runner.doUnstakeEarly(executor, staker, stakeAccountId),
+      () => platform.doUnstakeEarly(executor, staker, stakeAccountId),
       OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET
     );
 
     // Wait for unstake delay to pass
     const unstakeableAt = unwrapOption(stakeAccount.data.unstakeableAtTimestamp);
     if (!unstakeableAt) throw new Error("unstakeableAtTimestamp is None");
-    await sleepUntilOnChainTimestamp(Number(unstakeableAt) + 1);
+    await sleepUntilOnChainTimestamp(
+      Number(unstakeableAt) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS,
+      rpc,
+    );
 
     // Execute unstake (permissionless — different user can call)
-    const balanceBeforeUnstake = (await fetchToken(rpc, runner.getUserTokenAccount(staker))).data.amount;
-    await runner.doUnstakeEarly(executor, staker, stakeAccountId);
+    const balanceBeforeUnstake = (await fetchToken(rpc, platform.getUserTokenAccount(staker))).data.amount;
+    await platform.doUnstakeEarly(executor, staker, stakeAccountId);
 
-    stakeAccount = await runner.fetchStakeAccountData(staker, stakeAccountId);
+    stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
     expect(isSome(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
 
     // Verify staker received tokens back (net of 1% protocol fee)
-    const balanceAfterUnstake = (await fetchToken(rpc, runner.getUserTokenAccount(staker))).data.amount;
+    const balanceAfterUnstake = (await fetchToken(rpc, platform.getUserTokenAccount(staker))).data.amount;
     const protocolFeeBp = 100n;
     const expectedNet = stakeAmount - (stakeAmount * protocolFeeBp / 10_000n);
     expect(balanceAfterUnstake - balanceBeforeUnstake).to.equal(expectedNet);
 
     // Select winner and wait for stake period to end
-    await runner.selectSingleWinningOption(optionA);
+    await platform.selectSingleWinningOption(optionA);
     const stakeEndTimestamp = Number(openTimestamp) + Number(timeToStake);
     await sleepUntilOnChainTimestamp(stakeEndTimestamp + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Reveal stake
-    await runner.revealStake(staker, stakeAccountId);
-    stakeAccount = await runner.fetchStakeAccountData(staker, stakeAccountId);
+    await platform.revealStake(staker, stakeAccountId);
+    stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
     expect(stakeAccount.data.revealedOption).to.deep.equal(some(BigInt(optionA)));
   });
 
@@ -863,7 +898,7 @@ describe("OpportunityMarket", () => {
 
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 2,
@@ -877,50 +912,50 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const [lockedSponsor, unlockedSponsor] = runner.participants;
-    const rpc = runner.getRpc();
+    const [lockedSponsor, unlockedSponsor] = platform.participants;
+    const rpc = platform.getRpc();
 
     // Record balances before sponsoring
-    const lockedBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(lockedSponsor))).data.amount;
-    const unlockedBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(unlockedSponsor))).data.amount;
+    const lockedBalanceBefore = (await fetchToken(rpc, platform.getUserTokenAccount(lockedSponsor))).data.amount;
+    const unlockedBalanceBefore = (await fetchToken(rpc, platform.getUserTokenAccount(unlockedSponsor))).data.amount;
 
     // Locked sponsor adds reward with lock=true
-    await runner.addReward(lockedSponsor, lockedAmount, true);
+    await platform.addReward(lockedSponsor, lockedAmount, true);
 
     // Unlocked sponsor adds reward with lock=false
-    await runner.addReward(unlockedSponsor, unlockedAmount, false);
+    await platform.addReward(unlockedSponsor, unlockedAmount, false);
 
     // Verify market reward amount is the sum of both
-    let market = await runner.fetchMarket();
+    let market = await platform.fetchMarket();
     expect(market.data.rewardAmount).to.equal(lockedAmount + unlockedAmount);
 
     // Verify token balances decreased
-    const lockedBalanceAfterAdd = (await fetchToken(rpc, runner.getUserTokenAccount(lockedSponsor))).data.amount;
+    const lockedBalanceAfterAdd = (await fetchToken(rpc, platform.getUserTokenAccount(lockedSponsor))).data.amount;
     expect(lockedBalanceBefore - lockedBalanceAfterAdd).to.equal(lockedAmount);
 
-    const unlockedBalanceAfterAdd = (await fetchToken(rpc, runner.getUserTokenAccount(unlockedSponsor))).data.amount;
+    const unlockedBalanceAfterAdd = (await fetchToken(rpc, platform.getUserTokenAccount(unlockedSponsor))).data.amount;
     expect(unlockedBalanceBefore - unlockedBalanceAfterAdd).to.equal(unlockedAmount);
 
     // Verify market ATA holds total reward
-    const marketAta = await runner.getMarketAta();
+    const marketAta = await platform.getMarketAta();
     const marketAtaBalance = (await fetchToken(rpc, marketAta)).data.amount;
     expect(marketAtaBalance).to.equal(lockedAmount + unlockedAmount);
 
     // Locked sponsor cannot withdraw
     await shouldThrowCustomError(
-      () => runner.withdrawReward(lockedSponsor),
+      () => platform.withdrawReward(lockedSponsor),
       OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED
     );
 
     // Unlocked sponsor can withdraw
-    await runner.withdrawReward(unlockedSponsor);
+    await platform.withdrawReward(unlockedSponsor);
 
     // Verify unlocked sponsor received tokens back
-    const unlockedBalanceAfterWithdraw = (await fetchToken(rpc, runner.getUserTokenAccount(unlockedSponsor))).data.amount;
+    const unlockedBalanceAfterWithdraw = (await fetchToken(rpc, platform.getUserTokenAccount(unlockedSponsor))).data.amount;
     expect(unlockedBalanceAfterWithdraw).to.equal(unlockedBalanceBefore);
 
     // Verify market reward decreased by unlocked amount
-    market = await runner.fetchMarket();
+    market = await platform.fetchMarket();
     expect(market.data.rewardAmount).to.equal(lockedAmount);
 
     // Verify market ATA balance decreased accordingly
@@ -931,7 +966,7 @@ describe("OpportunityMarket", () => {
   it("can close a stuck stake account and refund", async () => {
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 1,
@@ -945,31 +980,31 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await runner.openMarket();
-    const { optionId } = await runner.addOption();
+    const openTimestamp = await platform.openMarket();
+    const { optionId } = await platform.addOption();
 
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
-    const [user] = runner.participants;
-    const rpc = runner.getRpc();
+    const [user] = platform.participants;
+    const rpc = platform.getRpc();
     const stakeAmount = 100_000_000n;
 
     // Record balances before
-    const userBalanceBefore = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
-    const tokenVaultAta = await runner.getMarketAta();
+    const userBalanceBefore = (await fetchToken(rpc, platform.getUserTokenAccount(user))).data.amount;
+    const tokenVaultAta = await platform.getMarketAta();
     const vaultAtaBalanceBefore = (await fetchToken(rpc, tokenVaultAta)).data.amount;
-    const vaultBefore = await runner.fetchMarket();
+    const vaultBefore = await platform.fetchMarket();
 
     // Stake and immediately close stuck in the same transaction
-    const stakeAccountId = await runner.stakeAndCloseStuck(user, stakeAmount, optionId);
+    const stakeAccountId = await platform.stakeAndCloseStuck(user, stakeAmount, optionId);
 
     // Verify stake account PDA no longer exists
-    const stakeAccountAddress = await runner.getStakeAccountAddress(user, stakeAccountId);
-    const exists = await runner.accountExists(stakeAccountAddress);
+    const stakeAccountAddress = await platform.getStakeAccountAddress(user, stakeAccountId);
+    const exists = await platform.accountExists(stakeAccountAddress);
     expect(exists).to.be.false;
 
     // Verify user token balance is restored (full amount refunded)
-    const userBalanceAfter = (await fetchToken(rpc, runner.getUserTokenAccount(user))).data.amount;
+    const userBalanceAfter = (await fetchToken(rpc, platform.getUserTokenAccount(user))).data.amount;
     expect(userBalanceAfter).to.equal(userBalanceBefore,
       "User balance should be fully restored after close_stuck");
 
@@ -978,7 +1013,7 @@ describe("OpportunityMarket", () => {
     expect(vaultAtaBalanceAfter).to.equal(vaultAtaBalanceBefore,
       "Token vault ATA balance should be unchanged");
 
-    const vaultAfter = await runner.fetchMarket();
+    const vaultAfter = await platform.fetchMarket();
     expect(vaultAfter.data.collectedPlatformFees).to.equal(vaultBefore.data.collectedPlatformFees,
       "Market collected_platform_fees should not have changed");
   });
@@ -986,7 +1021,7 @@ describe("OpportunityMarket", () => {
   it("pausing blocks staking, resuming allows it again", async () => {
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 1,
@@ -1000,29 +1035,205 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await runner.openMarket();
-    const { optionId } = await runner.addOption();
+    const openTimestamp = await platform.openMarket();
+    const { optionId } = await platform.addOption();
 
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
-    const user = runner.participants[0];
+    const user = platform.participants[0];
 
     // Pause market
-    await runner.pauseMarket();
+    await platform.pauseMarket();
 
     // Staking should fail while paused
     await shouldThrowCustomError(
-      () => runner.stakeOnOption(user, 50_000_000n, optionId),
+      () => platform.stakeOnOption(user, 50_000_000n, optionId),
       OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED
     );
 
     // Resume market
-    await runner.resumeMarket();
+    await platform.resumeMarket();
 
     // Staking should succeed after resume
-    const stakeAccountId = await runner.stakeOnOption(user, 50_000_000n, optionId);
-    const stakeAccount = await runner.fetchStakeAccountData(user, stakeAccountId);
+    const stakeAccountId = await platform.stakeOnOption(user, 50_000_000n, optionId);
+    const stakeAccount = await platform.fetchStakeAccountData(user, stakeAccountId);
     expect(stakeAccount.data.amount > 0n).to.be.true;
+  });
+
+  it("collects fee components correctly", async () => {
+    const marketFundingAmount = 1_000_000_000n;
+    const stakeAmount = 100_000_000n;
+    const platformFeeBp = 100n;     // 1%
+    const rewardPoolFeeBp = 200n;   // 2%
+    const creatorFeeBp = 150n;      // 1.5%
+
+    const observer = loadObserverKeypair();
+
+    const platform = await Platform.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 1,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      platformFeeBp: Number(platformFeeBp),
+      rewardPoolFeeBp: Number(rewardPoolFeeBp),
+      creatorFeeBp: Number(creatorFeeBp),
+      marketConfig: {
+        rewardAmount: marketFundingAmount,
+        timeToStake: 120n,
+        timeToReveal: 120n,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    const openTimestamp = await platform.openMarket();
+    const { optionId } = await platform.addOption();
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    const user = platform.participants[0];
+    const rpc = platform.getRpc();
+
+    const expectedPlatformFee = stakeAmount * platformFeeBp / 10_000n;
+    const expectedRewardPoolFee = stakeAmount * rewardPoolFeeBp / 10_000n;
+    const expectedCreatorFee = stakeAmount * creatorFeeBp / 10_000n;
+    const expectedNetStake =
+      stakeAmount - expectedPlatformFee - expectedRewardPoolFee - expectedCreatorFee;
+
+    const stakeAccountId = await platform.stakeOnOption(user, stakeAmount, optionId);
+
+    // Stake account records each fee component plus the net stake.
+    const stakeAccount = await platform.fetchStakeAccountData(user, stakeAccountId);
+    expect(stakeAccount.data.amount).to.equal(expectedNetStake);
+    expect(stakeAccount.data.platformFee).to.equal(expectedPlatformFee);
+    expect(stakeAccount.data.rewardPoolFee).to.equal(expectedRewardPoolFee);
+    expect(stakeAccount.data.creatorFee).to.equal(expectedCreatorFee);
+
+    // Market accumulators credit each fee bucket appropriately.
+    let market = await platform.fetchMarket();
+    expect(market.data.collectedPlatformFees).to.equal(expectedPlatformFee);
+    expect(market.data.collectedCreatorFees).to.equal(expectedCreatorFee);
+    expect(market.data.rewardAmount).to.equal(marketFundingAmount + expectedRewardPoolFee);
+
+    // Resolve the market and run through reveal/reclaim.
+    await platform.selectSingleWinningOption(optionId);
+    const resolved = await platform.fetchMarket();
+    const stakeEnd =
+      Number(unwrapOption(resolved.data.openTimestamp) ?? 0n) + Number(resolved.data.timeToStake);
+    await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    await platform.revealStake(user, stakeAccountId);
+    await platform.incrementOptionTally(user, optionId, stakeAccountId);
+    await platform.reclaimStake(user, stakeAccountId);
+    await platform.endRevealPeriod();
+
+    // Platform fee → fee_claim_authority (= creator in default Platform setup).
+    const feeAuthBefore = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
+    await platform.claimFees();
+    const feeAuthAfter = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
+    expect(feeAuthAfter - feeAuthBefore).to.equal(expectedPlatformFee);
+
+    // Creator fee → market_fee_claimer (= creator in default Platform setup).
+    const creatorFeeBefore = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
+    await platform.claimCreatorFees();
+    const creatorFeeAfter = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
+    expect(creatorFeeAfter - creatorFeeBefore).to.equal(expectedCreatorFee);
+
+    // Reward pool fee → winner reward. The sole staker takes the full reward,
+    // which now includes their own reward_pool_fee contribution.
+    const userBalanceBeforeClose = (await fetchToken(rpc, platform.getUserTokenAccount(user))).data.amount;
+    await platform.closeStakeAccount(user, optionId, stakeAccountId);
+    const userBalanceAfterClose = (await fetchToken(rpc, platform.getUserTokenAccount(user))).data.amount;
+    const expectedReward = marketFundingAmount + expectedRewardPoolFee;
+    const userGain = userBalanceAfterClose - userBalanceBeforeClose;
+    expect(
+      userGain >= expectedReward - 1n && userGain <= expectedReward,
+      `User should receive ~${expectedReward} as reward, got ${userGain}`,
+    ).to.be.true;
+
+    // All fee accumulators drained, only dust may remain in the market ATA.
+    market = await platform.fetchMarket();
+    expect(market.data.collectedPlatformFees).to.equal(0n);
+    expect(market.data.collectedCreatorFees).to.equal(0n);
+  });
+
+  it("expired market refunds reward_pool and creator fees", async () => {
+    const stakeAmount = 100_000_000n;
+    const platformFeeBp = 100n;
+    const rewardPoolFeeBp = 200n;
+    const creatorFeeBp = 150n;
+    const maxSelectOptionsSeconds = 10n;
+    const timeToStake = 10n;
+
+    const observer = loadObserverKeypair();
+
+    const platform = await Platform.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 1,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      platformFeeBp: Number(platformFeeBp),
+      rewardPoolFeeBp: Number(rewardPoolFeeBp),
+      creatorFeeBp: Number(creatorFeeBp),
+      maxSelectOptionsSeconds,
+      marketConfig: {
+        rewardAmount: 0n,
+        timeToStake,
+        timeToReveal: 60n,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    const openTimestamp = await platform.openMarket();
+    const { optionId } = await platform.addOption();
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    const user = platform.participants[0];
+    const rpc = platform.getRpc();
+
+    const expectedPlatformFee = stakeAmount * platformFeeBp / 10_000n;
+    const expectedRewardPoolFee = stakeAmount * rewardPoolFeeBp / 10_000n;
+    const expectedCreatorFee = stakeAmount * creatorFeeBp / 10_000n;
+    const expectedNetStake =
+      stakeAmount - expectedPlatformFee - expectedRewardPoolFee - expectedCreatorFee;
+
+    const userBalanceBefore = (await fetchToken(rpc, platform.getUserTokenAccount(user))).data.amount;
+    const stakeAccountId = await platform.stakeOnOption(user, stakeAmount, optionId);
+
+    const stakeAccount = await platform.fetchStakeAccountData(user, stakeAccountId);
+    expect(stakeAccount.data.platformFee).to.equal(expectedPlatformFee);
+    expect(stakeAccount.data.rewardPoolFee).to.equal(expectedRewardPoolFee);
+    expect(stakeAccount.data.creatorFee).to.equal(expectedCreatorFee);
+    expect(stakeAccount.data.amount).to.equal(expectedNetStake);
+
+    // Wait past stake_end + max_select_options_seconds without selecting winners.
+    const stakeEnd = Number(openTimestamp) + Number(timeToStake);
+    const selectDeadline = stakeEnd + Number(maxSelectOptionsSeconds);
+    await sleepUntilOnChainTimestamp(selectDeadline + ONCHAIN_TIMESTAMP_BUFFER_SECONDS, rpc);
+
+    // Stake reclaim returns the net staked amount.
+    await platform.reclaimStake(user, stakeAccountId);
+
+    // Closing on the expired path refunds reward_pool_fee + creator_fee.
+    await platform.closeStakeAccount(user, optionId, stakeAccountId);
+
+    const userBalanceAfter = (await fetchToken(rpc, platform.getUserTokenAccount(user))).data.amount;
+    // Net loss equals the platform fee only — reward pool and creator fees were refunded.
+    expect(userBalanceBefore - userBalanceAfter).to.equal(expectedPlatformFee);
+
+    let market = await platform.fetchMarket();
+    expect(market.data.collectedPlatformFees).to.equal(expectedPlatformFee);
+    expect(market.data.collectedCreatorFees).to.equal(0n);
+    expect(market.data.rewardAmount).to.equal(0n);
+
+    // The platform fee remains claimable by the fee_claim_authority.
+    const feeAuthBefore = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
+    await platform.claimFees();
+    const feeAuthAfter = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
+    expect(feeAuthAfter - feeAuthBefore).to.equal(expectedPlatformFee);
+
+    market = await platform.fetchMarket();
+    expect(market.data.collectedPlatformFees).to.equal(0n);
   });
 
   it("rejects staking below the minimum stake amount", async () => {
@@ -1030,7 +1241,7 @@ describe("OpportunityMarket", () => {
 
     const observer = loadObserverKeypair();
 
-    const runner = await TestRunner.initialize(provider, programId, {
+    const platform = await Platform.initialize(provider, programId, {
       rpcUrl: RPC_URL,
       wsUrl: WS_URL,
       numParticipants: 1,
@@ -1045,22 +1256,22 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await runner.openMarket();
-    const { optionId } = await runner.addOption();
+    const openTimestamp = await platform.openMarket();
+    const { optionId } = await platform.addOption();
 
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
-    const user = runner.participants[0];
+    const user = platform.participants[0];
 
     // Stake just below the minimum should fail
     await shouldThrowCustomError(
-      () => runner.stakeOnOption(user, minStakeAmount - 1n, optionId),
+      () => platform.stakeOnOption(user, minStakeAmount - 1n, optionId),
       OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM
     );
 
     // Stake at exactly the minimum should succeed
-    const stakeAccountId = await runner.stakeOnOption(user, minStakeAmount, optionId);
-    const stakeAccount = await runner.fetchStakeAccountData(user, stakeAccountId);
+    const stakeAccountId = await platform.stakeOnOption(user, minStakeAmount, optionId);
+    const stakeAccount = await platform.fetchStakeAccountData(user, stakeAccountId);
     expect(stakeAccount.data.amount > 0n).to.be.true;
   });
 });

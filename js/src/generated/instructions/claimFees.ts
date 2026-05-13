@@ -127,7 +127,6 @@ export type ClaimFeesAsyncInput<
   market: Address<TAccountMarket>;
   platformConfig: Address<TAccountPlatformConfig>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market-owned ATA holding all program-held tokens for this market. */
   marketTokenAta?: Address<TAccountMarketTokenAta>;
   destinationTokenAccount: Address<TAccountDestinationTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
@@ -238,7 +237,6 @@ export type ClaimFeesInput<
   market: Address<TAccountMarket>;
   platformConfig: Address<TAccountPlatformConfig>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market-owned ATA holding all program-held tokens for this market. */
   marketTokenAta: Address<TAccountMarketTokenAta>;
   destinationTokenAccount: Address<TAccountDestinationTokenAccount>;
   tokenProgram: Address<TAccountTokenProgram>;
@@ -331,7 +329,6 @@ export type ParsedClaimFeesInstruction<
     market: TAccountMetas[1];
     platformConfig: TAccountMetas[2];
     tokenMint: TAccountMetas[3];
-    /** Market-owned ATA holding all program-held tokens for this market. */
     marketTokenAta: TAccountMetas[4];
     destinationTokenAccount: TAccountMetas[5];
     tokenProgram: TAccountMetas[6];

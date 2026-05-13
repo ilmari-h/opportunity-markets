@@ -62,6 +62,16 @@ pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Ve
         );
     }
 
+    // Block selection after the deadline: once stake_end + max_select_options_seconds
+    // has passed, stakers may take fee refunds via close_stake_account.
+    let select_deadline = stake_end_timestamp
+        .checked_add(market.max_select_options_seconds)
+        .ok_or(ErrorCode::Overflow)?;
+    require!(
+        current_timestamp <= select_deadline,
+        ErrorCode::SelectOptionsDeadlinePassed
+    );
+
     // If staking is still open, close it by setting time_to_stake to end now
     if current_timestamp < stake_end_timestamp {
         market.time_to_stake = current_timestamp

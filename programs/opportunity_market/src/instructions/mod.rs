@@ -1,4 +1,5 @@
 pub mod claim_fees;
+pub mod claim_creator_fees;
 pub mod add_market_option;
 pub mod stake;
 pub mod close_stake_account;
@@ -29,6 +30,7 @@ pub mod update_platform_config;
 pub mod withdraw_reward;
 
 pub use claim_fees::*;
+pub use claim_creator_fees::*;
 pub use add_market_option::*;
 pub use stake::*;
 pub use close_stake_account::*;

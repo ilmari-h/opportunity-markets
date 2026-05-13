@@ -46,6 +46,9 @@ export type MarketCreatedEvent = {
   minStakeAmount: bigint;
   platformFeeBp: number;
   rewardPoolFeeBp: number;
+  creatorFeeBp: number;
+  marketFeeClaimer: Address;
+  maxSelectOptionsSeconds: bigint;
   timestamp: bigint;
 };
 
@@ -65,6 +68,9 @@ export type MarketCreatedEventArgs = {
   minStakeAmount: number | bigint;
   platformFeeBp: number;
   rewardPoolFeeBp: number;
+  creatorFeeBp: number;
+  marketFeeClaimer: Address;
+  maxSelectOptionsSeconds: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -85,6 +91,9 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['minStakeAmount', getU64Encoder()],
     ['platformFeeBp', getU16Encoder()],
     ['rewardPoolFeeBp', getU16Encoder()],
+    ['creatorFeeBp', getU16Encoder()],
+    ['marketFeeClaimer', getAddressEncoder()],
+    ['maxSelectOptionsSeconds', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -106,6 +115,9 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['minStakeAmount', getU64Decoder()],
     ['platformFeeBp', getU16Decoder()],
     ['rewardPoolFeeBp', getU16Decoder()],
+    ['creatorFeeBp', getU16Decoder()],
+    ['marketFeeClaimer', getAddressDecoder()],
+    ['maxSelectOptionsSeconds', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

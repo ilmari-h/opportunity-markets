@@ -29,19 +29,25 @@ pub mod opportunity_market {
 
     pub fn init_platform_config(
         ctx: Context<InitPlatformConfig>,
+        name: String,
         platform_fee_bp: u16,
         reward_pool_fee_bp: u16,
+        creator_fee_bp: u16,
         fee_claim_authority: Pubkey,
         min_time_to_stake_seconds: u64,
         min_time_to_reveal_seconds: u64,
+        max_select_options_seconds: u64,
     ) -> Result<()> {
         instructions::init_platform_config(
             ctx,
+            name,
             platform_fee_bp,
             reward_pool_fee_bp,
+            creator_fee_bp,
             fee_claim_authority,
             min_time_to_stake_seconds,
             min_time_to_reveal_seconds,
+            max_select_options_seconds,
         )
     }
 
@@ -49,15 +55,19 @@ pub mod opportunity_market {
         ctx: Context<UpdatePlatformConfig>,
         platform_fee_bp: u16,
         reward_pool_fee_bp: u16,
+        creator_fee_bp: u16,
         min_time_to_stake_seconds: u64,
         min_time_to_reveal_seconds: u64,
+        max_select_options_seconds: u64,
     ) -> Result<()> {
         instructions::update_platform_config(
             ctx,
             platform_fee_bp,
             reward_pool_fee_bp,
+            creator_fee_bp,
             min_time_to_stake_seconds,
             min_time_to_reveal_seconds,
+            max_select_options_seconds,
         )
     }
 
@@ -113,6 +123,7 @@ pub mod opportunity_market {
         reveal_period_authority: Pubkey,
         earliness_cutoff_seconds: u64,
         min_stake_amount: u64,
+        market_fee_claimer: Pubkey,
     ) -> Result<()> {
         instructions::create_market(
             ctx,
@@ -126,6 +137,7 @@ pub mod opportunity_market {
             reveal_period_authority,
             earliness_cutoff_seconds,
             min_stake_amount,
+            market_fee_claimer,
         )
     }
 
@@ -179,6 +191,10 @@ pub mod opportunity_market {
 
     pub fn claim_fees(ctx: Context<ClaimFees>) -> Result<()> {
         instructions::claim_fees(ctx)
+    }
+
+    pub fn claim_creator_fees(ctx: Context<ClaimCreatorFees>) -> Result<()> {
+        instructions::claim_creator_fees(ctx)
     }
 
     pub fn init_stake_account(

@@ -152,7 +152,6 @@ export type DoUnstakeEarlyAsyncInput<
   market: Address<TAccountMarket>;
   stakeAccount?: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market-owned ATA holding all program-held tokens for this market. */
   marketTokenAta?: Address<TAccountMarketTokenAta>;
   /** Owner's token account to receive refund */
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
@@ -298,7 +297,6 @@ export type DoUnstakeEarlyInput<
   market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market-owned ATA holding all program-held tokens for this market. */
   marketTokenAta: Address<TAccountMarketTokenAta>;
   /** Owner's token account to receive refund */
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
@@ -412,7 +410,6 @@ export type ParsedDoUnstakeEarlyInstruction<
     market: TAccountMetas[1];
     stakeAccount: TAccountMetas[2];
     tokenMint: TAccountMetas[3];
-    /** Market-owned ATA holding all program-held tokens for this market. */
     marketTokenAta: TAccountMetas[4];
     /** Owner's token account to receive refund */
     ownerTokenAccount: TAccountMetas[5];

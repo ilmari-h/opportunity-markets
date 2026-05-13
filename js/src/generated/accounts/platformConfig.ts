@@ -7,6 +7,8 @@
  */
 
 import {
+  addDecoderSizePrefix,
+  addEncoderSizePrefix,
   assertAccountExists,
   assertAccountsExist,
   combineCodec,
@@ -23,19 +25,23 @@ import {
   getStructEncoder,
   getU16Decoder,
   getU16Encoder,
+  getU32Decoder,
+  getU32Encoder,
   getU64Decoder,
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
+  getUtf8Decoder,
+  getUtf8Encoder,
   transformEncoder,
   type Account,
   type Address,
+  type Codec,
+  type Decoder,
   type EncodedAccount,
+  type Encoder,
   type FetchAccountConfig,
   type FetchAccountsConfig,
-  type FixedSizeCodec,
-  type FixedSizeDecoder,
-  type FixedSizeEncoder,
   type MaybeAccount,
   type MaybeEncodedAccount,
   type ReadonlyUint8Array,
@@ -54,33 +60,42 @@ export function getPlatformConfigDiscriminatorBytes() {
 export type PlatformConfig = {
   discriminator: ReadonlyUint8Array;
   bump: number;
+  name: string;
   updateAuthority: Address;
   feeClaimAuthority: Address;
   platformFeeBp: number;
   rewardPoolFeeBp: number;
+  creatorFeeBp: number;
+  maxSelectOptionsSeconds: bigint;
   minTimeToStakeSeconds: bigint;
   minTimeToRevealSeconds: bigint;
 };
 
 export type PlatformConfigArgs = {
   bump: number;
+  name: string;
   updateAuthority: Address;
   feeClaimAuthority: Address;
   platformFeeBp: number;
   rewardPoolFeeBp: number;
+  creatorFeeBp: number;
+  maxSelectOptionsSeconds: number | bigint;
   minTimeToStakeSeconds: number | bigint;
   minTimeToRevealSeconds: number | bigint;
 };
 
-export function getPlatformConfigEncoder(): FixedSizeEncoder<PlatformConfigArgs> {
+export function getPlatformConfigEncoder(): Encoder<PlatformConfigArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['bump', getU8Encoder()],
+      ['name', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
       ['updateAuthority', getAddressEncoder()],
       ['feeClaimAuthority', getAddressEncoder()],
       ['platformFeeBp', getU16Encoder()],
       ['rewardPoolFeeBp', getU16Encoder()],
+      ['creatorFeeBp', getU16Encoder()],
+      ['maxSelectOptionsSeconds', getU64Encoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minTimeToRevealSeconds', getU64Encoder()],
     ]),
@@ -88,20 +103,23 @@ export function getPlatformConfigEncoder(): FixedSizeEncoder<PlatformConfigArgs>
   );
 }
 
-export function getPlatformConfigDecoder(): FixedSizeDecoder<PlatformConfig> {
+export function getPlatformConfigDecoder(): Decoder<PlatformConfig> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['bump', getU8Decoder()],
+    ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ['updateAuthority', getAddressDecoder()],
     ['feeClaimAuthority', getAddressDecoder()],
     ['platformFeeBp', getU16Decoder()],
     ['rewardPoolFeeBp', getU16Decoder()],
+    ['creatorFeeBp', getU16Decoder()],
+    ['maxSelectOptionsSeconds', getU64Decoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minTimeToRevealSeconds', getU64Decoder()],
   ]);
 }
 
-export function getPlatformConfigCodec(): FixedSizeCodec<
+export function getPlatformConfigCodec(): Codec<
   PlatformConfigArgs,
   PlatformConfig
 > {

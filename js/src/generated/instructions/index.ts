@@ -10,6 +10,7 @@ export * from './addMarketOption';
 export * from './addReward';
 export * from './cancelFeeClaimAuthorityChange';
 export * from './cancelUpdateAuthorityChange';
+export * from './claimCreatorFees';
 export * from './claimFees';
 export * from './closeStakeAccount';
 export * from './closeStuckStakeAccount';

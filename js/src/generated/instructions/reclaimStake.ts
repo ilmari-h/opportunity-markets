@@ -151,7 +151,6 @@ export type ReclaimStakeAsyncInput<
   market: Address<TAccountMarket>;
   stakeAccount?: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market-owned ATA holding all program-held tokens for this market. */
   marketTokenAta?: Address<TAccountMarketTokenAta>;
   /** Owner's token account to receive staked tokens */
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
@@ -304,7 +303,6 @@ export type ReclaimStakeInput<
   market: Address<TAccountMarket>;
   stakeAccount: Address<TAccountStakeAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market-owned ATA holding all program-held tokens for this market. */
   marketTokenAta: Address<TAccountMarketTokenAta>;
   /** Owner's token account to receive staked tokens */
   ownerTokenAccount: Address<TAccountOwnerTokenAccount>;
@@ -424,7 +422,6 @@ export type ParsedReclaimStakeInstruction<
     market: TAccountMetas[2];
     stakeAccount: TAccountMetas[3];
     tokenMint: TAccountMetas[4];
-    /** Market-owned ATA holding all program-held tokens for this market. */
     marketTokenAta: TAccountMetas[5];
     /** Owner's token account to receive staked tokens */
     ownerTokenAccount: TAccountMetas[6];

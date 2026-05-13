@@ -32,6 +32,7 @@ export type StuckStakeClosedEvent = {
   refundedAmount: bigint;
   refundedPlatformFee: bigint;
   refundedRewardPoolFee: bigint;
+  refundedCreatorFee: bigint;
   timestamp: bigint;
 };
 
@@ -43,6 +44,7 @@ export type StuckStakeClosedEventArgs = {
   refundedAmount: number | bigint;
   refundedPlatformFee: number | bigint;
   refundedRewardPoolFee: number | bigint;
+  refundedCreatorFee: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -55,6 +57,7 @@ export function getStuckStakeClosedEventEncoder(): FixedSizeEncoder<StuckStakeCl
     ['refundedAmount', getU64Encoder()],
     ['refundedPlatformFee', getU64Encoder()],
     ['refundedRewardPoolFee', getU64Encoder()],
+    ['refundedCreatorFee', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -68,6 +71,7 @@ export function getStuckStakeClosedEventDecoder(): FixedSizeDecoder<StuckStakeCl
     ['refundedAmount', getU64Decoder()],
     ['refundedPlatformFee', getU64Decoder()],
     ['refundedRewardPoolFee', getU64Decoder()],
+    ['refundedCreatorFee', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

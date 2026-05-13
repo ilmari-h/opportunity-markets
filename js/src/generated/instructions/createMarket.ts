@@ -121,6 +121,7 @@ export type CreateMarketInstructionData = {
   revealPeriodAuthority: Address;
   earlinessCutoffSeconds: bigint;
   minStakeAmount: bigint;
+  marketFeeClaimer: Address;
 };
 
 export type CreateMarketInstructionDataArgs = {
@@ -134,6 +135,7 @@ export type CreateMarketInstructionDataArgs = {
   revealPeriodAuthority: Address;
   earlinessCutoffSeconds: number | bigint;
   minStakeAmount: number | bigint;
+  marketFeeClaimer: Address;
 };
 
 export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<CreateMarketInstructionDataArgs> {
@@ -150,6 +152,7 @@ export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<Create
       ['revealPeriodAuthority', getAddressEncoder()],
       ['earlinessCutoffSeconds', getU64Encoder()],
       ['minStakeAmount', getU64Encoder()],
+      ['marketFeeClaimer', getAddressEncoder()],
     ]),
     (value) => ({ ...value, discriminator: CREATE_MARKET_DISCRIMINATOR })
   );
@@ -168,6 +171,7 @@ export function getCreateMarketInstructionDataDecoder(): FixedSizeDecoder<Create
     ['revealPeriodAuthority', getAddressDecoder()],
     ['earlinessCutoffSeconds', getU64Decoder()],
     ['minStakeAmount', getU64Decoder()],
+    ['marketFeeClaimer', getAddressDecoder()],
   ]);
 }
 
@@ -198,7 +202,6 @@ export type CreateMarketAsyncInput<
   market?: Address<TAccountMarket>;
   /** This ATA holds all of the market's program-held tokens (stakes, rewards, fees). */
   marketTokenAta?: Address<TAccountMarketTokenAta>;
-  /** Per-platform whitelist proof for this mint. */
   allowedMint?: Address<TAccountAllowedMint>;
   tokenProgram: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
@@ -213,6 +216,7 @@ export type CreateMarketAsyncInput<
   revealPeriodAuthority: CreateMarketInstructionDataArgs['revealPeriodAuthority'];
   earlinessCutoffSeconds: CreateMarketInstructionDataArgs['earlinessCutoffSeconds'];
   minStakeAmount: CreateMarketInstructionDataArgs['minStakeAmount'];
+  marketFeeClaimer: CreateMarketInstructionDataArgs['marketFeeClaimer'];
 };
 
 export async function getCreateMarketInstructionAsync<
@@ -380,7 +384,6 @@ export type CreateMarketInput<
   market: Address<TAccountMarket>;
   /** This ATA holds all of the market's program-held tokens (stakes, rewards, fees). */
   marketTokenAta: Address<TAccountMarketTokenAta>;
-  /** Per-platform whitelist proof for this mint. */
   allowedMint: Address<TAccountAllowedMint>;
   tokenProgram: Address<TAccountTokenProgram>;
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
@@ -395,6 +398,7 @@ export type CreateMarketInput<
   revealPeriodAuthority: CreateMarketInstructionDataArgs['revealPeriodAuthority'];
   earlinessCutoffSeconds: CreateMarketInstructionDataArgs['earlinessCutoffSeconds'];
   minStakeAmount: CreateMarketInstructionDataArgs['minStakeAmount'];
+  marketFeeClaimer: CreateMarketInstructionDataArgs['marketFeeClaimer'];
 };
 
 export function getCreateMarketInstruction<
@@ -513,7 +517,6 @@ export type ParsedCreateMarketInstruction<
     market: TAccountMetas[3];
     /** This ATA holds all of the market's program-held tokens (stakes, rewards, fees). */
     marketTokenAta: TAccountMetas[4];
-    /** Per-platform whitelist proof for this mint. */
     allowedMint: TAccountMetas[5];
     tokenProgram: TAccountMetas[6];
     associatedTokenProgram: TAccountMetas[7];

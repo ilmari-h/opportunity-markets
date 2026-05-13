@@ -140,8 +140,15 @@ pub fn stake(
         .ok_or(ErrorCode::Overflow)?
         .checked_div(10_000)
         .ok_or(ErrorCode::Overflow)? as u64;
+    let creator_fee = (amount as u128)
+        .checked_mul(market.creator_fee_bp as u128)
+        .ok_or(ErrorCode::Overflow)?
+        .checked_div(10_000)
+        .ok_or(ErrorCode::Overflow)? as u64;
     let total_fee = platform_fee
         .checked_add(reward_pool_fee)
+        .ok_or(ErrorCode::Overflow)?
+        .checked_add(creator_fee)
         .ok_or(ErrorCode::Overflow)?;
     let net_amount = amount
         .checked_sub(total_fee)
@@ -166,6 +173,7 @@ pub fn stake(
     ctx.accounts.stake_account.amount = net_amount;
     ctx.accounts.stake_account.platform_fee = platform_fee;
     ctx.accounts.stake_account.reward_pool_fee = reward_pool_fee;
+    ctx.accounts.stake_account.creator_fee = creator_fee;
     ctx.accounts.stake_account.user_pubkey = user_pubkey;
     ctx.accounts.stake_account.state_nonce = state_nonce;
     ctx.accounts.stake_account.locked = true;
@@ -276,6 +284,7 @@ pub fn stake_callback(
 
     let platform_fee = ctx.accounts.stake_account.platform_fee;
     let reward_pool_fee = ctx.accounts.stake_account.reward_pool_fee;
+    let creator_fee = ctx.accounts.stake_account.creator_fee;
     if platform_fee > 0 {
         ctx.accounts.market.collected_platform_fees = ctx.accounts.market
             .collected_platform_fees
@@ -286,6 +295,12 @@ pub fn stake_callback(
         ctx.accounts.market.reward_amount = ctx.accounts.market
             .reward_amount
             .checked_add(reward_pool_fee)
+            .ok_or(ErrorCode::Overflow)?;
+    }
+    if creator_fee > 0 {
+        ctx.accounts.market.collected_creator_fees = ctx.accounts.market
+            .collected_creator_fees
+            .checked_add(creator_fee)
             .ok_or(ErrorCode::Overflow)?;
     }
 

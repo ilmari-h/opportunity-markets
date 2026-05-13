@@ -65,65 +65,55 @@ pub struct CloseStakeAccount<'info> {
 }
 
 pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _stake_account_id: u32) -> Result<()> {
-    let stake_account = &ctx.accounts.stake_account;
-    let market = &ctx.accounts.market;
-    let option = &ctx.accounts.option;
-
-    // Market must be resolved: winners selected
-    require!(
-        market.selected_options.is_some(),
-        ErrorCode::MarketNotResolved
-    );
-
-    // Check that reveal period is over
     let clock = Clock::get()?;
     let current_time = clock.unix_timestamp as u64;
 
-    let open_timestamp = market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
-    let reveal_end = open_timestamp
-        .checked_add(market.time_to_stake)
-        .and_then(|t| t.checked_add(market.time_to_reveal))
+    let open_timestamp = ctx.accounts.market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
+    let stake_end = open_timestamp
+        .checked_add(ctx.accounts.market.time_to_stake)
+        .ok_or(ErrorCode::Overflow)?;
+    let reveal_end = stake_end
+        .checked_add(ctx.accounts.market.time_to_reveal)
+        .ok_or(ErrorCode::Overflow)?;
+    let select_deadline = stake_end
+        .checked_add(ctx.accounts.market.max_select_options_seconds)
         .ok_or(ErrorCode::Overflow)?;
 
-    require!(current_time >= reveal_end, ErrorCode::MarketNotResolved);
+    let resolved = ctx.accounts.market.selected_options.is_some();
+    let expired = !resolved && current_time >= select_deadline;
+    require!(resolved || expired, ErrorCode::MarketNotResolved);
 
-    // If the stake was revealed and user staked on winning options, pay reward.
-    // If reveal never ran, allow close with zero reward so the user can recover the stake_account rent.
-    let mut user_reward: u64 = 0;
-    if let Some(revealed_option) = stake_account.revealed_option {
-        require!(
-            revealed_option == option_id,
-            ErrorCode::InvalidOptionId
-        );
+    let payout: u64 = if resolved {
+        // Market resolved — reveal period must be over.
+        require!(current_time >= reveal_end, ErrorCode::MarketNotResolved);
+        compute_user_reward(
+            &ctx.accounts.stake_account,
+            &ctx.accounts.market,
+            &ctx.accounts.option,
+            option_id,
+        )?
+    } else {
+        // Market expired: refund reward_pool_fee + creator_fee.
+        let reward_pool_fee = ctx.accounts.stake_account.reward_pool_fee;
+        let creator_fee = ctx.accounts.stake_account.creator_fee;
+        let market = &mut ctx.accounts.market;
+        market.reward_amount = market
+            .reward_amount
+            .checked_sub(reward_pool_fee)
+            .ok_or(ErrorCode::Overflow)?;
+        market.collected_creator_fees = market
+            .collected_creator_fees
+            .checked_sub(creator_fee)
+            .ok_or(ErrorCode::Overflow)?;
+        reward_pool_fee
+            .checked_add(creator_fee)
+            .ok_or(ErrorCode::Overflow)?
+    };
 
-        // Check that this stake was for one of the winning options
-        if let Some(winning) = market.selected_options.as_ref().and_then(|opts| opts.iter().find(|w| w.option_id == revealed_option)) {
-            if stake_account.total_incremented {
-                let user_score = stake_account.score.ok_or(ErrorCode::NotRevealed)?;
-                let total_score = option.total_score;
-
-                let reward_amount = market.reward_amount as u128;
-                let percentage = winning.reward_percentage as u128;
-                user_reward = (user_score as u128)
-                    .checked_mul(reward_amount)
-                    .ok_or(ErrorCode::Overflow)?
-                    .checked_mul(percentage)
-                    .ok_or(ErrorCode::Overflow)?
-                    .checked_div(
-                        (total_score as u128)
-                            .checked_mul(100)
-                            .ok_or(ErrorCode::Overflow)?
-                    )
-                    .ok_or(ErrorCode::Overflow)? as u64;
-            }
-        }
-    }
-
-    // If user has a reward, transfer from the market's ATA.
-    if user_reward > 0 {
-        let creator = market.creator;
-        let index_bytes = market.index.to_le_bytes();
-        let market_bump = market.bump;
+    if payout > 0 {
+        let creator = ctx.accounts.market.creator;
+        let index_bytes = ctx.accounts.market.index.to_le_bytes();
+        let market_bump = ctx.accounts.market.bump;
         let market_seeds: &[&[&[u8]]] = &[&[
             OPPORTUNITY_MARKET_SEED,
             creator.as_ref(),
@@ -142,30 +132,70 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
                 },
                 market_seeds,
             ),
-            user_reward,
+            payout,
             ctx.accounts.token_mint.decimals,
         )?;
     }
 
-    let staked_at_timestamp = stake_account.staked_at_timestamp.ok_or(ErrorCode::NotRevealed)?;
-    let unstaked_at_timestamp = stake_account.unstaked_at_timestamp.unwrap_or(
-        open_timestamp
-            .checked_add(market.time_to_stake)
-            .ok_or(ErrorCode::Overflow)?
-    );
+    let stake_account = &ctx.accounts.stake_account;
+    let staked_at_timestamp = stake_account.staked_at_timestamp.unwrap_or(stake_end);
+    let unstaked_at_timestamp = stake_account.unstaked_at_timestamp.unwrap_or(stake_end);
     let score = stake_account.score.unwrap_or(0);
     emit_ts!(RewardClaimedEvent {
         owner: ctx.accounts.owner.key(),
-        market: market.key(),
+        market: ctx.accounts.market.key(),
         stake_account: stake_account.key(),
         stake_account_id: stake_account.id,
         option_id: option_id,
         stake_amount: stake_account.amount,
-        reward_amount: user_reward,
+        reward_amount: if resolved { payout } else { 0 },
         staked_at_timestamp: staked_at_timestamp,
         unstaked_at_timestamp: unstaked_at_timestamp,
         score: score,
     });
 
     Ok(())
+}
+
+fn compute_user_reward(
+    stake_account: &Account<StakeAccount>,
+    market: &Account<OpportunityMarket>,
+    option: &Account<OpportunityMarketOption>,
+    option_id: u64,
+) -> Result<u64> {
+    let revealed_option = match stake_account.revealed_option {
+        Some(o) => o,
+        None => return Ok(0),
+    };
+    require!(revealed_option == option_id, ErrorCode::InvalidOptionId);
+
+    let winning = match market
+        .selected_options
+        .as_ref()
+        .and_then(|opts| opts.iter().find(|w| w.option_id == revealed_option))
+    {
+        Some(w) => w,
+        None => return Ok(0),
+    };
+
+    if !stake_account.total_incremented {
+        return Ok(0);
+    }
+
+    let user_score = stake_account.score.ok_or(ErrorCode::NotRevealed)?;
+    let total_score = option.total_score;
+
+    let reward = (user_score as u128)
+        .checked_mul(market.reward_amount as u128)
+        .ok_or(ErrorCode::Overflow)?
+        .checked_mul(winning.reward_percentage as u128)
+        .ok_or(ErrorCode::Overflow)?
+        .checked_div(
+            (total_score as u128)
+                .checked_mul(100)
+                .ok_or(ErrorCode::Overflow)?,
+        )
+        .ok_or(ErrorCode::Overflow)? as u64;
+
+    Ok(reward)
 }

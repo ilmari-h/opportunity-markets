@@ -21,6 +21,7 @@ export interface CreateMarketParams extends BaseInstructionParams {
   revealPeriodAuthority: Address;
   earlinessCutoffSeconds: bigint;
   minStakeAmount: bigint;
+  marketFeeClaimer: Address;
 }
 
 export async function createMarket(

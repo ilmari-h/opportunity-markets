@@ -61,6 +61,7 @@ pub fn create_market(
     reveal_period_authority: Pubkey,
     earliness_cutoff_seconds: u64,
     min_stake_amount: u64,
+    market_fee_claimer: Pubkey,
 ) -> Result<()> {
     require!(
         time_to_stake >= ctx.accounts.platform_config.min_time_to_stake_seconds
@@ -74,6 +75,8 @@ pub fn create_market(
     let platform_key = ctx.accounts.platform_config.key();
     let platform_fee_bp = ctx.accounts.platform_config.platform_fee_bp;
     let reward_pool_fee_bp = ctx.accounts.platform_config.reward_pool_fee_bp;
+    let creator_fee_bp = ctx.accounts.platform_config.creator_fee_bp;
+    let max_select_options_seconds = ctx.accounts.platform_config.max_select_options_seconds;
     let market = &mut ctx.accounts.market;
     let mint = ctx.accounts.token_mint.key();
     market.bump = ctx.bumps.market;
@@ -91,6 +94,9 @@ pub fn create_market(
     market.allow_closing_early = allow_closing_early;
     market.platform_fee_bp = platform_fee_bp;
     market.reward_pool_fee_bp = reward_pool_fee_bp;
+    market.creator_fee_bp = creator_fee_bp;
+    market.market_fee_claimer = market_fee_claimer;
+    market.max_select_options_seconds = max_select_options_seconds;
     market.min_stake_amount = min_stake_amount;
 
     emit_ts!(MarketCreatedEvent {
@@ -109,6 +115,9 @@ pub fn create_market(
         min_stake_amount: min_stake_amount,
         platform_fee_bp: platform_fee_bp,
         reward_pool_fee_bp: reward_pool_fee_bp,
+        creator_fee_bp: creator_fee_bp,
+        market_fee_claimer: market_fee_claimer,
+        max_select_options_seconds: max_select_options_seconds,
     });
 
     Ok(())

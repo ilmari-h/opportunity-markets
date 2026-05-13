@@ -5,6 +5,10 @@ use anchor_lang::prelude::*;
 pub struct PlatformConfig {
     pub bump: u8,
 
+    // Human-readable platform name
+    #[max_len(20)]
+    pub name: String,
+
     pub update_authority: Pubkey,
 
     // Only this address can call claim_fees on markets tied to this platform
@@ -15,6 +19,13 @@ pub struct PlatformConfig {
 
     // Reward-pool fee in basis points
     pub reward_pool_fee_bp: u16,
+
+    // Creator fee in basis points (claimable by market_fee_claimer once winners are selected)
+    pub creator_fee_bp: u16,
+
+    // Grace period after stake_end during which market_authority may call select_winning_options.
+    // Past this, the market is "expired" and stakers may recover reward_pool_fee + creator_fee.
+    pub max_select_options_seconds: u64,
 
     // Minimum time_to_stake (seconds) accepted by create_market
     pub min_time_to_stake_seconds: u64,
@@ -88,9 +99,19 @@ pub struct OpportunityMarket {
     // Fee policy snapshotted from the platform at create time.
     pub platform_fee_bp: u16,
     pub reward_pool_fee_bp: u16,
+    pub creator_fee_bp: u16,
 
     // Unclaimed platform fees held in the market ATA.
     pub collected_platform_fees: u64,
+
+    // Unclaimed creator fees held in the market ATA.
+    pub collected_creator_fees: u64,
+
+    // Authority allowed to claim creator fees (only after winners are selected).
+    pub market_fee_claimer: Pubkey,
+
+    // Snapshot from platform at create time.
+    pub max_select_options_seconds: u64,
 
     // Minimum stake amount (in SPL token base units) required for a stake.
     pub min_stake_amount: u64,
@@ -109,9 +130,10 @@ pub struct StakeAccount {
     pub state_nonce_disclosure: u128,
     pub staked_at_timestamp: Option<u64>,
     pub unstaked_at_timestamp: Option<u64>,
-    pub amount: u64,                         // net stake (after both fees)
+    pub amount: u64,                         // net stake (after all fees)
     pub platform_fee: u64,                   // fee owed to the platform
     pub reward_pool_fee: u64,                // fee added to the market reward pool
+    pub creator_fee: u64,                    // fee owed to the market creator
     pub revealed_option: Option<u64>,
     pub score: Option<u64>,
     pub total_incremented: bool,

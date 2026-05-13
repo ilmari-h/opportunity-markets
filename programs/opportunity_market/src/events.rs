@@ -32,6 +32,9 @@ pub struct MarketCreatedEvent {
     pub min_stake_amount: u64,
     pub platform_fee_bp: u16,
     pub reward_pool_fee_bp: u16,
+    pub creator_fee_bp: u16,
+    pub market_fee_claimer: Pubkey,
+    pub max_select_options_seconds: u64,
     pub timestamp: i64,
 }
 
@@ -219,6 +222,17 @@ pub struct StuckStakeClosedEvent {
     pub refunded_amount: u64,
     pub refunded_platform_fee: u64,
     pub refunded_reward_pool_fee: u64,
+    pub refunded_creator_fee: u64,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct CreatorFeesClaimedEvent {
+    pub market: Pubkey,
+    pub market_fee_claimer: Pubkey,
+    pub mint: Pubkey,
+    pub destination: Pubkey,
+    pub amount: u64,
     pub timestamp: i64,
 }
 

@@ -7,6 +7,8 @@
  */
 
 import {
+  addDecoderSizePrefix,
+  addEncoderSizePrefix,
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
@@ -19,15 +21,19 @@ import {
   getStructEncoder,
   getU16Decoder,
   getU16Encoder,
+  getU32Decoder,
+  getU32Encoder,
   getU64Decoder,
   getU64Encoder,
+  getUtf8Decoder,
+  getUtf8Encoder,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
   type Address,
-  type FixedSizeCodec,
-  type FixedSizeDecoder,
-  type FixedSizeEncoder,
+  type Codec,
+  type Decoder,
+  type Encoder,
   type Instruction,
   type InstructionWithAccounts,
   type InstructionWithData,
@@ -40,6 +46,7 @@ import {
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 import {
   expectAddress,
+  expectSome,
   getAccountMetaFactory,
   type ResolvedAccount,
 } from '../shared';
@@ -81,47 +88,59 @@ export type InitPlatformConfigInstruction<
 
 export type InitPlatformConfigInstructionData = {
   discriminator: ReadonlyUint8Array;
+  name: string;
   platformFeeBp: number;
   rewardPoolFeeBp: number;
+  creatorFeeBp: number;
   feeClaimAuthority: Address;
   minTimeToStakeSeconds: bigint;
   minTimeToRevealSeconds: bigint;
+  maxSelectOptionsSeconds: bigint;
 };
 
 export type InitPlatformConfigInstructionDataArgs = {
+  name: string;
   platformFeeBp: number;
   rewardPoolFeeBp: number;
+  creatorFeeBp: number;
   feeClaimAuthority: Address;
   minTimeToStakeSeconds: number | bigint;
   minTimeToRevealSeconds: number | bigint;
+  maxSelectOptionsSeconds: number | bigint;
 };
 
-export function getInitPlatformConfigInstructionDataEncoder(): FixedSizeEncoder<InitPlatformConfigInstructionDataArgs> {
+export function getInitPlatformConfigInstructionDataEncoder(): Encoder<InitPlatformConfigInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
+      ['name', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
       ['platformFeeBp', getU16Encoder()],
       ['rewardPoolFeeBp', getU16Encoder()],
+      ['creatorFeeBp', getU16Encoder()],
       ['feeClaimAuthority', getAddressEncoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minTimeToRevealSeconds', getU64Encoder()],
+      ['maxSelectOptionsSeconds', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: INIT_PLATFORM_CONFIG_DISCRIMINATOR })
   );
 }
 
-export function getInitPlatformConfigInstructionDataDecoder(): FixedSizeDecoder<InitPlatformConfigInstructionData> {
+export function getInitPlatformConfigInstructionDataDecoder(): Decoder<InitPlatformConfigInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
+    ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ['platformFeeBp', getU16Decoder()],
     ['rewardPoolFeeBp', getU16Decoder()],
+    ['creatorFeeBp', getU16Decoder()],
     ['feeClaimAuthority', getAddressDecoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minTimeToRevealSeconds', getU64Decoder()],
+    ['maxSelectOptionsSeconds', getU64Decoder()],
   ]);
 }
 
-export function getInitPlatformConfigInstructionDataCodec(): FixedSizeCodec<
+export function getInitPlatformConfigInstructionDataCodec(): Codec<
   InitPlatformConfigInstructionDataArgs,
   InitPlatformConfigInstructionData
 > {
@@ -139,11 +158,14 @@ export type InitPlatformConfigAsyncInput<
   payer: TransactionSigner<TAccountPayer>;
   platformConfig?: Address<TAccountPlatformConfig>;
   systemProgram?: Address<TAccountSystemProgram>;
+  name: InitPlatformConfigInstructionDataArgs['name'];
   platformFeeBp: InitPlatformConfigInstructionDataArgs['platformFeeBp'];
   rewardPoolFeeBp: InitPlatformConfigInstructionDataArgs['rewardPoolFeeBp'];
+  creatorFeeBp: InitPlatformConfigInstructionDataArgs['creatorFeeBp'];
   feeClaimAuthority: InitPlatformConfigInstructionDataArgs['feeClaimAuthority'];
   minTimeToStakeSeconds: InitPlatformConfigInstructionDataArgs['minTimeToStakeSeconds'];
   minTimeToRevealSeconds: InitPlatformConfigInstructionDataArgs['minTimeToRevealSeconds'];
+  maxSelectOptionsSeconds: InitPlatformConfigInstructionDataArgs['maxSelectOptionsSeconds'];
 };
 
 export async function getInitPlatformConfigInstructionAsync<
@@ -196,6 +218,7 @@ export async function getInitPlatformConfigInstructionAsync<
           ])
         ),
         getAddressEncoder().encode(expectAddress(accounts.payer.value)),
+        getUtf8Encoder().encode(expectSome(args.name)),
       ],
     });
   }
@@ -231,11 +254,14 @@ export type InitPlatformConfigInput<
   payer: TransactionSigner<TAccountPayer>;
   platformConfig: Address<TAccountPlatformConfig>;
   systemProgram?: Address<TAccountSystemProgram>;
+  name: InitPlatformConfigInstructionDataArgs['name'];
   platformFeeBp: InitPlatformConfigInstructionDataArgs['platformFeeBp'];
   rewardPoolFeeBp: InitPlatformConfigInstructionDataArgs['rewardPoolFeeBp'];
+  creatorFeeBp: InitPlatformConfigInstructionDataArgs['creatorFeeBp'];
   feeClaimAuthority: InitPlatformConfigInstructionDataArgs['feeClaimAuthority'];
   minTimeToStakeSeconds: InitPlatformConfigInstructionDataArgs['minTimeToStakeSeconds'];
   minTimeToRevealSeconds: InitPlatformConfigInstructionDataArgs['minTimeToRevealSeconds'];
+  maxSelectOptionsSeconds: InitPlatformConfigInstructionDataArgs['maxSelectOptionsSeconds'];
 };
 
 export function getInitPlatformConfigInstruction<

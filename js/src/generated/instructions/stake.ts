@@ -246,11 +246,6 @@ export type StakeAsyncInput<
   tokenMint: Address<TAccountTokenMint>;
   /** Funds the stake. */
   signerTokenAccount: Address<TAccountSignerTokenAccount>;
-  /**
-   * Market-owned ATA. Receives the full staked amount; fee accounting is
-   * applied to `market.collected_platform_fees` and `market.reward_amount`
-   * only on a successful stake_callback.
-   */
   marketTokenAta?: Address<TAccountMarketTokenAta>;
   tokenProgram: Address<TAccountTokenProgram>;
   signPdaAccount?: Address<TAccountSignPdaAccount>;
@@ -503,11 +498,6 @@ export type StakeInput<
   tokenMint: Address<TAccountTokenMint>;
   /** Funds the stake. */
   signerTokenAccount: Address<TAccountSignerTokenAccount>;
-  /**
-   * Market-owned ATA. Receives the full staked amount; fee accounting is
-   * applied to `market.collected_platform_fees` and `market.reward_amount`
-   * only on a successful stake_callback.
-   */
   marketTokenAta: Address<TAccountMarketTokenAta>;
   tokenProgram: Address<TAccountTokenProgram>;
   signPdaAccount: Address<TAccountSignPdaAccount>;
@@ -719,11 +709,6 @@ export type ParsedStakeInstruction<
     tokenMint: TAccountMetas[4];
     /** Funds the stake. */
     signerTokenAccount: TAccountMetas[5];
-    /**
-     * Market-owned ATA. Receives the full staked amount; fee accounting is
-     * applied to `market.collected_platform_fees` and `market.reward_amount`
-     * only on a successful stake_callback.
-     */
     marketTokenAta: TAccountMetas[6];
     tokenProgram: TAccountMetas[7];
     signPdaAccount: TAccountMetas[8];

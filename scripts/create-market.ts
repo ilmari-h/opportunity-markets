@@ -80,7 +80,11 @@ async function main() {
     throw new Error(`authorizedReaderPubkey must be 32 bytes, got ${authorizedReaderPubkey.length}`);
   }
 
-  const [platformConfigAddress] = await getPlatformConfigAddress(payer.address, PROGRAM_ID);
+  const [platformConfigAddress] = await getPlatformConfigAddress(
+    payer.address,
+    config.platformName,
+    PROGRAM_ID,
+  );
 
   console.log(`\nCreating market (index: ${marketIndex})...`);
 
@@ -99,6 +103,7 @@ async function main() {
     revealPeriodAuthority: payer.address,
     earlinessCutoffSeconds: BigInt(config.earlinessCutoffSeconds),
     minStakeAmount: BigInt(config.minStakeAmount ?? 0),
+    marketFeeClaimer: config.marketFeeClaimer ? address(config.marketFeeClaimer) : payer.address,
     programAddress: PROGRAM_ID,
   });
 

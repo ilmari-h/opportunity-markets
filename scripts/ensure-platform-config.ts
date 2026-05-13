@@ -14,7 +14,12 @@ import {
   type SolanaRpcApi,
   type Signature,
 } from "@solana/kit";
-import { ensurePlatformConfig } from "../js/src";
+import {
+  createPlatformConfig,
+  updatePlatformConfig,
+  fetchMaybePlatformConfig,
+  getPlatformConfigAddress,
+} from "../js/src";
 import config from "./platformConfig.json";
 import * as fs from "fs";
 import * as os from "os";
@@ -62,29 +67,53 @@ async function main() {
 
   const minTimeToStakeSeconds = BigInt(config.minTimeToStakeSeconds);
   const minTimeToRevealSeconds = BigInt(config.minTimeToRevealSeconds);
+  const maxSelectOptionsSeconds = BigInt(config.maxSelectOptionsSeconds);
 
-  console.log(`Program:                ${PROGRAM_ID}`);
-  console.log(`Payer:                  ${payer.address}`);
-  console.log(`Platform fee:           ${config.platformFeeBp} bp`);
-  console.log(`Reward-pool fee:        ${config.rewardPoolFeeBp} bp`);
-  console.log(`Fee claim authority:    ${feeClaimAuthority}`);
-  console.log(`Min time to stake (s):  ${minTimeToStakeSeconds}`);
-  console.log(`Min time to reveal (s): ${minTimeToRevealSeconds}`);
+  const [platformConfigAddress] = await getPlatformConfigAddress(
+    payer.address,
+    config.name,
+    PROGRAM_ID,
+  );
+  const existing = await fetchMaybePlatformConfig(rpc, platformConfigAddress);
+  const mode = existing.exists ? "update" : "create";
 
-  const ix = await ensurePlatformConfig(rpc, {
-    programAddress: PROGRAM_ID,
-    signer: payer,
-    platformFeeBp: config.platformFeeBp,
-    rewardPoolFeeBp: config.rewardPoolFeeBp,
-    feeClaimAuthority,
-    minTimeToStakeSeconds,
-    minTimeToRevealSeconds,
-  });
+  console.log(`Program:                    ${PROGRAM_ID}`);
+  console.log(`Payer:                      ${payer.address}`);
+  console.log(`Name:                       ${config.name}`);
+  console.log(`Platform config address:    ${platformConfigAddress}`);
+  console.log(`Mode:                       ${mode}`);
+  console.log(`Platform fee:               ${config.platformFeeBp} bp`);
+  console.log(`Reward-pool fee:            ${config.rewardPoolFeeBp} bp`);
+  console.log(`Creator fee:                ${config.creatorFeeBp} bp`);
+  console.log(`Fee claim authority:        ${feeClaimAuthority}`);
+  console.log(`Min time to stake (s):      ${minTimeToStakeSeconds}`);
+  console.log(`Min time to reveal (s):     ${minTimeToRevealSeconds}`);
+  console.log(`Max select options (s):     ${maxSelectOptionsSeconds}`);
 
-  if (!ix) {
-    console.log("\nPlatform config already up to date.");
-    return;
-  }
+  const ix = existing.exists
+    ? await updatePlatformConfig(rpc, {
+        programAddress: PROGRAM_ID,
+        signer: payer,
+        name: config.name,
+        platformFeeBp: config.platformFeeBp,
+        rewardPoolFeeBp: config.rewardPoolFeeBp,
+        creatorFeeBp: config.creatorFeeBp,
+        minTimeToStakeSeconds,
+        minTimeToRevealSeconds,
+        maxSelectOptionsSeconds,
+      })
+    : await createPlatformConfig(rpc, {
+        programAddress: PROGRAM_ID,
+        signer: payer,
+        name: config.name,
+        platformFeeBp: config.platformFeeBp,
+        rewardPoolFeeBp: config.rewardPoolFeeBp,
+        creatorFeeBp: config.creatorFeeBp,
+        feeClaimAuthority,
+        minTimeToStakeSeconds,
+        minTimeToRevealSeconds,
+        maxSelectOptionsSeconds,
+      });
 
   console.log("\nSending transaction...");
 
@@ -100,7 +129,7 @@ async function main() {
   );
 
   const sig = await sendAndConfirmTx(rpc, signedTx);
-  console.log(`Done. Signature: ${sig}`);
+  console.log(`Done (${mode}). Signature: ${sig}`);
 }
 
 main()

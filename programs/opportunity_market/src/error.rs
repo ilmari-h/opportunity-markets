@@ -70,4 +70,6 @@ pub enum ErrorCode {
     TimelockNotElapsed,
     #[msg("Stake amount is below the market minimum")]
     StakeBelowMinimum,
+    #[msg("Deadline for selecting winning options has passed")]
+    SelectOptionsDeadlinePassed,
 }

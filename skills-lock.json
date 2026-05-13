@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "solana-security": {
+      "source": "tenequm/claude-plugins",
+      "sourceType": "github",
+      "skillPath": "skills/solana-security/SKILL.md",
+      "computedHash": "d760b10ba5d71ba2e0f620fdc559620ed6c2f3555093f20e5dc8e10a733fc84b"
+    }
+  }
+}

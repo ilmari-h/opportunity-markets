@@ -131,7 +131,6 @@ export type WithdrawRewardAsyncInput<
   market: Address<TAccountMarket>;
   sponsorAccount?: Address<TAccountSponsorAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market-owned ATA holding all program-held tokens for this market. */
   marketTokenAta?: Address<TAccountMarketTokenAta>;
   /** Sponsor's destination for refunded reward tokens */
   refundTokenAccount: Address<TAccountRefundTokenAccount>;
@@ -255,7 +254,6 @@ export type WithdrawRewardInput<
   market: Address<TAccountMarket>;
   sponsorAccount: Address<TAccountSponsorAccount>;
   tokenMint: Address<TAccountTokenMint>;
-  /** Market-owned ATA holding all program-held tokens for this market. */
   marketTokenAta: Address<TAccountMarketTokenAta>;
   /** Sponsor's destination for refunded reward tokens */
   refundTokenAccount: Address<TAccountRefundTokenAccount>;
@@ -349,7 +347,6 @@ export type ParsedWithdrawRewardInstruction<
     market: TAccountMetas[1];
     sponsorAccount: TAccountMetas[2];
     tokenMint: TAccountMetas[3];
-    /** Market-owned ATA holding all program-held tokens for this market. */
     marketTokenAta: TAccountMetas[4];
     /** Sponsor's destination for refunded reward tokens */
     refundTokenAccount: TAccountMetas[5];

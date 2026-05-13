@@ -15,6 +15,7 @@ export * from './bN254G2BLSPublicKey';
 export * from './circuitSource';
 export * from './computationDefinitionMeta';
 export * from './computationSignature';
+export * from './creatorFeesClaimedEvent';
 export * from './epoch';
 export * from './feesClaimedEvent';
 export * from './localCircuitSource';

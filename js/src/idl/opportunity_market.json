@@ -369,6 +369,134 @@
       "args": []
     },
     {
+      "name": "claim_creator_fees",
+      "discriminator": [
+        0,
+        23,
+        125,
+        234,
+        156,
+        118,
+        134,
+        89
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "signer": true
+        },
+        {
+          "name": "market",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  112,
+                  112,
+                  111,
+                  114,
+                  116,
+                  117,
+                  110,
+                  105,
+                  116,
+                  121,
+                  95,
+                  109,
+                  97,
+                  114,
+                  107,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market.creator",
+                "account": "OpportunityMarket"
+              },
+              {
+                "kind": "account",
+                "path": "market.index",
+                "account": "OpportunityMarket"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint"
+        },
+        {
+          "name": "market_token_ata",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "account",
+                "path": "token_program"
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "destination_token_account",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "claim_fees",
       "discriminator": [
         82,
@@ -434,9 +562,6 @@
         },
         {
           "name": "market_token_ata",
-          "docs": [
-            "Market-owned ATA holding all program-held tokens for this market."
-          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -631,8 +756,7 @@
         {
           "name": "market_token_ata",
           "docs": [
-            "Market-owned ATA holding all program-held tokens for this market",
-            "(stakes, rewards, fees)."
+            "Market-owned ATA holding all program-held tokens for this market"
           ],
           "writable": true,
           "pda": {
@@ -823,9 +947,6 @@
         },
         {
           "name": "market_token_ata",
-          "docs": [
-            "Market-owned ATA holding all program-held tokens for this market."
-          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -1021,9 +1142,6 @@
         },
         {
           "name": "allowed_mint",
-          "docs": [
-            "Per-platform whitelist proof for this mint."
-          ],
           "pda": {
             "seeds": [
               {
@@ -1111,6 +1229,10 @@
         {
           "name": "min_stake_amount",
           "type": "u64"
+        },
+        {
+          "name": "market_fee_claimer",
+          "type": "pubkey"
         }
       ]
     },
@@ -1215,9 +1337,6 @@
         },
         {
           "name": "market_token_ata",
-          "docs": [
-            "Market-owned ATA holding all program-held tokens for this market."
-          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -1724,6 +1843,10 @@
               {
                 "kind": "account",
                 "path": "payer"
+              },
+              {
+                "kind": "arg",
+                "path": "name"
               }
             ]
           }
@@ -1735,11 +1858,19 @@
       ],
       "args": [
         {
+          "name": "name",
+          "type": "string"
+        },
+        {
           "name": "platform_fee_bp",
           "type": "u16"
         },
         {
           "name": "reward_pool_fee_bp",
+          "type": "u16"
+        },
+        {
+          "name": "creator_fee_bp",
           "type": "u16"
         },
         {
@@ -1752,6 +1883,10 @@
         },
         {
           "name": "min_time_to_reveal_seconds",
+          "type": "u64"
+        },
+        {
+          "name": "max_select_options_seconds",
           "type": "u64"
         }
       ]
@@ -2177,9 +2312,6 @@
         },
         {
           "name": "market_token_ata",
-          "docs": [
-            "Market-owned ATA holding all program-held tokens for this market."
-          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -2649,11 +2781,6 @@
         },
         {
           "name": "market_token_ata",
-          "docs": [
-            "Market-owned ATA. Receives the full staked amount; fee accounting is",
-            "applied to `market.collected_platform_fees` and `market.reward_amount`",
-            "only on a successful stake_callback."
-          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -3040,11 +3167,19 @@
           "type": "u16"
         },
         {
+          "name": "creator_fee_bp",
+          "type": "u16"
+        },
+        {
           "name": "min_time_to_stake_seconds",
           "type": "u64"
         },
         {
           "name": "min_time_to_reveal_seconds",
+          "type": "u64"
+        },
+        {
+          "name": "max_select_options_seconds",
           "type": "u64"
         }
       ]
@@ -3141,9 +3276,6 @@
         },
         {
           "name": "market_token_ata",
-          "docs": [
-            "Market-owned ATA holding all program-held tokens for this market."
-          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -3435,6 +3567,19 @@
         194,
         10,
         39
+      ]
+    },
+    {
+      "name": "CreatorFeesClaimedEvent",
+      "discriminator": [
+        40,
+        137,
+        200,
+        40,
+        154,
+        133,
+        234,
+        251
       ]
     },
     {
@@ -3855,6 +4000,11 @@
       "code": 6033,
       "name": "StakeBelowMinimum",
       "msg": "Stake amount is below the market minimum"
+    },
+    {
+      "code": 6034,
+      "name": "SelectOptionsDeadlinePassed",
+      "msg": "Deadline for selecting winning options has passed"
     }
   ],
   "types": [
@@ -3973,8 +4123,7 @@
     {
       "name": "AllowedMint",
       "docs": [
-        "Per-platform mint allowlist. Existence permits a market on this platform",
-        "to use the given mint. Holds no tokens — custody is per-market."
+        "Whitelisted token per platform"
       ],
       "type": {
         "kind": "struct",
@@ -4316,6 +4465,38 @@
       }
     },
     {
+      "name": "CreatorFeesClaimedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "market_fee_claimer",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "destination",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "Epoch",
       "docs": [
         "The network epoch"
@@ -4532,6 +4713,18 @@
           {
             "name": "reward_pool_fee_bp",
             "type": "u16"
+          },
+          {
+            "name": "creator_fee_bp",
+            "type": "u16"
+          },
+          {
+            "name": "market_fee_claimer",
+            "type": "pubkey"
+          },
+          {
+            "name": "max_select_options_seconds",
+            "type": "u64"
           },
           {
             "name": "timestamp",
@@ -4838,7 +5031,23 @@
             "type": "u16"
           },
           {
+            "name": "creator_fee_bp",
+            "type": "u16"
+          },
+          {
             "name": "collected_platform_fees",
+            "type": "u64"
+          },
+          {
+            "name": "collected_creator_fees",
+            "type": "u64"
+          },
+          {
+            "name": "market_fee_claimer",
+            "type": "pubkey"
+          },
+          {
+            "name": "max_select_options_seconds",
             "type": "u64"
           },
           {
@@ -5031,6 +5240,10 @@
             "type": "u8"
           },
           {
+            "name": "name",
+            "type": "string"
+          },
+          {
             "name": "update_authority",
             "type": "pubkey"
           },
@@ -5045,6 +5258,14 @@
           {
             "name": "reward_pool_fee_bp",
             "type": "u16"
+          },
+          {
+            "name": "creator_fee_bp",
+            "type": "u16"
+          },
+          {
+            "name": "max_select_options_seconds",
+            "type": "u64"
           },
           {
             "name": "min_time_to_stake_seconds",
@@ -5403,6 +5624,10 @@
             "type": "u64"
           },
           {
+            "name": "creator_fee",
+            "type": "u64"
+          },
+          {
             "name": "revealed_option",
             "type": {
               "option": "u64"
@@ -5688,6 +5913,10 @@
           },
           {
             "name": "refunded_reward_pool_fee",
+            "type": "u64"
+          },
+          {
+            "name": "refunded_creator_fee",
             "type": "u64"
           },
           {

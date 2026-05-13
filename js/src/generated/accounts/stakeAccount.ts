@@ -76,6 +76,7 @@ export type StakeAccount = {
   amount: bigint;
   platformFee: bigint;
   rewardPoolFee: bigint;
+  creatorFee: bigint;
   revealedOption: Option<bigint>;
   score: Option<bigint>;
   totalIncremented: boolean;
@@ -101,6 +102,7 @@ export type StakeAccountArgs = {
   amount: number | bigint;
   platformFee: number | bigint;
   rewardPoolFee: number | bigint;
+  creatorFee: number | bigint;
   revealedOption: OptionOrNullable<number | bigint>;
   score: OptionOrNullable<number | bigint>;
   totalIncremented: boolean;
@@ -132,6 +134,7 @@ export function getStakeAccountEncoder(): Encoder<StakeAccountArgs> {
       ['amount', getU64Encoder()],
       ['platformFee', getU64Encoder()],
       ['rewardPoolFee', getU64Encoder()],
+      ['creatorFee', getU64Encoder()],
       ['revealedOption', getOptionEncoder(getU64Encoder())],
       ['score', getOptionEncoder(getU64Encoder())],
       ['totalIncremented', getBooleanEncoder()],
@@ -165,6 +168,7 @@ export function getStakeAccountDecoder(): Decoder<StakeAccount> {
     ['amount', getU64Decoder()],
     ['platformFee', getU64Decoder()],
     ['rewardPoolFee', getU64Decoder()],
+    ['creatorFee', getU64Decoder()],
     ['revealedOption', getOptionDecoder(getU64Decoder())],
     ['score', getOptionDecoder(getU64Decoder())],
     ['totalIncremented', getBooleanDecoder()],

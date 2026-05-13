@@ -2,12 +2,11 @@ import { type TransactionSigner, type Address, type Instruction } from "@solana/
 import {
   fetchMaybePlatformConfig,
   getInitPlatformConfigInstructionAsync,
-  getUpdatePlatformConfigInstruction,
 } from "../generated";
 import { getPlatformConfigAddress } from "../accounts/platformConfig";
 import { type BaseInstructionParams } from "./instructionParams";
 
-export interface EnsurePlatformConfigParams extends BaseInstructionParams {
+export interface CreatePlatformConfigParams extends BaseInstructionParams {
   signer: TransactionSigner;
   name: string;
   platformFeeBp: number;
@@ -19,10 +18,10 @@ export interface EnsurePlatformConfigParams extends BaseInstructionParams {
   maxSelectOptionsSeconds: bigint;
 }
 
-export async function ensurePlatformConfig(
+export async function createPlatformConfig(
   rpc: Parameters<typeof fetchMaybePlatformConfig>[0],
-  params: EnsurePlatformConfigParams,
-): Promise<Instruction | null> {
+  params: CreatePlatformConfigParams,
+): Promise<Instruction> {
   const {
     programAddress,
     signer,
@@ -35,7 +34,6 @@ export async function ensurePlatformConfig(
     minTimeToRevealSeconds,
     maxSelectOptionsSeconds,
   } = params;
-  const config = programAddress ? { programAddress } : undefined;
 
   const [platformConfigAddress] = await getPlatformConfigAddress(
     signer.address,
@@ -43,33 +41,10 @@ export async function ensurePlatformConfig(
     programAddress,
   );
   const existing = await fetchMaybePlatformConfig(rpc, platformConfigAddress);
-
   if (existing.exists) {
-    const s = existing.data;
-    if (
-      s.platformFeeBp === platformFeeBp &&
-      s.rewardPoolFeeBp === rewardPoolFeeBp &&
-      s.creatorFeeBp === creatorFeeBp &&
-      s.minTimeToStakeSeconds === minTimeToStakeSeconds &&
-      s.minTimeToRevealSeconds === minTimeToRevealSeconds &&
-      s.maxSelectOptionsSeconds === maxSelectOptionsSeconds
-    ) {
-      return null;
-    }
-
-    return getUpdatePlatformConfigInstruction(
-      {
-        updateAuthority: signer,
-        platformConfig: platformConfigAddress,
-        platformFeeBp,
-        rewardPoolFeeBp,
-        creatorFeeBp,
-        minTimeToStakeSeconds,
-        minTimeToRevealSeconds,
-        maxSelectOptionsSeconds,
-      },
-      config,
-    ) as Instruction;
+    throw new Error(
+      `Platform config already exists for (${signer.address}, "${name}") at ${platformConfigAddress}`,
+    );
   }
 
   return getInitPlatformConfigInstructionAsync(
@@ -84,6 +59,6 @@ export async function ensurePlatformConfig(
       minTimeToRevealSeconds,
       maxSelectOptionsSeconds,
     },
-    config,
+    programAddress ? { programAddress } : undefined,
   ) as Promise<Instruction>;
 }

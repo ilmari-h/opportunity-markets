@@ -87,7 +87,11 @@ export type OpportunityMarket = {
   paused: boolean;
   platformFeeBp: number;
   rewardPoolFeeBp: number;
+  creatorFeeBp: number;
   collectedPlatformFees: bigint;
+  collectedCreatorFees: bigint;
+  marketFeeClaimer: Address;
+  maxSelectOptionsSeconds: bigint;
   minStakeAmount: bigint;
 };
 
@@ -112,7 +116,11 @@ export type OpportunityMarketArgs = {
   paused: boolean;
   platformFeeBp: number;
   rewardPoolFeeBp: number;
+  creatorFeeBp: number;
   collectedPlatformFees: number | bigint;
+  collectedCreatorFees: number | bigint;
+  marketFeeClaimer: Address;
+  maxSelectOptionsSeconds: number | bigint;
   minStakeAmount: number | bigint;
 };
 
@@ -143,7 +151,11 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['paused', getBooleanEncoder()],
       ['platformFeeBp', getU16Encoder()],
       ['rewardPoolFeeBp', getU16Encoder()],
+      ['creatorFeeBp', getU16Encoder()],
       ['collectedPlatformFees', getU64Encoder()],
+      ['collectedCreatorFees', getU64Encoder()],
+      ['marketFeeClaimer', getAddressEncoder()],
+      ['maxSelectOptionsSeconds', getU64Encoder()],
       ['minStakeAmount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: OPPORTUNITY_MARKET_DISCRIMINATOR })
@@ -176,7 +188,11 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['paused', getBooleanDecoder()],
     ['platformFeeBp', getU16Decoder()],
     ['rewardPoolFeeBp', getU16Decoder()],
+    ['creatorFeeBp', getU16Decoder()],
     ['collectedPlatformFees', getU64Decoder()],
+    ['collectedCreatorFees', getU64Decoder()],
+    ['marketFeeClaimer', getAddressDecoder()],
+    ['maxSelectOptionsSeconds', getU64Decoder()],
     ['minStakeAmount', getU64Decoder()],
   ]);
 }
