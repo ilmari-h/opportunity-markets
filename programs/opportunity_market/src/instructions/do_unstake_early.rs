@@ -36,7 +36,6 @@ pub struct DoUnstakeEarly<'info> {
     #[account(address = market.mint)]
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// Market-owned ATA holding all program-held tokens for this market.
     #[account(
         mut,
         associated_token::mint = token_mint,
@@ -88,6 +87,8 @@ pub fn do_unstake_early(
     // Refund only the net staked amount. Both fee components were credited on
     // the successful stake_callback and stay with the market (platform fee for
     // claim, reward-pool fee in the reward pool) — early unstakers forfeit them.
+
+    // TODO: allow reclaiming reward fee later if market is never resolved!
     let amount = ctx.accounts.stake_account.amount;
 
     let creator = market.creator;

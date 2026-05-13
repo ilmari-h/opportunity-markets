@@ -41,7 +41,6 @@ pub struct CloseStuckStakeAccount<'info> {
     )]
     pub signer_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// Market-owned ATA holding all program-held tokens for this market.
     #[account(
         mut,
         associated_token::mint = token_mint,
@@ -98,9 +97,6 @@ pub fn close_stuck_stake_account(
             ctx.accounts.token_mint.decimals,
         )?;
     }
-
-    // The failed stake never credited fees on the market (callback never ran),
-    // so no counter update is needed.
 
     emit_ts!(StuckStakeClosedEvent {
         owner: ctx.accounts.signer.key(),

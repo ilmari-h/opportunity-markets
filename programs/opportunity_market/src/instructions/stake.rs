@@ -55,9 +55,6 @@ pub struct Stake<'info> {
     )]
     pub signer_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// Market-owned ATA. Receives the full staked amount; fee accounting is
-    /// applied to `market.collected_platform_fees` and `market.reward_amount`
-    /// only on a successful stake_callback.
     #[account(
         mut,
         associated_token::mint = token_mint,
@@ -133,8 +130,6 @@ pub fn stake(
         ErrorCode::StakeWindowMismatch
     );
 
-    // Split fee: platform component + reward-pool component, both snapshotted
-    // on the market at create time.
     let platform_fee = (amount as u128)
         .checked_mul(market.platform_fee_bp as u128)
         .ok_or(ErrorCode::Overflow)?
@@ -152,9 +147,6 @@ pub fn stake(
         .checked_sub(total_fee)
         .ok_or(ErrorCode::Overflow)?;
 
-    // Move the full amount into the market's ATA. Per-stake accounting on
-    // `stake_account.amount` / `.platform_fee` / `.reward_pool_fee` controls
-    // how the tokens may flow back out (reclaim, reward payout, fee claim, refund).
     transfer_checked(
         CpiContext::new(
             ctx.accounts.token_program.to_account_info(),
@@ -282,9 +274,6 @@ pub fn stake_callback(
     ctx.accounts.stake_account.state_nonce_disclosure = stake_data_shared.nonce;
     ctx.accounts.stake_account.encrypted_option_disclosure = stake_data_shared.ciphertexts[0];
 
-    // Credit fees only on successful stake. The tokens are already in the
-    // market's ATA; these counters tell claim_fees and the reward distribution
-    // how much of the ATA balance belongs to which bucket.
     let platform_fee = ctx.accounts.stake_account.platform_fee;
     let reward_pool_fee = ctx.accounts.stake_account.reward_pool_fee;
     if platform_fee > 0 {

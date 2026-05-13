@@ -38,7 +38,6 @@ pub struct ReclaimStake<'info> {
     #[account(address = market.mint)]
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// Market-owned ATA holding all program-held tokens for this market.
     #[account(
         mut,
         associated_token::mint = token_mint,

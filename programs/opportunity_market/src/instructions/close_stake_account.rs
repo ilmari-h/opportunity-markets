@@ -43,7 +43,6 @@ pub struct CloseStakeAccount<'info> {
     pub token_mint: InterfaceAccount<'info, Mint>,
 
     /// Market-owned ATA holding all program-held tokens for this market
-    /// (stakes, rewards, fees).
     #[account(
         mut,
         associated_token::mint = token_mint,

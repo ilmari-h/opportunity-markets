@@ -4,9 +4,6 @@ use crate::constants::{MAX_PLATFORM_FEE_BP, MAX_TOTAL_FEE_BP, PLATFORM_CONFIG_SE
 use crate::error::ErrorCode;
 use crate::state::PlatformConfig;
 
-/// Permissionlessly spin up a platform. The signer becomes the platform's
-/// initial `update_authority`; PDA is keyed by the signer so anyone can host
-/// their own platform alongside others.
 #[derive(Accounts)]
 pub struct InitPlatformConfig<'info> {
     #[account(mut)]

@@ -6,8 +6,7 @@ use crate::error::ErrorCode;
 use crate::events::{emit_ts, AllowedMintInitializedEvent};
 use crate::state::{AllowedMint, PlatformConfig};
 
-/// Per-platform mint allowlist. Existence permits a market on this platform
-/// to use the given mint. No token custody happens here.
+/// Whitelists a token mint for the given platform.
 #[derive(Accounts)]
 pub struct InitAllowedMint<'info> {
     #[account(mut)]

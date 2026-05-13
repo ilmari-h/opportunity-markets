@@ -36,7 +36,6 @@ pub struct CreateMarket<'info> {
     )]
     pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// Per-platform whitelist proof for this mint.
     #[account(
         seeds = [ALLOWED_MINT_SEED, platform_config.key().as_ref(), token_mint.key().as_ref()],
         bump = allowed_mint.bump,

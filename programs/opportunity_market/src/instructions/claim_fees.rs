@@ -8,7 +8,6 @@ use crate::events::{emit_ts, FeesClaimedEvent};
 use crate::constants::OPPORTUNITY_MARKET_SEED;
 use crate::state::{OpportunityMarket, PlatformConfig};
 
-/// Per-market fee claim. Caller must be the platform's `fee_claim_authority`.
 #[derive(Accounts)]
 pub struct ClaimFees<'info> {
     pub signer: Signer<'info>,
@@ -17,7 +16,6 @@ pub struct ClaimFees<'info> {
         mut,
         seeds = [OPPORTUNITY_MARKET_SEED, market.creator.as_ref(), &market.index.to_le_bytes()],
         bump = market.bump,
-        constraint = market.selected_options.is_some() @ ErrorCode::MarketNotResolved,
         constraint = market.collected_platform_fees > 0 @ ErrorCode::NoFeesToClaim,
         constraint = market.platform == platform_config.key() @ ErrorCode::Unauthorized,
     )]
@@ -31,7 +29,6 @@ pub struct ClaimFees<'info> {
     #[account(address = market.mint)]
     pub token_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    /// Market-owned ATA holding all program-held tokens for this market.
     #[account(
         mut,
         associated_token::mint = token_mint,

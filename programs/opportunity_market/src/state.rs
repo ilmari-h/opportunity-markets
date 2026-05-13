@@ -23,8 +23,7 @@ pub struct PlatformConfig {
     pub min_time_to_reveal_seconds: u64,
 }
 
-/// Per-platform mint allowlist. Existence permits a market on this platform
-/// to use the given mint. Holds no tokens — custody is per-market.
+/// Whitelisted token per platform
 #[account]
 #[derive(InitSpace)]
 pub struct AllowedMint {
@@ -47,7 +46,6 @@ pub struct OpportunityMarket {
     pub index: u64,           // part of PDA seed
     pub total_options: u64,
 
-    // Platform this market is tied to. Drives fee-claim authority and rules.
     pub platform: Pubkey,
 
     // If set, means market is funded and ready to be opened for staking.
@@ -87,11 +85,11 @@ pub struct OpportunityMarket {
     // If true, staking is halted
     pub paused: bool,
 
-    // Snapshots of platform fee policy taken at create time.
+    // Fee policy snapshotted from the platform at create time.
     pub platform_fee_bp: u16,
     pub reward_pool_fee_bp: u16,
 
-    // Running counter of platform fees held in this market's ATA, awaiting claim.
+    // Unclaimed platform fees held in the market ATA.
     pub collected_platform_fees: u64,
 
     // Minimum stake amount (in SPL token base units) required for a stake.
