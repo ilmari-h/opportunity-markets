@@ -1,11 +1,11 @@
 use anchor_lang::prelude::*;
 
 use crate::error::ErrorCode;
-use crate::events::{emit_ts, MarketPausedEvent};
+use crate::events::{emit_ts, StakingPausedEvent};
 use crate::state::OpportunityMarket;
 
 #[derive(Accounts)]
-pub struct PauseMarket<'info> {
+pub struct PauseStaking<'info> {
     pub market_authority: Signer<'info>,
     #[account(
         mut,
@@ -14,19 +14,16 @@ pub struct PauseMarket<'info> {
     pub market: Account<'info, OpportunityMarket>,
 }
 
-pub fn pause_market(ctx: Context<PauseMarket>) -> Result<()> {
+pub fn pause_staking(ctx: Context<PauseStaking>) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
     require!(market.open_timestamp.is_some(), ErrorCode::MarketNotOpen);
-    require!(
-        market.selected_options.is_none(),
-        ErrorCode::WinnerAlreadySelected
-    );
-    require!(!market.paused, ErrorCode::MarketPaused);
+    require!(!market.resolved, ErrorCode::WinnerAlreadySelected);
+    require!(!market.staking_paused, ErrorCode::MarketPaused);
 
-    market.paused = true;
+    market.staking_paused = true;
 
-    emit_ts!(MarketPausedEvent {
+    emit_ts!(StakingPausedEvent {
         market: market.key(),
     });
 

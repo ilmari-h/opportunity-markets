@@ -67,7 +67,7 @@ async function main() {
 
   const minTimeToStakeSeconds = BigInt(config.minTimeToStakeSeconds);
   const minTimeToRevealSeconds = BigInt(config.minTimeToRevealSeconds);
-  const maxSelectOptionsSeconds = BigInt(config.maxSelectOptionsSeconds);
+  const marketResolutionDeadlineSeconds = BigInt(config.marketResolutionDeadlineSeconds);
 
   const [platformConfigAddress] = await getPlatformConfigAddress(
     payer.address,
@@ -88,7 +88,7 @@ async function main() {
   console.log(`Fee claim authority:        ${feeClaimAuthority}`);
   console.log(`Min time to stake (s):      ${minTimeToStakeSeconds}`);
   console.log(`Min time to reveal (s):     ${minTimeToRevealSeconds}`);
-  console.log(`Max select options (s):     ${maxSelectOptionsSeconds}`);
+  console.log(`Resolution deadline (s):    ${marketResolutionDeadlineSeconds}`);
 
   const ix = existing.exists
     ? await updatePlatformConfig(rpc, {
@@ -100,7 +100,7 @@ async function main() {
         creatorFeeBp: config.creatorFeeBp,
         minTimeToStakeSeconds,
         minTimeToRevealSeconds,
-        maxSelectOptionsSeconds,
+        marketResolutionDeadlineSeconds,
       })
     : await createPlatformConfig(rpc, {
         programAddress: PROGRAM_ID,
@@ -112,7 +112,7 @@ async function main() {
         feeClaimAuthority,
         minTimeToStakeSeconds,
         minTimeToRevealSeconds,
-        maxSelectOptionsSeconds,
+        marketResolutionDeadlineSeconds,
       });
 
   console.log("\nSending transaction...");

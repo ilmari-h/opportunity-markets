@@ -6,6 +6,7 @@ pub const MAX_CREATOR_FEE_BP: u16 = 500;
 pub const MIN_PLATFORM_NAME_LEN: usize = 3;
 pub const MAX_PLATFORM_NAME_LEN: usize = 20;
 
+/// 100%
 /// total fee = platform fee + creator fee + reward pool fee
 pub const MAX_TOTAL_FEE_BP: u16 = 10_000;
 
@@ -14,6 +15,9 @@ pub const TIMELOCK_DELAY_SECONDS: i64 = 48 * 60 * 60;
 
 /// Maximum unstake delay: 3 days
 pub const MAX_UNSTAKE_DELAY_SECONDS: u64 = 3 * 24 * 60 * 60;
+
+#[cfg(feature = "production-settings")]
+pub const MIN_MARKET_RESOLUTION_DEADLINE_SECONDS: u64 = 7 * 24 * 60 * 60;
 
 pub const MAX_EARLINESS_MULTIPLIER: u16 = 20_000;
 

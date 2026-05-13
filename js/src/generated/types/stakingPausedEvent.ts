@@ -20,33 +20,33 @@ import {
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type MarketPausedEvent = { market: Address; timestamp: bigint };
+export type StakingPausedEvent = { market: Address; timestamp: bigint };
 
-export type MarketPausedEventArgs = {
+export type StakingPausedEventArgs = {
   market: Address;
   timestamp: number | bigint;
 };
 
-export function getMarketPausedEventEncoder(): FixedSizeEncoder<MarketPausedEventArgs> {
+export function getStakingPausedEventEncoder(): FixedSizeEncoder<StakingPausedEventArgs> {
   return getStructEncoder([
     ['market', getAddressEncoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getMarketPausedEventDecoder(): FixedSizeDecoder<MarketPausedEvent> {
+export function getStakingPausedEventDecoder(): FixedSizeDecoder<StakingPausedEvent> {
   return getStructDecoder([
     ['market', getAddressDecoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getMarketPausedEventCodec(): FixedSizeCodec<
-  MarketPausedEventArgs,
-  MarketPausedEvent
+export function getStakingPausedEventCodec(): FixedSizeCodec<
+  StakingPausedEventArgs,
+  StakingPausedEvent
 > {
   return combineCodec(
-    getMarketPausedEventEncoder(),
-    getMarketPausedEventDecoder()
+    getStakingPausedEventEncoder(),
+    getStakingPausedEventDecoder()
   );
 }

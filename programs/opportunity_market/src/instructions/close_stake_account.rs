@@ -76,21 +76,28 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
         .checked_add(ctx.accounts.market.time_to_reveal)
         .ok_or(ErrorCode::Overflow)?;
     let select_deadline = stake_end
-        .checked_add(ctx.accounts.market.max_select_options_seconds)
+        .checked_add(ctx.accounts.market.market_resolution_deadline_seconds)
         .ok_or(ErrorCode::Overflow)?;
 
-    let resolved = ctx.accounts.market.selected_options.is_some();
+    let resolved = ctx.accounts.market.resolved;
     let expired = !resolved && current_time >= select_deadline;
     require!(resolved || expired, ErrorCode::MarketNotResolved);
 
     let payout: u64 = if resolved {
         // Market resolved — reveal period must be over.
         require!(current_time >= reveal_end, ErrorCode::MarketNotResolved);
+
+        let revealed_option = ctx
+            .accounts
+            .stake_account
+            .revealed_option
+            .ok_or(ErrorCode::NotRevealed)?;
+        require!(revealed_option == option_id, ErrorCode::InvalidOptionId);
+
         compute_user_reward(
             &ctx.accounts.stake_account,
             &ctx.accounts.market,
             &ctx.accounts.option,
-            option_id,
         )?
     } else {
         // Market expired: refund reward_pool_fee + creator_fee.
@@ -161,22 +168,10 @@ fn compute_user_reward(
     stake_account: &Account<StakeAccount>,
     market: &Account<OpportunityMarket>,
     option: &Account<OpportunityMarketOption>,
-    option_id: u64,
 ) -> Result<u64> {
-    let revealed_option = match stake_account.revealed_option {
-        Some(o) => o,
-        None => return Ok(0),
-    };
-    require!(revealed_option == option_id, ErrorCode::InvalidOptionId);
-
-    let winning = match market
-        .selected_options
-        .as_ref()
-        .and_then(|opts| opts.iter().find(|w| w.option_id == revealed_option))
-    {
-        Some(w) => w,
-        None => return Ok(0),
-    };
+    if !option.selected {
+        return Ok(0);
+    }
 
     if !stake_account.total_incremented {
         return Ok(0);
@@ -188,7 +183,7 @@ fn compute_user_reward(
     let reward = (user_score as u128)
         .checked_mul(market.reward_amount as u128)
         .ok_or(ErrorCode::Overflow)?
-        .checked_mul(winning.reward_percentage as u128)
+        .checked_mul(option.reward_percentage as u128)
         .ok_or(ErrorCode::Overflow)?
         .checked_div(
             (total_score as u128)

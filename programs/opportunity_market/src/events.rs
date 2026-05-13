@@ -1,7 +1,5 @@
 use anchor_lang::prelude::*;
 
-use crate::state::WinningOption;
-
 /// Emits an event with `timestamp` automatically set from `Clock::get()`.
 macro_rules! emit_ts {
     ($event:ident { $($field:ident : $value:expr),* $(,)? }) => {{
@@ -35,7 +33,7 @@ pub struct MarketCreatedEvent {
     pub reward_pool_fee_bp: u16,
     pub creator_fee_bp: u16,
     pub market_fee_claimer: Pubkey,
-    pub max_select_options_seconds: u64,
+    pub market_resolution_deadline_seconds: u64,
     pub timestamp: i64,
 }
 
@@ -91,10 +89,20 @@ pub struct MarketOpenedEvent {
 }
 
 #[event]
-pub struct WinningOptionsSelectedEvent {
+pub struct WinningOptionSetEvent {
     pub market: Pubkey,
     pub market_authority: Pubkey,
-    pub selected_options: Vec<WinningOption>,
+    pub option: Pubkey,
+    pub option_id: u64,
+    pub reward_percentage: u8,
+    pub winning_option_allocation: u8,
+    pub timestamp: i64,
+}
+
+#[event]
+pub struct MarketResolvedEvent {
+    pub market: Pubkey,
+    pub market_authority: Pubkey,
     pub timestamp: i64,
 }
 
@@ -203,13 +211,13 @@ pub struct AllowedMintInitializedEvent {
 }
 
 #[event]
-pub struct MarketPausedEvent {
+pub struct StakingPausedEvent {
     pub market: Pubkey,
     pub timestamp: i64,
 }
 
 #[event]
-pub struct MarketResumedEvent {
+pub struct StakingResumedEvent {
     pub market: Pubkey,
     pub timestamp: i64,
 }

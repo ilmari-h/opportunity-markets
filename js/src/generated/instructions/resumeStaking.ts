@@ -10,8 +10,6 @@ import {
   combineCodec,
   fixDecoderSize,
   fixEncoderSize,
-  getArrayDecoder,
-  getArrayEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getStructDecoder,
@@ -20,9 +18,9 @@ import {
   type AccountMeta,
   type AccountSignerMeta,
   type Address,
-  type Codec,
-  type Decoder,
-  type Encoder,
+  type FixedSizeCodec,
+  type FixedSizeDecoder,
+  type FixedSizeEncoder,
   type Instruction,
   type InstructionWithAccounts,
   type InstructionWithData,
@@ -33,24 +31,18 @@ import {
 } from '@solana/kit';
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
-import {
-  getWinningOptionDecoder,
-  getWinningOptionEncoder,
-  type WinningOption,
-  type WinningOptionArgs,
-} from '../types';
 
-export const SELECT_WINNING_OPTIONS_DISCRIMINATOR = new Uint8Array([
-  56, 237, 171, 43, 247, 124, 100, 20,
+export const RESUME_STAKING_DISCRIMINATOR = new Uint8Array([
+  31, 200, 175, 23, 211, 22, 63, 155,
 ]);
 
-export function getSelectWinningOptionsDiscriminatorBytes() {
+export function getResumeStakingDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    SELECT_WINNING_OPTIONS_DISCRIMINATOR
+    RESUME_STAKING_DISCRIMINATOR
   );
 }
 
-export type SelectWinningOptionsInstruction<
+export type ResumeStakingInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMarketAuthority extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
@@ -70,62 +62,51 @@ export type SelectWinningOptionsInstruction<
     ]
   >;
 
-export type SelectWinningOptionsInstructionData = {
+export type ResumeStakingInstructionData = {
   discriminator: ReadonlyUint8Array;
-  selections: Array<WinningOption>;
 };
 
-export type SelectWinningOptionsInstructionDataArgs = {
-  selections: Array<WinningOptionArgs>;
-};
+export type ResumeStakingInstructionDataArgs = {};
 
-export function getSelectWinningOptionsInstructionDataEncoder(): Encoder<SelectWinningOptionsInstructionDataArgs> {
+export function getResumeStakingInstructionDataEncoder(): FixedSizeEncoder<ResumeStakingInstructionDataArgs> {
   return transformEncoder(
-    getStructEncoder([
-      ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['selections', getArrayEncoder(getWinningOptionEncoder())],
-    ]),
-    (value) => ({
-      ...value,
-      discriminator: SELECT_WINNING_OPTIONS_DISCRIMINATOR,
-    })
+    getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
+    (value) => ({ ...value, discriminator: RESUME_STAKING_DISCRIMINATOR })
   );
 }
 
-export function getSelectWinningOptionsInstructionDataDecoder(): Decoder<SelectWinningOptionsInstructionData> {
+export function getResumeStakingInstructionDataDecoder(): FixedSizeDecoder<ResumeStakingInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['selections', getArrayDecoder(getWinningOptionDecoder())],
   ]);
 }
 
-export function getSelectWinningOptionsInstructionDataCodec(): Codec<
-  SelectWinningOptionsInstructionDataArgs,
-  SelectWinningOptionsInstructionData
+export function getResumeStakingInstructionDataCodec(): FixedSizeCodec<
+  ResumeStakingInstructionDataArgs,
+  ResumeStakingInstructionData
 > {
   return combineCodec(
-    getSelectWinningOptionsInstructionDataEncoder(),
-    getSelectWinningOptionsInstructionDataDecoder()
+    getResumeStakingInstructionDataEncoder(),
+    getResumeStakingInstructionDataDecoder()
   );
 }
 
-export type SelectWinningOptionsInput<
+export type ResumeStakingInput<
   TAccountMarketAuthority extends string = string,
   TAccountMarket extends string = string,
 > = {
   marketAuthority: TransactionSigner<TAccountMarketAuthority>;
   market: Address<TAccountMarket>;
-  selections: SelectWinningOptionsInstructionDataArgs['selections'];
 };
 
-export function getSelectWinningOptionsInstruction<
+export function getResumeStakingInstruction<
   TAccountMarketAuthority extends string,
   TAccountMarket extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: SelectWinningOptionsInput<TAccountMarketAuthority, TAccountMarket>,
+  input: ResumeStakingInput<TAccountMarketAuthority, TAccountMarket>,
   config?: { programAddress?: TProgramAddress }
-): SelectWinningOptionsInstruction<
+): ResumeStakingInstruction<
   TProgramAddress,
   TAccountMarketAuthority,
   TAccountMarket
@@ -147,27 +128,22 @@ export function getSelectWinningOptionsInstruction<
     ResolvedAccount
   >;
 
-  // Original args.
-  const args = { ...input };
-
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
       getAccountMeta(accounts.marketAuthority),
       getAccountMeta(accounts.market),
     ],
-    data: getSelectWinningOptionsInstructionDataEncoder().encode(
-      args as SelectWinningOptionsInstructionDataArgs
-    ),
+    data: getResumeStakingInstructionDataEncoder().encode({}),
     programAddress,
-  } as SelectWinningOptionsInstruction<
+  } as ResumeStakingInstruction<
     TProgramAddress,
     TAccountMarketAuthority,
     TAccountMarket
   >);
 }
 
-export type ParsedSelectWinningOptionsInstruction<
+export type ParsedResumeStakingInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -176,17 +152,17 @@ export type ParsedSelectWinningOptionsInstruction<
     marketAuthority: TAccountMetas[0];
     market: TAccountMetas[1];
   };
-  data: SelectWinningOptionsInstructionData;
+  data: ResumeStakingInstructionData;
 };
 
-export function parseSelectWinningOptionsInstruction<
+export function parseResumeStakingInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedSelectWinningOptionsInstruction<TProgram, TAccountMetas> {
+): ParsedResumeStakingInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 2) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -200,8 +176,6 @@ export function parseSelectWinningOptionsInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: { marketAuthority: getNextAccount(), market: getNextAccount() },
-    data: getSelectWinningOptionsInstructionDataDecoder().decode(
-      instruction.data
-    ),
+    data: getResumeStakingInstructionDataDecoder().decode(instruction.data),
   };
 }

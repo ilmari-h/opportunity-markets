@@ -49,7 +49,7 @@ export type MarketCreatedEvent = {
   rewardPoolFeeBp: number;
   creatorFeeBp: number;
   marketFeeClaimer: Address;
-  maxSelectOptionsSeconds: bigint;
+  marketResolutionDeadlineSeconds: bigint;
   timestamp: bigint;
 };
 
@@ -72,7 +72,7 @@ export type MarketCreatedEventArgs = {
   rewardPoolFeeBp: number;
   creatorFeeBp: number;
   marketFeeClaimer: Address;
-  maxSelectOptionsSeconds: number | bigint;
+  marketResolutionDeadlineSeconds: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -96,7 +96,7 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['rewardPoolFeeBp', getU16Encoder()],
     ['creatorFeeBp', getU16Encoder()],
     ['marketFeeClaimer', getAddressEncoder()],
-    ['maxSelectOptionsSeconds', getU64Encoder()],
+    ['marketResolutionDeadlineSeconds', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -121,7 +121,7 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['rewardPoolFeeBp', getU16Decoder()],
     ['creatorFeeBp', getU16Decoder()],
     ['marketFeeClaimer', getAddressDecoder()],
-    ['maxSelectOptionsSeconds', getU64Decoder()],
+    ['marketResolutionDeadlineSeconds', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

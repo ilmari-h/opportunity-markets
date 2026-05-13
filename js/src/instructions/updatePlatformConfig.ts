@@ -14,7 +14,7 @@ export interface UpdatePlatformConfigParams extends BaseInstructionParams {
   creatorFeeBp: number;
   minTimeToStakeSeconds: bigint;
   minTimeToRevealSeconds: bigint;
-  maxSelectOptionsSeconds: bigint;
+  marketResolutionDeadlineSeconds: bigint;
 }
 
 export async function updatePlatformConfig(
@@ -30,7 +30,7 @@ export async function updatePlatformConfig(
     creatorFeeBp,
     minTimeToStakeSeconds,
     minTimeToRevealSeconds,
-    maxSelectOptionsSeconds,
+    marketResolutionDeadlineSeconds,
   } = params;
 
   const [platformConfigAddress] = await getPlatformConfigAddress(
@@ -54,7 +54,7 @@ export async function updatePlatformConfig(
       creatorFeeBp,
       minTimeToStakeSeconds,
       minTimeToRevealSeconds,
-      maxSelectOptionsSeconds,
+      marketResolutionDeadlineSeconds,
     },
     programAddress ? { programAddress } : undefined,
   ) as Instruction;

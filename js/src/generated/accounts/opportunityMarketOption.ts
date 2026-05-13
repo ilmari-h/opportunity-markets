@@ -15,6 +15,8 @@ import {
   fetchEncodedAccounts,
   fixDecoderSize,
   fixEncoderSize,
+  getBooleanDecoder,
+  getBooleanEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getStructDecoder,
@@ -53,6 +55,8 @@ export type OpportunityMarketOption = {
   id: bigint;
   totalStaked: bigint;
   totalScore: bigint;
+  selected: boolean;
+  rewardPercentage: number;
 };
 
 export type OpportunityMarketOptionArgs = {
@@ -60,6 +64,8 @@ export type OpportunityMarketOptionArgs = {
   id: number | bigint;
   totalStaked: number | bigint;
   totalScore: number | bigint;
+  selected: boolean;
+  rewardPercentage: number;
 };
 
 export function getOpportunityMarketOptionEncoder(): FixedSizeEncoder<OpportunityMarketOptionArgs> {
@@ -70,6 +76,8 @@ export function getOpportunityMarketOptionEncoder(): FixedSizeEncoder<Opportunit
       ['id', getU64Encoder()],
       ['totalStaked', getU64Encoder()],
       ['totalScore', getU64Encoder()],
+      ['selected', getBooleanEncoder()],
+      ['rewardPercentage', getU8Encoder()],
     ]),
     (value) => ({
       ...value,
@@ -85,6 +93,8 @@ export function getOpportunityMarketOptionDecoder(): FixedSizeDecoder<Opportunit
     ['id', getU64Decoder()],
     ['totalStaked', getU64Decoder()],
     ['totalScore', getU64Decoder()],
+    ['selected', getBooleanDecoder()],
+    ['rewardPercentage', getU8Decoder()],
   ]);
 }
 

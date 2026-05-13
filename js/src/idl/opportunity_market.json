@@ -1890,7 +1890,7 @@
           "type": "u64"
         },
         {
-          "name": "max_select_options_seconds",
+          "name": "market_resolution_deadline_seconds",
           "type": "u64"
         }
       ]
@@ -2005,16 +2005,16 @@
       ]
     },
     {
-      "name": "pause_market",
+      "name": "pause_staking",
       "discriminator": [
-        216,
-        238,
-        4,
-        164,
-        65,
-        11,
-        162,
-        91
+        245,
+        191,
+        35,
+        58,
+        88,
+        250,
+        229,
+        60
       ],
       "accounts": [
         {
@@ -2394,16 +2394,43 @@
       ]
     },
     {
-      "name": "resume_market",
+      "name": "resolve_market",
       "discriminator": [
-        198,
-        120,
-        104,
-        87,
-        44,
-        103,
-        108,
-        143
+        155,
+        23,
+        80,
+        173,
+        46,
+        74,
+        23,
+        239
+      ],
+      "accounts": [
+        {
+          "name": "market_authority",
+          "signer": true,
+          "relations": [
+            "market"
+          ]
+        },
+        {
+          "name": "market",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "resume_staking",
+      "discriminator": [
+        31,
+        200,
+        175,
+        23,
+        211,
+        22,
+        63,
+        155
       ],
       "accounts": [
         {
@@ -2671,16 +2698,16 @@
       "args": []
     },
     {
-      "name": "select_winning_options",
+      "name": "set_winning_option",
       "discriminator": [
-        56,
-        237,
-        171,
-        43,
-        247,
-        124,
-        100,
-        20
+        156,
+        73,
+        113,
+        33,
+        170,
+        115,
+        163,
+        206
       ],
       "accounts": [
         {
@@ -2693,18 +2720,43 @@
         {
           "name": "market",
           "writable": true
+        },
+        {
+          "name": "option",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  112,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "market"
+              },
+              {
+                "kind": "arg",
+                "path": "option_id"
+              }
+            ]
+          }
         }
       ],
       "args": [
         {
-          "name": "selections",
-          "type": {
-            "vec": {
-              "defined": {
-                "name": "WinningOption"
-              }
-            }
-          }
+          "name": "option_id",
+          "type": "u64"
+        },
+        {
+          "name": "reward_percentage",
+          "type": "u8"
         }
       ]
     },
@@ -3183,7 +3235,7 @@
           "type": "u64"
         },
         {
-          "name": "max_select_options_seconds",
+          "name": "market_resolution_deadline_seconds",
           "type": "u64"
         }
       ]
@@ -3639,29 +3691,16 @@
       ]
     },
     {
-      "name": "MarketPausedEvent",
+      "name": "MarketResolvedEvent",
       "discriminator": [
-        188,
-        195,
+        87,
+        249,
         34,
-        16,
-        53,
-        37,
-        64,
-        100
-      ]
-    },
-    {
-      "name": "MarketResumedEvent",
-      "discriminator": [
-        34,
-        56,
-        120,
-        78,
-        71,
-        228,
-        93,
-        131
+        139,
+        194,
+        159,
+        14,
+        156
       ]
     },
     {
@@ -3769,6 +3808,32 @@
       ]
     },
     {
+      "name": "StakingPausedEvent",
+      "discriminator": [
+        45,
+        97,
+        179,
+        123,
+        64,
+        45,
+        253,
+        164
+      ]
+    },
+    {
+      "name": "StakingResumedEvent",
+      "discriminator": [
+        61,
+        202,
+        117,
+        241,
+        29,
+        137,
+        191,
+        132
+      ]
+    },
+    {
       "name": "StuckStakeClosedEvent",
       "discriminator": [
         0,
@@ -3821,16 +3886,16 @@
       ]
     },
     {
-      "name": "WinningOptionsSelectedEvent",
+      "name": "WinningOptionSetEvent",
       "discriminator": [
-        228,
-        90,
-        78,
-        13,
-        36,
-        36,
-        173,
-        6
+        157,
+        146,
+        212,
+        192,
+        122,
+        218,
+        160,
+        97
       ]
     }
   ],
@@ -4731,7 +4796,7 @@
             "type": "pubkey"
           },
           {
-            "name": "max_select_options_seconds",
+            "name": "market_resolution_deadline_seconds",
             "type": "u64"
           },
           {
@@ -4794,7 +4859,7 @@
       }
     },
     {
-      "name": "MarketPausedEvent",
+      "name": "MarketResolvedEvent",
       "type": {
         "kind": "struct",
         "fields": [
@@ -4803,19 +4868,7 @@
             "type": "pubkey"
           },
           {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "MarketResumedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "market",
+            "name": "market_authority",
             "type": "pubkey"
           },
           {
@@ -4978,16 +5031,12 @@
             "type": "u64"
           },
           {
-            "name": "selected_options",
-            "type": {
-              "option": {
-                "vec": {
-                  "defined": {
-                    "name": "WinningOption"
-                  }
-                }
-              }
-            }
+            "name": "resolved",
+            "type": "bool"
+          },
+          {
+            "name": "winning_option_allocation",
+            "type": "u8"
           },
           {
             "name": "reward_amount",
@@ -5031,7 +5080,7 @@
             "type": "bool"
           },
           {
-            "name": "paused",
+            "name": "staking_paused",
             "type": "bool"
           },
           {
@@ -5059,7 +5108,7 @@
             "type": "pubkey"
           },
           {
-            "name": "max_select_options_seconds",
+            "name": "market_resolution_deadline_seconds",
             "type": "u64"
           },
           {
@@ -5089,6 +5138,14 @@
           {
             "name": "total_score",
             "type": "u64"
+          },
+          {
+            "name": "selected",
+            "type": "bool"
+          },
+          {
+            "name": "reward_percentage",
+            "type": "u8"
           }
         ]
       }
@@ -5276,7 +5333,7 @@
             "type": "u16"
           },
           {
-            "name": "max_select_options_seconds",
+            "name": "market_resolution_deadline_seconds",
             "type": "u64"
           },
           {
@@ -5895,6 +5952,38 @@
       }
     },
     {
+      "name": "StakingPausedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakingResumedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "market",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "StuckStakeClosedEvent",
       "type": {
         "kind": "struct",
@@ -6127,23 +6216,7 @@
       }
     },
     {
-      "name": "WinningOption",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "option_id",
-            "type": "u64"
-          },
-          {
-            "name": "reward_percentage",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "WinningOptionsSelectedEvent",
+      "name": "WinningOptionSetEvent",
       "type": {
         "kind": "struct",
         "fields": [
@@ -6156,14 +6229,20 @@
             "type": "pubkey"
           },
           {
-            "name": "selected_options",
-            "type": {
-              "vec": {
-                "defined": {
-                  "name": "WinningOption"
-                }
-              }
-            }
+            "name": "option",
+            "type": "pubkey"
+          },
+          {
+            "name": "option_id",
+            "type": "u64"
+          },
+          {
+            "name": "reward_percentage",
+            "type": "u8"
+          },
+          {
+            "name": "winning_option_allocation",
+            "type": "u8"
           },
           {
             "name": "timestamp",

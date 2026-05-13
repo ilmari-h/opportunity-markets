@@ -32,15 +32,16 @@ import {
   type ParsedInitPlatformConfigInstruction,
   type ParsedInitStakeAccountInstruction,
   type ParsedOpenMarketInstruction,
-  type ParsedPauseMarketInstruction,
+  type ParsedPauseStakingInstruction,
   type ParsedProposeNewFeeClaimAuthorityInstruction,
   type ParsedProposeNewUpdateAuthorityInstruction,
   type ParsedReclaimStakeInstruction,
-  type ParsedResumeMarketInstruction,
+  type ParsedResolveMarketInstruction,
+  type ParsedResumeStakingInstruction,
   type ParsedRevealStakeCallbackInstruction,
   type ParsedRevealStakeCompDefInstruction,
   type ParsedRevealStakeInstruction,
-  type ParsedSelectWinningOptionsInstruction,
+  type ParsedSetWinningOptionInstruction,
   type ParsedStakeCallbackInstruction,
   type ParsedStakeCompDefInstruction,
   type ParsedStakeInstruction,
@@ -239,15 +240,16 @@ export enum OpportunityMarketInstruction {
   InitPlatformConfig,
   InitStakeAccount,
   OpenMarket,
-  PauseMarket,
+  PauseStaking,
   ProposeNewFeeClaimAuthority,
   ProposeNewUpdateAuthority,
   ReclaimStake,
-  ResumeMarket,
+  ResolveMarket,
+  ResumeStaking,
   RevealStake,
   RevealStakeCallback,
   RevealStakeCompDef,
-  SelectWinningOptions,
+  SetWinningOption,
   Stake,
   StakeCallback,
   StakeCompDef,
@@ -462,12 +464,12 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([216, 238, 4, 164, 65, 11, 162, 91])
+        new Uint8Array([245, 191, 35, 58, 88, 250, 229, 60])
       ),
       0
     )
   ) {
-    return OpportunityMarketInstruction.PauseMarket;
+    return OpportunityMarketInstruction.PauseStaking;
   }
   if (
     containsBytes(
@@ -506,12 +508,23 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([198, 120, 104, 87, 44, 103, 108, 143])
+        new Uint8Array([155, 23, 80, 173, 46, 74, 23, 239])
       ),
       0
     )
   ) {
-    return OpportunityMarketInstruction.ResumeMarket;
+    return OpportunityMarketInstruction.ResolveMarket;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([31, 200, 175, 23, 211, 22, 63, 155])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.ResumeStaking;
   }
   if (
     containsBytes(
@@ -550,12 +563,12 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([56, 237, 171, 43, 247, 124, 100, 20])
+        new Uint8Array([156, 73, 113, 33, 170, 115, 163, 206])
       ),
       0
     )
   ) {
-    return OpportunityMarketInstruction.SelectWinningOptions;
+    return OpportunityMarketInstruction.SetWinningOption;
   }
   if (
     containsBytes(
@@ -686,8 +699,8 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.OpenMarket;
     } & ParsedOpenMarketInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.PauseMarket;
-    } & ParsedPauseMarketInstruction<TProgram>)
+      instructionType: OpportunityMarketInstruction.PauseStaking;
+    } & ParsedPauseStakingInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.ProposeNewFeeClaimAuthority;
     } & ParsedProposeNewFeeClaimAuthorityInstruction<TProgram>)
@@ -698,8 +711,11 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.ReclaimStake;
     } & ParsedReclaimStakeInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.ResumeMarket;
-    } & ParsedResumeMarketInstruction<TProgram>)
+      instructionType: OpportunityMarketInstruction.ResolveMarket;
+    } & ParsedResolveMarketInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.ResumeStaking;
+    } & ParsedResumeStakingInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.RevealStake;
     } & ParsedRevealStakeInstruction<TProgram>)
@@ -710,8 +726,8 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.RevealStakeCompDef;
     } & ParsedRevealStakeCompDefInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.SelectWinningOptions;
-    } & ParsedSelectWinningOptionsInstruction<TProgram>)
+      instructionType: OpportunityMarketInstruction.SetWinningOption;
+    } & ParsedSetWinningOptionInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.Stake;
     } & ParsedStakeInstruction<TProgram>)

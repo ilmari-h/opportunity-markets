@@ -11,6 +11,7 @@ import {
   OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED,
   OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM,
   OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED,
+  OPPORTUNITY_MARKET_ERROR__INVALID_PARAMETERS,
 } from "../js/src";
 
 import { OpportunityMarket } from "../target/types/opportunity_market";
@@ -130,11 +131,13 @@ describe("OpportunityMarket", () => {
     const winningOptionIndex = optionA;
     await platform.selectSingleWinningOption(winningOptionIndex);
 
-    // Verify selected option
+    // Verify market is resolved and the winning option carries 100% allocation.
     const resolvedMarket = await platform.fetchMarket();
-    expect(resolvedMarket.data.selectedOptions).to.deep.equal(
-      some([{ optionId: BigInt(winningOptionIndex), rewardPercentage: 100 }])
-    );
+    expect(resolvedMarket.data.resolved).to.be.true;
+    expect(resolvedMarket.data.winningOptionAllocation).to.equal(100);
+    const winningOption = await platform.fetchOptionData(winningOptionIndex);
+    expect(winningOption.data.selected).to.be.true;
+    expect(winningOption.data.rewardPercentage).to.equal(100);
 
     // After winners are selected but before winners close their stake accounts,
     // the market creator can claim the accumulated creator fees.
@@ -368,13 +371,20 @@ describe("OpportunityMarket", () => {
       { optionId: optE, rewardPercentage: 20 },
     ]);
 
-    // Verify selected options
+    // Verify market is resolved and each winning option carries its percentage.
     const resolvedMarket = await platform.fetchMarket();
-    expect(resolvedMarket.data.selectedOptions).to.deep.equal(some([
-      { optionId: BigInt(optA), rewardPercentage: 50 },
-      { optionId: BigInt(optB), rewardPercentage: 30 },
-      { optionId: BigInt(optE), rewardPercentage: 20 },
-    ]));
+    expect(resolvedMarket.data.resolved).to.be.true;
+    expect(resolvedMarket.data.winningOptionAllocation).to.equal(100);
+    const expectedWinners: Array<{ optionId: number; percentage: number }> = [
+      { optionId: optA, percentage: 50 },
+      { optionId: optB, percentage: 30 },
+      { optionId: optE, percentage: 20 },
+    ];
+    for (const { optionId, percentage } of expectedWinners) {
+      const opt = await platform.fetchOptionData(optionId);
+      expect(opt.data.selected).to.be.true;
+      expect(opt.data.rewardPercentage).to.equal(percentage);
+    }
 
     // selectWinningOptions with allow_closing_early shortens time_to_stake, so reveal window starts now.
     const updatedMarket = await platform.fetchMarket();
@@ -617,6 +627,67 @@ describe("OpportunityMarket", () => {
     ).to.be.true;
   });
 
+  it("rejects resolve_market when winning option allocation does not sum to 100", async () => {
+    const marketFundingAmount = 1_000_000_000n;
+
+    const observer = loadObserverKeypair();
+
+    const platform = await Platform.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 1,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketConfig: {
+        rewardAmount: marketFundingAmount,
+        timeToStake: 120n,
+        timeToReveal: 60n,
+        authorizedReaderPubkey: observer.publicKey,
+        allowClosingEarly: true,
+      },
+    });
+
+    const openTimestamp = await platform.openMarket();
+    const { optionId: optionA } = await platform.addOption();
+    const { optionId: optionB } = await platform.addOption();
+
+    // resolve_market requires current_time >= open_timestamp; otherwise it errors
+    // with the same InvalidParameters code as the allocation check.
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    // Under (50 + 30 = 80): resolve must reject.
+    await platform.setWinningOption(optionA, 50);
+    await platform.setWinningOption(optionB, 30);
+
+    let market = await platform.fetchMarket();
+    expect(market.data.winningOptionAllocation).to.equal(80);
+
+    await shouldThrowCustomError(
+      () => platform.resolveMarket(),
+      OPPORTUNITY_MARKET_ERROR__INVALID_PARAMETERS,
+    );
+
+    market = await platform.fetchMarket();
+    expect(market.data.resolved).to.be.false;
+
+    // Over (80 + 30 = 110): set must reject before allocation moves.
+    await shouldThrowCustomError(
+      () => platform.setWinningOption(optionA, 80),
+      OPPORTUNITY_MARKET_ERROR__INVALID_PARAMETERS,
+    );
+
+    market = await platform.fetchMarket();
+    expect(market.data.winningOptionAllocation).to.equal(80);
+
+    // Correcting optionA up to exactly 70 brings the total to 100 and resolve succeeds.
+    await platform.setWinningOption(optionA, 70);
+    await platform.resolveMarket();
+
+    market = await platform.fetchMarket();
+    expect(market.data.resolved).to.be.true;
+    expect(market.data.winningOptionAllocation).to.equal(100);
+  });
+
   it("prevents closing market early when not allowed", async () => {
     const marketFundingAmount = 1_000_000_000n;
     const timeToStake = 10n;
@@ -654,9 +725,9 @@ describe("OpportunityMarket", () => {
       OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED
     );
 
-    // Verify market is still open (no selected option)
+    // Verify market is still unresolved
     let market = await platform.fetchMarket();
-    expect(isNone(market.data.selectedOptions)).to.be.true;
+    expect(market.data.resolved).to.be.false;
 
     // Wait for stake period to end
     const stakeEndTimestamp = Number(openTimestamp) + Number(timeToStake);
@@ -665,9 +736,13 @@ describe("OpportunityMarket", () => {
     // Now selecting option should succeed
     await platform.selectSingleWinningOption(optionA);
 
-    // Verify option was selected
+    // Verify option was selected and market resolved
     market = await platform.fetchMarket();
-    expect(market.data.selectedOptions).to.deep.equal(some([{ optionId: BigInt(optionA), rewardPercentage: 100 }]));
+    expect(market.data.resolved).to.be.true;
+    expect(market.data.winningOptionAllocation).to.equal(100);
+    const optionAAccount = await platform.fetchOptionData(optionA);
+    expect(optionAAccount.data.selected).to.be.true;
+    expect(optionAAccount.data.rewardPercentage).to.equal(100);
   });
 
   it("allows adding more reward during staking", async () => {
@@ -759,7 +834,7 @@ describe("OpportunityMarket", () => {
     // Verify market state
     market = await platform.fetchMarket();
     expect(market.data.rewardAmount).to.equal(0n);
-    expect(isNone(market.data.selectedOptions)).to.be.true;
+    expect(market.data.resolved).to.be.false;
   });
 
   it("rejects staking before staking period is active", async () => {
@@ -1042,8 +1117,8 @@ describe("OpportunityMarket", () => {
 
     const user = platform.participants[0];
 
-    // Pause market
-    await platform.pauseMarket();
+    // Pause staking
+    await platform.pauseStaking();
 
     // Staking should fail while paused
     await shouldThrowCustomError(
@@ -1051,8 +1126,8 @@ describe("OpportunityMarket", () => {
       OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED
     );
 
-    // Resume market
-    await platform.resumeMarket();
+    // Resume staking
+    await platform.resumeStaking();
 
     // Staking should succeed after resume
     const stakeAccountId = await platform.stakeOnOption(user, 50_000_000n, optionId);
@@ -1161,7 +1236,7 @@ describe("OpportunityMarket", () => {
     const platformFeeBp = 100n;
     const rewardPoolFeeBp = 200n;
     const creatorFeeBp = 150n;
-    const maxSelectOptionsSeconds = 10n;
+    const marketResolutionDeadlineSeconds = 10n;
     const timeToStake = 10n;
 
     const observer = loadObserverKeypair();
@@ -1175,7 +1250,7 @@ describe("OpportunityMarket", () => {
       platformFeeBp: Number(platformFeeBp),
       rewardPoolFeeBp: Number(rewardPoolFeeBp),
       creatorFeeBp: Number(creatorFeeBp),
-      maxSelectOptionsSeconds,
+      marketResolutionDeadlineSeconds,
       marketConfig: {
         rewardAmount: 0n,
         timeToStake,
@@ -1206,9 +1281,9 @@ describe("OpportunityMarket", () => {
     expect(stakeAccount.data.creatorFee).to.equal(expectedCreatorFee);
     expect(stakeAccount.data.amount).to.equal(expectedNetStake);
 
-    // Wait past stake_end + max_select_options_seconds without selecting winners.
+    // Wait past stake_end + market_resolution_deadline without selecting winners.
     const stakeEnd = Number(openTimestamp) + Number(timeToStake);
-    const selectDeadline = stakeEnd + Number(maxSelectOptionsSeconds);
+    const selectDeadline = stakeEnd + Number(marketResolutionDeadlineSeconds);
     await sleepUntilOnChainTimestamp(selectDeadline + ONCHAIN_TIMESTAMP_BUFFER_SECONDS, rpc);
 
     // Stake reclaim returns the net staked amount.

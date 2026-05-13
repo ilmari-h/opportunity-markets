@@ -66,7 +66,7 @@ export type PlatformConfig = {
   platformFeeBp: number;
   rewardPoolFeeBp: number;
   creatorFeeBp: number;
-  maxSelectOptionsSeconds: bigint;
+  marketResolutionDeadlineSeconds: bigint;
   minTimeToStakeSeconds: bigint;
   minTimeToRevealSeconds: bigint;
 };
@@ -79,7 +79,7 @@ export type PlatformConfigArgs = {
   platformFeeBp: number;
   rewardPoolFeeBp: number;
   creatorFeeBp: number;
-  maxSelectOptionsSeconds: number | bigint;
+  marketResolutionDeadlineSeconds: number | bigint;
   minTimeToStakeSeconds: number | bigint;
   minTimeToRevealSeconds: number | bigint;
 };
@@ -95,7 +95,7 @@ export function getPlatformConfigEncoder(): Encoder<PlatformConfigArgs> {
       ['platformFeeBp', getU16Encoder()],
       ['rewardPoolFeeBp', getU16Encoder()],
       ['creatorFeeBp', getU16Encoder()],
-      ['maxSelectOptionsSeconds', getU64Encoder()],
+      ['marketResolutionDeadlineSeconds', getU64Encoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minTimeToRevealSeconds', getU64Encoder()],
     ]),
@@ -113,7 +113,7 @@ export function getPlatformConfigDecoder(): Decoder<PlatformConfig> {
     ['platformFeeBp', getU16Decoder()],
     ['rewardPoolFeeBp', getU16Decoder()],
     ['creatorFeeBp', getU16Decoder()],
-    ['maxSelectOptionsSeconds', getU64Decoder()],
+    ['marketResolutionDeadlineSeconds', getU64Decoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minTimeToRevealSeconds', getU64Decoder()],
   ]);

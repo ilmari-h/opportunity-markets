@@ -95,7 +95,7 @@ export type InitPlatformConfigInstructionData = {
   feeClaimAuthority: Address;
   minTimeToStakeSeconds: bigint;
   minTimeToRevealSeconds: bigint;
-  maxSelectOptionsSeconds: bigint;
+  marketResolutionDeadlineSeconds: bigint;
 };
 
 export type InitPlatformConfigInstructionDataArgs = {
@@ -106,7 +106,7 @@ export type InitPlatformConfigInstructionDataArgs = {
   feeClaimAuthority: Address;
   minTimeToStakeSeconds: number | bigint;
   minTimeToRevealSeconds: number | bigint;
-  maxSelectOptionsSeconds: number | bigint;
+  marketResolutionDeadlineSeconds: number | bigint;
 };
 
 export function getInitPlatformConfigInstructionDataEncoder(): Encoder<InitPlatformConfigInstructionDataArgs> {
@@ -120,7 +120,7 @@ export function getInitPlatformConfigInstructionDataEncoder(): Encoder<InitPlatf
       ['feeClaimAuthority', getAddressEncoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minTimeToRevealSeconds', getU64Encoder()],
-      ['maxSelectOptionsSeconds', getU64Encoder()],
+      ['marketResolutionDeadlineSeconds', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: INIT_PLATFORM_CONFIG_DISCRIMINATOR })
   );
@@ -136,7 +136,7 @@ export function getInitPlatformConfigInstructionDataDecoder(): Decoder<InitPlatf
     ['feeClaimAuthority', getAddressDecoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minTimeToRevealSeconds', getU64Decoder()],
-    ['maxSelectOptionsSeconds', getU64Decoder()],
+    ['marketResolutionDeadlineSeconds', getU64Decoder()],
   ]);
 }
 
@@ -165,7 +165,7 @@ export type InitPlatformConfigAsyncInput<
   feeClaimAuthority: InitPlatformConfigInstructionDataArgs['feeClaimAuthority'];
   minTimeToStakeSeconds: InitPlatformConfigInstructionDataArgs['minTimeToStakeSeconds'];
   minTimeToRevealSeconds: InitPlatformConfigInstructionDataArgs['minTimeToRevealSeconds'];
-  maxSelectOptionsSeconds: InitPlatformConfigInstructionDataArgs['maxSelectOptionsSeconds'];
+  marketResolutionDeadlineSeconds: InitPlatformConfigInstructionDataArgs['marketResolutionDeadlineSeconds'];
 };
 
 export async function getInitPlatformConfigInstructionAsync<
@@ -261,7 +261,7 @@ export type InitPlatformConfigInput<
   feeClaimAuthority: InitPlatformConfigInstructionDataArgs['feeClaimAuthority'];
   minTimeToStakeSeconds: InitPlatformConfigInstructionDataArgs['minTimeToStakeSeconds'];
   minTimeToRevealSeconds: InitPlatformConfigInstructionDataArgs['minTimeToRevealSeconds'];
-  maxSelectOptionsSeconds: InitPlatformConfigInstructionDataArgs['maxSelectOptionsSeconds'];
+  marketResolutionDeadlineSeconds: InitPlatformConfigInstructionDataArgs['marketResolutionDeadlineSeconds'];
 };
 
 export function getInitPlatformConfigInstruction<

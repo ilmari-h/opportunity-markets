@@ -32,17 +32,17 @@ import {
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const RESUME_MARKET_DISCRIMINATOR = new Uint8Array([
-  198, 120, 104, 87, 44, 103, 108, 143,
+export const RESOLVE_MARKET_DISCRIMINATOR = new Uint8Array([
+  155, 23, 80, 173, 46, 74, 23, 239,
 ]);
 
-export function getResumeMarketDiscriminatorBytes() {
+export function getResolveMarketDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    RESUME_MARKET_DISCRIMINATOR
+    RESOLVE_MARKET_DISCRIMINATOR
   );
 }
 
-export type ResumeMarketInstruction<
+export type ResolveMarketInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMarketAuthority extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
@@ -62,34 +62,36 @@ export type ResumeMarketInstruction<
     ]
   >;
 
-export type ResumeMarketInstructionData = { discriminator: ReadonlyUint8Array };
+export type ResolveMarketInstructionData = {
+  discriminator: ReadonlyUint8Array;
+};
 
-export type ResumeMarketInstructionDataArgs = {};
+export type ResolveMarketInstructionDataArgs = {};
 
-export function getResumeMarketInstructionDataEncoder(): FixedSizeEncoder<ResumeMarketInstructionDataArgs> {
+export function getResolveMarketInstructionDataEncoder(): FixedSizeEncoder<ResolveMarketInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
-    (value) => ({ ...value, discriminator: RESUME_MARKET_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: RESOLVE_MARKET_DISCRIMINATOR })
   );
 }
 
-export function getResumeMarketInstructionDataDecoder(): FixedSizeDecoder<ResumeMarketInstructionData> {
+export function getResolveMarketInstructionDataDecoder(): FixedSizeDecoder<ResolveMarketInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
   ]);
 }
 
-export function getResumeMarketInstructionDataCodec(): FixedSizeCodec<
-  ResumeMarketInstructionDataArgs,
-  ResumeMarketInstructionData
+export function getResolveMarketInstructionDataCodec(): FixedSizeCodec<
+  ResolveMarketInstructionDataArgs,
+  ResolveMarketInstructionData
 > {
   return combineCodec(
-    getResumeMarketInstructionDataEncoder(),
-    getResumeMarketInstructionDataDecoder()
+    getResolveMarketInstructionDataEncoder(),
+    getResolveMarketInstructionDataDecoder()
   );
 }
 
-export type ResumeMarketInput<
+export type ResolveMarketInput<
   TAccountMarketAuthority extends string = string,
   TAccountMarket extends string = string,
 > = {
@@ -97,14 +99,14 @@ export type ResumeMarketInput<
   market: Address<TAccountMarket>;
 };
 
-export function getResumeMarketInstruction<
+export function getResolveMarketInstruction<
   TAccountMarketAuthority extends string,
   TAccountMarket extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: ResumeMarketInput<TAccountMarketAuthority, TAccountMarket>,
+  input: ResolveMarketInput<TAccountMarketAuthority, TAccountMarket>,
   config?: { programAddress?: TProgramAddress }
-): ResumeMarketInstruction<
+): ResolveMarketInstruction<
   TProgramAddress,
   TAccountMarketAuthority,
   TAccountMarket
@@ -132,16 +134,16 @@ export function getResumeMarketInstruction<
       getAccountMeta(accounts.marketAuthority),
       getAccountMeta(accounts.market),
     ],
-    data: getResumeMarketInstructionDataEncoder().encode({}),
+    data: getResolveMarketInstructionDataEncoder().encode({}),
     programAddress,
-  } as ResumeMarketInstruction<
+  } as ResolveMarketInstruction<
     TProgramAddress,
     TAccountMarketAuthority,
     TAccountMarket
   >);
 }
 
-export type ParsedResumeMarketInstruction<
+export type ParsedResolveMarketInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -150,17 +152,17 @@ export type ParsedResumeMarketInstruction<
     marketAuthority: TAccountMetas[0];
     market: TAccountMetas[1];
   };
-  data: ResumeMarketInstructionData;
+  data: ResolveMarketInstructionData;
 };
 
-export function parseResumeMarketInstruction<
+export function parseResolveMarketInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedResumeMarketInstruction<TProgram, TAccountMetas> {
+): ParsedResolveMarketInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 2) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -174,6 +176,6 @@ export function parseResumeMarketInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: { marketAuthority: getNextAccount(), market: getNextAccount() },
-    data: getResumeMarketInstructionDataDecoder().decode(instruction.data),
+    data: getResolveMarketInstructionDataDecoder().decode(instruction.data),
   };
 }

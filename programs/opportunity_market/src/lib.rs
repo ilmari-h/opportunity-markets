@@ -36,7 +36,7 @@ pub mod opportunity_market {
         fee_claim_authority: Pubkey,
         min_time_to_stake_seconds: u64,
         min_time_to_reveal_seconds: u64,
-        max_select_options_seconds: u64,
+        market_resolution_deadline_seconds: u64,
     ) -> Result<()> {
         instructions::init_platform_config(
             ctx,
@@ -47,7 +47,7 @@ pub mod opportunity_market {
             fee_claim_authority,
             min_time_to_stake_seconds,
             min_time_to_reveal_seconds,
-            max_select_options_seconds,
+            market_resolution_deadline_seconds,
         )
     }
 
@@ -58,7 +58,7 @@ pub mod opportunity_market {
         creator_fee_bp: u16,
         min_time_to_stake_seconds: u64,
         min_time_to_reveal_seconds: u64,
-        max_select_options_seconds: u64,
+        market_resolution_deadline_seconds: u64,
     ) -> Result<()> {
         instructions::update_platform_config(
             ctx,
@@ -67,7 +67,7 @@ pub mod opportunity_market {
             creator_fee_bp,
             min_time_to_stake_seconds,
             min_time_to_reveal_seconds,
-            max_select_options_seconds,
+            market_resolution_deadline_seconds,
         )
     }
 
@@ -151,16 +151,24 @@ pub mod opportunity_market {
         instructions::open_market(ctx, open_timestamp)
     }
 
-    pub fn pause_market(ctx: Context<PauseMarket>) -> Result<()> {
-        instructions::pause_market(ctx)
+    pub fn pause_staking(ctx: Context<PauseStaking>) -> Result<()> {
+        instructions::pause_staking(ctx)
     }
 
-    pub fn resume_market(ctx: Context<ResumeMarket>) -> Result<()> {
-        instructions::resume_market(ctx)
+    pub fn resume_staking(ctx: Context<ResumeStaking>) -> Result<()> {
+        instructions::resume_staking(ctx)
     }
 
-    pub fn select_winning_options(ctx: Context<SelectWinningOptions>, selections: Vec<WinningOption>) -> Result<()> {
-        instructions::select_winning_options(ctx, selections)
+    pub fn set_winning_option(
+        ctx: Context<SetWinningOption>,
+        option_id: u64,
+        reward_percentage: u8,
+    ) -> Result<()> {
+        instructions::set_winning_option(ctx, option_id, reward_percentage)
+    }
+
+    pub fn resolve_market(ctx: Context<ResolveMarket>) -> Result<()> {
+        instructions::resolve_market(ctx)
     }
 
     pub fn withdraw_reward(ctx: Context<WithdrawReward>) -> Result<()> {

@@ -15,7 +15,7 @@ export interface CreatePlatformConfigParams extends BaseInstructionParams {
   feeClaimAuthority: Address;
   minTimeToStakeSeconds: bigint;
   minTimeToRevealSeconds: bigint;
-  maxSelectOptionsSeconds: bigint;
+  marketResolutionDeadlineSeconds: bigint;
 }
 
 export async function createPlatformConfig(
@@ -32,7 +32,7 @@ export async function createPlatformConfig(
     feeClaimAuthority,
     minTimeToStakeSeconds,
     minTimeToRevealSeconds,
-    maxSelectOptionsSeconds,
+    marketResolutionDeadlineSeconds,
   } = params;
 
   const [platformConfigAddress] = await getPlatformConfigAddress(
@@ -57,7 +57,7 @@ export async function createPlatformConfig(
       feeClaimAuthority,
       minTimeToStakeSeconds,
       minTimeToRevealSeconds,
-      maxSelectOptionsSeconds,
+      marketResolutionDeadlineSeconds,
     },
     programAddress ? { programAddress } : undefined,
   ) as Promise<Instruction>;

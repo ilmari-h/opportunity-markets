@@ -32,17 +32,17 @@ import {
 import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const PAUSE_MARKET_DISCRIMINATOR = new Uint8Array([
-  216, 238, 4, 164, 65, 11, 162, 91,
+export const PAUSE_STAKING_DISCRIMINATOR = new Uint8Array([
+  245, 191, 35, 58, 88, 250, 229, 60,
 ]);
 
-export function getPauseMarketDiscriminatorBytes() {
+export function getPauseStakingDiscriminatorBytes() {
   return fixEncoderSize(getBytesEncoder(), 8).encode(
-    PAUSE_MARKET_DISCRIMINATOR
+    PAUSE_STAKING_DISCRIMINATOR
   );
 }
 
-export type PauseMarketInstruction<
+export type PauseStakingInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMarketAuthority extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
@@ -62,34 +62,34 @@ export type PauseMarketInstruction<
     ]
   >;
 
-export type PauseMarketInstructionData = { discriminator: ReadonlyUint8Array };
+export type PauseStakingInstructionData = { discriminator: ReadonlyUint8Array };
 
-export type PauseMarketInstructionDataArgs = {};
+export type PauseStakingInstructionDataArgs = {};
 
-export function getPauseMarketInstructionDataEncoder(): FixedSizeEncoder<PauseMarketInstructionDataArgs> {
+export function getPauseStakingInstructionDataEncoder(): FixedSizeEncoder<PauseStakingInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([['discriminator', fixEncoderSize(getBytesEncoder(), 8)]]),
-    (value) => ({ ...value, discriminator: PAUSE_MARKET_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: PAUSE_STAKING_DISCRIMINATOR })
   );
 }
 
-export function getPauseMarketInstructionDataDecoder(): FixedSizeDecoder<PauseMarketInstructionData> {
+export function getPauseStakingInstructionDataDecoder(): FixedSizeDecoder<PauseStakingInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
   ]);
 }
 
-export function getPauseMarketInstructionDataCodec(): FixedSizeCodec<
-  PauseMarketInstructionDataArgs,
-  PauseMarketInstructionData
+export function getPauseStakingInstructionDataCodec(): FixedSizeCodec<
+  PauseStakingInstructionDataArgs,
+  PauseStakingInstructionData
 > {
   return combineCodec(
-    getPauseMarketInstructionDataEncoder(),
-    getPauseMarketInstructionDataDecoder()
+    getPauseStakingInstructionDataEncoder(),
+    getPauseStakingInstructionDataDecoder()
   );
 }
 
-export type PauseMarketInput<
+export type PauseStakingInput<
   TAccountMarketAuthority extends string = string,
   TAccountMarket extends string = string,
 > = {
@@ -97,14 +97,14 @@ export type PauseMarketInput<
   market: Address<TAccountMarket>;
 };
 
-export function getPauseMarketInstruction<
+export function getPauseStakingInstruction<
   TAccountMarketAuthority extends string,
   TAccountMarket extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: PauseMarketInput<TAccountMarketAuthority, TAccountMarket>,
+  input: PauseStakingInput<TAccountMarketAuthority, TAccountMarket>,
   config?: { programAddress?: TProgramAddress }
-): PauseMarketInstruction<
+): PauseStakingInstruction<
   TProgramAddress,
   TAccountMarketAuthority,
   TAccountMarket
@@ -132,16 +132,16 @@ export function getPauseMarketInstruction<
       getAccountMeta(accounts.marketAuthority),
       getAccountMeta(accounts.market),
     ],
-    data: getPauseMarketInstructionDataEncoder().encode({}),
+    data: getPauseStakingInstructionDataEncoder().encode({}),
     programAddress,
-  } as PauseMarketInstruction<
+  } as PauseStakingInstruction<
     TProgramAddress,
     TAccountMarketAuthority,
     TAccountMarket
   >);
 }
 
-export type ParsedPauseMarketInstruction<
+export type ParsedPauseStakingInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMetas extends readonly AccountMeta[] = readonly AccountMeta[],
 > = {
@@ -150,17 +150,17 @@ export type ParsedPauseMarketInstruction<
     marketAuthority: TAccountMetas[0];
     market: TAccountMetas[1];
   };
-  data: PauseMarketInstructionData;
+  data: PauseStakingInstructionData;
 };
 
-export function parsePauseMarketInstruction<
+export function parsePauseStakingInstruction<
   TProgram extends string,
   TAccountMetas extends readonly AccountMeta[],
 >(
   instruction: Instruction<TProgram> &
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
-): ParsedPauseMarketInstruction<TProgram, TAccountMetas> {
+): ParsedPauseStakingInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 2) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -174,6 +174,6 @@ export function parsePauseMarketInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: { marketAuthority: getNextAccount(), market: getNextAccount() },
-    data: getPauseMarketInstructionDataDecoder().decode(instruction.data),
+    data: getPauseStakingInstructionDataDecoder().decode(instruction.data),
   };
 }

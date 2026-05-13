@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 
 use crate::constants::{MAX_CREATOR_FEE_BP, MAX_PLATFORM_FEE_BP, MAX_TOTAL_FEE_BP};
+#[cfg(feature = "production-settings")]
+use crate::constants::MIN_MARKET_RESOLUTION_DEADLINE_SECONDS;
 use crate::error::ErrorCode;
 use crate::state::PlatformConfig;
 
@@ -22,7 +24,7 @@ pub fn update_platform_config(
     creator_fee_bp: u16,
     min_time_to_stake_seconds: u64,
     min_time_to_reveal_seconds: u64,
-    max_select_options_seconds: u64,
+    market_resolution_deadline_seconds: u64,
 ) -> Result<()> {
     require!(
         platform_fee_bp <= MAX_PLATFORM_FEE_BP,
@@ -37,6 +39,11 @@ pub fn update_platform_config(
             <= MAX_TOTAL_FEE_BP as u32,
         ErrorCode::InvalidParameters
     );
+    #[cfg(feature = "production-settings")]
+    require!(
+        market_resolution_deadline_seconds >= MIN_MARKET_RESOLUTION_DEADLINE_SECONDS,
+        ErrorCode::InvalidParameters
+    );
 
     let platform_config = &mut ctx.accounts.platform_config;
     platform_config.platform_fee_bp = platform_fee_bp;
@@ -44,6 +51,6 @@ pub fn update_platform_config(
     platform_config.creator_fee_bp = creator_fee_bp;
     platform_config.min_time_to_stake_seconds = min_time_to_stake_seconds;
     platform_config.min_time_to_reveal_seconds = min_time_to_reveal_seconds;
-    platform_config.max_select_options_seconds = max_select_options_seconds;
+    platform_config.market_resolution_deadline_seconds = market_resolution_deadline_seconds;
     Ok(())
 }

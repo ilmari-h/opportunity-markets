@@ -73,7 +73,7 @@ export type UpdatePlatformConfigInstructionData = {
   creatorFeeBp: number;
   minTimeToStakeSeconds: bigint;
   minTimeToRevealSeconds: bigint;
-  maxSelectOptionsSeconds: bigint;
+  marketResolutionDeadlineSeconds: bigint;
 };
 
 export type UpdatePlatformConfigInstructionDataArgs = {
@@ -82,7 +82,7 @@ export type UpdatePlatformConfigInstructionDataArgs = {
   creatorFeeBp: number;
   minTimeToStakeSeconds: number | bigint;
   minTimeToRevealSeconds: number | bigint;
-  maxSelectOptionsSeconds: number | bigint;
+  marketResolutionDeadlineSeconds: number | bigint;
 };
 
 export function getUpdatePlatformConfigInstructionDataEncoder(): FixedSizeEncoder<UpdatePlatformConfigInstructionDataArgs> {
@@ -94,7 +94,7 @@ export function getUpdatePlatformConfigInstructionDataEncoder(): FixedSizeEncode
       ['creatorFeeBp', getU16Encoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minTimeToRevealSeconds', getU64Encoder()],
-      ['maxSelectOptionsSeconds', getU64Encoder()],
+      ['marketResolutionDeadlineSeconds', getU64Encoder()],
     ]),
     (value) => ({
       ...value,
@@ -111,7 +111,7 @@ export function getUpdatePlatformConfigInstructionDataDecoder(): FixedSizeDecode
     ['creatorFeeBp', getU16Decoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minTimeToRevealSeconds', getU64Decoder()],
-    ['maxSelectOptionsSeconds', getU64Decoder()],
+    ['marketResolutionDeadlineSeconds', getU64Decoder()],
   ]);
 }
 
@@ -136,7 +136,7 @@ export type UpdatePlatformConfigInput<
   creatorFeeBp: UpdatePlatformConfigInstructionDataArgs['creatorFeeBp'];
   minTimeToStakeSeconds: UpdatePlatformConfigInstructionDataArgs['minTimeToStakeSeconds'];
   minTimeToRevealSeconds: UpdatePlatformConfigInstructionDataArgs['minTimeToRevealSeconds'];
-  maxSelectOptionsSeconds: UpdatePlatformConfigInstructionDataArgs['maxSelectOptionsSeconds'];
+  marketResolutionDeadlineSeconds: UpdatePlatformConfigInstructionDataArgs['marketResolutionDeadlineSeconds'];
 };
 
 export function getUpdatePlatformConfigInstruction<

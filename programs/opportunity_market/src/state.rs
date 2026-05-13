@@ -23,9 +23,10 @@ pub struct PlatformConfig {
     // Creator fee in basis points (claimable by market_fee_claimer once winners are selected)
     pub creator_fee_bp: u16,
 
-    // Grace period after stake_end during which market_authority may call select_winning_options.
-    // Past this, the market is "expired" and stakers may recover reward_pool_fee + creator_fee.
-    pub max_select_options_seconds: u64,
+    // Grace period after stake_end during which market_authority may set winning options and
+    // resolve the market. Past this, the market is "expired" and stakers may recover
+    // reward_pool_fee + creator_fee.
+    pub market_resolution_deadline_seconds: u64,
 
     // Minimum time_to_stake (seconds) accepted by create_market
     pub min_time_to_stake_seconds: u64,
@@ -41,12 +42,6 @@ pub struct AllowedMint {
     pub bump: u8,
     pub platform: Pubkey,
     pub mint: Pubkey,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, InitSpace)]
-pub struct WinningOption {
-    pub option_id: u64,
-    pub reward_percentage: u8,
 }
 
 #[account]
@@ -68,8 +63,8 @@ pub struct OpportunityMarket {
     // Seconds from open_timestamp + time_to_stake
     pub time_to_reveal: u64,
 
-    #[max_len(10)]
-    pub selected_options: Option<Vec<WinningOption>>,
+    pub resolved: bool,
+    pub winning_option_allocation: u8,
 
     // Reward to be shared with stakers (in SPL token base units)
     pub reward_amount: u64,
@@ -96,8 +91,7 @@ pub struct OpportunityMarket {
     // If false, market can only be closed after stake period ends
     pub allow_closing_early: bool,
 
-    // If true, staking is halted
-    pub paused: bool,
+    pub staking_paused: bool,
 
     // Fee policy snapshotted from the platform at create time.
     pub platform_fee_bp: u16,
@@ -114,7 +108,7 @@ pub struct OpportunityMarket {
     pub market_fee_claimer: Pubkey,
 
     // Snapshot from platform at create time.
-    pub max_select_options_seconds: u64,
+    pub market_resolution_deadline_seconds: u64,
 
     // Minimum stake amount (in SPL token base units) required for a stake.
     pub min_stake_amount: u64,
@@ -157,6 +151,9 @@ pub struct OpportunityMarketOption {
     // Total tallies, collected in `increment_option_tally`
     pub total_staked: u64,
     pub total_score: u64,
+
+    pub selected: bool,
+    pub reward_percentage: u8,
 }
 
 #[account]

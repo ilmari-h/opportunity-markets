@@ -83,10 +83,7 @@ pub fn reveal_stake(
         .ok_or(ErrorCode::Overflow)?;
 
     require!(current_timestamp >= reveal_start, ErrorCode::MarketNotResolved);
-    require!(
-        market.selected_options.is_some(),
-        ErrorCode::MarketNotResolved
-    );
+    require!(market.resolved, ErrorCode::MarketNotResolved);
 
     let stake_account_key = ctx.accounts.stake_account.key();
     let stake_account_nonce = ctx.accounts.stake_account.state_nonce;

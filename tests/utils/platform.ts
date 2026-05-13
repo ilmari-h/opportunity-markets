@@ -32,7 +32,8 @@ import {
   initStakeAccount,
   initAllowedMint,
   stake as stakeIx,
-  selectWinningOptions as selectWinningOptionsIx,
+  setWinningOption as setWinningOptionIx,
+  resolveMarket as resolveMarketIx,
   revealStake,
   incrementOptionTally,
   closeStakeAccount,
@@ -41,8 +42,8 @@ import {
   unstakeEarly as unstakeEarlyIx,
   doUnstakeEarly as doUnstakeEarlyIx,
   openMarket as openMarketIx,
-  pauseMarket as pauseMarketIx,
-  resumeMarket as resumeMarketIx,
+  pauseStaking as pauseStakingIx,
+  resumeStaking as resumeStakingIx,
   addReward as addRewardIx,
   withdrawReward as withdrawRewardIx,
   endRevealPeriod as endRevealPeriodIx,
@@ -108,7 +109,7 @@ export interface PlatformConfigArgs {
   platformFeeBp?: number;
   rewardPoolFeeBp?: number;
   creatorFeeBp?: number;
-  maxSelectOptionsSeconds?: bigint;
+  marketResolutionDeadlineSeconds?: bigint;
   name?: string;
 }
 
@@ -149,7 +150,8 @@ const DEFAULT_CONFIG: Required<Omit<PlatformConfigArgs, "name">> = {
   platformFeeBp: 100,
   rewardPoolFeeBp: 0,
   creatorFeeBp: 0,
-  maxSelectOptionsSeconds: 3600n,
+  // Program enforces a hard floor of 7 days.
+  marketResolutionDeadlineSeconds: 7n * 24n * 60n * 60n,
   marketConfig: {
     rewardAmount: 1_000_000_000n,
     timeToStake: 120n,
@@ -256,7 +258,7 @@ export class Platform {
       platformFeeBp,
       rewardPoolFeeBp,
       creatorFeeBp,
-      maxSelectOptionsSeconds,
+      marketResolutionDeadlineSeconds,
     } = mergedConfig;
     const platformName = config.name ?? generatePlatformName();
 
@@ -319,7 +321,7 @@ export class Platform {
       feeClaimAuthority: creatorAccountBase.keypair.address,
       minTimeToStakeSeconds: 1n,
       minTimeToRevealSeconds: 1n,
-      maxSelectOptionsSeconds,
+      marketResolutionDeadlineSeconds,
     });
     await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [platformConfigIx], {
       label: `Create platform config (${platformName})`,
@@ -544,19 +546,57 @@ export class Platform {
   }
 
   async selectWinningOptions(selections: Array<{ optionId: number; rewardPercentage: number }>): Promise<void> {
-    const ix = selectWinningOptionsIx({
+    const setIxs = await Promise.all(
+      selections.map(({ optionId, rewardPercentage }) =>
+        setWinningOptionIx({
+          marketAuthority: this.marketCreator.solanaKeypair,
+          market: this.marketAddress,
+          optionId,
+          rewardPercentage,
+        }),
+      ),
+    );
+
+    const resolveIx = resolveMarketIx({
       marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
-      selections,
     });
 
-    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
-      label: "Select winning options",
-    });
+    await sendTransaction(
+      this.rpc,
+      this.sendAndConfirm,
+      this.marketCreator.solanaKeypair,
+      [...setIxs, resolveIx],
+      { label: "Set winning options and resolve market" },
+    );
   }
 
   async selectSingleWinningOption(optionId: number): Promise<void> {
     await this.selectWinningOptions([{ optionId, rewardPercentage: 100 }]);
+  }
+
+  async setWinningOption(optionId: number, rewardPercentage: number): Promise<void> {
+    const ix = await setWinningOptionIx({
+      marketAuthority: this.marketCreator.solanaKeypair,
+      market: this.marketAddress,
+      optionId,
+      rewardPercentage,
+    });
+
+    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
+      label: `Set winning option ${optionId} = ${rewardPercentage}%`,
+    });
+  }
+
+  async resolveMarket(): Promise<void> {
+    const ix = resolveMarketIx({
+      marketAuthority: this.marketCreator.solanaKeypair,
+      market: this.marketAddress,
+    });
+
+    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
+      label: "Resolve market",
+    });
   }
 
   async addReward(userId: Address, amount: bigint, lock: boolean = false): Promise<void> {
@@ -606,25 +646,25 @@ export class Platform {
     });
   }
 
-  async pauseMarket(): Promise<void> {
-    const ix = pauseMarketIx({
+  async pauseStaking(): Promise<void> {
+    const ix = pauseStakingIx({
       marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
     });
 
     await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
-      label: "Pause market",
+      label: "Pause staking",
     });
   }
 
-  async resumeMarket(): Promise<void> {
-    const ix = resumeMarketIx({
+  async resumeStaking(): Promise<void> {
+    const ix = resumeStakingIx({
       marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
     });
 
     await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
-      label: "Resume market",
+      label: "Resume staking",
     });
   }
 
