@@ -92,10 +92,9 @@ mod tests {
     const MARKET_OPENED: u64 = 1_714_521_600;
     const ONE_WEEK: u64 = 7 * 24 * 60 * 60;
 
-    // 1.5x peak boost, PRECISION-scaled.
     const MULT_1_5X: u16 = 15_000;
     const MULT_2X: u16 = 20_000;
-    const MULT_1X: u16 = PRECISION as u16;
+    const MULT_1X: u16 = 10_000;
 
     #[test]
     fn peak_boost_when_staking_at_market_open() {
@@ -104,10 +103,10 @@ mod tests {
         let (amount, time_pct, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
-            MARKET_OPENED,                       // user_staked_at == market_opened
-            reveal_start,                        // never unstaked
+            MARKET_OPENED,                       
+            reveal_start,
             STAKE,
-            ONE_WEEK,                            // cutoff = full stake period
+            ONE_WEEK,
             MULT_2X,
         )
         .unwrap();
@@ -125,7 +124,7 @@ mod tests {
         let (_, _, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
-            MARKET_OPENED + cutoff,              // exactly at cutoff
+            MARKET_OPENED + cutoff,
             reveal_start,
             STAKE,
             cutoff,
@@ -133,7 +132,8 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(earliness, PRECISION); // 1.0x — boost fully decayed
+        // 1.0x
+        assert_eq!(earliness, PRECISION); 
     }
 
     #[test]
@@ -143,7 +143,7 @@ mod tests {
         let (_, _, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
-            MARKET_OPENED + 2 * cutoff,          // well past cutoff
+            MARKET_OPENED + 2 * cutoff,
             reveal_start,
             STAKE,
             cutoff,
@@ -151,7 +151,8 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(earliness, PRECISION); // clamped to 1.0x
+        // 1.0x
+        assert_eq!(earliness, PRECISION);
     }
 
     #[test]
@@ -161,7 +162,7 @@ mod tests {
         let (_, _, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
-            MARKET_OPENED + cutoff / 2,          // halfway through decay
+            MARKET_OPENED + cutoff / 2,
             reveal_start,
             STAKE,
             cutoff,
@@ -169,7 +170,7 @@ mod tests {
         )
         .unwrap();
 
-        // 2.0x at t=0, 1.0x at t=cutoff → 1.5x at t=cutoff/2.
+        // 2.0x at t=0, 1.5x at t=cutoff/2.
         assert_eq!(earliness, PRECISION + PRECISION / 2);
     }
 
@@ -179,11 +180,11 @@ mod tests {
         let (_, _, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
-            MARKET_OPENED + 60,                  // stake 1 minute in
+            MARKET_OPENED + 60,
             reveal_start,
             STAKE,
             ONE_WEEK,
-            MULT_1X,                             // 1.0x — opted out of boost
+            MULT_1X,
         )
         .unwrap();
 
@@ -281,7 +282,7 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(score, 0); // time_pct = 0 dominates.
+        assert_eq!(score, 0);
     }
 
     #[test]
