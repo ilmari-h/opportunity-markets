@@ -9,7 +9,9 @@ Users should only ever get their initial stake deposit back OR additionally be r
 
 Market sponsors should be able to deposit a market reward (can choose either permanently locked or withdrawable), and trust that after the market is resolved, the reward is split according to the rules of the protocol and cannot be stolen by exploit.
 
-We are looking to go live on Solana mainnet as soon as possible, so a security audit is critical to ensure the safety of our users' funds.
+We want to make sure that while an opportunity market is running, what option a given user staked on cannot be revealed by exploit. Likewise, total stake amounts per option while market is running should stay confidential.
+
+We are looking to go live on Solana mainnet as soon as possible, so a security audit is critical to ensure the safety of our users' funds and correctness of the protocol.
 
 ### What we have done for security
 
