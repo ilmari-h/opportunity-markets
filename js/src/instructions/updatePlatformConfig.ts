@@ -13,7 +13,7 @@ export interface UpdatePlatformConfigParams extends BaseInstructionParams {
   rewardPoolFeeBp: number;
   creatorFeeBp: number;
   minTimeToStakeSeconds: bigint;
-  minTimeToRevealSeconds: bigint;
+  minRevealPeriodSeconds: bigint;
   marketResolutionDeadlineSeconds: bigint;
 }
 
@@ -29,7 +29,7 @@ export async function updatePlatformConfig(
     rewardPoolFeeBp,
     creatorFeeBp,
     minTimeToStakeSeconds,
-    minTimeToRevealSeconds,
+    minRevealPeriodSeconds,
     marketResolutionDeadlineSeconds,
   } = params;
 
@@ -53,7 +53,7 @@ export async function updatePlatformConfig(
       rewardPoolFeeBp,
       creatorFeeBp,
       minTimeToStakeSeconds,
-      minTimeToRevealSeconds,
+      minRevealPeriodSeconds,
       marketResolutionDeadlineSeconds,
     },
     programAddress ? { programAddress } : undefined,

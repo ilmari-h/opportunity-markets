@@ -35,7 +35,7 @@ pub mod opportunity_market {
         creator_fee_bp: u16,
         fee_claim_authority: Pubkey,
         min_time_to_stake_seconds: u64,
-        min_time_to_reveal_seconds: u64,
+        min_reveal_period_seconds: u64,
         market_resolution_deadline_seconds: u64,
     ) -> Result<()> {
         instructions::init_platform_config(
@@ -46,7 +46,7 @@ pub mod opportunity_market {
             creator_fee_bp,
             fee_claim_authority,
             min_time_to_stake_seconds,
-            min_time_to_reveal_seconds,
+            min_reveal_period_seconds,
             market_resolution_deadline_seconds,
         )
     }
@@ -57,7 +57,7 @@ pub mod opportunity_market {
         reward_pool_fee_bp: u16,
         creator_fee_bp: u16,
         min_time_to_stake_seconds: u64,
-        min_time_to_reveal_seconds: u64,
+        min_reveal_period_seconds: u64,
         market_resolution_deadline_seconds: u64,
     ) -> Result<()> {
         instructions::update_platform_config(
@@ -66,7 +66,7 @@ pub mod opportunity_market {
             reward_pool_fee_bp,
             creator_fee_bp,
             min_time_to_stake_seconds,
-            min_time_to_reveal_seconds,
+            min_reveal_period_seconds,
             market_resolution_deadline_seconds,
         )
     }
@@ -115,7 +115,6 @@ pub mod opportunity_market {
         ctx: Context<CreateMarket>,
         market_index: u64,
         time_to_stake: u64,
-        time_to_reveal: u64,
         market_authority: Pubkey,
         unstake_delay_seconds: u64,
         authorized_reader_pubkey: [u8; 32],
@@ -130,7 +129,6 @@ pub mod opportunity_market {
             ctx,
             market_index,
             time_to_stake,
-            time_to_reveal,
             market_authority,
             unstake_delay_seconds,
             authorized_reader_pubkey,

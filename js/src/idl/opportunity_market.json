@@ -1194,10 +1194,6 @@
           "type": "u64"
         },
         {
-          "name": "time_to_reveal",
-          "type": "u64"
-        },
-        {
           "name": "market_authority",
           "type": "pubkey"
         },
@@ -1886,7 +1882,7 @@
           "type": "u64"
         },
         {
-          "name": "min_time_to_reveal_seconds",
+          "name": "min_reveal_period_seconds",
           "type": "u64"
         },
         {
@@ -3231,7 +3227,7 @@
           "type": "u64"
         },
         {
-          "name": "min_time_to_reveal_seconds",
+          "name": "min_reveal_period_seconds",
           "type": "u64"
         },
         {
@@ -3947,8 +3943,8 @@
     },
     {
       "code": 6009,
-      "name": "StakeWindowMismatch",
-      "msg": "Stake window error"
+      "name": "TimeWindowMismatch",
+      "msg": "Operation called outside its permitted time window"
     },
     {
       "code": 6010,
@@ -4743,10 +4739,6 @@
             "type": "u64"
           },
           {
-            "name": "time_to_reveal",
-            "type": "u64"
-          },
-          {
             "name": "earliness_cutoff_seconds",
             "type": "u64"
           },
@@ -4797,6 +4789,10 @@
           },
           {
             "name": "market_resolution_deadline_seconds",
+            "type": "u64"
+          },
+          {
+            "name": "min_reveal_period_seconds",
             "type": "u64"
           },
           {
@@ -5027,10 +5023,6 @@
             "type": "u64"
           },
           {
-            "name": "time_to_reveal",
-            "type": "u64"
-          },
-          {
             "name": "resolved",
             "type": "bool"
           },
@@ -5110,6 +5102,16 @@
           {
             "name": "market_resolution_deadline_seconds",
             "type": "u64"
+          },
+          {
+            "name": "min_reveal_period_seconds",
+            "type": "u64"
+          },
+          {
+            "name": "reveal_ended_at",
+            "type": {
+              "option": "u64"
+            }
           },
           {
             "name": "min_stake_amount",
@@ -5341,7 +5343,7 @@
             "type": "u64"
           },
           {
-            "name": "min_time_to_reveal_seconds",
+            "name": "min_reveal_period_seconds",
             "type": "u64"
           }
         ]

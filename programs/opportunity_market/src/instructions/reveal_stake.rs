@@ -82,7 +82,7 @@ pub fn reveal_stake(
         .checked_add(market.time_to_stake)
         .ok_or(ErrorCode::Overflow)?;
 
-    require!(current_timestamp >= reveal_start, ErrorCode::MarketNotResolved);
+    require!(current_timestamp >= reveal_start, ErrorCode::TimeWindowMismatch);
     require!(market.resolved, ErrorCode::MarketNotResolved);
 
     let stake_account_key = ctx.accounts.stake_account.key();

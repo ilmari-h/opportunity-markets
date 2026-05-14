@@ -71,7 +71,7 @@ pub fn reclaim_stake(
         .ok_or(ErrorCode::Overflow)?;
     let current_timestamp = Clock::get()?.unix_timestamp as u64;
 
-    require!(current_timestamp >= stake_end, ErrorCode::StakeWindowMismatch);
+    require!(current_timestamp >= stake_end, ErrorCode::TimeWindowMismatch);
 
     let amount = ctx.accounts.stake_account.amount;
 

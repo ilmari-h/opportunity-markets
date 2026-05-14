@@ -31,8 +31,9 @@ pub struct PlatformConfig {
     // Minimum time_to_stake (seconds) accepted by create_market
     pub min_time_to_stake_seconds: u64,
 
-    // Minimum time_to_reveal (seconds) accepted by create_market
-    pub min_time_to_reveal_seconds: u64,
+    // Grace period after staking ends to reveal stakes
+    // Reveal period can be closed only after this has passed.
+    pub min_reveal_period_seconds: u64,
 }
 
 /// Whitelisted token per platform
@@ -59,9 +60,6 @@ pub struct OpportunityMarket {
 
     // Seconds from open_timestamp
     pub time_to_stake: u64,
-
-    // Seconds from open_timestamp + time_to_stake
-    pub time_to_reveal: u64,
 
     pub resolved: bool,
     pub winning_option_allocation: u8,
@@ -109,6 +107,10 @@ pub struct OpportunityMarket {
 
     // Snapshot from platform at create time.
     pub market_resolution_deadline_seconds: u64,
+
+    pub min_reveal_period_seconds: u64,
+
+    pub reveal_ended_at: Option<u64>,
 
     // Minimum stake amount (in SPL token base units) required for a stake.
     pub min_stake_amount: u64,

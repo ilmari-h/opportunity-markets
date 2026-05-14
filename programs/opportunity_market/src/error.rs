@@ -20,8 +20,8 @@ pub enum ErrorCode {
     InvalidOptionId,
     #[msg("Market is not open")]
     MarketNotOpen,
-    #[msg("Stake window error")]
-    StakeWindowMismatch,
+    #[msg("Operation called outside its permitted time window")]
+    TimeWindowMismatch,
     #[msg("Stake account has no recorded stake")]
     NoStake,
     #[msg("Market winner already selected")]

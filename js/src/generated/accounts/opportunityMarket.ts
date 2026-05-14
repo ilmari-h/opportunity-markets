@@ -68,7 +68,6 @@ export type OpportunityMarket = {
   platform: Address;
   openTimestamp: Option<bigint>;
   timeToStake: bigint;
-  timeToReveal: bigint;
   resolved: boolean;
   winningOptionAllocation: number;
   rewardAmount: bigint;
@@ -88,6 +87,8 @@ export type OpportunityMarket = {
   collectedCreatorFees: bigint;
   marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: bigint;
+  minRevealPeriodSeconds: bigint;
+  revealEndedAt: Option<bigint>;
   minStakeAmount: bigint;
 };
 
@@ -99,7 +100,6 @@ export type OpportunityMarketArgs = {
   platform: Address;
   openTimestamp: OptionOrNullable<number | bigint>;
   timeToStake: number | bigint;
-  timeToReveal: number | bigint;
   resolved: boolean;
   winningOptionAllocation: number;
   rewardAmount: number | bigint;
@@ -119,6 +119,8 @@ export type OpportunityMarketArgs = {
   collectedCreatorFees: number | bigint;
   marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: number | bigint;
+  minRevealPeriodSeconds: number | bigint;
+  revealEndedAt: OptionOrNullable<number | bigint>;
   minStakeAmount: number | bigint;
 };
 
@@ -133,7 +135,6 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['platform', getAddressEncoder()],
       ['openTimestamp', getOptionEncoder(getU64Encoder())],
       ['timeToStake', getU64Encoder()],
-      ['timeToReveal', getU64Encoder()],
       ['resolved', getBooleanEncoder()],
       ['winningOptionAllocation', getU8Encoder()],
       ['rewardAmount', getU64Encoder()],
@@ -153,6 +154,8 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['collectedCreatorFees', getU64Encoder()],
       ['marketFeeClaimer', getAddressEncoder()],
       ['marketResolutionDeadlineSeconds', getU64Encoder()],
+      ['minRevealPeriodSeconds', getU64Encoder()],
+      ['revealEndedAt', getOptionEncoder(getU64Encoder())],
       ['minStakeAmount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: OPPORTUNITY_MARKET_DISCRIMINATOR })
@@ -169,7 +172,6 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['platform', getAddressDecoder()],
     ['openTimestamp', getOptionDecoder(getU64Decoder())],
     ['timeToStake', getU64Decoder()],
-    ['timeToReveal', getU64Decoder()],
     ['resolved', getBooleanDecoder()],
     ['winningOptionAllocation', getU8Decoder()],
     ['rewardAmount', getU64Decoder()],
@@ -189,6 +191,8 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['collectedCreatorFees', getU64Decoder()],
     ['marketFeeClaimer', getAddressDecoder()],
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
+    ['minRevealPeriodSeconds', getU64Decoder()],
+    ['revealEndedAt', getOptionDecoder(getU64Decoder())],
     ['minStakeAmount', getU64Decoder()],
   ]);
 }

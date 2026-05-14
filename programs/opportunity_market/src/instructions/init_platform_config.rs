@@ -35,7 +35,7 @@ pub fn init_platform_config(
     creator_fee_bp: u16,
     fee_claim_authority: Pubkey,
     min_time_to_stake_seconds: u64,
-    min_time_to_reveal_seconds: u64,
+    min_reveal_period_seconds: u64,
     market_resolution_deadline_seconds: u64,
 ) -> Result<()> {
     require!(
@@ -70,7 +70,7 @@ pub fn init_platform_config(
     platform_config.creator_fee_bp = creator_fee_bp;
     platform_config.fee_claim_authority = fee_claim_authority;
     platform_config.min_time_to_stake_seconds = min_time_to_stake_seconds;
-    platform_config.min_time_to_reveal_seconds = min_time_to_reveal_seconds;
+    platform_config.min_reveal_period_seconds = min_reveal_period_seconds;
     platform_config.market_resolution_deadline_seconds = market_resolution_deadline_seconds;
 
     Ok(())

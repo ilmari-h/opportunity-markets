@@ -62,7 +62,7 @@ pub fn add_reward(ctx: Context<AddReward>, amount: u64, lock: bool) -> Result<()
         let stake_end = open_timestamp
             .checked_add(market.time_to_stake)
             .ok_or(ErrorCode::Overflow)?;
-        require!(current_timestamp < stake_end, ErrorCode::StakeWindowMismatch);
+        require!(current_timestamp < stake_end, ErrorCode::TimeWindowMismatch);
     }
 
     let sponsor_account = &mut ctx.accounts.sponsor_account;

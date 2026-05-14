@@ -32,8 +32,8 @@ export const OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN = 0x1776; // 6006
 export const OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_ID = 0x1777; // 6007
 /** MarketNotOpen: Market is not open */
 export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN = 0x1778; // 6008
-/** StakeWindowMismatch: Stake window error */
-export const OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH = 0x1779; // 6009
+/** TimeWindowMismatch: Operation called outside its permitted time window */
+export const OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH = 0x1779; // 6009
 /** NoStake: Stake account has no recorded stake */
 export const OPPORTUNITY_MARKET_ERROR__NO_STAKE = 0x177a; // 6010
 /** WinnerAlreadySelected: Market winner already selected */
@@ -114,9 +114,9 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED
   | typeof OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM
   | typeof OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK
-  | typeof OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH
   | typeof OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED
   | typeof OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED
+  | typeof OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH
   | typeof OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED
   | typeof OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET
   | typeof OPPORTUNITY_MARKET_ERROR__UNSTAKE_NOT_INITIATED
@@ -155,9 +155,9 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED]: `Deadline for selecting winning options has passed`,
     [OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM]: `Stake amount is below the market minimum`,
     [OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK]: `Stake account is not in a stuck or failed state`,
-    [OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH]: `Stake window error`,
     [OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED]: `Tally already incremented for this stake account`,
     [OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED]: `Timelock period has not elapsed yet`,
+    [OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH]: `Operation called outside its permitted time window`,
     [OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED]: `Unauthorized`,
     [OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET]: `Unstake delay period has not passed yet`,
     [OPPORTUNITY_MARKET_ERROR__UNSTAKE_NOT_INITIATED]: `Unstake has not been initiated`,

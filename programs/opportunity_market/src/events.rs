@@ -21,7 +21,6 @@ pub struct MarketCreatedEvent {
     pub index: u64,
     pub mint: Pubkey,
     pub time_to_stake: u64,
-    pub time_to_reveal: u64,
     pub earliness_cutoff_seconds: u64,
     pub earliness_multiplier: u16,
     pub market_authority: Pubkey,
@@ -34,6 +33,7 @@ pub struct MarketCreatedEvent {
     pub creator_fee_bp: u16,
     pub market_fee_claimer: Pubkey,
     pub market_resolution_deadline_seconds: u64,
+    pub min_reveal_period_seconds: u64,
     pub timestamp: i64,
 }
 

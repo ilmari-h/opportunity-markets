@@ -127,7 +127,7 @@ pub fn stake(
 
     require!(
         current_timestamp >= open_timestamp && current_timestamp <= stake_end_timestamp,
-        ErrorCode::StakeWindowMismatch
+        ErrorCode::TimeWindowMismatch
     );
 
     let platform_fee = (amount as u128)

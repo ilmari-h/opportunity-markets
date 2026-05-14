@@ -5,7 +5,7 @@ import { fetchToken } from "@solana-program/token";
 import { expect } from "chai";
 import {
   OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED,
-  OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH,
+  OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
   OPPORTUNITY_MARKET_ERROR__UNSTAKE_DELAY_NOT_MET,
   OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
   OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED,
@@ -79,7 +79,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake: 120n,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -330,7 +329,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake: 120n,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -490,7 +488,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake: 120n,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -641,7 +638,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake: 120n,
-        timeToReveal: 60n,
         authorizedReaderPubkey: observer.publicKey,
         allowClosingEarly: true,
       },
@@ -703,7 +699,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
         allowClosingEarly: false,
       },
@@ -760,7 +755,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: initialReward,
         timeToStake: 120n,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -799,7 +793,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: 0n,
         timeToStake: 120n,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -851,7 +844,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake: 120n,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -869,7 +861,7 @@ describe("OpportunityMarket", () => {
     // Try to stake before staking period starts — should fail
     await shouldThrowCustomError(
       () => platform.stakeOnOption(user, 50_000_000n, optionA),
-      OPPORTUNITY_MARKET_ERROR__STAKE_WINDOW_MISMATCH
+      OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH
     );
   });
 
@@ -890,7 +882,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake,
-        timeToReveal: 120n,
         unstakeDelaySeconds,
         authorizedReaderPubkey: observer.publicKey,
       },
@@ -982,7 +973,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: 0n,
         timeToStake: 120n,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -1050,7 +1040,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: 1_000_000_000n,
         timeToStake: 120n,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -1105,7 +1094,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: 1_000_000_000n,
         timeToStake: 120n,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -1156,7 +1144,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: marketFundingAmount,
         timeToStake: 120n,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -1254,7 +1241,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: 0n,
         timeToStake,
-        timeToReveal: 60n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -1325,7 +1311,6 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         rewardAmount: 1_000_000_000n,
         timeToStake: 120n,
-        timeToReveal: 120n,
         authorizedReaderPubkey: observer.publicKey,
         minStakeAmount,
       },
@@ -1348,5 +1333,53 @@ describe("OpportunityMarket", () => {
     const stakeAccountId = await platform.stakeOnOption(user, minStakeAmount, optionId);
     const stakeAccount = await platform.fetchStakeAccountData(user, stakeAccountId);
     expect(stakeAccount.data.amount > 0n).to.be.true;
+  });
+
+  it("reveal period cannot be closed too early", async () => {
+    const minRevealPeriodSeconds = 15n;
+    const timeToStake = 5n;
+
+    const observer = loadObserverKeypair();
+
+    const platform = await Platform.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 1,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      minRevealPeriodSeconds,
+      marketConfig: {
+        rewardAmount: 0n,
+        timeToStake,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    const openTimestamp = await platform.openMarket();
+    await platform.addOption();
+
+    const stakeEnd = Number(openTimestamp) + Number(timeToStake);
+
+    // Sleep just past stake_end, not yet past the min_reveal_period window.
+    await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    // Calling end_reveal_period now must faill.
+    await shouldThrowCustomError(
+      () => platform.endRevealPeriod(),
+      OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
+    );
+
+    const marketBefore = await platform.fetchMarket();
+    expect(isNone(marketBefore.data.revealEndedAt)).to.be.true;
+
+    // Wait past stake_end + min_reveal_period_seconds and retry.
+    await sleepUntilOnChainTimestamp(
+      stakeEnd + Number(minRevealPeriodSeconds) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS,
+    );
+
+    await platform.endRevealPeriod();
+
+    const marketAfter = await platform.fetchMarket();
+    expect(isSome(marketAfter.data.revealEndedAt)).to.be.true;
   });
 });

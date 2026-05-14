@@ -42,7 +42,7 @@ pub fn add_market_option(ctx: Context<AddMarketOption>, option_id: u64) -> Resul
             .ok_or(ErrorCode::Overflow)?;
         require!(
             current_timestamp <= stake_end_timestamp,
-            ErrorCode::StakeWindowMismatch
+            ErrorCode::TimeWindowMismatch
         );
     }
 

@@ -22,21 +22,17 @@ pub fn end_reveal_period(ctx: Context<EndRevealPeriod>) -> Result<()> {
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
 
+    require!(market.reveal_ended_at.is_none(), ErrorCode::RevealPeriodEnded);
+
     let stake_end = open_timestamp
         .checked_add(market.time_to_stake)
         .ok_or(ErrorCode::Overflow)?;
-
-    // Must be in the reveal period
-    require!(current_timestamp >= stake_end, ErrorCode::StakeWindowMismatch);
-
-    let reveal_end = stake_end
-        .checked_add(market.time_to_reveal)
+    let earliest_end = stake_end
+        .checked_add(market.min_reveal_period_seconds)
         .ok_or(ErrorCode::Overflow)?;
+    require!(current_timestamp >= earliest_end, ErrorCode::TimeWindowMismatch);
 
-    require!(current_timestamp < reveal_end, ErrorCode::RevealPeriodEnded);
-
-    // Set reveal period to end now
-    market.time_to_reveal = current_timestamp - stake_end;
+    market.reveal_ended_at = Some(current_timestamp);
 
     emit_ts!(RevealPeriodEndedEvent {
         market: market.key(),

@@ -73,7 +73,7 @@ pub fn do_unstake_early(
 
     require!(
         current_timestamp <= stake_end_timestamp,
-        ErrorCode::StakeWindowMismatch
+        ErrorCode::TimeWindowMismatch
     );
 
     // Enforce unstake delay has passed

@@ -95,7 +95,6 @@ async function main() {
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     marketIndex,
     timeToStake: BigInt(config.timeToStake),
-    timeToReveal: BigInt(config.timeToReveal),
     marketAuthority: config.marketAuthority ? address(config.marketAuthority) : payer.address,
     unstakeDelaySeconds: BigInt(config.unstakeDelaySeconds),
     authorizedReaderPubkey,

@@ -65,7 +65,7 @@ pub fn withdraw_reward(ctx: Context<WithdrawReward>) -> Result<()> {
         let stake_end = open_timestamp
             .checked_add(market.time_to_stake)
             .ok_or(ErrorCode::Overflow)?;
-        require!(current_timestamp < stake_end, ErrorCode::StakeWindowMismatch);
+        require!(current_timestamp < stake_end, ErrorCode::TimeWindowMismatch);
     }
 
     let reward_amount = sponsor_account.reward_deposited;

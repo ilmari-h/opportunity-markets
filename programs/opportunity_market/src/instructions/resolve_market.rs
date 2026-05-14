@@ -30,7 +30,7 @@ pub fn resolve_market(ctx: Context<ResolveMarket>) -> Result<()> {
 
     require!(
         current_timestamp >= open_timestamp,
-        ErrorCode::InvalidParameters,
+        ErrorCode::TimeWindowMismatch,
     );
 
     let stake_end = open_timestamp

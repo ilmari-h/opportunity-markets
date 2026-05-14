@@ -72,9 +72,6 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
     let stake_end = open_timestamp
         .checked_add(ctx.accounts.market.time_to_stake)
         .ok_or(ErrorCode::Overflow)?;
-    let reveal_end = stake_end
-        .checked_add(ctx.accounts.market.time_to_reveal)
-        .ok_or(ErrorCode::Overflow)?;
     let select_deadline = stake_end
         .checked_add(ctx.accounts.market.market_resolution_deadline_seconds)
         .ok_or(ErrorCode::Overflow)?;
@@ -85,7 +82,10 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
 
     let payout: u64 = if resolved {
         // Market resolved — reveal period must be over.
-        require!(current_time >= reveal_end, ErrorCode::MarketNotResolved);
+        require!(
+            ctx.accounts.market.reveal_ended_at.is_some(),
+            ErrorCode::MarketNotResolved,
+        );
 
         let revealed_option = ctx
             .accounts

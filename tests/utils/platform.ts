@@ -89,7 +89,6 @@ interface TestUser {
 interface MarketConfig {
   rewardAmount: bigint;
   timeToStake: bigint;
-  timeToReveal: bigint;
   unstakeDelaySeconds: bigint;
   authorizedReaderPubkey: Uint8Array;
   allowClosingEarly: boolean;
@@ -110,6 +109,7 @@ export interface PlatformConfigArgs {
   rewardPoolFeeBp?: number;
   creatorFeeBp?: number;
   marketResolutionDeadlineSeconds?: bigint;
+  minRevealPeriodSeconds?: bigint;
   name?: string;
 }
 
@@ -152,10 +152,10 @@ const DEFAULT_CONFIG: Required<Omit<PlatformConfigArgs, "name">> = {
   creatorFeeBp: 0,
   // Program enforces a hard floor of 7 days.
   marketResolutionDeadlineSeconds: 7n * 24n * 60n * 60n,
+  minRevealPeriodSeconds: 1n,
   marketConfig: {
     rewardAmount: 1_000_000_000n,
     timeToStake: 120n,
-    timeToReveal: 60n,
     unstakeDelaySeconds: 10n,
     allowClosingEarly: true,
     earlinessCutoffSeconds: 0n,
@@ -259,6 +259,7 @@ export class Platform {
       rewardPoolFeeBp,
       creatorFeeBp,
       marketResolutionDeadlineSeconds,
+      minRevealPeriodSeconds,
     } = mergedConfig;
     const platformName = config.name ?? generatePlatformName();
 
@@ -320,7 +321,7 @@ export class Platform {
       creatorFeeBp,
       feeClaimAuthority: creatorAccountBase.keypair.address,
       minTimeToStakeSeconds: 1n,
-      minTimeToRevealSeconds: 1n,
+      minRevealPeriodSeconds,
       marketResolutionDeadlineSeconds,
     });
     await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [platformConfigIx], {
@@ -413,7 +414,6 @@ export class Platform {
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
       marketIndex,
       timeToStake: marketConfig.timeToStake,
-      timeToReveal: marketConfig.timeToReveal,
       marketAuthority: runner.marketCreator.solanaKeypair.address,
       unstakeDelaySeconds: marketConfig.unstakeDelaySeconds,
       authorizedReaderPubkey: marketConfig.authorizedReaderPubkey,
@@ -1150,10 +1150,6 @@ export class Platform {
 
   getTimeToStake(): bigint {
     return this.marketConfig.timeToStake;
-  }
-
-  getTimeToReveal(): bigint {
-    return this.marketConfig.timeToReveal;
   }
 
   getRewardAmount(): bigint {

@@ -115,7 +115,6 @@ export type CreateMarketInstructionData = {
   discriminator: ReadonlyUint8Array;
   marketIndex: bigint;
   timeToStake: bigint;
-  timeToReveal: bigint;
   marketAuthority: Address;
   unstakeDelaySeconds: bigint;
   authorizedReaderPubkey: Array<number>;
@@ -130,7 +129,6 @@ export type CreateMarketInstructionData = {
 export type CreateMarketInstructionDataArgs = {
   marketIndex: number | bigint;
   timeToStake: number | bigint;
-  timeToReveal: number | bigint;
   marketAuthority: Address;
   unstakeDelaySeconds: number | bigint;
   authorizedReaderPubkey: Array<number>;
@@ -148,7 +146,6 @@ export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<Create
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['marketIndex', getU64Encoder()],
       ['timeToStake', getU64Encoder()],
-      ['timeToReveal', getU64Encoder()],
       ['marketAuthority', getAddressEncoder()],
       ['unstakeDelaySeconds', getU64Encoder()],
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
@@ -168,7 +165,6 @@ export function getCreateMarketInstructionDataDecoder(): FixedSizeDecoder<Create
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['marketIndex', getU64Decoder()],
     ['timeToStake', getU64Decoder()],
-    ['timeToReveal', getU64Decoder()],
     ['marketAuthority', getAddressDecoder()],
     ['unstakeDelaySeconds', getU64Decoder()],
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
@@ -214,7 +210,6 @@ export type CreateMarketAsyncInput<
   systemProgram?: Address<TAccountSystemProgram>;
   marketIndex: CreateMarketInstructionDataArgs['marketIndex'];
   timeToStake: CreateMarketInstructionDataArgs['timeToStake'];
-  timeToReveal: CreateMarketInstructionDataArgs['timeToReveal'];
   marketAuthority: CreateMarketInstructionDataArgs['marketAuthority'];
   unstakeDelaySeconds: CreateMarketInstructionDataArgs['unstakeDelaySeconds'];
   authorizedReaderPubkey: CreateMarketInstructionDataArgs['authorizedReaderPubkey'];
@@ -397,7 +392,6 @@ export type CreateMarketInput<
   systemProgram?: Address<TAccountSystemProgram>;
   marketIndex: CreateMarketInstructionDataArgs['marketIndex'];
   timeToStake: CreateMarketInstructionDataArgs['timeToStake'];
-  timeToReveal: CreateMarketInstructionDataArgs['timeToReveal'];
   marketAuthority: CreateMarketInstructionDataArgs['marketAuthority'];
   unstakeDelaySeconds: CreateMarketInstructionDataArgs['unstakeDelaySeconds'];
   authorizedReaderPubkey: CreateMarketInstructionDataArgs['authorizedReaderPubkey'];

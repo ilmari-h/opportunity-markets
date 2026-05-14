@@ -57,7 +57,6 @@ pub fn create_market(
     ctx: Context<CreateMarket>,
     market_index: u64,
     time_to_stake: u64,
-    time_to_reveal: u64,
     market_authority: Pubkey,
     unstake_delay_seconds: u64,
     authorized_reader_pubkey: [u8; 32],
@@ -70,7 +69,6 @@ pub fn create_market(
 ) -> Result<()> {
     require!(
         time_to_stake >= ctx.accounts.platform_config.min_time_to_stake_seconds
-            && time_to_reveal >= ctx.accounts.platform_config.min_time_to_reveal_seconds
             && earliness_cutoff_seconds <= time_to_stake
             && (earliness_multiplier as u64) >= PRECISION
             && earliness_multiplier <= MAX_EARLINESS_MULTIPLIER
@@ -84,6 +82,7 @@ pub fn create_market(
     let reward_pool_fee_bp = ctx.accounts.platform_config.reward_pool_fee_bp;
     let creator_fee_bp = ctx.accounts.platform_config.creator_fee_bp;
     let market_resolution_deadline_seconds = ctx.accounts.platform_config.market_resolution_deadline_seconds;
+    let min_reveal_period_seconds = ctx.accounts.platform_config.min_reveal_period_seconds;
     let market = &mut ctx.accounts.market;
     let mint = ctx.accounts.token_mint.key();
     market.bump = ctx.bumps.market;
@@ -91,7 +90,6 @@ pub fn create_market(
     market.index = market_index;
     market.platform = platform_key;
     market.time_to_stake = time_to_stake;
-    market.time_to_reveal = time_to_reveal;
     market.mint = mint;
     market.market_authority = market_authority;
     market.reveal_period_authority = reveal_period_authority;
@@ -105,6 +103,8 @@ pub fn create_market(
     market.creator_fee_bp = creator_fee_bp;
     market.market_fee_claimer = market_fee_claimer;
     market.market_resolution_deadline_seconds = market_resolution_deadline_seconds;
+    market.min_reveal_period_seconds = min_reveal_period_seconds;
+    market.reveal_ended_at = None;
     market.min_stake_amount = min_stake_amount;
 
     emit_ts!(MarketCreatedEvent {
@@ -113,7 +113,6 @@ pub fn create_market(
         platform: platform_key,
         index: market_index,
         mint: mint,
-        time_to_reveal: time_to_reveal,
         time_to_stake: time_to_stake,
         market_authority: market_authority,
         authorized_reader_pubkey: authorized_reader_pubkey,
@@ -127,6 +126,7 @@ pub fn create_market(
         creator_fee_bp: creator_fee_bp,
         market_fee_claimer: market_fee_claimer,
         market_resolution_deadline_seconds: market_resolution_deadline_seconds,
+        min_reveal_period_seconds: min_reveal_period_seconds,
     });
 
     Ok(())

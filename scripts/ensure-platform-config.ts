@@ -66,7 +66,7 @@ async function main() {
   const feeClaimAuthority = config.feeClaimAuthority ? address(config.feeClaimAuthority) : payer.address;
 
   const minTimeToStakeSeconds = BigInt(config.minTimeToStakeSeconds);
-  const minTimeToRevealSeconds = BigInt(config.minTimeToRevealSeconds);
+  const minRevealPeriodSeconds = BigInt(config.minRevealPeriodSeconds);
   const marketResolutionDeadlineSeconds = BigInt(config.marketResolutionDeadlineSeconds);
 
   const [platformConfigAddress] = await getPlatformConfigAddress(
@@ -87,7 +87,7 @@ async function main() {
   console.log(`Creator fee:                ${config.creatorFeeBp} bp`);
   console.log(`Fee claim authority:        ${feeClaimAuthority}`);
   console.log(`Min time to stake (s):      ${minTimeToStakeSeconds}`);
-  console.log(`Min time to reveal (s):     ${minTimeToRevealSeconds}`);
+  console.log(`Min reveal period (s):      ${minRevealPeriodSeconds}`);
   console.log(`Resolution deadline (s):    ${marketResolutionDeadlineSeconds}`);
 
   const ix = existing.exists
@@ -99,7 +99,7 @@ async function main() {
         rewardPoolFeeBp: config.rewardPoolFeeBp,
         creatorFeeBp: config.creatorFeeBp,
         minTimeToStakeSeconds,
-        minTimeToRevealSeconds,
+        minRevealPeriodSeconds,
         marketResolutionDeadlineSeconds,
       })
     : await createPlatformConfig(rpc, {
@@ -111,7 +111,7 @@ async function main() {
         creatorFeeBp: config.creatorFeeBp,
         feeClaimAuthority,
         minTimeToStakeSeconds,
-        minTimeToRevealSeconds,
+        minRevealPeriodSeconds,
         marketResolutionDeadlineSeconds,
       });
 

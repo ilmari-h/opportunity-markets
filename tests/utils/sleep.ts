@@ -1,5 +1,7 @@
 import { type Rpc, type SolanaRpcApi } from "@solana/kit";
 
+// TODO: remove buffer now with better algo??
+// also reduce sleep times if more accurate now
 export async function sleepUntilOnChainTimestamp(
   targetTimestamp: number,
   rpc?: Rpc<SolanaRpcApi>,

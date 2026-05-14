@@ -43,7 +43,7 @@ pub fn unstake_early(
 
     require!(
         current_timestamp >= open_timestamp && current_timestamp <= stake_end_timestamp,
-        ErrorCode::StakeWindowMismatch
+        ErrorCode::TimeWindowMismatch
     );
 
     // Set the timestamp when stake becomes unstakeable

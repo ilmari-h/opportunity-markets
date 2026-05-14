@@ -37,7 +37,6 @@ export type MarketCreatedEvent = {
   index: bigint;
   mint: Address;
   timeToStake: bigint;
-  timeToReveal: bigint;
   earlinessCutoffSeconds: bigint;
   earlinessMultiplier: number;
   marketAuthority: Address;
@@ -50,6 +49,7 @@ export type MarketCreatedEvent = {
   creatorFeeBp: number;
   marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: bigint;
+  minRevealPeriodSeconds: bigint;
   timestamp: bigint;
 };
 
@@ -60,7 +60,6 @@ export type MarketCreatedEventArgs = {
   index: number | bigint;
   mint: Address;
   timeToStake: number | bigint;
-  timeToReveal: number | bigint;
   earlinessCutoffSeconds: number | bigint;
   earlinessMultiplier: number;
   marketAuthority: Address;
@@ -73,6 +72,7 @@ export type MarketCreatedEventArgs = {
   creatorFeeBp: number;
   marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: number | bigint;
+  minRevealPeriodSeconds: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -84,7 +84,6 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['index', getU64Encoder()],
     ['mint', getAddressEncoder()],
     ['timeToStake', getU64Encoder()],
-    ['timeToReveal', getU64Encoder()],
     ['earlinessCutoffSeconds', getU64Encoder()],
     ['earlinessMultiplier', getU16Encoder()],
     ['marketAuthority', getAddressEncoder()],
@@ -97,6 +96,7 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['creatorFeeBp', getU16Encoder()],
     ['marketFeeClaimer', getAddressEncoder()],
     ['marketResolutionDeadlineSeconds', getU64Encoder()],
+    ['minRevealPeriodSeconds', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -109,7 +109,6 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['index', getU64Decoder()],
     ['mint', getAddressDecoder()],
     ['timeToStake', getU64Decoder()],
-    ['timeToReveal', getU64Decoder()],
     ['earlinessCutoffSeconds', getU64Decoder()],
     ['earlinessMultiplier', getU16Decoder()],
     ['marketAuthority', getAddressDecoder()],
@@ -122,6 +121,7 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['creatorFeeBp', getU16Decoder()],
     ['marketFeeClaimer', getAddressDecoder()],
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
+    ['minRevealPeriodSeconds', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
