@@ -101,8 +101,8 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
         )?
     } else {
         // Market expired: refund reward_pool_fee + creator_fee.
-        let reward_pool_fee = ctx.accounts.stake_account.reward_pool_fee;
-        let creator_fee = ctx.accounts.stake_account.creator_fee;
+        let reward_pool_fee = ctx.accounts.stake_account.fees.reward_pool_fee;
+        let creator_fee = ctx.accounts.stake_account.fees.creator_fee;
         let market = &mut ctx.accounts.market;
         market.reward_amount = market
             .reward_amount

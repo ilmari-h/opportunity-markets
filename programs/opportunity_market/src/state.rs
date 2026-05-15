@@ -1,5 +1,7 @@
 use anchor_lang::prelude::*;
 
+use crate::error::ErrorCode;
+
 #[account]
 #[derive(InitSpace)]
 pub struct PlatformConfig {
@@ -49,8 +51,8 @@ pub struct AllowedMint {
 #[derive(InitSpace)]
 pub struct OpportunityMarket {
     pub bump: u8,
-    pub creator: Pubkey,      // part of PDA seed
-    pub index: u64,           // part of PDA seed
+    pub creator: Pubkey, // part of PDA seed
+    pub index: u64,      // part of PDA seed
     pub total_options: u64,
 
     pub platform: Pubkey,
@@ -116,29 +118,72 @@ pub struct OpportunityMarket {
     pub min_stake_amount: u64,
 }
 
+#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, InitSpace)]
+pub struct Fees {
+    pub platform_fee: u64,
+    pub reward_pool_fee: u64,
+    pub creator_fee: u64,
+}
+
+impl Fees {
+    pub fn total(&self) -> Result<u64> {
+        let total_fee = self
+            .platform_fee
+            .checked_add(self.reward_pool_fee)
+            .ok_or(ErrorCode::Overflow)?
+            .checked_add(self.creator_fee)
+            .ok_or(ErrorCode::Overflow)?;
+        Ok(total_fee)
+    }
+}
+
+impl OpportunityMarket {
+    pub fn calculate_fees(&self, amount: u64) -> Result<Fees> {
+        let platform_fee = (amount as u128)
+            .checked_mul(self.platform_fee_bp as u128)
+            .ok_or(ErrorCode::Overflow)?
+            .checked_div(10_000)
+            .ok_or(ErrorCode::Overflow)? as u64;
+        let reward_pool_fee = (amount as u128)
+            .checked_mul(self.reward_pool_fee_bp as u128)
+            .ok_or(ErrorCode::Overflow)?
+            .checked_div(10_000)
+            .ok_or(ErrorCode::Overflow)? as u64;
+        let creator_fee = (amount as u128)
+            .checked_mul(self.creator_fee_bp as u128)
+            .ok_or(ErrorCode::Overflow)?
+            .checked_div(10_000)
+            .ok_or(ErrorCode::Overflow)? as u64;
+
+        Ok(Fees {
+            platform_fee,
+            reward_pool_fee,
+            creator_fee,
+        })
+    }
+}
+
 #[account]
 #[derive(InitSpace)]
 pub struct StakeAccount {
-    pub encrypted_option: [u8; 32],          // encrypted option ciphertext
+    pub encrypted_option: [u8; 32], // encrypted option ciphertext
     pub state_nonce: u128,
     pub bump: u8,
     pub owner: Pubkey,
     pub market: Pubkey,
-    pub user_pubkey: [u8; 32],               // x25519 pubkey for MPC decryption
+    pub user_pubkey: [u8; 32], // x25519 pubkey
     pub encrypted_option_disclosure: [u8; 32],
     pub state_nonce_disclosure: u128,
     pub staked_at_timestamp: Option<u64>,
     pub unstaked_at_timestamp: Option<u64>,
-    pub amount: u64,                         // net stake (after all fees)
-    pub platform_fee: u64,                   // fee owed to the platform
-    pub reward_pool_fee: u64,                // fee added to the market reward pool
-    pub creator_fee: u64,                    // fee owed to the market creator
+    pub amount: u64, // net stake (after all fees)
+    pub fees: Fees,  // fees owed to the platform, reward pool, and creator
     pub revealed_option: Option<u64>,
     pub score: Option<u64>,
     pub total_incremented: bool,
     pub unstakeable_at_timestamp: Option<u64>,
     pub locked: bool,
-    pub stake_reclaimed: bool,               // whether staked tokens have been returned
+    pub stake_reclaimed: bool, // whether staked tokens have been returned
     pub id: u32,
 
     // Computation account pubkey of the in-flight stake computation. 
