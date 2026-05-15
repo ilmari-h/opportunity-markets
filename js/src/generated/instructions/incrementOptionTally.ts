@@ -76,7 +76,7 @@ export type IncrementOptionTallyInstruction<
         ? ReadonlyAccount<TAccountOwner>
         : TAccountOwner,
       TAccountMarket extends string
-        ? ReadonlyAccount<TAccountMarket>
+        ? WritableAccount<TAccountMarket>
         : TAccountMarket,
       TAccountStakeAccount extends string
         ? WritableAccount<TAccountStakeAccount>
@@ -189,7 +189,7 @@ export async function getIncrementOptionTallyInstructionAsync<
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
-    market: { value: input.market ?? null, isWritable: false },
+    market: { value: input.market ?? null, isWritable: true },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     option: { value: input.option ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },
@@ -313,7 +313,7 @@ export function getIncrementOptionTallyInstruction<
   const originalAccounts = {
     signer: { value: input.signer ?? null, isWritable: true },
     owner: { value: input.owner ?? null, isWritable: false },
-    market: { value: input.market ?? null, isWritable: false },
+    market: { value: input.market ?? null, isWritable: true },
     stakeAccount: { value: input.stakeAccount ?? null, isWritable: true },
     option: { value: input.option ?? null, isWritable: true },
     systemProgram: { value: input.systemProgram ?? null, isWritable: false },

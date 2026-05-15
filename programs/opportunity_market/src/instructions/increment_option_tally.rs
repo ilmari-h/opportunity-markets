@@ -15,6 +15,7 @@ pub struct IncrementOptionTally<'info> {
     /// CHECK: this is a permissionless operation
     pub owner: UncheckedAccount<'info>,
 
+    #[account(mut)]
     pub market: Account<'info, OpportunityMarket>,
 
     #[account(
@@ -84,6 +85,13 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64
     // Store the user's score in their stake account for reward calculation
     ctx.accounts.stake_account.score = Some(user_score);
     ctx.accounts.stake_account.total_incremented = true;
+
+    // Winning option means stake fees get refunded, so deduct from market account.
+    // Actual refund transfer happens in `close_stake_account` together with reward.
+    if ctx.accounts.option.selected {
+        let fees = ctx.accounts.stake_account.fees;
+        ctx.accounts.market.deduct_stake_fees(&fees)?;
+    }
 
     emit_ts!(TallyIncrementedEvent {
         owner: ctx.accounts.owner.key(),

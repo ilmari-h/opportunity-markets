@@ -17,6 +17,7 @@ export * from './computationDefinitionMeta';
 export * from './computationSignature';
 export * from './creatorFeesClaimedEvent';
 export * from './epoch';
+export * from './fees';
 export * from './feesClaimedEvent';
 export * from './localCircuitSource';
 export * from './marketCreatedEvent';

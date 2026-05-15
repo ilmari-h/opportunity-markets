@@ -94,27 +94,15 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
             .ok_or(ErrorCode::NotRevealed)?;
         require!(revealed_option == option_id, ErrorCode::InvalidOptionId);
 
-        compute_user_reward(
+        compute_winning_payout(
             &ctx.accounts.stake_account,
             &ctx.accounts.market,
             &ctx.accounts.option,
         )?
     } else {
         // Market expired: refund reward_pool_fee + creator_fee.
-        let reward_pool_fee = ctx.accounts.stake_account.fees.reward_pool_fee;
-        let creator_fee = ctx.accounts.stake_account.fees.creator_fee;
-        let market = &mut ctx.accounts.market;
-        market.reward_amount = market
-            .reward_amount
-            .checked_sub(reward_pool_fee)
-            .ok_or(ErrorCode::Overflow)?;
-        market.collected_creator_fees = market
-            .collected_creator_fees
-            .checked_sub(creator_fee)
-            .ok_or(ErrorCode::Overflow)?;
-        reward_pool_fee
-            .checked_add(creator_fee)
-            .ok_or(ErrorCode::Overflow)?
+        let fees = ctx.accounts.stake_account.fees;
+        ctx.accounts.market.deduct_stake_fees(&fees)?
     };
 
     if payout > 0 {
@@ -164,7 +152,7 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
     Ok(())
 }
 
-fn compute_user_reward(
+fn compute_winning_payout(
     stake_account: &Account<StakeAccount>,
     market: &Account<OpportunityMarket>,
     option: &Account<OpportunityMarketOption>,
@@ -192,5 +180,11 @@ fn compute_user_reward(
         )
         .ok_or(ErrorCode::Overflow)? as u64;
 
-    Ok(reward)
+    let fees = stake_account.fees;
+    let fees_refund = fees
+        .reward_pool_fee
+        .checked_add(fees.creator_fee)
+        .ok_or(ErrorCode::Overflow)?;
+
+    reward.checked_add(fees_refund).ok_or(ErrorCode::Overflow.into())
 }

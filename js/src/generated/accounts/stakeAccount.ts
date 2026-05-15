@@ -50,6 +50,12 @@ import {
   type OptionOrNullable,
   type ReadonlyUint8Array,
 } from '@solana/kit';
+import {
+  getFeesDecoder,
+  getFeesEncoder,
+  type Fees,
+  type FeesArgs,
+} from '../types';
 
 export const STAKE_ACCOUNT_DISCRIMINATOR = new Uint8Array([
   80, 158, 67, 124, 50, 189, 192, 255,
@@ -74,9 +80,7 @@ export type StakeAccount = {
   stakedAtTimestamp: Option<bigint>;
   unstakedAtTimestamp: Option<bigint>;
   amount: bigint;
-  platformFee: bigint;
-  rewardPoolFee: bigint;
-  creatorFee: bigint;
+  fees: Fees;
   revealedOption: Option<bigint>;
   score: Option<bigint>;
   totalIncremented: boolean;
@@ -100,9 +104,7 @@ export type StakeAccountArgs = {
   stakedAtTimestamp: OptionOrNullable<number | bigint>;
   unstakedAtTimestamp: OptionOrNullable<number | bigint>;
   amount: number | bigint;
-  platformFee: number | bigint;
-  rewardPoolFee: number | bigint;
-  creatorFee: number | bigint;
+  fees: FeesArgs;
   revealedOption: OptionOrNullable<number | bigint>;
   score: OptionOrNullable<number | bigint>;
   totalIncremented: boolean;
@@ -132,9 +134,7 @@ export function getStakeAccountEncoder(): Encoder<StakeAccountArgs> {
       ['stakedAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['unstakedAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['amount', getU64Encoder()],
-      ['platformFee', getU64Encoder()],
-      ['rewardPoolFee', getU64Encoder()],
-      ['creatorFee', getU64Encoder()],
+      ['fees', getFeesEncoder()],
       ['revealedOption', getOptionEncoder(getU64Encoder())],
       ['score', getOptionEncoder(getU64Encoder())],
       ['totalIncremented', getBooleanEncoder()],
@@ -166,9 +166,7 @@ export function getStakeAccountDecoder(): Decoder<StakeAccount> {
     ['stakedAtTimestamp', getOptionDecoder(getU64Decoder())],
     ['unstakedAtTimestamp', getOptionDecoder(getU64Decoder())],
     ['amount', getU64Decoder()],
-    ['platformFee', getU64Decoder()],
-    ['rewardPoolFee', getU64Decoder()],
-    ['creatorFee', getU64Decoder()],
+    ['fees', getFeesDecoder()],
     ['revealedOption', getOptionDecoder(getU64Decoder())],
     ['score', getOptionDecoder(getU64Decoder())],
     ['totalIncremented', getBooleanDecoder()],

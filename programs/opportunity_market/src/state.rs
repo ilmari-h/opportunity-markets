@@ -161,6 +161,20 @@ impl OpportunityMarket {
             creator_fee,
         })
     }
+
+    pub fn deduct_stake_fees(&mut self, fees: &Fees) -> Result<u64> {
+        self.reward_amount = self
+            .reward_amount
+            .checked_sub(fees.reward_pool_fee)
+            .ok_or(ErrorCode::Overflow)?;
+        self.collected_creator_fees = self
+            .collected_creator_fees
+            .checked_sub(fees.creator_fee)
+            .ok_or(ErrorCode::Overflow)?;
+        fees.reward_pool_fee
+            .checked_add(fees.creator_fee)
+            .ok_or(ErrorCode::Overflow.into())
+    }
 }
 
 #[account]

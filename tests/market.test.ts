@@ -138,25 +138,6 @@ describe("OpportunityMarket", () => {
     expect(winningOption.data.selected).to.be.true;
     expect(winningOption.data.rewardPercentage).to.equal(100);
 
-    // After winners are selected but before winners close their stake accounts,
-    // the market creator can claim the accumulated creator fees.
-    const totalExpectedCreatorFees = expectedCreatorFeePerUser.reduce((sum, f) => sum + f, 0n);
-    const rpcForCreatorFee = platform.getRpc();
-    const creatorBalanceBeforeCreatorFee = (
-      await fetchToken(rpcForCreatorFee, platform.getUserTokenAccount(platform.creator))
-    ).data.amount;
-    await platform.claimCreatorFees();
-    const creatorBalanceAfterCreatorFee = (
-      await fetchToken(rpcForCreatorFee, platform.getUserTokenAccount(platform.creator))
-    ).data.amount;
-    expect(creatorBalanceAfterCreatorFee - creatorBalanceBeforeCreatorFee).to.equal(
-      totalExpectedCreatorFees,
-      `Market creator should have received ${totalExpectedCreatorFees} in creator fees`,
-    );
-
-    const marketAfterCreatorClaim = await platform.fetchMarket();
-    expect(marketAfterCreatorClaim.data.collectedCreatorFees).to.equal(0n);
-
     // Reveal stakes for winners
     const winners = platform.participants.filter(
       (userId) => platform.getUserStakeAccountsForOption(userId, winningOptionIndex).length > 0
@@ -217,6 +198,34 @@ describe("OpportunityMarket", () => {
 
     await platform.endRevealPeriod();
 
+    // After the reveal period ends, the market creator can claim the
+    // accumulated creator fees.
+    const winnerIndices = purchases
+      .map((p, idx) => (p.optionId === winningOptionIndex ? idx : -1))
+      .filter((idx) => idx !== -1);
+    const sumWinnerCreatorFees = winnerIndices.reduce(
+      (sum, idx) => sum + expectedCreatorFeePerUser[idx],
+      0n,
+    );
+    const totalExpectedCreatorFees = expectedCreatorFeePerUser.reduce((sum, f) => sum + f, 0n);
+    const claimableCreatorFees = totalExpectedCreatorFees - sumWinnerCreatorFees;
+
+    const rpcForCreatorFee = platform.getRpc();
+    const creatorBalanceBeforeCreatorFee = (
+      await fetchToken(rpcForCreatorFee, platform.getUserTokenAccount(platform.creator))
+    ).data.amount;
+    await platform.claimCreatorFees();
+    const creatorBalanceAfterCreatorFee = (
+      await fetchToken(rpcForCreatorFee, platform.getUserTokenAccount(platform.creator))
+    ).data.amount;
+    expect(creatorBalanceAfterCreatorFee - creatorBalanceBeforeCreatorFee).to.equal(
+      claimableCreatorFees,
+      `Market creator should have received ${claimableCreatorFees} in creator fees (losers only)`,
+    );
+
+    const marketAfterCreatorClaim = await platform.fetchMarket();
+    expect(marketAfterCreatorClaim.data.collectedCreatorFees).to.equal(0n);
+
     // Get token balances before closing (after reclaim, so only reward transfer remains)
     const rpc = platform.getRpc();
     const marketAta = await platform.getMarketAta();
@@ -266,9 +275,11 @@ describe("OpportunityMarket", () => {
       expect(gain > 0n).to.be.true;
     }
 
-    // Total market loss should equal the full reward amount (tolerance of 2 for rounding)
+    // Total market loss equals the reward pool plus winners' refunded creator
+    // fees (reward_pool_fee is 0 in this test, so it does not contribute).
+    const expectedMarketLoss = marketFundingAmount + sumWinnerCreatorFees;
     const marketLoss = marketBalanceBefore - marketBalanceAfter;
-    expect(marketLoss >= marketFundingAmount - 2n && marketLoss <= marketFundingAmount).to.be.true;
+    expect(marketLoss >= expectedMarketLoss - 2n && marketLoss <= expectedMarketLoss).to.be.true;
 
     // Verify proportional reward distribution
     const winnerScores = gains.map(({ gain, staked }, i) => ({
@@ -288,10 +299,10 @@ describe("OpportunityMarket", () => {
       })
     );
 
-    // Verify total gains equal reward amount
+    // Verify total gains equal reward amount + winners' refunded creator fees
     const totalGains = gains.reduce((sum, { gain }) => sum + gain, 0n);
-    expect(totalGains >= marketFundingAmount - 2n).to.be.true;
-    expect(totalGains <= marketFundingAmount).to.be.true;
+    expect(totalGains >= expectedMarketLoss - 2n).to.be.true;
+    expect(totalGains <= expectedMarketLoss).to.be.true;
 
     // Verify the fee vault has collected platform fees
     const totalExpectedPlatformFees = expectedPlatformFeePerUser.reduce((sum, f) => sum + f, 0n);
@@ -1166,9 +1177,9 @@ describe("OpportunityMarket", () => {
     // Stake account records each fee component plus the net stake.
     const stakeAccount = await platform.fetchStakeAccountData(user, stakeAccountId);
     expect(stakeAccount.data.amount).to.equal(expectedNetStake);
-    expect(stakeAccount.data.platformFee).to.equal(expectedPlatformFee);
-    expect(stakeAccount.data.rewardPoolFee).to.equal(expectedRewardPoolFee);
-    expect(stakeAccount.data.creatorFee).to.equal(expectedCreatorFee);
+    expect(stakeAccount.data.fees.platformFee).to.equal(expectedPlatformFee);
+    expect(stakeAccount.data.fees.rewardPoolFee).to.equal(expectedRewardPoolFee);
+    expect(stakeAccount.data.fees.creatorFee).to.equal(expectedCreatorFee);
 
     // Market accumulators credit each fee bucket appropriately.
     let market = await platform.fetchMarket();
@@ -1194,18 +1205,11 @@ describe("OpportunityMarket", () => {
     const feeAuthAfter = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
     expect(feeAuthAfter - feeAuthBefore).to.equal(expectedPlatformFee);
 
-    // Creator fee → market_fee_claimer (= creator in default Platform setup).
-    const creatorFeeBefore = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
-    await platform.claimCreatorFees();
-    const creatorFeeAfter = (await fetchToken(rpc, platform.getUserTokenAccount(platform.creator))).data.amount;
-    expect(creatorFeeAfter - creatorFeeBefore).to.equal(expectedCreatorFee);
-
-    // Reward pool fee → winner reward. The sole staker takes the full reward,
-    // which now includes their own reward_pool_fee contribution.
+    // Check that winner gets the reward + pool and creator fee refund
     const userBalanceBeforeClose = (await fetchToken(rpc, platform.getUserTokenAccount(user))).data.amount;
     await platform.closeStakeAccount(user, optionId, stakeAccountId);
     const userBalanceAfterClose = (await fetchToken(rpc, platform.getUserTokenAccount(user))).data.amount;
-    const expectedReward = marketFundingAmount + expectedRewardPoolFee;
+    const expectedReward = marketFundingAmount + expectedRewardPoolFee + expectedCreatorFee;
     const userGain = userBalanceAfterClose - userBalanceBeforeClose;
     expect(
       userGain >= expectedReward - 1n && userGain <= expectedReward,
@@ -1262,9 +1266,9 @@ describe("OpportunityMarket", () => {
     const stakeAccountId = await platform.stakeOnOption(user, stakeAmount, optionId);
 
     const stakeAccount = await platform.fetchStakeAccountData(user, stakeAccountId);
-    expect(stakeAccount.data.platformFee).to.equal(expectedPlatformFee);
-    expect(stakeAccount.data.rewardPoolFee).to.equal(expectedRewardPoolFee);
-    expect(stakeAccount.data.creatorFee).to.equal(expectedCreatorFee);
+    expect(stakeAccount.data.fees.platformFee).to.equal(expectedPlatformFee);
+    expect(stakeAccount.data.fees.rewardPoolFee).to.equal(expectedRewardPoolFee);
+    expect(stakeAccount.data.fees.creatorFee).to.equal(expectedCreatorFee);
     expect(stakeAccount.data.amount).to.equal(expectedNetStake);
 
     // Wait past stake_end + market_resolution_deadline without selecting winners.
