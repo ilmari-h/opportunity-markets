@@ -1,7 +1,9 @@
 
-# What Are Opportunity Markets?
+# The Opportunity Markets protocol
 
-**In Summary:**
+## Summary of how the protocol works
+
+An Opportunity Market goes through the following stages:
 
 1. A decision maker creates an Opportunity Market and funds the reward pool (reward can also be deposited by a 3rd party)
     - For example, a VC firm can create an Opportunity Market titled *"Which companies should we invest in next quarter?"*
@@ -32,102 +34,80 @@ There can be multiple winning options, each assigned a differently sized slice o
 The market creator has exclusive access to these signals through selective disclosure of encrypted staking data.
 Staking data is confidential while the market is open, allowing the creator to take advantage of opportunities before the public knows about them.
 
-# Technical Description of The Protocol
+## Opportunity Market lifecycle in detail
 
-The protocol is implemented as a Solana smart contract. 
-Confidential staking is implemented with Arcium.
+Following describes the complete lifecycle of an Opportunity Market (later referred to as just "market") and what purpose different instructions serve at which points of the lifecycle.
 
-## Account Structure
+#### Creating a market
 
-Description of Opportunity Market protocol Solana PDA account structure.
+A decision maker creates a market by calling the `create_market` instruction.
+The creator can adjust some of the market's configuration with parameters passed into this instruction.
+Some configuration is inherited from a `PlatformConfig` account.
+Each opportunity market belongs to a *platform* which defines some rules for it like fee percentages for example.
+The market is associated with one SPL token mint, which must be whitelisted by the platform update authority account.
+This token mint dictates the token that is used for rewards and fees within the market.
 
-### `StakeAccount`
+#### Adding initial options
 
-When a user stakes on an Opportunity Market option, a Stake Account is created to keep track of how much money the user staked and for which option. The option choice is encrypted, meaning anyone observing the transactions on chain cannot tell which of the available options the user staked on.
+The market is not yet open to staking, but users can already start adding options to the market.
+This is done with the `add_market_option` instruction (TODO: this is not yet permissionless but will be, anyone can add options).
 
-Once a user's stake is stored in a Stake Account, it cannot be increased, only withdrawn completely.
-A user can, however, have multiple Stake Accounts for the same option. So if they wish to stake more, a new Stake Account can be opened.
 
-Once the market closes (and after our "cranking" process finishes as documented in section [Distributing the Reward](#distributing-the-reward)) the owner of the Stake Account can claim their reward if the account is for one of the winning options.
+> [!NOTE]  
+> For keeping the user's option choice confidential, the user should not add an option using a wallet that can be linked to the wallet they stake with.
+> Otherwise, it will be quite obvious that they probably staked on the option they themselves created earlier.
 
-### `OpportunityMarketOption`
+Options can also be added after the market is opened for staking, until the staking period closes.
 
-Account representing an option in the market. This account also holds the tally of the total revealed stake amount for this option.
+#### Funding the market
 
-### `OpportunityMarket`
+The market has a reward pool that at the end is distributed to those that staked on the winning options.
 
-Account representing the Opportunity Market itself. This account stores the market configuration and keeps track of current market state.
+A sponsor can choose to fund the market with the `add_reward` instruction during the staking period or before it.
+They can lock the reward permanently or choose to add a withdrawable reward.
+A withdrawable reward can be withdrawn during the staking period or before it.
 
-### `OpportunityMarketSponsor`
+In the case that the market creator fails to choose winning options for the market within the given time period, all rewards, including locked ones, can be withdrawn. More about this in the *Resolving the market* section.
 
-Tracks an individual sponsor's contribution to a market's reward pool.
-The sponsored amount can be withdrawn before staking period is over, unless the sponsor chose to mark it as permanently locked.
+#### Staking
 
-### `TokenVault`
+The market creator can open the market to staking by calling `open_market`.
 
-Vault account that tracks collected protocol fee amount. One such account per token mint.
+After the market is opened, users can stake in it. How long staking is possible is dictated by the market account field `time_to_stake`.
 
-## Opportunity Market Lifecycle
+A user stakes in a market by calling the `stake` instruction. It accepts the following payload:
 
-### Creating the market
+- `amount` - stake amount in base units of the market's token
+- `selected_option_ciphertext` - encrypted ID of the option the user chose to stake for
+- `input_nonce` - random nonce used in the encryption of `selected_option_ciphertext`
+- `authorized_reader_nonce` - random nonce used by following encrypted circuit invocation for selective disclosure of the option choice
+- `user_pubkey` - user's x25519 pubkey used by following encrypted circuit invocation
+- `state_nonce` - random nonce used by following encrypted circuit invocation
 
-The decision maker creates and configures the market account by calling the `create_market` instruction.
+The `stake` instruction triggers an Arcium encrypted computation.
+This computation takes the user's encrypted option choice and re-encrypts it so that the owner of the market's `authorized_reader_pubkey` can also decrypt and view it. This gives the market creator real-time access to the stake data.
 
-### Adding initial options
+The stake is finalized when the callback instruction (invoked by the Arcium network) runs.
+It is possible that the callback fails to run. In this case, the user can recover their stuck stake with the `close_stuck_stake_account`.
 
-Options can be added at this stage by the creator with the instruction `add_market_option`
+#### Staking fee structure
 
-### Funding the Reward Pool
+The `stake` instruction also collects fees, split into 3 configurable components:
 
-Anyone can fund the market via the instruction `add_reward`.
-Rewards can be either locked in permanently or made withdrawable later.
-Withdrawable rewards are only withdrawable before the staking period ends via `withdraw_reward`.
+1. Platform fee
+    - Goes to the platform
+2. Creator fee
+    - Goes to the market creator
+3. Reward pool fee
+    - Goes to the reward pool
 
-### Opening the Opportunity Market for Staking
+Creator fee and reward pool fee are refunded to the winners later together with their reward.
+The reason being that, with a large amount of stake on the winning option, it is possible the reward would get dilluted to the point where a winning stake's reward no longer covers the fees, and a winning staker ends up with a net-loss.
 
-The market creator opens the market to staking by calling the `open_market` instruction.
+The reward pool fee can be set to a very high value. For example following configuration is possible:
 
-### Staking
+Platform fee = 1%, creator fee 1%, reward pool fee 98%
 
-Once the market is open, users can stake on options.
-The market is open for a certain period of time, the length of which is configured upon market creation.
-During this time, more options can still be added.
+This setup effectively turns the opportunity market into a speculative market à la prediction markets, with significant downside for the losers and great upside for the winners. If this kind of setup were to be used, early unstaking should be disabled in the market as the user of course has nothing to unstake since their stake goes to the reward pool.
 
-Staking is done with the `stake` instruction. This transfers SPL tokens to the Token Vault account. The user encrypts their option choice, which is then stored in their `StakeAccount`.
-
-The stake is finalized by an Arcium callback transaction that the Arcium network invokes after encrypted circuit completes.
-
-The user can claim back their stake amount with a delay by calling the `unstake_early` instruction (the delay can be set to zero, we have this mechanism just to allow flexibility for future design).
-After the delay has passed that, the stake can be claimed via `do_unstake_early`.
-The latter instruction is permissionless, and can be moved to a "cranker" process to improve UX.
-Users are incentivized to keep their stake in the market as long as possible. More about that in later section [Distributing the Reward](#distributing-the-reward).
-
-### Selecting the Winning Options
-
-The market creator can choose up to 10 winning options and choose how the reward pool is split between them.
-This is done via the `select_winning_option` instruction.
-If the market is configured to allow closing early, this instruction can be called while the staking is still active, ending the staking period immediately.
-
-### Unstaking
-
-Now that the winning options have been selected, users can withdraw their stake with no penalty via `reclaim_stake`.
-
-### Distributing the Reward
-
-Once the winning options have been selected, those who staked on them are entitled to a slice of the reward pool.
-
-Before the reward can be claimed however, the option choice of the eligible users must be revealed.
-Revealing must be done for each eligible `StakeAccount` via the instruction `reveal_stake`.
-After that, the total option stake tally must be incremented via `increment_option_tally`. This increments the user's stake amount in the `OpportunityMarketOptionAccount`, the total sum of which is used for reward calculation.  
-Both of these operations are permissionless, and can be done by a background "cranker" process.
-
-After all the winning stakes have been revealed and the tallies incremented, eligible users can claim their rewards via the `close_stake_account` instruction.
-
-We use a score system for determining how much of the total reward goes to each eligible `StakeAccount`.
-The score takes three things into account:
-
-1. **Stake amount**: how much the user staked.
-2. **Time in market**: how long the stake was active relative to the total market duration. Unstaking early lowers your score.
-3. **Earliness**: staking sooner after the market opens gives a bonus by a configurable max multiplier. This bonus decays over time linearly and eventually disappears (also configurable what point in time this is).
-
-A user's reward is then their share of the total score for that winning option, multiplied by the portion of the reward pool assigned to that option by the market creator.
+#### Closing the market

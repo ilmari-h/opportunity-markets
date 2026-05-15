@@ -5,7 +5,7 @@
 Our contract is meant to secure a large amount of user capital in the form of staked SPL tokens.
 Users can deposit any amount of tokens in the program and should always be able to withdraw their stake later.
 Users should never face the risk of loss-of-funds.
-Users should only ever get their initial stake deposit back OR additionally be rewarded fairly according to the rules of the protocol.
+Users should only ever get their initial stake deposit back OR additionally be rewarded fairly according to the rules of the protocol (see [protocol documentation](/docs/README.md)).
 
 Market sponsors should be able to deposit a market reward (can choose either permanently locked or withdrawable), and trust that after the market is resolved, the reward is split according to the rules of the protocol and cannot be stolen by exploit.
 

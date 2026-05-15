@@ -2,11 +2,17 @@
 
 Opportunity Markets allow users to influence decision making by staking. Decision makers benefit from opportunity markets by getting access to high-quality signals, helping them make the best choice.
 
-### **[Detailed protocol documentation →](./docs/README.md)**
+Program address on Solana Devnet: `B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg`
 
-### **[Security statement for auditors! →](./docs/security/README.md)**
+## Documentation
 
-The Opportunity Markets program is deployed on Solana devnet at `B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg`
+***Important documents for auditors and contributors:***
+
+
+
+[Detailed protocol description →](./docs/README.md)
+
+[Security statement for auditors →](./docs/security/README.md)
 
 ## Build & Test
 
