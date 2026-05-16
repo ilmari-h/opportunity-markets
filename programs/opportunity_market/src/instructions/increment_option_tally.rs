@@ -50,7 +50,7 @@ pub fn increment_option_tally(ctx: Context<IncrementOptionTally>, option_id: u64
         .ok_or(ErrorCode::Overflow)?;
 
     require!(current_time >= reveal_start, ErrorCode::TimeWindowMismatch);
-    require!(market.reveal_ended_at.is_none(), ErrorCode::RevealPeriodEnded);
+    require!(!market.reveal_ended, ErrorCode::RevealPeriodEnded);
 
     let revealed_option = ctx.accounts.stake_account.revealed_option.ok_or(ErrorCode::NotRevealed)?;
     require!(revealed_option == option_id, ErrorCode::InvalidOptionId);

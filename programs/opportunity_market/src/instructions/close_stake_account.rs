@@ -74,14 +74,14 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
         .checked_add(ctx.accounts.market.market_resolution_deadline_seconds)
         .ok_or(ErrorCode::Overflow)?;
 
-    let resolved = ctx.accounts.market.resolved;
+    let resolved = ctx.accounts.market.resolved_at_timestamp.is_some();
     let expired = !resolved && current_time >= select_deadline;
     require!(resolved || expired, ErrorCode::MarketNotResolved);
 
     let payout: u64 = if resolved {
-        // Market resolved — reveal period must be over.
+        // Rreveal period must be over.
         require!(
-            ctx.accounts.market.reveal_ended_at.is_some(),
+            ctx.accounts.market.reveal_ended,
             ErrorCode::MarketNotResolved,
         );
 
@@ -169,11 +169,11 @@ fn compute_winning_payout(
     let reward = (user_score as u128)
         .checked_mul(market.reward_amount as u128)
         .ok_or(ErrorCode::Overflow)?
-        .checked_mul(option.reward_percentage as u128)
+        .checked_mul(option.reward_percentage_bp as u128)
         .ok_or(ErrorCode::Overflow)?
         .checked_div(
             (total_score as u128)
-                .checked_mul(100)
+                .checked_mul(10_000)
                 .ok_or(ErrorCode::Overflow)?,
         )
         .ok_or(ErrorCode::Overflow)? as u64;

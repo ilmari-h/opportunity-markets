@@ -67,6 +67,7 @@ async function main() {
 
   const minTimeToStakeSeconds = BigInt(config.minTimeToStakeSeconds);
   const minRevealPeriodSeconds = BigInt(config.minRevealPeriodSeconds);
+  const maxRevealPeriodSeconds = BigInt(config.maxRevealPeriodSeconds);
   const marketResolutionDeadlineSeconds = BigInt(config.marketResolutionDeadlineSeconds);
 
   const [platformConfigAddress] = await getPlatformConfigAddress(
@@ -88,6 +89,7 @@ async function main() {
   console.log(`Fee claim authority:        ${feeClaimAuthority}`);
   console.log(`Min time to stake (s):      ${minTimeToStakeSeconds}`);
   console.log(`Min reveal period (s):      ${minRevealPeriodSeconds}`);
+  console.log(`Max reveal period (s):      ${maxRevealPeriodSeconds}`);
   console.log(`Resolution deadline (s):    ${marketResolutionDeadlineSeconds}`);
 
   const ix = existing.exists
@@ -100,6 +102,7 @@ async function main() {
         creatorFeeBp: config.creatorFeeBp,
         minTimeToStakeSeconds,
         minRevealPeriodSeconds,
+        maxRevealPeriodSeconds,
         marketResolutionDeadlineSeconds,
       })
     : await createPlatformConfig(rpc, {
@@ -112,6 +115,7 @@ async function main() {
         feeClaimAuthority,
         minTimeToStakeSeconds,
         minRevealPeriodSeconds,
+        maxRevealPeriodSeconds,
         marketResolutionDeadlineSeconds,
       });
 

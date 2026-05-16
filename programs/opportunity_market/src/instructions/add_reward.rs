@@ -15,7 +15,7 @@ pub struct AddReward<'info> {
 
     #[account(
         mut,
-        constraint = !market.resolved @ ErrorCode::WinnerAlreadySelected,
+        constraint = market.resolved_at_timestamp.is_none() @ ErrorCode::WinnerAlreadySelected,
     )]
     pub market: Account<'info, OpportunityMarket>,
 

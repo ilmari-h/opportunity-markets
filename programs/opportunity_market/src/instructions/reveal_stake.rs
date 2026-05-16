@@ -72,18 +72,12 @@ pub fn reveal_stake(
     _stake_account_id: u32,
 ) -> Result<()> {
     let market = &ctx.accounts.market;
-    let clock = Clock::get()?;
-    let current_timestamp = clock.unix_timestamp as u64;
 
-    // Check that staking period is over.
-    let reveal_start = market
-        .open_timestamp
-        .ok_or(ErrorCode::MarketNotOpen)?
-        .checked_add(market.time_to_stake)
-        .ok_or(ErrorCode::Overflow)?;
 
-    require!(current_timestamp >= reveal_start, ErrorCode::TimeWindowMismatch);
-    require!(market.resolved, ErrorCode::MarketNotResolved);
+    require!(
+        market.resolved_at_timestamp.is_some(),
+        ErrorCode::MarketNotResolved,
+    );
 
     let stake_account_key = ctx.accounts.stake_account.key();
     let stake_account_nonce = ctx.accounts.stake_account.state_nonce;

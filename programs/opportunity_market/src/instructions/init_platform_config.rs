@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 
 use crate::constants::{
-    MAX_CREATOR_FEE_BP, MAX_PLATFORM_FEE_BP, MAX_PLATFORM_NAME_LEN, MAX_TOTAL_FEE_BP,
-    MIN_PLATFORM_NAME_LEN, PLATFORM_CONFIG_SEED,
+    MAX_CREATOR_FEE_BP, MAX_MAX_REVEAL_PERIOD_SECONDS, MAX_PLATFORM_FEE_BP, MAX_PLATFORM_NAME_LEN,
+    MAX_TOTAL_FEE_BP, MIN_MAX_REVEAL_PERIOD_SECONDS, MIN_PLATFORM_NAME_LEN, PLATFORM_CONFIG_SEED,
 };
 #[cfg(feature = "production-settings")]
 use crate::constants::MIN_MARKET_RESOLUTION_DEADLINE_SECONDS;
@@ -36,6 +36,7 @@ pub fn init_platform_config(
     fee_claim_authority: Pubkey,
     min_time_to_stake_seconds: u64,
     min_reveal_period_seconds: u64,
+    max_reveal_period_seconds: u64,
     market_resolution_deadline_seconds: u64,
 ) -> Result<()> {
     require!(
@@ -60,6 +61,12 @@ pub fn init_platform_config(
         market_resolution_deadline_seconds >= MIN_MARKET_RESOLUTION_DEADLINE_SECONDS,
         ErrorCode::InvalidParameters
     );
+    require!(
+        max_reveal_period_seconds >= MIN_MAX_REVEAL_PERIOD_SECONDS
+            && max_reveal_period_seconds <= MAX_MAX_REVEAL_PERIOD_SECONDS
+            && max_reveal_period_seconds > min_reveal_period_seconds,
+        ErrorCode::InvalidParameters
+    );
 
     let platform_config = &mut ctx.accounts.platform_config;
     platform_config.bump = ctx.bumps.platform_config;
@@ -71,6 +78,7 @@ pub fn init_platform_config(
     platform_config.fee_claim_authority = fee_claim_authority;
     platform_config.min_time_to_stake_seconds = min_time_to_stake_seconds;
     platform_config.min_reveal_period_seconds = min_reveal_period_seconds;
+    platform_config.max_reveal_period_seconds = max_reveal_period_seconds;
     platform_config.market_resolution_deadline_seconds = market_resolution_deadline_seconds;
 
     Ok(())

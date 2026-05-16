@@ -22,20 +22,20 @@ import {
 
 export type RevealPeriodEndedEvent = {
   market: Address;
-  authority: Address;
+  signer: Address;
   timestamp: bigint;
 };
 
 export type RevealPeriodEndedEventArgs = {
   market: Address;
-  authority: Address;
+  signer: Address;
   timestamp: number | bigint;
 };
 
 export function getRevealPeriodEndedEventEncoder(): FixedSizeEncoder<RevealPeriodEndedEventArgs> {
   return getStructEncoder([
     ['market', getAddressEncoder()],
-    ['authority', getAddressEncoder()],
+    ['signer', getAddressEncoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -43,7 +43,7 @@ export function getRevealPeriodEndedEventEncoder(): FixedSizeEncoder<RevealPerio
 export function getRevealPeriodEndedEventDecoder(): FixedSizeDecoder<RevealPeriodEndedEvent> {
   return getStructDecoder([
     ['market', getAddressDecoder()],
-    ['authority', getAddressDecoder()],
+    ['signer', getAddressDecoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

@@ -36,6 +36,10 @@ pub struct PlatformConfig {
     // Grace period after staking ends to reveal stakes
     // Reveal period can be closed only after this has passed.
     pub min_reveal_period_seconds: u64,
+
+    // Time after resolve at which end_reveal_period becomes permissionless,
+    // so the reveal_period_authority cannot indefinitely block close_stake_account.
+    pub max_reveal_period_seconds: u64,
 }
 
 /// Whitelisted token per platform
@@ -63,8 +67,8 @@ pub struct OpportunityMarket {
     // Seconds from open_timestamp
     pub time_to_stake: u64,
 
-    pub resolved: bool,
-    pub winning_option_allocation: u8,
+    pub resolved_at_timestamp: Option<u64>,
+    pub winning_option_allocation: u16,
 
     // Reward to be shared with stakers (in SPL token base units)
     pub reward_amount: u64,
@@ -92,10 +96,7 @@ pub struct OpportunityMarket {
 
     pub staking_paused: bool,
 
-    // Fee policy snapshotted from the platform at create time.
-    pub platform_fee_bp: u16,
-    pub reward_pool_fee_bp: u16,
-    pub creator_fee_bp: u16,
+    pub fees: Fees,
 
     // Unclaimed platform fees held in the market ATA.
     pub collected_platform_fees: u64,
@@ -111,7 +112,9 @@ pub struct OpportunityMarket {
 
     pub min_reveal_period_seconds: u64,
 
-    pub reveal_ended_at: Option<u64>,
+    pub max_reveal_period_seconds: u64,
+
+    pub reveal_ended: bool,
 
     // Minimum stake amount (in SPL token base units) required for a stake.
     pub min_stake_amount: u64,
@@ -139,17 +142,17 @@ impl Fees {
 impl OpportunityMarket {
     pub fn calculate_fees(&self, amount: u64) -> Result<Fees> {
         let platform_fee = (amount as u128)
-            .checked_mul(self.platform_fee_bp as u128)
+            .checked_mul(self.fees.platform_fee as u128)
             .ok_or(ErrorCode::Overflow)?
             .checked_div(10_000)
             .ok_or(ErrorCode::Overflow)? as u64;
         let reward_pool_fee = (amount as u128)
-            .checked_mul(self.reward_pool_fee_bp as u128)
+            .checked_mul(self.fees.reward_pool_fee as u128)
             .ok_or(ErrorCode::Overflow)?
             .checked_div(10_000)
             .ok_or(ErrorCode::Overflow)? as u64;
         let creator_fee = (amount as u128)
-            .checked_mul(self.creator_fee_bp as u128)
+            .checked_mul(self.fees.creator_fee as u128)
             .ok_or(ErrorCode::Overflow)?
             .checked_div(10_000)
             .ok_or(ErrorCode::Overflow)? as u64;
@@ -218,7 +221,7 @@ pub struct OpportunityMarketOption {
     pub total_score: u64,
 
     pub selected: bool,
-    pub reward_percentage: u8,
+    pub reward_percentage_bp: u16,
 }
 
 #[account]

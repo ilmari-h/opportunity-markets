@@ -29,6 +29,7 @@ import {
   type FixedSizeDecoder,
   type FixedSizeEncoder,
 } from '@solana/kit';
+import { getFeesDecoder, getFeesEncoder, type Fees, type FeesArgs } from '.';
 
 export type MarketCreatedEvent = {
   market: Address;
@@ -44,12 +45,11 @@ export type MarketCreatedEvent = {
   allowUnstakingEarly: boolean;
   allowClosingEarly: boolean;
   minStakeAmount: bigint;
-  platformFeeBp: number;
-  rewardPoolFeeBp: number;
-  creatorFeeBp: number;
+  fees: Fees;
   marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: bigint;
   minRevealPeriodSeconds: bigint;
+  maxRevealPeriodSeconds: bigint;
   timestamp: bigint;
 };
 
@@ -67,12 +67,11 @@ export type MarketCreatedEventArgs = {
   allowUnstakingEarly: boolean;
   allowClosingEarly: boolean;
   minStakeAmount: number | bigint;
-  platformFeeBp: number;
-  rewardPoolFeeBp: number;
-  creatorFeeBp: number;
+  fees: FeesArgs;
   marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: number | bigint;
   minRevealPeriodSeconds: number | bigint;
+  maxRevealPeriodSeconds: number | bigint;
   timestamp: number | bigint;
 };
 
@@ -91,12 +90,11 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['allowUnstakingEarly', getBooleanEncoder()],
     ['allowClosingEarly', getBooleanEncoder()],
     ['minStakeAmount', getU64Encoder()],
-    ['platformFeeBp', getU16Encoder()],
-    ['rewardPoolFeeBp', getU16Encoder()],
-    ['creatorFeeBp', getU16Encoder()],
+    ['fees', getFeesEncoder()],
     ['marketFeeClaimer', getAddressEncoder()],
     ['marketResolutionDeadlineSeconds', getU64Encoder()],
     ['minRevealPeriodSeconds', getU64Encoder()],
+    ['maxRevealPeriodSeconds', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -116,12 +114,11 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['allowUnstakingEarly', getBooleanDecoder()],
     ['allowClosingEarly', getBooleanDecoder()],
     ['minStakeAmount', getU64Decoder()],
-    ['platformFeeBp', getU16Decoder()],
-    ['rewardPoolFeeBp', getU16Decoder()],
-    ['creatorFeeBp', getU16Decoder()],
+    ['fees', getFeesDecoder()],
     ['marketFeeClaimer', getAddressDecoder()],
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
     ['minRevealPeriodSeconds', getU64Decoder()],
+    ['maxRevealPeriodSeconds', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }

@@ -132,11 +132,11 @@ describe("OpportunityMarket", () => {
 
     // Verify market is resolved and the winning option carries 100% allocation.
     const resolvedMarket = await platform.fetchMarket();
-    expect(resolvedMarket.data.resolved).to.be.true;
-    expect(resolvedMarket.data.winningOptionAllocation).to.equal(100);
+    expect(isSome(resolvedMarket.data.resolvedAtTimestamp)).to.be.true;
+    expect(resolvedMarket.data.winningOptionAllocation).to.equal(10_000);
     const winningOption = await platform.fetchOptionData(winningOptionIndex);
     expect(winningOption.data.selected).to.be.true;
-    expect(winningOption.data.rewardPercentage).to.equal(100);
+    expect(winningOption.data.rewardPercentageBp).to.equal(10_000);
 
     // Reveal stakes for winners
     const winners = platform.participants.filter(
@@ -373,26 +373,26 @@ describe("OpportunityMarket", () => {
       { userId: user2, amount: stakeAmount, optionId: optG },
     ]);
 
-    // Creator selects 3 winning options with different percentages: A=50%, B=30%, E=20%
+    // Creator selects 3 winning options with different allocations: A=50%, B=30%, E=20%.
     await platform.selectWinningOptions([
-      { optionId: optA, rewardPercentage: 50 },
-      { optionId: optB, rewardPercentage: 30 },
-      { optionId: optE, rewardPercentage: 20 },
+      { optionId: optA, rewardPercentageBp: 5000 },
+      { optionId: optB, rewardPercentageBp: 3000 },
+      { optionId: optE, rewardPercentageBp: 2000 },
     ]);
 
-    // Verify market is resolved and each winning option carries its percentage.
+    // Verify market is resolved and each winning option carries its allocation.
     const resolvedMarket = await platform.fetchMarket();
-    expect(resolvedMarket.data.resolved).to.be.true;
-    expect(resolvedMarket.data.winningOptionAllocation).to.equal(100);
-    const expectedWinners: Array<{ optionId: number; percentage: number }> = [
-      { optionId: optA, percentage: 50 },
-      { optionId: optB, percentage: 30 },
-      { optionId: optE, percentage: 20 },
+    expect(isSome(resolvedMarket.data.resolvedAtTimestamp)).to.be.true;
+    expect(resolvedMarket.data.winningOptionAllocation).to.equal(10_000);
+    const expectedWinners: Array<{ optionId: number; rewardPercentageBp: number }> = [
+      { optionId: optA, rewardPercentageBp: 5000 },
+      { optionId: optB, rewardPercentageBp: 3000 },
+      { optionId: optE, rewardPercentageBp: 2000 },
     ];
-    for (const { optionId, percentage } of expectedWinners) {
+    for (const { optionId, rewardPercentageBp } of expectedWinners) {
       const opt = await platform.fetchOptionData(optionId);
       expect(opt.data.selected).to.be.true;
-      expect(opt.data.rewardPercentage).to.equal(percentage);
+      expect(opt.data.rewardPercentageBp).to.equal(rewardPercentageBp);
     }
 
     // selectWinningOptions with allow_closing_early shortens time_to_stake, so reveal window starts now.
@@ -662,12 +662,12 @@ describe("OpportunityMarket", () => {
     // with the same InvalidParameters code as the allocation check.
     await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
-    // Under (50 + 30 = 80): resolve must reject.
-    await platform.setWinningOption(optionA, 50);
-    await platform.setWinningOption(optionB, 30);
+    // Under (5000 + 3000 = 8000 bp): resolve must reject.
+    await platform.setWinningOption(optionA, 5000);
+    await platform.setWinningOption(optionB, 3000);
 
     let market = await platform.fetchMarket();
-    expect(market.data.winningOptionAllocation).to.equal(80);
+    expect(market.data.winningOptionAllocation).to.equal(8000);
 
     await shouldThrowCustomError(
       () => platform.resolveMarket(),
@@ -675,24 +675,24 @@ describe("OpportunityMarket", () => {
     );
 
     market = await platform.fetchMarket();
-    expect(market.data.resolved).to.be.false;
+    expect(isNone(market.data.resolvedAtTimestamp)).to.be.true;
 
-    // Over (80 + 30 = 110): set must reject before allocation moves.
+    // Over (8000 + 3000 = 11000 bp): set must reject before allocation moves.
     await shouldThrowCustomError(
-      () => platform.setWinningOption(optionA, 80),
+      () => platform.setWinningOption(optionA, 8000),
       OPPORTUNITY_MARKET_ERROR__INVALID_PARAMETERS,
     );
 
     market = await platform.fetchMarket();
-    expect(market.data.winningOptionAllocation).to.equal(80);
+    expect(market.data.winningOptionAllocation).to.equal(8000);
 
-    // Correcting optionA up to exactly 70 brings the total to 100 and resolve succeeds.
-    await platform.setWinningOption(optionA, 70);
+    // Correcting optionA up to exactly 7000 bp brings the total to 10_000 and resolve succeeds.
+    await platform.setWinningOption(optionA, 7000);
     await platform.resolveMarket();
 
     market = await platform.fetchMarket();
-    expect(market.data.resolved).to.be.true;
-    expect(market.data.winningOptionAllocation).to.equal(100);
+    expect(isSome(market.data.resolvedAtTimestamp)).to.be.true;
+    expect(market.data.winningOptionAllocation).to.equal(10_000);
   });
 
   it("prevents closing market early when not allowed", async () => {
@@ -733,7 +733,7 @@ describe("OpportunityMarket", () => {
 
     // Verify market is still unresolved
     let market = await platform.fetchMarket();
-    expect(market.data.resolved).to.be.false;
+    expect(isNone(market.data.resolvedAtTimestamp)).to.be.true;
 
     // Wait for stake period to end
     const stakeEndTimestamp = Number(openTimestamp) + Number(timeToStake);
@@ -744,11 +744,11 @@ describe("OpportunityMarket", () => {
 
     // Verify option was selected and market resolved
     market = await platform.fetchMarket();
-    expect(market.data.resolved).to.be.true;
-    expect(market.data.winningOptionAllocation).to.equal(100);
+    expect(isSome(market.data.resolvedAtTimestamp)).to.be.true;
+    expect(market.data.winningOptionAllocation).to.equal(10_000);
     const optionAAccount = await platform.fetchOptionData(optionA);
     expect(optionAAccount.data.selected).to.be.true;
-    expect(optionAAccount.data.rewardPercentage).to.equal(100);
+    expect(optionAAccount.data.rewardPercentageBp).to.equal(10_000);
   });
 
   it("allows adding more reward during staking", async () => {
@@ -838,7 +838,7 @@ describe("OpportunityMarket", () => {
     // Verify market state
     market = await platform.fetchMarket();
     expect(market.data.rewardAmount).to.equal(0n);
-    expect(market.data.resolved).to.be.false;
+    expect(isNone(market.data.resolvedAtTimestamp)).to.be.true;
   });
 
   it("rejects staking before staking period is active", async () => {
@@ -1423,7 +1423,7 @@ describe("OpportunityMarket", () => {
     expect(stakeAccount.data.amount > 0n).to.be.true;
   });
 
-  it("reveal period cannot be closed too early", async () => {
+  it("reveal period cannot be closed before resolved_at + min_reveal_period", async () => {
     const minRevealPeriodSeconds = 15n;
     const timeToStake = 5n;
 
@@ -1444,30 +1444,27 @@ describe("OpportunityMarket", () => {
     });
 
     const openTimestamp = await platform.openMarket();
-    await platform.addOption();
+    const { optionId } = await platform.addOption();
 
     const stakeEnd = Number(openTimestamp) + Number(timeToStake);
-
-    // Sleep just past stake_end, not yet past the min_reveal_period window.
     await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+    await platform.selectSingleWinningOption(optionId);
 
-    // Calling end_reveal_period now must faill.
+    const resolvedAt = Number(
+      unwrapOption((await platform.fetchMarket()).data.resolvedAtTimestamp),
+    );
+
+    // Closing immediately after resolve must fail — min_reveal_period hasn't elapsed.
     await shouldThrowCustomError(
       () => platform.endRevealPeriod(),
       OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
     );
 
-    const marketBefore = await platform.fetchMarket();
-    expect(isNone(marketBefore.data.revealEndedAt)).to.be.true;
-
-    // Wait past stake_end + min_reveal_period_seconds and retry.
     await sleepUntilOnChainTimestamp(
-      stakeEnd + Number(minRevealPeriodSeconds) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS,
+      resolvedAt + Number(minRevealPeriodSeconds) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS,
     );
-
     await platform.endRevealPeriod();
 
-    const marketAfter = await platform.fetchMarket();
-    expect(isSome(marketAfter.data.revealEndedAt)).to.be.true;
+    expect((await platform.fetchMarket()).data.revealEnded).to.be.true;
   });
 });

@@ -16,8 +16,8 @@ pub struct ClaimCreatorFees<'info> {
         mut,
         seeds = [OPPORTUNITY_MARKET_SEED, market.creator.as_ref(), &market.index.to_le_bytes()],
         bump = market.bump,
-        constraint = market.resolved @ ErrorCode::MarketNotResolved,
-        constraint = market.reveal_ended_at.is_some() @ ErrorCode::TimeWindowMismatch,
+        constraint = market.resolved_at_timestamp.is_some() @ ErrorCode::MarketNotResolved,
+        constraint = market.reveal_ended @ ErrorCode::TimeWindowMismatch,
         constraint = market.collected_creator_fees > 0 @ ErrorCode::NoFeesToClaim,
         constraint = market.market_fee_claimer == signer.key() @ ErrorCode::Unauthorized,
     )]

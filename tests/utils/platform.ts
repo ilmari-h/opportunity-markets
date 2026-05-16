@@ -108,6 +108,7 @@ export interface PlatformConfigArgs {
   creatorFeeBp?: number;
   marketResolutionDeadlineSeconds?: bigint;
   minRevealPeriodSeconds?: bigint;
+  maxRevealPeriodSeconds?: bigint;
   name?: string;
 }
 
@@ -151,6 +152,8 @@ const DEFAULT_CONFIG: Required<Omit<PlatformConfigArgs, "name">> = {
   // Program enforces a hard floor of 7 days.
   marketResolutionDeadlineSeconds: 7n * 24n * 60n * 60n,
   minRevealPeriodSeconds: 1n,
+  // Program enforces 1 week .. 60 days; pick the floor for tests.
+  maxRevealPeriodSeconds: 7n * 24n * 60n * 60n,
   marketConfig: {
     rewardAmount: 1_000_000_000n,
     timeToStake: 120n,
@@ -258,6 +261,7 @@ export class Platform {
       creatorFeeBp,
       marketResolutionDeadlineSeconds,
       minRevealPeriodSeconds,
+      maxRevealPeriodSeconds,
     } = mergedConfig;
     const platformName = config.name ?? generatePlatformName();
 
@@ -320,6 +324,7 @@ export class Platform {
       feeClaimAuthority: creatorAccountBase.keypair.address,
       minTimeToStakeSeconds: 1n,
       minRevealPeriodSeconds,
+      maxRevealPeriodSeconds,
       marketResolutionDeadlineSeconds,
     });
     await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [platformConfigIx], {
@@ -543,14 +548,16 @@ export class Platform {
     return timestamp;
   }
 
-  async selectWinningOptions(selections: Array<{ optionId: number; rewardPercentage: number }>): Promise<void> {
+  async selectWinningOptions(
+    selections: Array<{ optionId: number; rewardPercentageBp: number }>,
+  ): Promise<void> {
     const setIxs = await Promise.all(
-      selections.map(({ optionId, rewardPercentage }) =>
+      selections.map(({ optionId, rewardPercentageBp }) =>
         setWinningOptionIx({
           marketAuthority: this.marketCreator.solanaKeypair,
           market: this.marketAddress,
           optionId,
-          rewardPercentage,
+          rewardPercentageBp,
         }),
       ),
     );
@@ -570,19 +577,19 @@ export class Platform {
   }
 
   async selectSingleWinningOption(optionId: number): Promise<void> {
-    await this.selectWinningOptions([{ optionId, rewardPercentage: 100 }]);
+    await this.selectWinningOptions([{ optionId, rewardPercentageBp: 10_000 }]);
   }
 
-  async setWinningOption(optionId: number, rewardPercentage: number): Promise<void> {
+  async setWinningOption(optionId: number, rewardPercentageBp: number): Promise<void> {
     const ix = await setWinningOptionIx({
       marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
       optionId,
-      rewardPercentage,
+      rewardPercentageBp,
     });
 
     await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
-      label: `Set winning option ${optionId} = ${rewardPercentage}%`,
+      label: `Set winning option ${optionId} = ${rewardPercentageBp} bp`,
     });
   }
 
@@ -635,7 +642,7 @@ export class Platform {
 
   async endRevealPeriod(): Promise<void> {
     const ix = endRevealPeriodIx({
-      authority: this.marketCreator.solanaKeypair,
+      signer: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
     });
 

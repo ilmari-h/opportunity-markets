@@ -18,9 +18,12 @@ pub struct ResolveMarket<'info> {
 pub fn resolve_market(ctx: Context<ResolveMarket>) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
-    require!(!market.resolved, ErrorCode::WinnerAlreadySelected);
     require!(
-        market.winning_option_allocation == 100,
+        market.resolved_at_timestamp.is_none(),
+        ErrorCode::WinnerAlreadySelected,
+    );
+    require!(
+        market.winning_option_allocation == 10_000,
         ErrorCode::InvalidParameters,
     );
 
@@ -58,7 +61,7 @@ pub fn resolve_market(ctx: Context<ResolveMarket>) -> Result<()> {
             .ok_or(ErrorCode::Overflow)?;
     }
 
-    market.resolved = true;
+    market.resolved_at_timestamp = Some(current_timestamp);
 
     emit_ts!(MarketResolvedEvent {
         market: market.key(),

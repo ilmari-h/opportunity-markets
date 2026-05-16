@@ -69,6 +69,7 @@ export type PlatformConfig = {
   marketResolutionDeadlineSeconds: bigint;
   minTimeToStakeSeconds: bigint;
   minRevealPeriodSeconds: bigint;
+  maxRevealPeriodSeconds: bigint;
 };
 
 export type PlatformConfigArgs = {
@@ -82,6 +83,7 @@ export type PlatformConfigArgs = {
   marketResolutionDeadlineSeconds: number | bigint;
   minTimeToStakeSeconds: number | bigint;
   minRevealPeriodSeconds: number | bigint;
+  maxRevealPeriodSeconds: number | bigint;
 };
 
 export function getPlatformConfigEncoder(): Encoder<PlatformConfigArgs> {
@@ -98,6 +100,7 @@ export function getPlatformConfigEncoder(): Encoder<PlatformConfigArgs> {
       ['marketResolutionDeadlineSeconds', getU64Encoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minRevealPeriodSeconds', getU64Encoder()],
+      ['maxRevealPeriodSeconds', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: PLATFORM_CONFIG_DISCRIMINATOR })
   );
@@ -116,6 +119,7 @@ export function getPlatformConfigDecoder(): Decoder<PlatformConfig> {
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minRevealPeriodSeconds', getU64Decoder()],
+    ['maxRevealPeriodSeconds', getU64Decoder()],
   ]);
 }
 

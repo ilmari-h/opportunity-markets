@@ -73,6 +73,7 @@ export type UpdatePlatformConfigInstructionData = {
   creatorFeeBp: number;
   minTimeToStakeSeconds: bigint;
   minRevealPeriodSeconds: bigint;
+  maxRevealPeriodSeconds: bigint;
   marketResolutionDeadlineSeconds: bigint;
 };
 
@@ -82,6 +83,7 @@ export type UpdatePlatformConfigInstructionDataArgs = {
   creatorFeeBp: number;
   minTimeToStakeSeconds: number | bigint;
   minRevealPeriodSeconds: number | bigint;
+  maxRevealPeriodSeconds: number | bigint;
   marketResolutionDeadlineSeconds: number | bigint;
 };
 
@@ -94,6 +96,7 @@ export function getUpdatePlatformConfigInstructionDataEncoder(): FixedSizeEncode
       ['creatorFeeBp', getU16Encoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minRevealPeriodSeconds', getU64Encoder()],
+      ['maxRevealPeriodSeconds', getU64Encoder()],
       ['marketResolutionDeadlineSeconds', getU64Encoder()],
     ]),
     (value) => ({
@@ -111,6 +114,7 @@ export function getUpdatePlatformConfigInstructionDataDecoder(): FixedSizeDecode
     ['creatorFeeBp', getU16Decoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minRevealPeriodSeconds', getU64Decoder()],
+    ['maxRevealPeriodSeconds', getU64Decoder()],
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
   ]);
 }
@@ -136,6 +140,7 @@ export type UpdatePlatformConfigInput<
   creatorFeeBp: UpdatePlatformConfigInstructionDataArgs['creatorFeeBp'];
   minTimeToStakeSeconds: UpdatePlatformConfigInstructionDataArgs['minTimeToStakeSeconds'];
   minRevealPeriodSeconds: UpdatePlatformConfigInstructionDataArgs['minRevealPeriodSeconds'];
+  maxRevealPeriodSeconds: UpdatePlatformConfigInstructionDataArgs['maxRevealPeriodSeconds'];
   marketResolutionDeadlineSeconds: UpdatePlatformConfigInstructionDataArgs['marketResolutionDeadlineSeconds'];
 };
 

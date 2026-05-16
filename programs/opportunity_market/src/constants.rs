@@ -16,6 +16,10 @@ pub const TIMELOCK_DELAY_SECONDS: i64 = 48 * 60 * 60;
 #[cfg(feature = "production-settings")]
 pub const MIN_MARKET_RESOLUTION_DEADLINE_SECONDS: u64 = 7 * 24 * 60 * 60;
 
+/// Bounds for the deadline after which end_reveal_period becomes permissionless.
+pub const MIN_MAX_REVEAL_PERIOD_SECONDS: u64 = 7 * 24 * 60 * 60;
+pub const MAX_MAX_REVEAL_PERIOD_SECONDS: u64 = 60 * 24 * 60 * 60;
+
 pub const MAX_EARLINESS_MULTIPLIER: u16 = 20_000;
 
 /// PDA seeds

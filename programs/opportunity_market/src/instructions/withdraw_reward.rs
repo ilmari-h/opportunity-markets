@@ -64,7 +64,8 @@ pub fn withdraw_reward(ctx: Context<WithdrawReward>) -> Result<()> {
             .ok_or(ErrorCode::Overflow)?;
 
         // If market expired without resolution, even locked reward can be withdrawn.
-        let market_expired = current_timestamp >= expired_at && !market.resolved;
+        let market_expired =
+            current_timestamp >= expired_at && market.resolved_at_timestamp.is_none();
         if !market_expired {
             require!(current_timestamp < stake_end, ErrorCode::TimeWindowMismatch);
             require!(!sponsor_account.reward_locked, ErrorCode::Unauthorized);

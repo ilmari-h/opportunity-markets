@@ -18,7 +18,10 @@ pub fn resume_staking(ctx: Context<ResumeStaking>) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
     require!(market.open_timestamp.is_some(), ErrorCode::MarketNotOpen);
-    require!(!market.resolved, ErrorCode::WinnerAlreadySelected);
+    require!(
+        market.resolved_at_timestamp.is_none(),
+        ErrorCode::WinnerAlreadySelected,
+    );
     require!(market.staking_paused, ErrorCode::MarketNotPaused);
 
     market.staking_paused = false;

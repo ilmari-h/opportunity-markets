@@ -48,6 +48,12 @@ import {
   type OptionOrNullable,
   type ReadonlyUint8Array,
 } from '@solana/kit';
+import {
+  getFeesDecoder,
+  getFeesEncoder,
+  type Fees,
+  type FeesArgs,
+} from '../types';
 
 export const OPPORTUNITY_MARKET_DISCRIMINATOR = new Uint8Array([
   207, 103, 169, 160, 157, 215, 97, 224,
@@ -68,7 +74,7 @@ export type OpportunityMarket = {
   platform: Address;
   openTimestamp: Option<bigint>;
   timeToStake: bigint;
-  resolved: boolean;
+  resolvedAtTimestamp: Option<bigint>;
   winningOptionAllocation: number;
   rewardAmount: bigint;
   marketAuthority: Address;
@@ -80,15 +86,14 @@ export type OpportunityMarket = {
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
   stakingPaused: boolean;
-  platformFeeBp: number;
-  rewardPoolFeeBp: number;
-  creatorFeeBp: number;
+  fees: Fees;
   collectedPlatformFees: bigint;
   collectedCreatorFees: bigint;
   marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: bigint;
   minRevealPeriodSeconds: bigint;
-  revealEndedAt: Option<bigint>;
+  maxRevealPeriodSeconds: bigint;
+  revealEnded: boolean;
   minStakeAmount: bigint;
 };
 
@@ -100,7 +105,7 @@ export type OpportunityMarketArgs = {
   platform: Address;
   openTimestamp: OptionOrNullable<number | bigint>;
   timeToStake: number | bigint;
-  resolved: boolean;
+  resolvedAtTimestamp: OptionOrNullable<number | bigint>;
   winningOptionAllocation: number;
   rewardAmount: number | bigint;
   marketAuthority: Address;
@@ -112,15 +117,14 @@ export type OpportunityMarketArgs = {
   authorizedReaderPubkey: Array<number>;
   allowClosingEarly: boolean;
   stakingPaused: boolean;
-  platformFeeBp: number;
-  rewardPoolFeeBp: number;
-  creatorFeeBp: number;
+  fees: FeesArgs;
   collectedPlatformFees: number | bigint;
   collectedCreatorFees: number | bigint;
   marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: number | bigint;
   minRevealPeriodSeconds: number | bigint;
-  revealEndedAt: OptionOrNullable<number | bigint>;
+  maxRevealPeriodSeconds: number | bigint;
+  revealEnded: boolean;
   minStakeAmount: number | bigint;
 };
 
@@ -135,8 +139,8 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['platform', getAddressEncoder()],
       ['openTimestamp', getOptionEncoder(getU64Encoder())],
       ['timeToStake', getU64Encoder()],
-      ['resolved', getBooleanEncoder()],
-      ['winningOptionAllocation', getU8Encoder()],
+      ['resolvedAtTimestamp', getOptionEncoder(getU64Encoder())],
+      ['winningOptionAllocation', getU16Encoder()],
       ['rewardAmount', getU64Encoder()],
       ['marketAuthority', getAddressEncoder()],
       ['revealPeriodAuthority', getAddressEncoder()],
@@ -147,15 +151,14 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['allowClosingEarly', getBooleanEncoder()],
       ['stakingPaused', getBooleanEncoder()],
-      ['platformFeeBp', getU16Encoder()],
-      ['rewardPoolFeeBp', getU16Encoder()],
-      ['creatorFeeBp', getU16Encoder()],
+      ['fees', getFeesEncoder()],
       ['collectedPlatformFees', getU64Encoder()],
       ['collectedCreatorFees', getU64Encoder()],
       ['marketFeeClaimer', getAddressEncoder()],
       ['marketResolutionDeadlineSeconds', getU64Encoder()],
       ['minRevealPeriodSeconds', getU64Encoder()],
-      ['revealEndedAt', getOptionEncoder(getU64Encoder())],
+      ['maxRevealPeriodSeconds', getU64Encoder()],
+      ['revealEnded', getBooleanEncoder()],
       ['minStakeAmount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: OPPORTUNITY_MARKET_DISCRIMINATOR })
@@ -172,8 +175,8 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['platform', getAddressDecoder()],
     ['openTimestamp', getOptionDecoder(getU64Decoder())],
     ['timeToStake', getU64Decoder()],
-    ['resolved', getBooleanDecoder()],
-    ['winningOptionAllocation', getU8Decoder()],
+    ['resolvedAtTimestamp', getOptionDecoder(getU64Decoder())],
+    ['winningOptionAllocation', getU16Decoder()],
     ['rewardAmount', getU64Decoder()],
     ['marketAuthority', getAddressDecoder()],
     ['revealPeriodAuthority', getAddressDecoder()],
@@ -184,15 +187,14 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['allowClosingEarly', getBooleanDecoder()],
     ['stakingPaused', getBooleanDecoder()],
-    ['platformFeeBp', getU16Decoder()],
-    ['rewardPoolFeeBp', getU16Decoder()],
-    ['creatorFeeBp', getU16Decoder()],
+    ['fees', getFeesDecoder()],
     ['collectedPlatformFees', getU64Decoder()],
     ['collectedCreatorFees', getU64Decoder()],
     ['marketFeeClaimer', getAddressDecoder()],
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
     ['minRevealPeriodSeconds', getU64Decoder()],
-    ['revealEndedAt', getOptionDecoder(getU64Decoder())],
+    ['maxRevealPeriodSeconds', getU64Decoder()],
+    ['revealEnded', getBooleanDecoder()],
     ['minStakeAmount', getU64Decoder()],
   ]);
 }

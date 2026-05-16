@@ -16,6 +16,7 @@ export interface EnsurePlatformConfigParams extends BaseInstructionParams {
   feeClaimAuthority: Address;
   minTimeToStakeSeconds: bigint;
   minRevealPeriodSeconds: bigint;
+  maxRevealPeriodSeconds: bigint;
   marketResolutionDeadlineSeconds: bigint;
 }
 
@@ -33,6 +34,7 @@ export async function ensurePlatformConfig(
     feeClaimAuthority,
     minTimeToStakeSeconds,
     minRevealPeriodSeconds,
+    maxRevealPeriodSeconds,
     marketResolutionDeadlineSeconds,
   } = params;
   const config = programAddress ? { programAddress } : undefined;
@@ -52,6 +54,7 @@ export async function ensurePlatformConfig(
       s.creatorFeeBp === creatorFeeBp &&
       s.minTimeToStakeSeconds === minTimeToStakeSeconds &&
       s.minRevealPeriodSeconds === minRevealPeriodSeconds &&
+      s.maxRevealPeriodSeconds === maxRevealPeriodSeconds &&
       s.marketResolutionDeadlineSeconds === marketResolutionDeadlineSeconds
     ) {
       return null;
@@ -66,6 +69,7 @@ export async function ensurePlatformConfig(
         creatorFeeBp,
         minTimeToStakeSeconds,
         minRevealPeriodSeconds,
+        maxRevealPeriodSeconds,
         marketResolutionDeadlineSeconds,
       },
       config,
@@ -82,6 +86,7 @@ export async function ensurePlatformConfig(
       feeClaimAuthority,
       minTimeToStakeSeconds,
       minRevealPeriodSeconds,
+      maxRevealPeriodSeconds,
       marketResolutionDeadlineSeconds,
     },
     config,

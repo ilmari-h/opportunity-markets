@@ -49,7 +49,7 @@ This token mint dictates the token that is used for rewards and fees within the 
 #### Adding initial options
 
 The market is not yet open to staking, but users can already start adding options to the market.
-This is done with the `add_market_option` instruction (TODO: this is not yet permissionless but will be, anyone can add options).
+This is done with the `add_market_option` instruction.
 
 
 > [!NOTE]  
@@ -115,30 +115,37 @@ This setup effectively turns the opportunity market into a speculative market à
 If the market configuration allows, users can reclaim their stake back at any time with the `unstake` instruction. Longer stake however results in a higher score and more potential yield.
 Othewise, the user must wait until the staking period ends before unstaking.
 
+#### Pausing staking
+
+During the staking period, the market creator can call the `pause_staking` instruction to prevent users from placing new stakes into the market. Staking can be resumed with `resume_staking`.
+
 #### Resolving the market
 
-Once the staking period ends, the market creator has a certain amount of time to select the winning options
+Once the staking period ends, the market creator has a certain amount of time (defined by the platform config) to select the winning options.
 They do this via the instruction `set_winning_option`. This can be called multiple times for different options to select multiple winners.
 The instruction takes the option ID and the percentage of the reward pool that should be allocated to that option as arguments and marks the option account as one of the winning ones.
 The market creator finalizes their choices and resolves the market by calling `resolve_market`.
 
 If the market is not resolved in time, the market is considered expired and users can reclaim the fees they paid via `close_stake_account`.
 Sponsors also get to reclaim their deposited rewards via `withdraw_reward`.
-The grace period for a market creator to resolve the market is defined in the platform config.
 
 At this point, users can also claim their stake back without negatively impacting their potential reward amount.
 This is done via `reclaim_stake`.
 
 #### Revealing stakes
 
-Once the staking period is over, user stake choices can be revealed. This can be done in parallel while the creator is resolving the market.
-
-The reveal operation is permissionless and requires two transactions per stake account.
+Once the market has been resolved, user option choices can be revealed.
+This is permissionless and requires two transactions per stake account:
 
 **`reveal_stake`** - This invokes an Arcium encrypted computation that decrypts the user's option choice and returns it as plaintext to the callback.
 The callback then records the plaintext option ID to the stake account struct stored on chain.
 
-// TODO: make sure latter can only be called after resolved! and former already before!
-// And make sure reveal period is always longer than market resolution period by a given minimum!
+**`finalize_reveal_stake`** - Now that the option ID is public, this instruction can be called to calculate the user's score and add that to the total score tally for the option for later reward distribution calculation.
 
-**`finalize_reveal_stake`** - Now that the option ID is public, this instruction can be called to calculate the user's score and add that to the total score tally for the option for later reward distribution calculation. Here, we also deduct the refundable fee components from the fees that would later be claimable if the user's o
+There's a certain amount of time alloted for the reveal period.
+After this has passed, a market authority account can close the reveal period with `end_reveal_period`.
+The market authority must call this instruction within a certain grace period. After this time passes, anyone can end the reveal period by calling the same instruction.
+
+#### Claiming rewards
+
+After the reveal period has passsed, users that staked on one of the selected options can call `close_stake_account` to claim their slice of the reward pool and reclaim the refundable part of fees they paid. Non-winning stake accounts can also be closed via the same instruction to reclaim account rent.

@@ -36,6 +36,7 @@ pub mod opportunity_market {
         fee_claim_authority: Pubkey,
         min_time_to_stake_seconds: u64,
         min_reveal_period_seconds: u64,
+        max_reveal_period_seconds: u64,
         market_resolution_deadline_seconds: u64,
     ) -> Result<()> {
         instructions::init_platform_config(
@@ -47,6 +48,7 @@ pub mod opportunity_market {
             fee_claim_authority,
             min_time_to_stake_seconds,
             min_reveal_period_seconds,
+            max_reveal_period_seconds,
             market_resolution_deadline_seconds,
         )
     }
@@ -58,6 +60,7 @@ pub mod opportunity_market {
         creator_fee_bp: u16,
         min_time_to_stake_seconds: u64,
         min_reveal_period_seconds: u64,
+        max_reveal_period_seconds: u64,
         market_resolution_deadline_seconds: u64,
     ) -> Result<()> {
         instructions::update_platform_config(
@@ -67,6 +70,7 @@ pub mod opportunity_market {
             creator_fee_bp,
             min_time_to_stake_seconds,
             min_reveal_period_seconds,
+            max_reveal_period_seconds,
             market_resolution_deadline_seconds,
         )
     }
@@ -160,9 +164,9 @@ pub mod opportunity_market {
     pub fn set_winning_option(
         ctx: Context<SetWinningOption>,
         option_id: u64,
-        reward_percentage: u8,
+        reward_percentage_bp: u16,
     ) -> Result<()> {
-        instructions::set_winning_option(ctx, option_id, reward_percentage)
+        instructions::set_winning_option(ctx, option_id, reward_percentage_bp)
     }
 
     pub fn resolve_market(ctx: Context<ResolveMarket>) -> Result<()> {

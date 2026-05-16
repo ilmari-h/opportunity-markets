@@ -8,7 +8,7 @@ use crate::constants::{
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, MarketCreatedEvent};
 use crate::score::PRECISION;
-use crate::state::{AllowedMint, OpportunityMarket, PlatformConfig};
+use crate::state::{AllowedMint, Fees, OpportunityMarket, PlatformConfig};
 
 #[derive(Accounts)]
 #[instruction(market_index: u64)]
@@ -76,11 +76,14 @@ pub fn create_market(
 
     let creator_key = ctx.accounts.creator.key();
     let platform_key = ctx.accounts.platform_config.key();
-    let platform_fee_bp = ctx.accounts.platform_config.platform_fee_bp;
-    let reward_pool_fee_bp = ctx.accounts.platform_config.reward_pool_fee_bp;
-    let creator_fee_bp = ctx.accounts.platform_config.creator_fee_bp;
+    let fees = Fees {
+        platform_fee: ctx.accounts.platform_config.platform_fee_bp as u64,
+        reward_pool_fee: ctx.accounts.platform_config.reward_pool_fee_bp as u64,
+        creator_fee: ctx.accounts.platform_config.creator_fee_bp as u64,
+    };
     let market_resolution_deadline_seconds = ctx.accounts.platform_config.market_resolution_deadline_seconds;
     let min_reveal_period_seconds = ctx.accounts.platform_config.min_reveal_period_seconds;
+    let max_reveal_period_seconds = ctx.accounts.platform_config.max_reveal_period_seconds;
     let market = &mut ctx.accounts.market;
     let mint = ctx.accounts.token_mint.key();
     market.bump = ctx.bumps.market;
@@ -96,13 +99,12 @@ pub fn create_market(
     market.allow_unstaking_early = allow_unstaking_early;
     market.authorized_reader_pubkey = authorized_reader_pubkey;
     market.allow_closing_early = allow_closing_early;
-    market.platform_fee_bp = platform_fee_bp;
-    market.reward_pool_fee_bp = reward_pool_fee_bp;
-    market.creator_fee_bp = creator_fee_bp;
+    market.fees = fees;
     market.market_fee_claimer = market_fee_claimer;
     market.market_resolution_deadline_seconds = market_resolution_deadline_seconds;
     market.min_reveal_period_seconds = min_reveal_period_seconds;
-    market.reveal_ended_at = None;
+    market.max_reveal_period_seconds = max_reveal_period_seconds;
+    market.reveal_ended = false;
     market.min_stake_amount = min_stake_amount;
 
     emit_ts!(MarketCreatedEvent {
@@ -119,12 +121,11 @@ pub fn create_market(
         earliness_cutoff_seconds: earliness_cutoff_seconds,
         earliness_multiplier: earliness_multiplier,
         min_stake_amount: min_stake_amount,
-        platform_fee_bp: platform_fee_bp,
-        reward_pool_fee_bp: reward_pool_fee_bp,
-        creator_fee_bp: creator_fee_bp,
+        fees: fees,
         market_fee_claimer: market_fee_claimer,
         market_resolution_deadline_seconds: market_resolution_deadline_seconds,
         min_reveal_period_seconds: min_reveal_period_seconds,
+        max_reveal_period_seconds: max_reveal_period_seconds,
     });
 
     Ok(())

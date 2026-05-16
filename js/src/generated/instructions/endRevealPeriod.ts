@@ -44,17 +44,17 @@ export function getEndRevealPeriodDiscriminatorBytes() {
 
 export type EndRevealPeriodInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
-  TAccountAuthority extends string | AccountMeta<string> = string,
+  TAccountSigner extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
   InstructionWithAccounts<
     [
-      TAccountAuthority extends string
-        ? ReadonlySignerAccount<TAccountAuthority> &
-            AccountSignerMeta<TAccountAuthority>
-        : TAccountAuthority,
+      TAccountSigner extends string
+        ? ReadonlySignerAccount<TAccountSigner> &
+            AccountSignerMeta<TAccountSigner>
+        : TAccountSigner,
       TAccountMarket extends string
         ? WritableAccount<TAccountMarket>
         : TAccountMarket,
@@ -92,32 +92,28 @@ export function getEndRevealPeriodInstructionDataCodec(): FixedSizeCodec<
 }
 
 export type EndRevealPeriodInput<
-  TAccountAuthority extends string = string,
+  TAccountSigner extends string = string,
   TAccountMarket extends string = string,
 > = {
-  authority: TransactionSigner<TAccountAuthority>;
+  signer: TransactionSigner<TAccountSigner>;
   market: Address<TAccountMarket>;
 };
 
 export function getEndRevealPeriodInstruction<
-  TAccountAuthority extends string,
+  TAccountSigner extends string,
   TAccountMarket extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: EndRevealPeriodInput<TAccountAuthority, TAccountMarket>,
+  input: EndRevealPeriodInput<TAccountSigner, TAccountMarket>,
   config?: { programAddress?: TProgramAddress }
-): EndRevealPeriodInstruction<
-  TProgramAddress,
-  TAccountAuthority,
-  TAccountMarket
-> {
+): EndRevealPeriodInstruction<TProgramAddress, TAccountSigner, TAccountMarket> {
   // Program address.
   const programAddress =
     config?.programAddress ?? OPPORTUNITY_MARKET_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
-    authority: { value: input.authority ?? null, isWritable: false },
+    signer: { value: input.signer ?? null, isWritable: false },
     market: { value: input.market ?? null, isWritable: true },
   };
   const accounts = originalAccounts as Record<
@@ -128,14 +124,14 @@ export function getEndRevealPeriodInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   return Object.freeze({
     accounts: [
-      getAccountMeta(accounts.authority),
+      getAccountMeta(accounts.signer),
       getAccountMeta(accounts.market),
     ],
     data: getEndRevealPeriodInstructionDataEncoder().encode({}),
     programAddress,
   } as EndRevealPeriodInstruction<
     TProgramAddress,
-    TAccountAuthority,
+    TAccountSigner,
     TAccountMarket
   >);
 }
@@ -146,7 +142,7 @@ export type ParsedEndRevealPeriodInstruction<
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    authority: TAccountMetas[0];
+    signer: TAccountMetas[0];
     market: TAccountMetas[1];
   };
   data: EndRevealPeriodInstructionData;
@@ -172,7 +168,7 @@ export function parseEndRevealPeriodInstruction<
   };
   return {
     programAddress: instruction.programAddress,
-    accounts: { authority: getNextAccount(), market: getNextAccount() },
+    accounts: { signer: getNextAccount(), market: getNextAccount() },
     data: getEndRevealPeriodInstructionDataDecoder().decode(instruction.data),
   };
 }

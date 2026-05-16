@@ -14,6 +14,7 @@ export interface UpdatePlatformConfigParams extends BaseInstructionParams {
   creatorFeeBp: number;
   minTimeToStakeSeconds: bigint;
   minRevealPeriodSeconds: bigint;
+  maxRevealPeriodSeconds: bigint;
   marketResolutionDeadlineSeconds: bigint;
 }
 
@@ -30,6 +31,7 @@ export async function updatePlatformConfig(
     creatorFeeBp,
     minTimeToStakeSeconds,
     minRevealPeriodSeconds,
+    maxRevealPeriodSeconds,
     marketResolutionDeadlineSeconds,
   } = params;
 
@@ -54,6 +56,7 @@ export async function updatePlatformConfig(
       creatorFeeBp,
       minTimeToStakeSeconds,
       minRevealPeriodSeconds,
+      maxRevealPeriodSeconds,
       marketResolutionDeadlineSeconds,
     },
     programAddress ? { programAddress } : undefined,

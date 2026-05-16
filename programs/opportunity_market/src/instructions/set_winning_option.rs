@@ -27,10 +27,13 @@ pub struct SetWinningOption<'info> {
 pub fn set_winning_option(
     ctx: Context<SetWinningOption>,
     _option_id: u64,
-    reward_percentage: u8,
+    reward_percentage_bp: u16,
 ) -> Result<()> {
-    require!(!ctx.accounts.market.resolved, ErrorCode::WinnerAlreadySelected);
-    require!(reward_percentage <= 100, ErrorCode::InvalidParameters);
+    require!(
+        ctx.accounts.market.resolved_at_timestamp.is_none(),
+        ErrorCode::WinnerAlreadySelected,
+    );
+    require!(reward_percentage_bp <= 10_000, ErrorCode::InvalidParameters);
 
     let open_timestamp = ctx
         .accounts
@@ -60,7 +63,7 @@ pub fn set_winning_option(
     );
 
     let previous = if ctx.accounts.option.selected {
-        ctx.accounts.option.reward_percentage
+        ctx.accounts.option.reward_percentage_bp
     } else {
         0
     };
@@ -70,12 +73,12 @@ pub fn set_winning_option(
         .winning_option_allocation
         .checked_sub(previous)
         .ok_or(ErrorCode::Overflow)?
-        .checked_add(reward_percentage)
+        .checked_add(reward_percentage_bp)
         .ok_or(ErrorCode::Overflow)?;
-    require!(new_alloc <= 100, ErrorCode::InvalidParameters);
+    require!(new_alloc <= 10_000, ErrorCode::InvalidParameters);
 
-    ctx.accounts.option.selected = reward_percentage > 0;
-    ctx.accounts.option.reward_percentage = reward_percentage;
+    ctx.accounts.option.selected = reward_percentage_bp > 0;
+    ctx.accounts.option.reward_percentage_bp = reward_percentage_bp;
     ctx.accounts.market.winning_option_allocation = new_alloc;
 
     emit_ts!(WinningOptionSetEvent {
@@ -83,7 +86,7 @@ pub fn set_winning_option(
         market_authority: ctx.accounts.market_authority.key(),
         option: ctx.accounts.option.key(),
         option_id: ctx.accounts.option.id,
-        reward_percentage: reward_percentage,
+        reward_percentage_bp: reward_percentage_bp,
         winning_option_allocation: new_alloc,
     });
 

@@ -16,10 +16,10 @@ import {
   getProgramDerivedAddress,
   getStructDecoder,
   getStructEncoder,
+  getU16Decoder,
+  getU16Encoder,
   getU64Decoder,
   getU64Encoder,
-  getU8Decoder,
-  getU8Encoder,
   transformEncoder,
   type AccountMeta,
   type AccountSignerMeta,
@@ -80,12 +80,12 @@ export type SetWinningOptionInstruction<
 export type SetWinningOptionInstructionData = {
   discriminator: ReadonlyUint8Array;
   optionId: bigint;
-  rewardPercentage: number;
+  rewardPercentageBp: number;
 };
 
 export type SetWinningOptionInstructionDataArgs = {
   optionId: number | bigint;
-  rewardPercentage: number;
+  rewardPercentageBp: number;
 };
 
 export function getSetWinningOptionInstructionDataEncoder(): FixedSizeEncoder<SetWinningOptionInstructionDataArgs> {
@@ -93,7 +93,7 @@ export function getSetWinningOptionInstructionDataEncoder(): FixedSizeEncoder<Se
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['optionId', getU64Encoder()],
-      ['rewardPercentage', getU8Encoder()],
+      ['rewardPercentageBp', getU16Encoder()],
     ]),
     (value) => ({ ...value, discriminator: SET_WINNING_OPTION_DISCRIMINATOR })
   );
@@ -103,7 +103,7 @@ export function getSetWinningOptionInstructionDataDecoder(): FixedSizeDecoder<Se
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['optionId', getU64Decoder()],
-    ['rewardPercentage', getU8Decoder()],
+    ['rewardPercentageBp', getU16Decoder()],
   ]);
 }
 
@@ -126,7 +126,7 @@ export type SetWinningOptionAsyncInput<
   market: Address<TAccountMarket>;
   option?: Address<TAccountOption>;
   optionId: SetWinningOptionInstructionDataArgs['optionId'];
-  rewardPercentage: SetWinningOptionInstructionDataArgs['rewardPercentage'];
+  rewardPercentageBp: SetWinningOptionInstructionDataArgs['rewardPercentageBp'];
 };
 
 export async function getSetWinningOptionInstructionAsync<
@@ -212,7 +212,7 @@ export type SetWinningOptionInput<
   market: Address<TAccountMarket>;
   option: Address<TAccountOption>;
   optionId: SetWinningOptionInstructionDataArgs['optionId'];
-  rewardPercentage: SetWinningOptionInstructionDataArgs['rewardPercentage'];
+  rewardPercentageBp: SetWinningOptionInstructionDataArgs['rewardPercentageBp'];
 };
 
 export function getSetWinningOptionInstruction<

@@ -6,7 +6,7 @@ import {
 import { type BaseInstructionParams } from "./instructionParams";
 
 export interface EndRevealPeriodParams extends BaseInstructionParams {
-  authority: TransactionSigner;
+  signer: TransactionSigner;
   market: Address;
 }
 

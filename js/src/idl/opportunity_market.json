@@ -1250,7 +1250,7 @@
       ],
       "accounts": [
         {
-          "name": "authority",
+          "name": "signer",
           "signer": true
         },
         {
@@ -1702,6 +1702,10 @@
         },
         {
           "name": "min_reveal_period_seconds",
+          "type": "u64"
+        },
+        {
+          "name": "max_reveal_period_seconds",
           "type": "u64"
         },
         {
@@ -2389,8 +2393,8 @@
           "type": "u64"
         },
         {
-          "name": "reward_percentage",
-          "type": "u8"
+          "name": "reward_percentage_bp",
+          "type": "u16"
         }
       ]
     },
@@ -2980,6 +2984,10 @@
         },
         {
           "name": "min_reveal_period_seconds",
+          "type": "u64"
+        },
+        {
+          "name": "max_reveal_period_seconds",
           "type": "u64"
         },
         {
@@ -4508,16 +4516,12 @@
             "type": "u64"
           },
           {
-            "name": "platform_fee_bp",
-            "type": "u16"
-          },
-          {
-            "name": "reward_pool_fee_bp",
-            "type": "u16"
-          },
-          {
-            "name": "creator_fee_bp",
-            "type": "u16"
+            "name": "fees",
+            "type": {
+              "defined": {
+                "name": "Fees"
+              }
+            }
           },
           {
             "name": "market_fee_claimer",
@@ -4529,6 +4533,10 @@
           },
           {
             "name": "min_reveal_period_seconds",
+            "type": "u64"
+          },
+          {
+            "name": "max_reveal_period_seconds",
             "type": "u64"
           },
           {
@@ -4759,12 +4767,14 @@
             "type": "u64"
           },
           {
-            "name": "resolved",
-            "type": "bool"
+            "name": "resolved_at_timestamp",
+            "type": {
+              "option": "u64"
+            }
           },
           {
             "name": "winning_option_allocation",
-            "type": "u8"
+            "type": "u16"
           },
           {
             "name": "reward_amount",
@@ -4812,16 +4822,12 @@
             "type": "bool"
           },
           {
-            "name": "platform_fee_bp",
-            "type": "u16"
-          },
-          {
-            "name": "reward_pool_fee_bp",
-            "type": "u16"
-          },
-          {
-            "name": "creator_fee_bp",
-            "type": "u16"
+            "name": "fees",
+            "type": {
+              "defined": {
+                "name": "Fees"
+              }
+            }
           },
           {
             "name": "collected_platform_fees",
@@ -4844,10 +4850,12 @@
             "type": "u64"
           },
           {
-            "name": "reveal_ended_at",
-            "type": {
-              "option": "u64"
-            }
+            "name": "max_reveal_period_seconds",
+            "type": "u64"
+          },
+          {
+            "name": "reveal_ended",
+            "type": "bool"
           },
           {
             "name": "min_stake_amount",
@@ -4886,8 +4894,8 @@
             "type": "bool"
           },
           {
-            "name": "reward_percentage",
-            "type": "u8"
+            "name": "reward_percentage_bp",
+            "type": "u16"
           }
         ]
       }
@@ -5085,6 +5093,10 @@
           {
             "name": "min_reveal_period_seconds",
             "type": "u64"
+          },
+          {
+            "name": "max_reveal_period_seconds",
+            "type": "u64"
           }
         ]
       }
@@ -5099,7 +5111,7 @@
             "type": "pubkey"
           },
           {
-            "name": "authority",
+            "name": "signer",
             "type": "pubkey"
           },
           {
@@ -5911,12 +5923,12 @@
             "type": "u64"
           },
           {
-            "name": "reward_percentage",
-            "type": "u8"
+            "name": "reward_percentage_bp",
+            "type": "u16"
           },
           {
             "name": "winning_option_allocation",
-            "type": "u8"
+            "type": "u16"
           },
           {
             "name": "timestamp",

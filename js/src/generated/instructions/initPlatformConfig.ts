@@ -95,6 +95,7 @@ export type InitPlatformConfigInstructionData = {
   feeClaimAuthority: Address;
   minTimeToStakeSeconds: bigint;
   minRevealPeriodSeconds: bigint;
+  maxRevealPeriodSeconds: bigint;
   marketResolutionDeadlineSeconds: bigint;
 };
 
@@ -106,6 +107,7 @@ export type InitPlatformConfigInstructionDataArgs = {
   feeClaimAuthority: Address;
   minTimeToStakeSeconds: number | bigint;
   minRevealPeriodSeconds: number | bigint;
+  maxRevealPeriodSeconds: number | bigint;
   marketResolutionDeadlineSeconds: number | bigint;
 };
 
@@ -120,6 +122,7 @@ export function getInitPlatformConfigInstructionDataEncoder(): Encoder<InitPlatf
       ['feeClaimAuthority', getAddressEncoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minRevealPeriodSeconds', getU64Encoder()],
+      ['maxRevealPeriodSeconds', getU64Encoder()],
       ['marketResolutionDeadlineSeconds', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: INIT_PLATFORM_CONFIG_DISCRIMINATOR })
@@ -136,6 +139,7 @@ export function getInitPlatformConfigInstructionDataDecoder(): Decoder<InitPlatf
     ['feeClaimAuthority', getAddressDecoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minRevealPeriodSeconds', getU64Decoder()],
+    ['maxRevealPeriodSeconds', getU64Decoder()],
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
   ]);
 }
@@ -165,6 +169,7 @@ export type InitPlatformConfigAsyncInput<
   feeClaimAuthority: InitPlatformConfigInstructionDataArgs['feeClaimAuthority'];
   minTimeToStakeSeconds: InitPlatformConfigInstructionDataArgs['minTimeToStakeSeconds'];
   minRevealPeriodSeconds: InitPlatformConfigInstructionDataArgs['minRevealPeriodSeconds'];
+  maxRevealPeriodSeconds: InitPlatformConfigInstructionDataArgs['maxRevealPeriodSeconds'];
   marketResolutionDeadlineSeconds: InitPlatformConfigInstructionDataArgs['marketResolutionDeadlineSeconds'];
 };
 
@@ -261,6 +266,7 @@ export type InitPlatformConfigInput<
   feeClaimAuthority: InitPlatformConfigInstructionDataArgs['feeClaimAuthority'];
   minTimeToStakeSeconds: InitPlatformConfigInstructionDataArgs['minTimeToStakeSeconds'];
   minRevealPeriodSeconds: InitPlatformConfigInstructionDataArgs['minRevealPeriodSeconds'];
+  maxRevealPeriodSeconds: InitPlatformConfigInstructionDataArgs['maxRevealPeriodSeconds'];
   marketResolutionDeadlineSeconds: InitPlatformConfigInstructionDataArgs['marketResolutionDeadlineSeconds'];
 };
 
