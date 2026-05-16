@@ -152,4 +152,17 @@ After the reveal period has passsed, users that staked on one of the selected op
 
 #### Reward calculation
 
-TODO
+When the market is resolved, the reward pool is split among the winning options according to the percentages set by the market creator. Each option's slice is then distributed across its stakers in proportion to their **score**.
+
+A staker's score is the product of three factors:
+
+$$\text{score} = A \cdot T \cdot E$$
+
+- $A$ = stake amount, in the market token's base units.
+- $T$ = how long the user was staked, capped at when staking closes
+- $E$ = the earliness factor, in $[1, M]$. It decays linearly from a maximum multiplier $M$ (configured by the market creator) down to $1$ over a configurable window $T_{\text{cutoff}}$:
+
+$$E(d) = M - \min(d, T_{\text{cutoff}}) \cdot \frac{M - 1}{T_{\text{cutoff}}}$$
+
+  where $d = t_{\text{start}} - t_{\text{option}}$ is the delay between option creation and stake placement. Stakes placed at or after $T_{\text{cutoff}}$ receive $E = 1$ (no boost).
+
