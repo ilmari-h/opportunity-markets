@@ -156,13 +156,10 @@ When the market is resolved, the reward pool is split among the winning options 
 
 A staker's score is the product of three factors:
 
-$$\text{score} = A \cdot T \cdot E$$
+$$\text{score} = s \cdot t \cdot e$$
 
-- $A$ = stake amount, in the market token's base units.
-- $T$ = how long the user was staked, capped at when staking closes
-- $E$ = the earliness factor, in $[1, M]$. It decays linearly from a maximum multiplier $M$ (configured by the market creator) down to $1$ over a configurable window $T_{\text{cutoff}}$:
+- $s$ = stake amount, in the market token's base units.
+- $t$ = how long the user was staked, capped at when staking closes
+- $e$ = the earliness factor, in $[1, m]$
 
-$$E(d) = M - \min(d, T_{\text{cutoff}}) \cdot \frac{M - 1}{T_{\text{cutoff}}}$$
-
-  where $d = t_{\text{start}} - t_{\text{option}}$ is the delay between option creation and stake placement. Stakes placed at or after $T_{\text{cutoff}}$ receive $E = 1$ (no boost).
-
+ Earliness factor $e$ decays linearly from a maximum multiplier $m$ (`earliness_multiplier` in market account) down to $1$ over a configurable window (`earliness_cutoff_seconds` in market account). User that stakes on an option right after it's created gets $e=m$, whereas user staking at the earliness window boundary or later gets $e=1$.
