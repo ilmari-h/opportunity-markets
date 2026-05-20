@@ -491,6 +491,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "arcium-crypto"
+version = "0.1.0"
+dependencies = [
+ "fiat-crypto 0.3.0",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha3",
+]
+
+[[package]]
 name = "arcium-macros"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1382,7 +1393,7 @@ dependencies = [
  "cpufeatures",
  "curve25519-dalek-derive",
  "digest 0.10.7",
- "fiat-crypto",
+ "fiat-crypto 0.2.9",
  "group",
  "rand_core 0.6.4",
  "rustc_version",
@@ -1406,7 +1417,7 @@ dependencies = [
  "digest 0.10.7",
  "elliptic-curve",
  "ff",
- "fiat-crypto",
+ "fiat-crypto 0.2.9",
  "group",
  "pkcs8 0.11.0-rc.1",
  "rand_core 0.6.4",
@@ -1838,6 +1849,12 @@ name = "fiat-crypto"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28dea519a9695b9977216879a3ebfddf92f1c08c05d984f8996aecd6ecdc811d"
+
+[[package]]
+name = "fiat-crypto"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64cd1e32ddd350061ae6edb1b082d7c54915b5c672c389143b9a63403a109f24"
 
 [[package]]
 name = "find-msvc-tools"
