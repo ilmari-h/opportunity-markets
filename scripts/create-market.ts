@@ -94,7 +94,6 @@ async function main() {
     tokenMint: address(TOKEN_MINT_ARG),
     tokenProgram: TOKEN_PROGRAM_ADDRESS,
     marketIndex,
-    timeToStake: BigInt(config.timeToStake),
     marketAuthority: config.marketAuthority ? address(config.marketAuthority) : payer.address,
     allowUnstakingEarly: config.allowUnstakingEarly,
     authorizedReaderPubkey,

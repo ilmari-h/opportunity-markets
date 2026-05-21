@@ -12,7 +12,6 @@ export interface CreateMarketParams extends BaseInstructionParams {
   tokenMint: Address;
   tokenProgram: Address;
   marketIndex: bigint;
-  timeToStake: bigint;
   marketAuthority: Address;
   allowUnstakingEarly: boolean;
   authorizedReaderPubkey: ByteArray;

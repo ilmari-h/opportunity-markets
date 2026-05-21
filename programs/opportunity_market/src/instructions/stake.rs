@@ -26,7 +26,7 @@ pub struct Stake<'info> {
 
     #[account(
         mut,
-        constraint = market.open_timestamp.is_some() @ ErrorCode::MarketNotOpen,
+        constraint = market.stake_end_timestamp.is_some() @ ErrorCode::MarketNotOpen,
         constraint = market.resolved_at_timestamp.is_none() @ ErrorCode::WinnerAlreadySelected,
         constraint = !market.staking_paused @ ErrorCode::MarketPaused,
     )]
@@ -118,15 +118,12 @@ pub fn stake(
     // Enforce staking period is active
     let market = &ctx.accounts.market;
     let authorized_reader_pubkey = market.authorized_reader_pubkey;
-    let open_timestamp = market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
+    let stake_end = market.stake_end_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
-    let stake_end_timestamp = open_timestamp
-        .checked_add(market.time_to_stake)
-        .ok_or(ErrorCode::Overflow)?;
 
     require!(
-        current_timestamp >= open_timestamp && current_timestamp <= stake_end_timestamp,
+        current_timestamp <= stake_end,
         ErrorCode::TimeWindowMismatch
     );
 

@@ -50,11 +50,8 @@ pub struct OpportunityMarket {
 
     pub platform: Pubkey,
 
-    // If set, means market is funded and ready to be opened for staking.
-    pub open_timestamp: Option<u64>,
-
-    // Seconds from open_timestamp
-    pub time_to_stake: u64,
+    // Some(...) once open_market is called; None means the market is not yet open.
+    pub stake_end_timestamp: Option<u64>,
 
     pub resolved_at_timestamp: Option<u64>,
     pub winning_option_allocation: u16,

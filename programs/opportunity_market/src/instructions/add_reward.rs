@@ -56,13 +56,13 @@ pub fn add_reward(ctx: Context<AddReward>, amount: u64, lock: bool) -> Result<()
     let market = &ctx.accounts.market;
 
     // Allow anytime before staking ends
-    if let Some(open_timestamp) = market.open_timestamp {
+    if let Some(stake_end) = market.stake_end_timestamp {
         let clock = Clock::get()?;
         let current_timestamp = clock.unix_timestamp as u64;
-        let stake_end = open_timestamp
-            .checked_add(market.time_to_stake)
-            .ok_or(ErrorCode::Overflow)?;
-        require!(current_timestamp < stake_end, ErrorCode::TimeWindowMismatch);
+        require!(
+            current_timestamp < stake_end,
+            ErrorCode::TimeWindowMismatch,
+        );
     }
 
     let sponsor_account = &mut ctx.accounts.sponsor_account;

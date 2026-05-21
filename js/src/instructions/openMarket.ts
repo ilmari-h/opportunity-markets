@@ -8,7 +8,8 @@ import { type BaseInstructionParams } from "./instructionParams";
 export interface OpenMarketParams extends BaseInstructionParams {
   marketAuthority: TransactionSigner;
   market: Address;
-  openTimestamp: bigint;
+  platformConfig: Address;
+  timeToStake: bigint;
 }
 
 export function openMarket(

@@ -37,7 +37,6 @@ export type MarketCreatedEvent = {
   platform: Address;
   index: bigint;
   mint: Address;
-  timeToStake: bigint;
   earlinessCutoffSeconds: bigint;
   earlinessMultiplier: number;
   marketAuthority: Address;
@@ -60,7 +59,6 @@ export type MarketCreatedEventArgs = {
   platform: Address;
   index: number | bigint;
   mint: Address;
-  timeToStake: number | bigint;
   earlinessCutoffSeconds: number | bigint;
   earlinessMultiplier: number;
   marketAuthority: Address;
@@ -84,7 +82,6 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['platform', getAddressEncoder()],
     ['index', getU64Encoder()],
     ['mint', getAddressEncoder()],
-    ['timeToStake', getU64Encoder()],
     ['earlinessCutoffSeconds', getU64Encoder()],
     ['earlinessMultiplier', getU16Encoder()],
     ['marketAuthority', getAddressEncoder()],
@@ -109,7 +106,6 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['platform', getAddressDecoder()],
     ['index', getU64Decoder()],
     ['mint', getAddressDecoder()],
-    ['timeToStake', getU64Decoder()],
     ['earlinessCutoffSeconds', getU64Decoder()],
     ['earlinessMultiplier', getU16Decoder()],
     ['marketAuthority', getAddressDecoder()],

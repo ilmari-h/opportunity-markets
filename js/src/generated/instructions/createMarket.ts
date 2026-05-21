@@ -114,7 +114,6 @@ export type CreateMarketInstruction<
 export type CreateMarketInstructionData = {
   discriminator: ReadonlyUint8Array;
   marketIndex: bigint;
-  timeToStake: bigint;
   marketAuthority: Address;
   allowUnstakingEarly: boolean;
   authorizedReaderPubkey: Array<number>;
@@ -129,7 +128,6 @@ export type CreateMarketInstructionData = {
 
 export type CreateMarketInstructionDataArgs = {
   marketIndex: number | bigint;
-  timeToStake: number | bigint;
   marketAuthority: Address;
   allowUnstakingEarly: boolean;
   authorizedReaderPubkey: Array<number>;
@@ -147,7 +145,6 @@ export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<Create
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['marketIndex', getU64Encoder()],
-      ['timeToStake', getU64Encoder()],
       ['marketAuthority', getAddressEncoder()],
       ['allowUnstakingEarly', getBooleanEncoder()],
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
@@ -167,7 +164,6 @@ export function getCreateMarketInstructionDataDecoder(): FixedSizeDecoder<Create
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['marketIndex', getU64Decoder()],
-    ['timeToStake', getU64Decoder()],
     ['marketAuthority', getAddressDecoder()],
     ['allowUnstakingEarly', getBooleanDecoder()],
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
@@ -213,7 +209,6 @@ export type CreateMarketAsyncInput<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketIndex: CreateMarketInstructionDataArgs['marketIndex'];
-  timeToStake: CreateMarketInstructionDataArgs['timeToStake'];
   marketAuthority: CreateMarketInstructionDataArgs['marketAuthority'];
   allowUnstakingEarly: CreateMarketInstructionDataArgs['allowUnstakingEarly'];
   authorizedReaderPubkey: CreateMarketInstructionDataArgs['authorizedReaderPubkey'];
@@ -399,7 +394,6 @@ export type CreateMarketInput<
   associatedTokenProgram?: Address<TAccountAssociatedTokenProgram>;
   systemProgram?: Address<TAccountSystemProgram>;
   marketIndex: CreateMarketInstructionDataArgs['marketIndex'];
-  timeToStake: CreateMarketInstructionDataArgs['timeToStake'];
   marketAuthority: CreateMarketInstructionDataArgs['marketAuthority'];
   allowUnstakingEarly: CreateMarketInstructionDataArgs['allowUnstakingEarly'];
   authorizedReaderPubkey: CreateMarketInstructionDataArgs['authorizedReaderPubkey'];

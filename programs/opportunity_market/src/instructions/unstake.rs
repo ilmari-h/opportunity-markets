@@ -20,7 +20,7 @@ pub struct Unstake<'info> {
     #[account(
         seeds = [OPPORTUNITY_MARKET_SEED, market.platform.as_ref(), market.creator.as_ref(), &market.index.to_le_bytes()],
         bump = market.bump,
-        constraint = market.open_timestamp.is_some() @ ErrorCode::MarketNotOpen,
+        constraint = market.stake_end_timestamp.is_some() @ ErrorCode::MarketNotOpen,
     )]
     pub market: Box<Account<'info, OpportunityMarket>>,
 
@@ -64,10 +64,7 @@ pub fn unstake(
 ) -> Result<()> {
     let market = &ctx.accounts.market;
 
-    let open_timestamp = market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
-    let stake_end = open_timestamp
-        .checked_add(market.time_to_stake)
-        .ok_or(ErrorCode::Overflow)?;
+    let stake_end = market.stake_end_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
     let current_timestamp = Clock::get()?.unix_timestamp as u64;
 
     if current_timestamp < stake_end {

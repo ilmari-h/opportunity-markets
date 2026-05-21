@@ -84,15 +84,11 @@ describe("OpportunityMarket", () => {
     });
 
     // Open market
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
 
     // Add two options
     const { optionId: optionA } = await platform.addOption();
     const { optionId: optionB } = await platform.addOption();
-
-    // Wait for market staking period to be active
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     // First half stake on Option A, second half stake on Option B
     const stakeAmounts = [50_000_000n, 75_000_000n, 100_000_000n, 60_000_000n];
     const expectedPlatformFeePerUser = stakeAmounts.map(a => a * platformFeeBp / 10_000n);
@@ -183,9 +179,7 @@ describe("OpportunityMarket", () => {
     );
 
     // Get timestamps for reward calculation
-    const updatedMarket = await platform.fetchMarket();
-    const marketCloseTimestamp =
-      BigInt(unwrapOption(updatedMarket.data.openTimestamp) ?? 0n) + updatedMarket.data.timeToStake;
+    const optionCreatedTimestamp = (await platform.fetchOptionData(winningOptionIndex)).data.createdAt;
 
     const winnerTimestamps = await Promise.all(
       winners.map(async (userId, i) => {
@@ -275,16 +269,15 @@ describe("OpportunityMarket", () => {
       expect(gain > 0n).to.be.true;
     }
 
-    // Total market loss equals the reward pool plus winners' refunded creator
-    // fees (reward_pool_fee is 0 in this test, so it does not contribute).
+    // Total market loss equals the reward pool plus winners' refunded creator fees.
     const expectedMarketLoss = marketFundingAmount + sumWinnerCreatorFees;
     const marketLoss = marketBalanceBefore - marketBalanceAfter;
     expect(marketLoss >= expectedMarketLoss - 2n && marketLoss <= expectedMarketLoss).to.be.true;
 
-    // Verify proportional reward distribution
+    // Verify proportional reward distribution. 
     const winnerScores = gains.map(({ gain, staked }, i) => ({
       gain,
-      score: staked * (marketCloseTimestamp - winnerTimestamps[i]),
+      score: staked * (winnerTimestamps[i] - optionCreatedTimestamp),
     }));
 
     winnerScores.forEach((a, i) =>
@@ -344,7 +337,7 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
 
     const [user1, user2] = platform.participants;
 
@@ -355,10 +348,6 @@ describe("OpportunityMarket", () => {
       options.push(optionId);
     }
     const [optA, optB, optC, _optD, optE, optF, optG] = options;
-
-    // Wait for staking period
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     // User 1 stakes on A, B, C
     const u1StakeIds = await platform.stakeOnOptionBatch([
       { userId: user1, amount: stakeAmount, optionId: optA },
@@ -397,8 +386,7 @@ describe("OpportunityMarket", () => {
 
     // selectWinningOptions with allow_closing_early shortens time_to_stake, so reveal window starts now.
     const updatedMarket = await platform.fetchMarket();
-    const updatedOpenTs = Number(unwrapOption(updatedMarket.data.openTimestamp) ?? 0n);
-    const revealStart = updatedOpenTs + Number(updatedMarket.data.timeToStake);
+    const revealStart = Number(unwrapOption(updatedMarket.data.stakeEndTimestamp) ?? 0n);
     await sleepUntilOnChainTimestamp(revealStart + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Reveal all stake accounts
@@ -504,7 +492,7 @@ describe("OpportunityMarket", () => {
     });
 
     // Open market
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
 
     // Get the single participant
     const user = platform.participants[0];
@@ -512,10 +500,6 @@ describe("OpportunityMarket", () => {
     // Create 2 options
     const { optionId: optionA } = await platform.addOption();
     const { optionId: optionB } = await platform.addOption();
-
-    // Wait for market staking period to be active
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     // User stakes on both options twice (4 stake accounts total)
     const stakeAccountIds = await platform.stakeOnOptionBatch([
       { userId: user, amount: stakeAmount, optionId: optionA },
@@ -553,8 +537,7 @@ describe("OpportunityMarket", () => {
 
     // Wait for reveal window to start (selectSingleWinningOption truncates time_to_stake)
     const updatedMarket = await platform.fetchMarket();
-    const marketOpenTs = Number(unwrapOption(updatedMarket.data.openTimestamp) ?? 0n);
-    const revealStart = marketOpenTs + Number(updatedMarket.data.timeToStake);
+    const revealStart = Number(unwrapOption(updatedMarket.data.stakeEndTimestamp) ?? 0n);
     await sleepUntilOnChainTimestamp(revealStart + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Reveal ALL stake accounts sequentially
@@ -654,14 +637,11 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
     const { optionId: optionA } = await platform.addOption();
     const { optionId: optionB } = await platform.addOption();
 
     // resolve_market requires current_time >= open_timestamp; otherwise it errors
-    // with the same InvalidParameters code as the allocation check.
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     // Under (5000 + 3000 = 8000 bp): resolve must reject.
     await platform.setWinningOption(optionA, 5000);
     await platform.setWinningOption(optionB, 3000);
@@ -716,15 +696,11 @@ describe("OpportunityMarket", () => {
     });
 
     // Open market
-    const openTimestamp = await platform.openMarket();
+    const stakeEnd = await platform.openMarket();
 
     // Add options as creator
     const { optionId: optionA } = await platform.addOption();
     await platform.addOption();
-
-    // Wait for staking period to be active
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     // Try to select option before stake period ends - should fail
     await shouldThrowCustomError(
       () => platform.selectSingleWinningOption(optionA),
@@ -736,8 +712,7 @@ describe("OpportunityMarket", () => {
     expect(isNone(market.data.resolvedAtTimestamp)).to.be.true;
 
     // Wait for stake period to end
-    const stakeEndTimestamp = Number(openTimestamp) + Number(timeToStake);
-    await sleepUntilOnChainTimestamp(stakeEndTimestamp + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+    await sleepUntilOnChainTimestamp(Number(stakeEnd) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Now selecting option should succeed
     await platform.selectSingleWinningOption(optionA);
@@ -770,14 +745,10 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
 
     // Add an option so staking can happen
     await platform.addOption();
-
-    // Wait for staking period to be active
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     // Verify initial reward amount
     let market = await platform.fetchMarket();
     expect(market.data.rewardAmount).to.equal(initialReward);
@@ -811,15 +782,11 @@ describe("OpportunityMarket", () => {
     // Add reward unlocked (lock=false)
     await platform.addReward(platform.creator, marketFundingAmount, false);
 
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
 
     // Add options
     await platform.addOption();
     await platform.addOption();
-
-    // Wait for staking period to be active
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     // Verify reward amount
     let market = await platform.fetchMarket();
     expect(market.data.rewardAmount).to.equal(marketFundingAmount);
@@ -839,41 +806,6 @@ describe("OpportunityMarket", () => {
     market = await platform.fetchMarket();
     expect(market.data.rewardAmount).to.equal(0n);
     expect(isNone(market.data.resolvedAtTimestamp)).to.be.true;
-  });
-
-  it("rejects staking before staking period is active", async () => {
-    const marketFundingAmount = 1_000_000_000n;
-
-    const observer = loadObserverKeypair();
-
-    const platform = await Platform.initialize(provider, programId, {
-      rpcUrl: RPC_URL,
-      wsUrl: WS_URL,
-      numParticipants: 1,
-      airdropLamports: 2_000_000_000n,
-      initialTokenAmount: 2_000_000_000n,
-      marketConfig: {
-        rewardAmount: marketFundingAmount,
-        timeToStake: 120n,
-        authorizedReaderPubkey: observer.publicKey,
-      },
-    });
-
-    // Open market with a timestamp far in the future so staking is not yet active
-    const futureTimestamp = BigInt(Math.floor(Date.now() / 1000) + 600);
-    await platform.openMarket(futureTimestamp);
-
-    const user = platform.participants[0];
-
-    // Add options
-    const { optionId: optionA } = await platform.addOption();
-    await platform.addOption();
-
-    // Try to stake before staking period starts — should fail
-    await shouldThrowCustomError(
-      () => platform.stakeOnOption(user, 50_000_000n, optionA),
-      OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH
-    );
   });
 
   it("allows early unstaking when market opts in", async () => {
@@ -897,15 +829,12 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    const stakeEnd = await platform.openMarket();
 
     const [staker] = platform.participants;
 
     const { optionId: optionA } = await platform.addOption();
     await platform.addOption();
-
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     const rpc = platform.getRpc();
     const balanceBeforeStake = (await fetchToken(rpc, platform.getUserTokenAccount(staker))).data.amount;
 
@@ -940,8 +869,7 @@ describe("OpportunityMarket", () => {
 
     // Reveal still works post-stake-end (early unstaker keeps participation rights).
     await platform.selectSingleWinningOption(optionA);
-    const stakeEndTimestamp = Number(openTimestamp) + Number(timeToStake);
-    await sleepUntilOnChainTimestamp(stakeEndTimestamp + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+    await sleepUntilOnChainTimestamp(Number(stakeEnd) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     await platform.revealStake(staker, stakeAccountId);
     stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
@@ -965,13 +893,10 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
     const [staker] = platform.participants;
     const { optionId: optionA } = await platform.addOption();
     await platform.addOption();
-
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     const stakeAccountId = await platform.stakeOnOption(staker, 50_000_000n, optionA);
 
     // Window is still open and opt-in is false — must reject.
@@ -1067,11 +992,8 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
     const { optionId } = await platform.addOption();
-
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     const [user] = platform.participants;
     const rpc = platform.getRpc();
     const stakeAmount = 100_000_000n;
@@ -1121,11 +1043,8 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
     const { optionId } = await platform.addOption();
-
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     const user = platform.participants[0];
 
     // Pause staking
@@ -1171,10 +1090,8 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
     const { optionId } = await platform.addOption();
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     const user = platform.participants[0];
     const rpc = platform.getRpc();
 
@@ -1202,8 +1119,7 @@ describe("OpportunityMarket", () => {
     // Resolve the market and run through reveal/reclaim.
     await platform.selectSingleWinningOption(optionId);
     const resolved = await platform.fetchMarket();
-    const stakeEnd =
-      Number(unwrapOption(resolved.data.openTimestamp) ?? 0n) + Number(resolved.data.timeToStake);
+    const stakeEnd = Number(unwrapOption(resolved.data.stakeEndTimestamp) ?? 0n);
     await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     await platform.revealStake(user, stakeAccountId);
@@ -1261,10 +1177,8 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    const stakeEnd = Number(await platform.openMarket());
     const { optionId } = await platform.addOption();
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     const user = platform.participants[0];
     const rpc = platform.getRpc();
 
@@ -1284,7 +1198,6 @@ describe("OpportunityMarket", () => {
     expect(stakeAccount.data.amount).to.equal(expectedNetStake);
 
     // Wait past stake_end + market_resolution_deadline without selecting winners.
-    const stakeEnd = Number(openTimestamp) + Number(timeToStake);
     const selectDeadline = stakeEnd + Number(marketResolutionDeadlineSeconds);
     await sleepUntilOnChainTimestamp(selectDeadline + ONCHAIN_TIMESTAMP_BUFFER_SECONDS, rpc);
 
@@ -1353,8 +1266,7 @@ describe("OpportunityMarket", () => {
       OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
     );
 
-    const openTimestamp = await platform.openMarket();
-    const stakeEnd = Number(openTimestamp) + Number(timeToStake);
+    const stakeEnd = Number(await platform.openMarket());
     await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS, rpc);
 
     // Resolution window: unlocked sponsor's withdraw is blocked by the time gate.
@@ -1402,11 +1314,8 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
     const { optionId } = await platform.addOption();
-
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     const user = platform.participants[0];
 
     // Stake just below the minimum should fail
@@ -1441,10 +1350,9 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    const stakeEnd = Number(await platform.openMarket());
     const { optionId } = await platform.addOption();
 
-    const stakeEnd = Number(openTimestamp) + Number(timeToStake);
     await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
     await platform.selectSingleWinningOption(optionId);
 
@@ -1467,14 +1375,12 @@ describe("OpportunityMarket", () => {
   });
 
   it("winner takes all when fees sum up to 100%", async () => {
-    // Fee split: 98% reward pool, 1% platform, 1% creator → 100% total, 0% net.
-    // The user's stake is wholly consumed by fees; the reward pool grows by 98%
-    // of every staker's deposit, so the winner's pool inherits the loser's stake.
+    // The user's stake is wholly consumed by fees which grow the reward pool.
     const platformFeeBp = 100;
     const creatorFeeBp = 100;
     const rewardPoolFeeBp = 9800;
 
-    const stakeAmount = 100_000_000_000n; // 100 tokens (9 decimals); divisible by 10_000
+    const stakeAmount = 100_000_000_000n;
     const expectedPoolFee = stakeAmount * BigInt(rewardPoolFeeBp) / 10_000n;
     const expectedPlatformFee = stakeAmount * BigInt(platformFeeBp) / 10_000n;
     const expectedCreatorFee = stakeAmount * BigInt(creatorFeeBp) / 10_000n;
@@ -1498,20 +1404,15 @@ describe("OpportunityMarket", () => {
       },
     });
 
-    const openTimestamp = await platform.openMarket();
+    await platform.openMarket();
     const [staker1, staker2] = platform.participants;
     const { optionId: optionA } = await platform.addOption();
     const { optionId: optionB } = await platform.addOption();
-
-    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
-
     const [sa1, sa2] = await platform.stakeOnOptionBatch([
       { userId: staker1, amount: stakeAmount, optionId: optionA },
       { userId: staker2, amount: stakeAmount, optionId: optionB },
     ]);
 
-    // Fees from both stakes accumulate on the market; the gross stake is paid in
-    // full but every base unit is split between pool / platform / creator.
     const marketAfterStakes = await platform.fetchMarket();
     expect(marketAfterStakes.data.rewardAmount).to.equal(expectedPoolFee * 2n);
     expect(marketAfterStakes.data.collectedPlatformFees).to.equal(expectedPlatformFee * 2n);
@@ -1524,10 +1425,8 @@ describe("OpportunityMarket", () => {
     // Resolve with option A as the sole winner.
     await platform.selectSingleWinningOption(optionA);
 
-    // selectSingleWinningOption shortens time_to_stake under allow_closing_early.
     const resolvedMarket = await platform.fetchMarket();
-    const resolvedOpenTs = Number(unwrapOption(resolvedMarket.data.openTimestamp) ?? 0n);
-    const revealStart = resolvedOpenTs + Number(resolvedMarket.data.timeToStake);
+    const revealStart = Number(unwrapOption(resolvedMarket.data.stakeEndTimestamp) ?? 0n);
     await sleepUntilOnChainTimestamp(revealStart + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Both stakes can be revealed.
@@ -1540,9 +1439,6 @@ describe("OpportunityMarket", () => {
     expect((await platform.fetchStakeAccountData(staker2, sa2)).data.revealedOption)
       .to.deep.equal(some(BigInt(optionB)));
 
-    // Both reveals can be finalized. Winner's finalize triggers deduct_stake_fees,
-    // so reward_amount drops by the winner's pool_fee, leaving the loser's pool
-    // contribution as the prize.
     await platform.finalizeRevealStakeBatch([
       { userId: staker1, optionId: optionA, stakeAccountId: sa1 },
       { userId: staker2, optionId: optionB, stakeAccountId: sa2 },
@@ -1552,7 +1448,7 @@ describe("OpportunityMarket", () => {
     expect(marketAfterFinalize.data.rewardAmount).to.equal(expectedPoolFee);
     expect(marketAfterFinalize.data.collectedCreatorFees).to.equal(expectedCreatorFee);
 
-    // Unstake returns exactly 0 — every base unit went to fees.
+    // Unstake returns 0, everything went to fees.
     const rpc = platform.getRpc();
     const bal1BeforeUnstake = (await fetchToken(rpc, platform.getUserTokenAccount(staker1))).data.amount;
     const bal2BeforeUnstake = (await fetchToken(rpc, platform.getUserTokenAccount(staker2))).data.amount;

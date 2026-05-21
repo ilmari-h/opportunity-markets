@@ -27,18 +27,9 @@ pub fn resolve_market(ctx: Context<ResolveMarket>) -> Result<()> {
         ErrorCode::InvalidParameters,
     );
 
-    let open_timestamp = market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
+    let stake_end = market.stake_end_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
-
-    require!(
-        current_timestamp >= open_timestamp,
-        ErrorCode::TimeWindowMismatch,
-    );
-
-    let stake_end = open_timestamp
-        .checked_add(market.time_to_stake)
-        .ok_or(ErrorCode::Overflow)?;
 
     if !market.allow_closing_early {
         require!(
@@ -56,9 +47,7 @@ pub fn resolve_market(ctx: Context<ResolveMarket>) -> Result<()> {
     );
 
     if current_timestamp < stake_end {
-        market.time_to_stake = current_timestamp
-            .checked_sub(open_timestamp)
-            .ok_or(ErrorCode::Overflow)?;
+        market.stake_end_timestamp = Some(current_timestamp);
     }
 
     market.resolved_at_timestamp = Some(current_timestamp);

@@ -22,7 +22,6 @@ pub struct MarketCreatedEvent {
     pub platform: Pubkey,
     pub index: u64,
     pub mint: Pubkey,
-    pub time_to_stake: u64,
     pub earliness_cutoff_seconds: u64,
     pub earliness_multiplier: u16,
     pub market_authority: Pubkey,
@@ -87,7 +86,7 @@ pub struct UnstakedEvent {
 pub struct MarketOpenedEvent {
     pub market: Pubkey,
     pub creator: Pubkey,
-    pub open_timestamp: u64,
+    pub stake_end_timestamp: u64,
     pub timestamp: i64,
 }
 

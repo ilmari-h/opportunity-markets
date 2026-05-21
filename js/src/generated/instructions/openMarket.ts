@@ -26,6 +26,7 @@ import {
   type Instruction,
   type InstructionWithAccounts,
   type InstructionWithData,
+  type ReadonlyAccount,
   type ReadonlySignerAccount,
   type ReadonlyUint8Array,
   type TransactionSigner,
@@ -46,6 +47,7 @@ export type OpenMarketInstruction<
   TProgram extends string = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
   TAccountMarketAuthority extends string | AccountMeta<string> = string,
   TAccountMarket extends string | AccountMeta<string> = string,
+  TAccountPlatformConfig extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -58,22 +60,25 @@ export type OpenMarketInstruction<
       TAccountMarket extends string
         ? WritableAccount<TAccountMarket>
         : TAccountMarket,
+      TAccountPlatformConfig extends string
+        ? ReadonlyAccount<TAccountPlatformConfig>
+        : TAccountPlatformConfig,
       ...TRemainingAccounts,
     ]
   >;
 
 export type OpenMarketInstructionData = {
   discriminator: ReadonlyUint8Array;
-  openTimestamp: bigint;
+  timeToStake: bigint;
 };
 
-export type OpenMarketInstructionDataArgs = { openTimestamp: number | bigint };
+export type OpenMarketInstructionDataArgs = { timeToStake: number | bigint };
 
 export function getOpenMarketInstructionDataEncoder(): FixedSizeEncoder<OpenMarketInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
-      ['openTimestamp', getU64Encoder()],
+      ['timeToStake', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: OPEN_MARKET_DISCRIMINATOR })
   );
@@ -82,7 +87,7 @@ export function getOpenMarketInstructionDataEncoder(): FixedSizeEncoder<OpenMark
 export function getOpenMarketInstructionDataDecoder(): FixedSizeDecoder<OpenMarketInstructionData> {
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
-    ['openTimestamp', getU64Decoder()],
+    ['timeToStake', getU64Decoder()],
   ]);
 }
 
@@ -99,23 +104,31 @@ export function getOpenMarketInstructionDataCodec(): FixedSizeCodec<
 export type OpenMarketInput<
   TAccountMarketAuthority extends string = string,
   TAccountMarket extends string = string,
+  TAccountPlatformConfig extends string = string,
 > = {
   marketAuthority: TransactionSigner<TAccountMarketAuthority>;
   market: Address<TAccountMarket>;
-  openTimestamp: OpenMarketInstructionDataArgs['openTimestamp'];
+  platformConfig: Address<TAccountPlatformConfig>;
+  timeToStake: OpenMarketInstructionDataArgs['timeToStake'];
 };
 
 export function getOpenMarketInstruction<
   TAccountMarketAuthority extends string,
   TAccountMarket extends string,
+  TAccountPlatformConfig extends string,
   TProgramAddress extends Address = typeof OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
 >(
-  input: OpenMarketInput<TAccountMarketAuthority, TAccountMarket>,
+  input: OpenMarketInput<
+    TAccountMarketAuthority,
+    TAccountMarket,
+    TAccountPlatformConfig
+  >,
   config?: { programAddress?: TProgramAddress }
 ): OpenMarketInstruction<
   TProgramAddress,
   TAccountMarketAuthority,
-  TAccountMarket
+  TAccountMarket,
+  TAccountPlatformConfig
 > {
   // Program address.
   const programAddress =
@@ -128,6 +141,7 @@ export function getOpenMarketInstruction<
       isWritable: false,
     },
     market: { value: input.market ?? null, isWritable: true },
+    platformConfig: { value: input.platformConfig ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
     keyof typeof originalAccounts,
@@ -142,6 +156,7 @@ export function getOpenMarketInstruction<
     accounts: [
       getAccountMeta(accounts.marketAuthority),
       getAccountMeta(accounts.market),
+      getAccountMeta(accounts.platformConfig),
     ],
     data: getOpenMarketInstructionDataEncoder().encode(
       args as OpenMarketInstructionDataArgs
@@ -150,7 +165,8 @@ export function getOpenMarketInstruction<
   } as OpenMarketInstruction<
     TProgramAddress,
     TAccountMarketAuthority,
-    TAccountMarket
+    TAccountMarket,
+    TAccountPlatformConfig
   >);
 }
 
@@ -162,6 +178,7 @@ export type ParsedOpenMarketInstruction<
   accounts: {
     marketAuthority: TAccountMetas[0];
     market: TAccountMetas[1];
+    platformConfig: TAccountMetas[2];
   };
   data: OpenMarketInstructionData;
 };
@@ -174,7 +191,7 @@ export function parseOpenMarketInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedOpenMarketInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 2) {
+  if (instruction.accounts.length < 3) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -186,7 +203,11 @@ export function parseOpenMarketInstruction<
   };
   return {
     programAddress: instruction.programAddress,
-    accounts: { marketAuthority: getNextAccount(), market: getNextAccount() },
+    accounts: {
+      marketAuthority: getNextAccount(),
+      market: getNextAccount(),
+      platformConfig: getNextAccount(),
+    },
     data: getOpenMarketInstructionDataDecoder().decode(instruction.data),
   };
 }

@@ -72,8 +72,7 @@ export type OpportunityMarket = {
   index: bigint;
   totalOptions: bigint;
   platform: Address;
-  openTimestamp: Option<bigint>;
-  timeToStake: bigint;
+  stakeEndTimestamp: Option<bigint>;
   resolvedAtTimestamp: Option<bigint>;
   winningOptionAllocation: number;
   rewardAmount: bigint;
@@ -104,8 +103,7 @@ export type OpportunityMarketArgs = {
   index: number | bigint;
   totalOptions: number | bigint;
   platform: Address;
-  openTimestamp: OptionOrNullable<number | bigint>;
-  timeToStake: number | bigint;
+  stakeEndTimestamp: OptionOrNullable<number | bigint>;
   resolvedAtTimestamp: OptionOrNullable<number | bigint>;
   winningOptionAllocation: number;
   rewardAmount: number | bigint;
@@ -139,8 +137,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['index', getU64Encoder()],
       ['totalOptions', getU64Encoder()],
       ['platform', getAddressEncoder()],
-      ['openTimestamp', getOptionEncoder(getU64Encoder())],
-      ['timeToStake', getU64Encoder()],
+      ['stakeEndTimestamp', getOptionEncoder(getU64Encoder())],
       ['resolvedAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['winningOptionAllocation', getU16Encoder()],
       ['rewardAmount', getU64Encoder()],
@@ -176,8 +173,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['index', getU64Decoder()],
     ['totalOptions', getU64Decoder()],
     ['platform', getAddressDecoder()],
-    ['openTimestamp', getOptionDecoder(getU64Decoder())],
-    ['timeToStake', getU64Decoder()],
+    ['stakeEndTimestamp', getOptionDecoder(getU64Decoder())],
     ['resolvedAtTimestamp', getOptionDecoder(getU64Decoder())],
     ['winningOptionAllocation', getU16Decoder()],
     ['rewardAmount', getU64Decoder()],

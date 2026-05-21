@@ -35,17 +35,13 @@ pub fn set_winning_option(
     );
     require!(reward_percentage_bp <= 10_000, ErrorCode::InvalidParameters);
 
-    let open_timestamp = ctx
+    let stake_end = ctx
         .accounts
         .market
-        .open_timestamp
+        .stake_end_timestamp
         .ok_or(ErrorCode::MarketNotOpen)?;
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
-
-    let stake_end = open_timestamp
-        .checked_add(ctx.accounts.market.time_to_stake)
-        .ok_or(ErrorCode::Overflow)?;
 
     if !ctx.accounts.market.allow_closing_early {
         require!(

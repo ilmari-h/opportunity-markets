@@ -94,7 +94,6 @@ pub mod opportunity_market {
     pub fn create_market(
         ctx: Context<CreateMarket>,
         market_index: u64,
-        time_to_stake: u64,
         market_authority: Pubkey,
         allow_unstaking_early: bool,
         authorized_reader_pubkey: [u8; 32],
@@ -109,7 +108,6 @@ pub mod opportunity_market {
         instructions::create_market(
             ctx,
             market_index,
-            time_to_stake,
             market_authority,
             allow_unstaking_early,
             authorized_reader_pubkey,
@@ -127,8 +125,8 @@ pub mod opportunity_market {
         instructions::add_market_option(ctx, option_id)
     }
 
-    pub fn open_market(ctx: Context<OpenMarket>, open_timestamp: u64) -> Result<()> {
-        instructions::open_market(ctx, open_timestamp)
+    pub fn open_market(ctx: Context<OpenMarket>, time_to_stake: u64) -> Result<()> {
+        instructions::open_market(ctx, time_to_stake)
     }
 
     pub fn pause_staking(ctx: Context<PauseStaking>) -> Result<()> {

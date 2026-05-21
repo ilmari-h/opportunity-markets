@@ -12,6 +12,7 @@ import {
   createSolanaRpcSubscriptions,
   lamports,
   sendAndConfirmTransactionFactory,
+  unwrapOption,
   type Rpc,
   type SolanaRpcApi,
 } from "@solana/kit";
@@ -221,7 +222,7 @@ export class Platform {
   private marketCreator: TestUser;
   private marketConfig: MarketConfig;
   private usedOptionIds: Set<number>;
-  private openTimestamp: bigint | null = null;
+  private stakeEndTimestamp: bigint | null = null;
 
   // Users: Map<address string, TestUser>
   private users: Map<string, TestUser>;
@@ -416,7 +417,6 @@ export class Platform {
       tokenMint: runner.mint.address,
       tokenProgram: TOKEN_PROGRAM_ADDRESS,
       marketIndex,
-      timeToStake: marketConfig.timeToStake,
       marketAuthority: runner.marketCreator.solanaKeypair.address,
       allowUnstakingEarly: marketConfig.allowUnstakingEarly,
       authorizedReaderPubkey: marketConfig.authorizedReaderPubkey,
@@ -533,21 +533,25 @@ export class Platform {
     });
   }
 
-  async openMarket(openTimestampArg?: bigint): Promise<bigint> {
-    const timestamp = openTimestampArg ?? BigInt(Math.floor(Date.now() / 1000) + 6);
-
+  async openMarket(): Promise<bigint> {
     const ix = openMarketIx({
       marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
-      openTimestamp: timestamp,
+      platformConfig: this.platformConfigAddress,
+      timeToStake: this.marketConfig.timeToStake,
     });
 
     await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
       label: "Open market",
     });
 
-    this.openTimestamp = timestamp;
-    return timestamp;
+    const market = await this.fetchMarket();
+    const stakeEnd = unwrapOption(market.data.stakeEndTimestamp);
+    if (stakeEnd === null) {
+      throw new Error("Market did not record stake_end_timestamp after open_market");
+    }
+    this.stakeEndTimestamp = stakeEnd;
+    return stakeEnd;
   }
 
   async selectWinningOptions(
@@ -1111,11 +1115,11 @@ export class Platform {
     };
   }
 
-  getOpenTimestamp(): bigint {
-    if (this.openTimestamp === null) {
+  getStakeEndTimestamp(): bigint {
+    if (this.stakeEndTimestamp === null) {
       throw new Error("Market not opened yet. Call openMarket() first.");
     }
-    return this.openTimestamp;
+    return this.stakeEndTimestamp;
   }
 
   getTimeToStake(): bigint {

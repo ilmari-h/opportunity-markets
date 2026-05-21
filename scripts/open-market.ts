@@ -14,7 +14,7 @@ import {
   type SolanaRpcApi,
   type Signature,
 } from "@solana/kit";
-import { openMarket } from "../js/src";
+import { fetchOpportunityMarket, openMarket } from "../js/src";
 import * as fs from "fs";
 import * as os from "os";
 
@@ -25,8 +25,9 @@ const PROGRAM_ID = address(process.env.PROGRAM_ID);
 const RPC_URL = process.env.RPC_URL;
 
 const MARKET_ADDRESS = process.argv[2];
-if (!MARKET_ADDRESS) {
-  console.error("Usage: npx tsx scripts/open-market.ts <MARKET_ADDRESS>");
+const TIME_TO_STAKE = process.argv[3];
+if (!MARKET_ADDRESS || !TIME_TO_STAKE) {
+  console.error("Usage: npx tsx scripts/open-market.ts <MARKET_ADDRESS> <TIME_TO_STAKE_SECONDS>");
   process.exit(1);
 }
 
@@ -64,17 +65,21 @@ async function main() {
   const rpc = createSolanaRpc(RPC_URL);
 
   const marketAddress = address(MARKET_ADDRESS);
-  const openTimestamp = BigInt(Math.floor(Date.now() / 1000) + 6);
+  const timeToStake = BigInt(TIME_TO_STAKE);
 
-  console.log(`Program: ${PROGRAM_ID}`);
-  console.log(`Payer:   ${payer.address}`);
-  console.log(`Market:  ${marketAddress}`);
-  console.log(`Open at: ${openTimestamp}`);
+  const marketAccount = await fetchOpportunityMarket(rpc, marketAddress);
+
+  console.log(`Program:        ${PROGRAM_ID}`);
+  console.log(`Payer:          ${payer.address}`);
+  console.log(`Market:         ${marketAddress}`);
+  console.log(`Platform cfg:   ${marketAccount.data.platform}`);
+  console.log(`Time to stake:  ${timeToStake}s`);
 
   const ix = openMarket({
     marketAuthority: payer,
     market: marketAddress,
-    openTimestamp,
+    platformConfig: marketAccount.data.platform,
+    timeToStake,
     programAddress: PROGRAM_ID,
   });
 

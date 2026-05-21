@@ -66,10 +66,11 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
     let clock = Clock::get()?;
     let current_time = clock.unix_timestamp as u64;
 
-    let open_timestamp = ctx.accounts.market.open_timestamp.ok_or(ErrorCode::MarketNotOpen)?;
-    let stake_end = open_timestamp
-        .checked_add(ctx.accounts.market.time_to_stake)
-        .ok_or(ErrorCode::Overflow)?;
+    let stake_end = ctx
+        .accounts
+        .market
+        .stake_end_timestamp
+        .ok_or(ErrorCode::MarketNotOpen)?;
     let select_deadline = stake_end
         .checked_add(ctx.accounts.market.market_resolution_deadline_seconds)
         .ok_or(ErrorCode::Overflow)?;

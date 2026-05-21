@@ -3,7 +3,7 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 use crate::constants::{
-    ALLOWED_MINT_SEED, MAX_EARLINESS_MULTIPLIER, MAX_TIME_TO_STAKE_SECONDS, OPPORTUNITY_MARKET_SEED,
+    ALLOWED_MINT_SEED, MAX_EARLINESS_MULTIPLIER, OPPORTUNITY_MARKET_SEED,
 };
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, MarketCreatedEvent};
@@ -55,7 +55,6 @@ pub struct CreateMarket<'info> {
 pub fn create_market(
     ctx: Context<CreateMarket>,
     market_index: u64,
-    time_to_stake: u64,
     market_authority: Pubkey,
     allow_unstaking_early: bool,
     authorized_reader_pubkey: [u8; 32],
@@ -68,10 +67,7 @@ pub fn create_market(
     disable_time_weighting: bool,
 ) -> Result<()> {
     require!(
-        time_to_stake >= ctx.accounts.platform_config.min_time_to_stake_seconds
-            && time_to_stake <= MAX_TIME_TO_STAKE_SECONDS
-            && earliness_cutoff_seconds <= time_to_stake
-            && (earliness_multiplier as u64) >= PRECISION
+        (earliness_multiplier as u64) >= PRECISION
             && earliness_multiplier <= MAX_EARLINESS_MULTIPLIER,
         ErrorCode::InvalidParameters
     );
@@ -92,7 +88,6 @@ pub fn create_market(
     market.creator = creator_key;
     market.index = market_index;
     market.platform = platform_key;
-    market.time_to_stake = time_to_stake;
     market.mint = mint;
     market.market_authority = market_authority;
     market.reveal_period_authority = reveal_period_authority;
@@ -116,7 +111,6 @@ pub fn create_market(
         platform: platform_key,
         index: market_index,
         mint: mint,
-        time_to_stake: time_to_stake,
         market_authority: market_authority,
         authorized_reader_pubkey: authorized_reader_pubkey,
         allow_unstaking_early: allow_unstaking_early,
