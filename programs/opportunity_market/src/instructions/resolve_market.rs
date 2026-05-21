@@ -31,12 +31,10 @@ pub fn resolve_market(ctx: Context<ResolveMarket>) -> Result<()> {
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
 
-    if !market.allow_closing_early {
-        require!(
-            current_timestamp >= stake_end,
-            ErrorCode::ClosingEarlyNotAllowed,
-        );
-    }
+    require!(
+        current_timestamp >= stake_end,
+        ErrorCode::TimeWindowMismatch,
+    );
 
     let select_deadline = stake_end
         .checked_add(market.market_resolution_deadline_seconds)
@@ -45,10 +43,6 @@ pub fn resolve_market(ctx: Context<ResolveMarket>) -> Result<()> {
         current_timestamp <= select_deadline,
         ErrorCode::SelectOptionsDeadlinePassed,
     );
-
-    if current_timestamp < stake_end {
-        market.stake_end_timestamp = Some(current_timestamp);
-    }
 
     market.resolved_at_timestamp = Some(current_timestamp);
 

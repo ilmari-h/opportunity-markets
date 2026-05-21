@@ -27,7 +27,6 @@ pub struct MarketCreatedEvent {
     pub market_authority: Pubkey,
     pub authorized_reader_pubkey: [u8; 32],
     pub allow_unstaking_early: bool,
-    pub allow_closing_early: bool,
     pub min_stake_amount: u64,
     pub fees: Fees,
     pub market_fee_claimer: Pubkey,

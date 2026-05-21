@@ -97,7 +97,6 @@ async function main() {
     marketAuthority: config.marketAuthority ? address(config.marketAuthority) : payer.address,
     allowUnstakingEarly: config.allowUnstakingEarly,
     authorizedReaderPubkey,
-    allowClosingEarly: config.allowClosingEarly,
     revealPeriodAuthority: payer.address,
     earlinessCutoffSeconds: BigInt(config.earlinessCutoffSeconds),
     earlinessMultiplier: config.earlinessMultiplier ?? 10_000,

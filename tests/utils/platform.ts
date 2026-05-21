@@ -62,6 +62,11 @@ import { createTokenMint, createAta, mintTokensTo } from "./spl-token";
 import { sendTransaction, type SendAndConfirmFn } from "./transaction";
 import { nonceToBytes } from "./nonce";
 import { getDeployerKeypair } from "./deployer";
+import { sleepUntilOnChainTimestamp } from "./sleep";
+
+// Buffer (seconds) added to on-chain timestamps before polling resumes; the
+// validator clock can lag wall-clock by a few seconds.
+const STAKE_END_BUFFER_SECONDS = 2;
 
 // ============================================================================
 // Types
@@ -90,7 +95,6 @@ interface MarketConfig {
   timeToStake: bigint;
   allowUnstakingEarly: boolean;
   authorizedReaderPubkey: Uint8Array;
-  allowClosingEarly: boolean;
   earlinessCutoffSeconds: bigint;
   earlinessMultiplier: number;
   minStakeAmount: bigint;
@@ -157,9 +161,9 @@ const DEFAULT_CONFIG: Required<Omit<PlatformConfigArgs, "name">> = {
   maxRevealPeriodSeconds: 7n * 24n * 60n * 60n,
   marketConfig: {
     rewardAmount: 1_000_000_000n,
-    timeToStake: 120n,
+    // Short by design so tests can wait through the stake window quickly.
+    timeToStake: 10n,
     allowUnstakingEarly: false,
-    allowClosingEarly: true,
     earlinessCutoffSeconds: 0n,
     earlinessMultiplier: 10_000,
     minStakeAmount: 0n,
@@ -420,7 +424,6 @@ export class Platform {
       marketAuthority: runner.marketCreator.solanaKeypair.address,
       allowUnstakingEarly: marketConfig.allowUnstakingEarly,
       authorizedReaderPubkey: marketConfig.authorizedReaderPubkey,
-      allowClosingEarly: marketConfig.allowClosingEarly,
       revealPeriodAuthority: runner.marketCreator.solanaKeypair.address,
       earlinessCutoffSeconds: marketConfig.earlinessCutoffSeconds,
       earlinessMultiplier: marketConfig.earlinessMultiplier,
@@ -1120,6 +1123,12 @@ export class Platform {
       throw new Error("Market not opened yet. Call openMarket() first.");
     }
     return this.stakeEndTimestamp;
+  }
+
+  async waitForStakeEnd(): Promise<void> {
+    await sleepUntilOnChainTimestamp(
+      Number(this.getStakeEndTimestamp()) + STAKE_END_BUFFER_SECONDS,
+    );
   }
 
   getTimeToStake(): bigint {

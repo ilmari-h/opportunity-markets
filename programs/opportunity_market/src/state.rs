@@ -77,9 +77,6 @@ pub struct OpportunityMarket {
     // Public key for voluntary disclosure of encrypted stake data
     pub authorized_reader_pubkey: [u8; 32],
 
-    // If false, market can only be closed after stake period ends
-    pub allow_closing_early: bool,
-
     pub staking_paused: bool,
 
     pub fees: Fees,

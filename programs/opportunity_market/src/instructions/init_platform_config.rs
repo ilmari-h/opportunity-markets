@@ -5,7 +5,7 @@ use crate::constants::{
     MAX_TOTAL_FEE_BP, MIN_MAX_REVEAL_PERIOD_SECONDS, MIN_PLATFORM_NAME_LEN, PLATFORM_CONFIG_SEED,
 };
 #[cfg(feature = "production-settings")]
-use crate::constants::MIN_MARKET_RESOLUTION_DEADLINE_SECONDS;
+use crate::constants::{MIN_MARKET_RESOLUTION_DEADLINE_SECONDS, MIN_TIME_TO_STAKE_FLOOR_SECONDS};
 use crate::error::ErrorCode;
 use crate::state::PlatformConfig;
 
@@ -59,6 +59,11 @@ pub fn init_platform_config(
     #[cfg(feature = "production-settings")]
     require!(
         market_resolution_deadline_seconds >= MIN_MARKET_RESOLUTION_DEADLINE_SECONDS,
+        ErrorCode::InvalidParameters
+    );
+    #[cfg(feature = "production-settings")]
+    require!(
+        min_time_to_stake_seconds >= MIN_TIME_TO_STAKE_FLOOR_SECONDS,
         ErrorCode::InvalidParameters
     );
     require!(

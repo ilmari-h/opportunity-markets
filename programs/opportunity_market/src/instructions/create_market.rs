@@ -58,7 +58,6 @@ pub fn create_market(
     market_authority: Pubkey,
     allow_unstaking_early: bool,
     authorized_reader_pubkey: [u8; 32],
-    allow_closing_early: bool,
     reveal_period_authority: Pubkey,
     earliness_cutoff_seconds: u64,
     earliness_multiplier: u16,
@@ -95,7 +94,6 @@ pub fn create_market(
     market.earliness_multiplier = earliness_multiplier;
     market.allow_unstaking_early = allow_unstaking_early;
     market.authorized_reader_pubkey = authorized_reader_pubkey;
-    market.allow_closing_early = allow_closing_early;
     market.fees = fees;
     market.market_fee_claimer = market_fee_claimer;
     market.market_resolution_deadline_seconds = market_resolution_deadline_seconds;
@@ -114,7 +112,6 @@ pub fn create_market(
         market_authority: market_authority,
         authorized_reader_pubkey: authorized_reader_pubkey,
         allow_unstaking_early: allow_unstaking_early,
-        allow_closing_early: allow_closing_early,
         earliness_cutoff_seconds: earliness_cutoff_seconds,
         earliness_multiplier: earliness_multiplier,
         min_stake_amount: min_stake_amount,

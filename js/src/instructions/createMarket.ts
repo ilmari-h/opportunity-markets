@@ -15,7 +15,6 @@ export interface CreateMarketParams extends BaseInstructionParams {
   marketAuthority: Address;
   allowUnstakingEarly: boolean;
   authorizedReaderPubkey: ByteArray;
-  allowClosingEarly: boolean;
   revealPeriodAuthority: Address;
   earlinessCutoffSeconds: bigint;
   earlinessMultiplier: number;

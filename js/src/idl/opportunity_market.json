@@ -1067,10 +1067,6 @@
           }
         },
         {
-          "name": "allow_closing_early",
-          "type": "bool"
-        },
-        {
           "name": "reveal_period_authority",
           "type": "pubkey"
         },
@@ -3300,36 +3296,31 @@
     },
     {
       "code": 6025,
-      "name": "ClosingEarlyNotAllowed",
-      "msg": "Market cannot be closed before stake period ends"
-    },
-    {
-      "code": 6026,
       "name": "NoFeesToClaim",
       "msg": "No fees to claim"
     },
     {
-      "code": 6027,
+      "code": 6026,
       "name": "StakeNotStuck",
       "msg": "Stake account is not in a stuck or failed state"
     },
     {
-      "code": 6028,
+      "code": 6027,
       "name": "MarketPaused",
       "msg": "Market staking is currently paused"
     },
     {
-      "code": 6029,
+      "code": 6028,
       "name": "MarketNotPaused",
       "msg": "Market is not paused"
     },
     {
-      "code": 6030,
+      "code": 6029,
       "name": "StakeBelowMinimum",
       "msg": "Stake amount is below the market minimum"
     },
     {
-      "code": 6031,
+      "code": 6030,
       "name": "SelectOptionsDeadlinePassed",
       "msg": "Deadline for selecting winning options has passed"
     }
@@ -3978,10 +3969,6 @@
             "type": "bool"
           },
           {
-            "name": "allow_closing_early",
-            "type": "bool"
-          },
-          {
             "name": "min_stake_amount",
             "type": "u64"
           },
@@ -4282,10 +4269,6 @@
                 32
               ]
             }
-          },
-          {
-            "name": "allow_closing_early",
-            "type": "bool"
           },
           {
             "name": "staking_paused",

@@ -83,7 +83,6 @@ export type OpportunityMarket = {
   earlinessMultiplier: number;
   allowUnstakingEarly: boolean;
   authorizedReaderPubkey: Array<number>;
-  allowClosingEarly: boolean;
   stakingPaused: boolean;
   fees: Fees;
   collectedPlatformFees: bigint;
@@ -114,7 +113,6 @@ export type OpportunityMarketArgs = {
   earlinessMultiplier: number;
   allowUnstakingEarly: boolean;
   authorizedReaderPubkey: Array<number>;
-  allowClosingEarly: boolean;
   stakingPaused: boolean;
   fees: FeesArgs;
   collectedPlatformFees: number | bigint;
@@ -148,7 +146,6 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['earlinessMultiplier', getU16Encoder()],
       ['allowUnstakingEarly', getBooleanEncoder()],
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
-      ['allowClosingEarly', getBooleanEncoder()],
       ['stakingPaused', getBooleanEncoder()],
       ['fees', getFeesEncoder()],
       ['collectedPlatformFees', getU64Encoder()],
@@ -184,7 +181,6 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['earlinessMultiplier', getU16Decoder()],
     ['allowUnstakingEarly', getBooleanDecoder()],
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
-    ['allowClosingEarly', getBooleanDecoder()],
     ['stakingPaused', getBooleanDecoder()],
     ['fees', getFeesDecoder()],
     ['collectedPlatformFees', getU64Decoder()],

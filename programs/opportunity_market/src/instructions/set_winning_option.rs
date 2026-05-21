@@ -43,12 +43,10 @@ pub fn set_winning_option(
     let clock = Clock::get()?;
     let current_timestamp = clock.unix_timestamp as u64;
 
-    if !ctx.accounts.market.allow_closing_early {
-        require!(
-            current_timestamp >= stake_end,
-            ErrorCode::ClosingEarlyNotAllowed,
-        );
-    }
+    require!(
+        current_timestamp >= stake_end,
+        ErrorCode::TimeWindowMismatch,
+    );
 
     let select_deadline = stake_end
         .checked_add(ctx.accounts.market.market_resolution_deadline_seconds)

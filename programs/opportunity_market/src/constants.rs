@@ -13,6 +13,9 @@ pub const MAX_TOTAL_FEE_BP: u16 = 10_000;
 #[cfg(feature = "production-settings")]
 pub const MIN_MARKET_RESOLUTION_DEADLINE_SECONDS: u64 = 7 * 24 * 60 * 60;
 
+#[cfg(feature = "production-settings")]
+pub const MIN_TIME_TO_STAKE_FLOOR_SECONDS: u64 = 24 * 60 * 60;
+
 /// Bounds for the deadline after which end_reveal_period becomes permissionless.
 pub const MIN_MAX_REVEAL_PERIOD_SECONDS: u64 = 7 * 24 * 60 * 60;
 pub const MAX_MAX_REVEAL_PERIOD_SECONDS: u64 = 60 * 24 * 60 * 60;

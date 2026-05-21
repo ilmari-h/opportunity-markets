@@ -4,7 +4,6 @@ import { address, some, isNone, isSome, unwrapOption, createSolanaRpc, createSol
 import { fetchToken } from "@solana-program/token";
 import { expect } from "chai";
 import {
-  OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED,
   OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
   OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED,
   OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
@@ -78,7 +77,7 @@ describe("OpportunityMarket", () => {
       creatorFeeBp: Number(creatorFeeBp),
       marketConfig: {
         rewardAmount: marketFundingAmount,
-        timeToStake: 120n,
+        timeToStake: 10n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -123,6 +122,7 @@ describe("OpportunityMarket", () => {
     );
 
     // Market creator selects winning option
+    await platform.waitForStakeEnd();
     const winningOptionIndex = optionA;
     await platform.selectSingleWinningOption(winningOptionIndex);
 
@@ -332,7 +332,8 @@ describe("OpportunityMarket", () => {
       initialTokenAmount: 2_000_000_000n,
       marketConfig: {
         rewardAmount: marketFundingAmount,
-        timeToStake: 120n,
+        // Six sequential stakes so larger time window
+        timeToStake: 30n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -363,6 +364,7 @@ describe("OpportunityMarket", () => {
     ]);
 
     // Creator selects 3 winning options with different allocations: A=50%, B=30%, E=20%.
+    await platform.waitForStakeEnd();
     await platform.selectWinningOptions([
       { optionId: optA, rewardPercentageBp: 5000 },
       { optionId: optB, rewardPercentageBp: 3000 },
@@ -383,11 +385,6 @@ describe("OpportunityMarket", () => {
       expect(opt.data.selected).to.be.true;
       expect(opt.data.rewardPercentageBp).to.equal(rewardPercentageBp);
     }
-
-    // selectWinningOptions with allow_closing_early shortens time_to_stake, so reveal window starts now.
-    const updatedMarket = await platform.fetchMarket();
-    const revealStart = Number(unwrapOption(updatedMarket.data.stakeEndTimestamp) ?? 0n);
-    await sleepUntilOnChainTimestamp(revealStart + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Reveal all stake accounts
     await Promise.all([
@@ -486,7 +483,7 @@ describe("OpportunityMarket", () => {
       initialTokenAmount: 2_000_000_000n,
       marketConfig: {
         rewardAmount: marketFundingAmount,
-        timeToStake: 120n,
+        timeToStake: 10n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -532,13 +529,9 @@ describe("OpportunityMarket", () => {
     });
 
     // Market creator selects winning option (Option A)
+    await platform.waitForStakeEnd();
     const winningOptionId = optionA;
     await platform.selectSingleWinningOption(winningOptionId);
-
-    // Wait for reveal window to start (selectSingleWinningOption truncates time_to_stake)
-    const updatedMarket = await platform.fetchMarket();
-    const revealStart = Number(unwrapOption(updatedMarket.data.stakeEndTimestamp) ?? 0n);
-    await sleepUntilOnChainTimestamp(revealStart + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Reveal ALL stake accounts sequentially
     for (const sa of userStakeAccounts) {
@@ -631,17 +624,18 @@ describe("OpportunityMarket", () => {
       initialTokenAmount: 2_000_000_000n,
       marketConfig: {
         rewardAmount: marketFundingAmount,
-        timeToStake: 120n,
+        timeToStake: 10n,
         authorizedReaderPubkey: observer.publicKey,
-        allowClosingEarly: true,
       },
     });
 
-    await platform.openMarket();
+    const stakeEnd = await platform.openMarket();
     const { optionId: optionA } = await platform.addOption();
     const { optionId: optionB } = await platform.addOption();
 
-    // resolve_market requires current_time >= open_timestamp; otherwise it errors
+    //  Wait until stake is over so we can resolve the market
+    await sleepUntilOnChainTimestamp(Number(stakeEnd) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
     // Under (5000 + 3000 = 8000 bp): resolve must reject.
     await platform.setWinningOption(optionA, 5000);
     await platform.setWinningOption(optionB, 3000);
@@ -675,7 +669,7 @@ describe("OpportunityMarket", () => {
     expect(market.data.winningOptionAllocation).to.equal(10_000);
   });
 
-  it("prevents closing market early when not allowed", async () => {
+  it("rejects setting winning option before stake period ends", async () => {
     const marketFundingAmount = 1_000_000_000n;
     const timeToStake = 10n;
 
@@ -691,7 +685,6 @@ describe("OpportunityMarket", () => {
         rewardAmount: marketFundingAmount,
         timeToStake,
         authorizedReaderPubkey: observer.publicKey,
-        allowClosingEarly: false,
       },
     });
 
@@ -704,7 +697,7 @@ describe("OpportunityMarket", () => {
     // Try to select option before stake period ends - should fail
     await shouldThrowCustomError(
       () => platform.selectSingleWinningOption(optionA),
-      OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED
+      OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
     );
 
     // Verify market is still unresolved
@@ -740,7 +733,7 @@ describe("OpportunityMarket", () => {
       initialTokenAmount: 5_000_000_000n,
       marketConfig: {
         rewardAmount: initialReward,
-        timeToStake: 120n,
+        timeToStake: 10n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -774,7 +767,7 @@ describe("OpportunityMarket", () => {
       initialTokenAmount: 2_000_000_000n,
       marketConfig: {
         rewardAmount: 0n,
-        timeToStake: 120n,
+        timeToStake: 10n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -868,8 +861,8 @@ describe("OpportunityMarket", () => {
     );
 
     // Reveal still works post-stake-end (early unstaker keeps participation rights).
-    await platform.selectSingleWinningOption(optionA);
     await sleepUntilOnChainTimestamp(Number(stakeEnd) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+    await platform.selectSingleWinningOption(optionA);
 
     await platform.revealStake(staker, stakeAccountId);
     stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
@@ -887,7 +880,7 @@ describe("OpportunityMarket", () => {
       initialTokenAmount: 2_000_000_000n,
       marketConfig: {
         rewardAmount: 1_000_000_000n,
-        timeToStake: 60n,
+        timeToStake: 10n,
         allowUnstakingEarly: false,
         authorizedReaderPubkey: observer.publicKey,
       },
@@ -920,7 +913,7 @@ describe("OpportunityMarket", () => {
       initialTokenAmount: 2_000_000_000n,
       marketConfig: {
         rewardAmount: 0n,
-        timeToStake: 120n,
+        timeToStake: 10n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -987,7 +980,7 @@ describe("OpportunityMarket", () => {
       initialTokenAmount: 2_000_000_000n,
       marketConfig: {
         rewardAmount: 1_000_000_000n,
-        timeToStake: 120n,
+        timeToStake: 10n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -1038,7 +1031,7 @@ describe("OpportunityMarket", () => {
       initialTokenAmount: 2_000_000_000n,
       marketConfig: {
         rewardAmount: 1_000_000_000n,
-        timeToStake: 120n,
+        timeToStake: 10n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -1085,7 +1078,7 @@ describe("OpportunityMarket", () => {
       creatorFeeBp: Number(creatorFeeBp),
       marketConfig: {
         rewardAmount: marketFundingAmount,
-        timeToStake: 120n,
+        timeToStake: 10n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -1117,10 +1110,8 @@ describe("OpportunityMarket", () => {
     expect(market.data.rewardAmount).to.equal(marketFundingAmount + expectedRewardPoolFee);
 
     // Resolve the market and run through reveal/reclaim.
+    await platform.waitForStakeEnd();
     await platform.selectSingleWinningOption(optionId);
-    const resolved = await platform.fetchMarket();
-    const stakeEnd = Number(unwrapOption(resolved.data.stakeEndTimestamp) ?? 0n);
-    await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     await platform.revealStake(user, stakeAccountId);
     await platform.finalizeRevealStake(user, optionId, stakeAccountId);
@@ -1308,7 +1299,7 @@ describe("OpportunityMarket", () => {
       initialTokenAmount: 2_000_000_000n,
       marketConfig: {
         rewardAmount: 1_000_000_000n,
-        timeToStake: 120n,
+        timeToStake: 10n,
         authorizedReaderPubkey: observer.publicKey,
         minStakeAmount,
       },
@@ -1330,7 +1321,7 @@ describe("OpportunityMarket", () => {
     expect(stakeAccount.data.amount > 0n).to.be.true;
   });
 
-  it("reveal period cannot be closed before resolved_at + min_reveal_period", async () => {
+  it("reveal period cannot be closed before min_reveal_period has passed", async () => {
     const minRevealPeriodSeconds = 15n;
     const timeToStake = 5n;
 
@@ -1360,7 +1351,7 @@ describe("OpportunityMarket", () => {
       unwrapOption((await platform.fetchMarket()).data.resolvedAtTimestamp),
     );
 
-    // Closing immediately after resolve must fail — min_reveal_period hasn't elapsed.
+    // Closing immediately after resolve must fail
     await shouldThrowCustomError(
       () => platform.endRevealPeriod(),
       OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
@@ -1399,7 +1390,7 @@ describe("OpportunityMarket", () => {
       marketConfig: {
         // No initial reward — the entire winning pool is the loser's contribution.
         rewardAmount: 0n,
-        timeToStake: 120n,
+        timeToStake: 10n,
         authorizedReaderPubkey: observer.publicKey,
       },
     });
@@ -1423,11 +1414,8 @@ describe("OpportunityMarket", () => {
     expect((await platform.fetchStakeAccountData(staker2, sa2)).data.amount).to.equal(0n);
 
     // Resolve with option A as the sole winner.
+    await platform.waitForStakeEnd();
     await platform.selectSingleWinningOption(optionA);
-
-    const resolvedMarket = await platform.fetchMarket();
-    const revealStart = Number(unwrapOption(resolvedMarket.data.stakeEndTimestamp) ?? 0n);
-    await sleepUntilOnChainTimestamp(revealStart + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
 
     // Both stakes can be revealed.
     await platform.revealStakeBatch([

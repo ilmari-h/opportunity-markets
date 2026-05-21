@@ -42,7 +42,6 @@ export type MarketCreatedEvent = {
   marketAuthority: Address;
   authorizedReaderPubkey: Array<number>;
   allowUnstakingEarly: boolean;
-  allowClosingEarly: boolean;
   minStakeAmount: bigint;
   fees: Fees;
   marketFeeClaimer: Address;
@@ -64,7 +63,6 @@ export type MarketCreatedEventArgs = {
   marketAuthority: Address;
   authorizedReaderPubkey: Array<number>;
   allowUnstakingEarly: boolean;
-  allowClosingEarly: boolean;
   minStakeAmount: number | bigint;
   fees: FeesArgs;
   marketFeeClaimer: Address;
@@ -87,7 +85,6 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['marketAuthority', getAddressEncoder()],
     ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
     ['allowUnstakingEarly', getBooleanEncoder()],
-    ['allowClosingEarly', getBooleanEncoder()],
     ['minStakeAmount', getU64Encoder()],
     ['fees', getFeesEncoder()],
     ['marketFeeClaimer', getAddressEncoder()],
@@ -111,7 +108,6 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['marketAuthority', getAddressDecoder()],
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['allowUnstakingEarly', getBooleanDecoder()],
-    ['allowClosingEarly', getBooleanDecoder()],
     ['minStakeAmount', getU64Decoder()],
     ['fees', getFeesDecoder()],
     ['marketFeeClaimer', getAddressDecoder()],

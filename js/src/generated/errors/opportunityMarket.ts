@@ -64,20 +64,18 @@ export const OPPORTUNITY_MARKET_ERROR__ADD_OPTION_STAKE_FAILED = 0x1786; // 6022
 export const OPPORTUNITY_MARKET_ERROR__LOCKED = 0x1787; // 6023
 /** InvalidAccountState: Invalid account state */
 export const OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE = 0x1788; // 6024
-/** ClosingEarlyNotAllowed: Market cannot be closed before stake period ends */
-export const OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED = 0x1789; // 6025
 /** NoFeesToClaim: No fees to claim */
-export const OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM = 0x178a; // 6026
+export const OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM = 0x1789; // 6025
 /** StakeNotStuck: Stake account is not in a stuck or failed state */
-export const OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK = 0x178b; // 6027
+export const OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK = 0x178a; // 6026
 /** MarketPaused: Market staking is currently paused */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED = 0x178c; // 6028
+export const OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED = 0x178b; // 6027
 /** MarketNotPaused: Market is not paused */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED = 0x178d; // 6029
+export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED = 0x178c; // 6028
 /** StakeBelowMinimum: Stake amount is below the market minimum */
-export const OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM = 0x178e; // 6030
+export const OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM = 0x178d; // 6029
 /** SelectOptionsDeadlinePassed: Deadline for selecting winning options has passed */
-export const OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED = 0x178f; // 6031
+export const OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED = 0x178e; // 6030
 
 export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION
@@ -85,7 +83,6 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED
   | typeof OPPORTUNITY_MARKET_ERROR__ALREADY_STAKED
   | typeof OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED
-  | typeof OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED
   | typeof OPPORTUNITY_MARKET_ERROR__CLUSTER_NOT_SET
   | typeof OPPORTUNITY_MARKET_ERROR__DEPOSIT_BELOW_MINIMUM
   | typeof OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_BALANCE
@@ -123,7 +120,6 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED]: `Stake already revealed`,
     [OPPORTUNITY_MARKET_ERROR__ALREADY_STAKED]: `Already staked for this stake account`,
     [OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED]: `Already unstaked`,
-    [OPPORTUNITY_MARKET_ERROR__CLOSING_EARLY_NOT_ALLOWED]: `Market cannot be closed before stake period ends`,
     [OPPORTUNITY_MARKET_ERROR__CLUSTER_NOT_SET]: `Cluster not set`,
     [OPPORTUNITY_MARKET_ERROR__DEPOSIT_BELOW_MINIMUM]: `Deposit amount below minimum required for option creation`,
     [OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_BALANCE]: `Insufficient balance`,

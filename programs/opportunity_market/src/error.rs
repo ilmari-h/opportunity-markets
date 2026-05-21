@@ -52,8 +52,6 @@ pub enum ErrorCode {
     Locked,
     #[msg("Invalid account state")]
     InvalidAccountState,
-    #[msg("Market cannot be closed before stake period ends")]
-    ClosingEarlyNotAllowed,
     #[msg("No fees to claim")]
     NoFeesToClaim,
     #[msg("Stake account is not in a stuck or failed state")]
