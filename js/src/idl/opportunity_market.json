@@ -205,167 +205,6 @@
       ]
     },
     {
-      "name": "cancel_fee_claim_authority_change",
-      "discriminator": [
-        158,
-        0,
-        189,
-        141,
-        126,
-        74,
-        140,
-        189
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "platform_config"
-        },
-        {
-          "name": "timelocked_change",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  105,
-                  109,
-                  101,
-                  108,
-                  111,
-                  99,
-                  107,
-                  101,
-                  100,
-                  95,
-                  99,
-                  104,
-                  97,
-                  110,
-                  103,
-                  101
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  101,
-                  101,
-                  95,
-                  99,
-                  108,
-                  97,
-                  105,
-                  109,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
-                  121
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "platform_config"
-              }
-            ]
-          }
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "cancel_update_authority_change",
-      "discriminator": [
-        193,
-        127,
-        213,
-        94,
-        136,
-        199,
-        133,
-        229
-      ],
-      "accounts": [
-        {
-          "name": "signer",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "platform_config"
-        },
-        {
-          "name": "timelocked_change",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  105,
-                  109,
-                  101,
-                  108,
-                  111,
-                  99,
-                  107,
-                  101,
-                  100,
-                  95,
-                  99,
-                  104,
-                  97,
-                  110,
-                  103,
-                  101
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  117,
-                  112,
-                  100,
-                  97,
-                  116,
-                  101,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
-                  121
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "platform_config"
-              }
-            ]
-          }
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "claim_creator_fees",
       "discriminator": [
         0,
@@ -1286,189 +1125,6 @@
       "args": []
     },
     {
-      "name": "finalize_new_fee_claim_authority",
-      "discriminator": [
-        101,
-        102,
-        211,
-        163,
-        210,
-        183,
-        108,
-        153
-      ],
-      "accounts": [
-        {
-          "name": "update_authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "platform_config"
-          ]
-        },
-        {
-          "name": "proposed_fee_claim_authority",
-          "docs": [
-            "The proposed new fee-claim authority must co-sign to prevent fat-finger mistakes."
-          ],
-          "signer": true
-        },
-        {
-          "name": "platform_config",
-          "writable": true
-        },
-        {
-          "name": "timelocked_change",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  105,
-                  109,
-                  101,
-                  108,
-                  111,
-                  99,
-                  107,
-                  101,
-                  100,
-                  95,
-                  99,
-                  104,
-                  97,
-                  110,
-                  103,
-                  101
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  101,
-                  101,
-                  95,
-                  99,
-                  108,
-                  97,
-                  105,
-                  109,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
-                  121
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "platform_config"
-              }
-            ]
-          }
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "finalize_new_update_authority",
-      "discriminator": [
-        46,
-        87,
-        119,
-        22,
-        184,
-        132,
-        188,
-        216
-      ],
-      "accounts": [
-        {
-          "name": "update_authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "platform_config"
-          ]
-        },
-        {
-          "name": "proposed_authority",
-          "docs": [
-            "The proposed new authority must co-sign to prevent fat-finger mistakes."
-          ],
-          "signer": true
-        },
-        {
-          "name": "platform_config",
-          "writable": true
-        },
-        {
-          "name": "timelocked_change",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  105,
-                  109,
-                  101,
-                  108,
-                  111,
-                  99,
-                  107,
-                  101,
-                  100,
-                  95,
-                  99,
-                  104,
-                  97,
-                  110,
-                  103,
-                  101
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  117,
-                  112,
-                  100,
-                  97,
-                  116,
-                  101,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
-                  121
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "platform_config"
-              }
-            ]
-          }
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "finalize_reveal_stake",
       "discriminator": [
         92,
@@ -1876,187 +1532,6 @@
       "args": []
     },
     {
-      "name": "propose_new_fee_claim_authority",
-      "discriminator": [
-        40,
-        106,
-        95,
-        197,
-        50,
-        31,
-        172,
-        97
-      ],
-      "accounts": [
-        {
-          "name": "update_authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "platform_config"
-          ]
-        },
-        {
-          "name": "platform_config"
-        },
-        {
-          "name": "proposed_fee_claim_authority"
-        },
-        {
-          "name": "timelocked_change",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  105,
-                  109,
-                  101,
-                  108,
-                  111,
-                  99,
-                  107,
-                  101,
-                  100,
-                  95,
-                  99,
-                  104,
-                  97,
-                  110,
-                  103,
-                  101
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  102,
-                  101,
-                  101,
-                  95,
-                  99,
-                  108,
-                  97,
-                  105,
-                  109,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
-                  121
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "platform_config"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "propose_new_update_authority",
-      "discriminator": [
-        190,
-        245,
-        249,
-        53,
-        37,
-        130,
-        25,
-        87
-      ],
-      "accounts": [
-        {
-          "name": "update_authority",
-          "writable": true,
-          "signer": true,
-          "relations": [
-            "platform_config"
-          ]
-        },
-        {
-          "name": "platform_config"
-        },
-        {
-          "name": "proposed_authority"
-        },
-        {
-          "name": "timelocked_change",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  105,
-                  109,
-                  101,
-                  108,
-                  111,
-                  99,
-                  107,
-                  101,
-                  100,
-                  95,
-                  99,
-                  104,
-                  97,
-                  110,
-                  103,
-                  101
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  117,
-                  112,
-                  100,
-                  97,
-                  116,
-                  101,
-                  95,
-                  97,
-                  117,
-                  116,
-                  104,
-                  111,
-                  114,
-                  105,
-                  116,
-                  121
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "platform_config"
-              }
-            ]
-          }
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "resolve_market",
       "discriminator": [
         155,
@@ -2356,6 +1831,66 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "set_fee_claim_authority",
+      "discriminator": [
+        75,
+        250,
+        161,
+        197,
+        43,
+        196,
+        161,
+        3
+      ],
+      "accounts": [
+        {
+          "name": "update_authority",
+          "signer": true,
+          "relations": [
+            "platform_config"
+          ]
+        },
+        {
+          "name": "platform_config",
+          "writable": true
+        },
+        {
+          "name": "new_fee_claim_authority"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "set_update_authority",
+      "discriminator": [
+        166,
+        198,
+        186,
+        255,
+        217,
+        170,
+        103,
+        155
+      ],
+      "accounts": [
+        {
+          "name": "update_authority",
+          "signer": true,
+          "relations": [
+            "platform_config"
+          ]
+        },
+        {
+          "name": "platform_config",
+          "writable": true
+        },
+        {
+          "name": "new_authority"
         }
       ],
       "args": []
@@ -3348,61 +2883,9 @@
         192,
         255
       ]
-    },
-    {
-      "name": "TimelockedAccountChange",
-      "discriminator": [
-        212,
-        170,
-        131,
-        144,
-        16,
-        51,
-        205,
-        22
-      ]
     }
   ],
   "events": [
-    {
-      "name": "AccountChangeCancelledEvent",
-      "discriminator": [
-        114,
-        140,
-        205,
-        240,
-        134,
-        237,
-        54,
-        79
-      ]
-    },
-    {
-      "name": "AccountChangeFinalizedEvent",
-      "discriminator": [
-        125,
-        145,
-        138,
-        250,
-        207,
-        92,
-        115,
-        230
-      ]
-    },
-    {
-      "name": "AccountChangeProposedEvent",
-      "discriminator": [
-        35,
-        36,
-        252,
-        186,
-        65,
-        210,
-        97,
-        148
-      ]
-    },
     {
       "name": "AllowedMintInitializedEvent",
       "discriminator": [
@@ -3427,6 +2910,19 @@
         133,
         234,
         251
+      ]
+    },
+    {
+      "name": "FeeClaimAuthorityChangedEvent",
+      "discriminator": [
+        206,
+        71,
+        94,
+        34,
+        56,
+        154,
+        156,
+        198
       ]
     },
     {
@@ -3651,6 +3147,19 @@
       ]
     },
     {
+      "name": "UpdateAuthorityChangedEvent",
+      "discriminator": [
+        25,
+        88,
+        75,
+        61,
+        35,
+        170,
+        84,
+        201
+      ]
+    },
+    {
       "name": "WinningOptionSetEvent",
       "discriminator": [
         157,
@@ -3817,109 +3326,16 @@
     },
     {
       "code": 6030,
-      "name": "TimelockNotElapsed",
-      "msg": "Timelock period has not elapsed yet"
-    },
-    {
-      "code": 6031,
       "name": "StakeBelowMinimum",
       "msg": "Stake amount is below the market minimum"
     },
     {
-      "code": 6032,
+      "code": 6031,
       "name": "SelectOptionsDeadlinePassed",
       "msg": "Deadline for selecting winning options has passed"
     }
   ],
   "types": [
-    {
-      "name": "AccountChangeCancelledEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "platform_config",
-            "type": "pubkey"
-          },
-          {
-            "name": "change_type",
-            "type": "string"
-          },
-          {
-            "name": "cancelled_by",
-            "type": "pubkey"
-          },
-          {
-            "name": "proposed_value",
-            "type": "pubkey"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "AccountChangeFinalizedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "platform_config",
-            "type": "pubkey"
-          },
-          {
-            "name": "change_type",
-            "type": "string"
-          },
-          {
-            "name": "old_value",
-            "type": "pubkey"
-          },
-          {
-            "name": "new_value",
-            "type": "pubkey"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "AccountChangeProposedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "platform_config",
-            "type": "pubkey"
-          },
-          {
-            "name": "change_type",
-            "type": "string"
-          },
-          {
-            "name": "current_value",
-            "type": "pubkey"
-          },
-          {
-            "name": "proposed_value",
-            "type": "pubkey"
-          },
-          {
-            "name": "execute_after",
-            "type": "i64"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
     {
       "name": "Activation",
       "type": {
@@ -4329,6 +3745,30 @@
         "kind": "struct",
         "fields": [
           "u64"
+        ]
+      }
+    },
+    {
+      "name": "FeeClaimAuthorityChangedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "platform_config",
+            "type": "pubkey"
+          },
+          {
+            "name": "old_value",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_value",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
         ]
       }
     },
@@ -5833,30 +5273,6 @@
       }
     },
     {
-      "name": "TimelockedAccountChange",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "bump",
-            "type": "u8"
-          },
-          {
-            "name": "current_value",
-            "type": "pubkey"
-          },
-          {
-            "name": "proposed_value",
-            "type": "pubkey"
-          },
-          {
-            "name": "execute_after",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
       "name": "Timestamp",
       "type": {
         "kind": "struct",
@@ -5892,6 +5308,30 @@
           {
             "name": "amount",
             "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateAuthorityChangedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "platform_config",
+            "type": "pubkey"
+          },
+          {
+            "name": "old_value",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_value",
+            "type": "pubkey"
           },
           {
             "name": "timestamp",

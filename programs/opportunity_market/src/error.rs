@@ -62,8 +62,6 @@ pub enum ErrorCode {
     MarketPaused,
     #[msg("Market is not paused")]
     MarketNotPaused,
-    #[msg("Timelock period has not elapsed yet")]
-    TimelockNotElapsed,
     #[msg("Stake amount is below the market minimum")]
     StakeBelowMinimum,
     #[msg("Deadline for selecting winning options has passed")]

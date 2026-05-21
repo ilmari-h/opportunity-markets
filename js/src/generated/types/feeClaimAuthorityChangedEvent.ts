@@ -7,8 +7,6 @@
  */
 
 import {
-  addDecoderSizePrefix,
-  addEncoderSizePrefix,
   combineCodec,
   getAddressDecoder,
   getAddressEncoder,
@@ -16,58 +14,50 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
-  getU32Decoder,
-  getU32Encoder,
-  getUtf8Decoder,
-  getUtf8Encoder,
   type Address,
-  type Codec,
-  type Decoder,
-  type Encoder,
+  type FixedSizeCodec,
+  type FixedSizeDecoder,
+  type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type AccountChangeFinalizedEvent = {
+export type FeeClaimAuthorityChangedEvent = {
   platformConfig: Address;
-  changeType: string;
   oldValue: Address;
   newValue: Address;
   timestamp: bigint;
 };
 
-export type AccountChangeFinalizedEventArgs = {
+export type FeeClaimAuthorityChangedEventArgs = {
   platformConfig: Address;
-  changeType: string;
   oldValue: Address;
   newValue: Address;
   timestamp: number | bigint;
 };
 
-export function getAccountChangeFinalizedEventEncoder(): Encoder<AccountChangeFinalizedEventArgs> {
+export function getFeeClaimAuthorityChangedEventEncoder(): FixedSizeEncoder<FeeClaimAuthorityChangedEventArgs> {
   return getStructEncoder([
     ['platformConfig', getAddressEncoder()],
-    ['changeType', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
     ['oldValue', getAddressEncoder()],
     ['newValue', getAddressEncoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getAccountChangeFinalizedEventDecoder(): Decoder<AccountChangeFinalizedEvent> {
+export function getFeeClaimAuthorityChangedEventDecoder(): FixedSizeDecoder<FeeClaimAuthorityChangedEvent> {
   return getStructDecoder([
     ['platformConfig', getAddressDecoder()],
-    ['changeType', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ['oldValue', getAddressDecoder()],
     ['newValue', getAddressDecoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getAccountChangeFinalizedEventCodec(): Codec<
-  AccountChangeFinalizedEventArgs,
-  AccountChangeFinalizedEvent
+export function getFeeClaimAuthorityChangedEventCodec(): FixedSizeCodec<
+  FeeClaimAuthorityChangedEventArgs,
+  FeeClaimAuthorityChangedEvent
 > {
   return combineCodec(
-    getAccountChangeFinalizedEventEncoder(),
-    getAccountChangeFinalizedEventDecoder()
+    getFeeClaimAuthorityChangedEventEncoder(),
+    getFeeClaimAuthorityChangedEventDecoder()
   );
 }

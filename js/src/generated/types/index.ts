@@ -6,9 +6,6 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from './accountChangeCancelledEvent';
-export * from './accountChangeFinalizedEvent';
-export * from './accountChangeProposedEvent';
 export * from './activation';
 export * from './allowedMintInitializedEvent';
 export * from './bN254G2BLSPublicKey';
@@ -17,6 +14,7 @@ export * from './computationDefinitionMeta';
 export * from './computationSignature';
 export * from './creatorFeesClaimedEvent';
 export * from './epoch';
+export * from './feeClaimAuthorityChangedEvent';
 export * from './fees';
 export * from './feesClaimedEvent';
 export * from './localCircuitSource';
@@ -47,5 +45,6 @@ export * from './stakingResumedEvent';
 export * from './stuckStakeClosedEvent';
 export * from './timestamp';
 export * from './unstakedEvent';
+export * from './updateAuthorityChangedEvent';
 export * from './utilityPubkeys';
 export * from './winningOptionSetEvent';

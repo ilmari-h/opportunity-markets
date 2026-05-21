@@ -1465,4 +1465,121 @@ describe("OpportunityMarket", () => {
 
     expect((await platform.fetchMarket()).data.revealEnded).to.be.true;
   });
+
+  it("winner takes all when fees sum up to 100%", async () => {
+    // Fee split: 98% reward pool, 1% platform, 1% creator → 100% total, 0% net.
+    // The user's stake is wholly consumed by fees; the reward pool grows by 98%
+    // of every staker's deposit, so the winner's pool inherits the loser's stake.
+    const platformFeeBp = 100;
+    const creatorFeeBp = 100;
+    const rewardPoolFeeBp = 9800;
+
+    const stakeAmount = 100_000_000_000n; // 100 tokens (9 decimals); divisible by 10_000
+    const expectedPoolFee = stakeAmount * BigInt(rewardPoolFeeBp) / 10_000n;
+    const expectedPlatformFee = stakeAmount * BigInt(platformFeeBp) / 10_000n;
+    const expectedCreatorFee = stakeAmount * BigInt(creatorFeeBp) / 10_000n;
+
+    const observer = loadObserverKeypair();
+
+    const platform = await Platform.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 2,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 1_000_000_000_000n,
+      platformFeeBp,
+      rewardPoolFeeBp,
+      creatorFeeBp,
+      marketConfig: {
+        // No initial reward — the entire winning pool is the loser's contribution.
+        rewardAmount: 0n,
+        timeToStake: 120n,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    const openTimestamp = await platform.openMarket();
+    const [staker1, staker2] = platform.participants;
+    const { optionId: optionA } = await platform.addOption();
+    const { optionId: optionB } = await platform.addOption();
+
+    await sleepUntilOnChainTimestamp(Number(openTimestamp) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    const [sa1, sa2] = await platform.stakeOnOptionBatch([
+      { userId: staker1, amount: stakeAmount, optionId: optionA },
+      { userId: staker2, amount: stakeAmount, optionId: optionB },
+    ]);
+
+    // Fees from both stakes accumulate on the market; the gross stake is paid in
+    // full but every base unit is split between pool / platform / creator.
+    const marketAfterStakes = await platform.fetchMarket();
+    expect(marketAfterStakes.data.rewardAmount).to.equal(expectedPoolFee * 2n);
+    expect(marketAfterStakes.data.collectedPlatformFees).to.equal(expectedPlatformFee * 2n);
+    expect(marketAfterStakes.data.collectedCreatorFees).to.equal(expectedCreatorFee * 2n);
+
+    // Stake accounts record zero net.
+    expect((await platform.fetchStakeAccountData(staker1, sa1)).data.amount).to.equal(0n);
+    expect((await platform.fetchStakeAccountData(staker2, sa2)).data.amount).to.equal(0n);
+
+    // Resolve with option A as the sole winner.
+    await platform.selectSingleWinningOption(optionA);
+
+    // selectSingleWinningOption shortens time_to_stake under allow_closing_early.
+    const resolvedMarket = await platform.fetchMarket();
+    const resolvedOpenTs = Number(unwrapOption(resolvedMarket.data.openTimestamp) ?? 0n);
+    const revealStart = resolvedOpenTs + Number(resolvedMarket.data.timeToStake);
+    await sleepUntilOnChainTimestamp(revealStart + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+
+    // Both stakes can be revealed.
+    await platform.revealStakeBatch([
+      { userId: staker1, stakeAccountId: sa1 },
+      { userId: staker2, stakeAccountId: sa2 },
+    ]);
+    expect((await platform.fetchStakeAccountData(staker1, sa1)).data.revealedOption)
+      .to.deep.equal(some(BigInt(optionA)));
+    expect((await platform.fetchStakeAccountData(staker2, sa2)).data.revealedOption)
+      .to.deep.equal(some(BigInt(optionB)));
+
+    // Both reveals can be finalized. Winner's finalize triggers deduct_stake_fees,
+    // so reward_amount drops by the winner's pool_fee, leaving the loser's pool
+    // contribution as the prize.
+    await platform.finalizeRevealStakeBatch([
+      { userId: staker1, optionId: optionA, stakeAccountId: sa1 },
+      { userId: staker2, optionId: optionB, stakeAccountId: sa2 },
+    ]);
+
+    const marketAfterFinalize = await platform.fetchMarket();
+    expect(marketAfterFinalize.data.rewardAmount).to.equal(expectedPoolFee);
+    expect(marketAfterFinalize.data.collectedCreatorFees).to.equal(expectedCreatorFee);
+
+    // Unstake returns exactly 0 — every base unit went to fees.
+    const rpc = platform.getRpc();
+    const bal1BeforeUnstake = (await fetchToken(rpc, platform.getUserTokenAccount(staker1))).data.amount;
+    const bal2BeforeUnstake = (await fetchToken(rpc, platform.getUserTokenAccount(staker2))).data.amount;
+    await platform.unstakeBatch([
+      { userId: staker1, stakeAccountId: sa1 },
+      { userId: staker2, stakeAccountId: sa2 },
+    ]);
+    const bal1AfterUnstake = (await fetchToken(rpc, platform.getUserTokenAccount(staker1))).data.amount;
+    const bal2AfterUnstake = (await fetchToken(rpc, platform.getUserTokenAccount(staker2))).data.amount;
+    expect(bal1AfterUnstake - bal1BeforeUnstake).to.equal(0n);
+    expect(bal2AfterUnstake - bal2BeforeUnstake).to.equal(0n);
+
+    await platform.endRevealPeriod();
+
+    await platform.closeStakeAccountBatch([
+      { userId: staker1, optionId: optionA, stakeAccountId: sa1 },
+      { userId: staker2, optionId: optionB, stakeAccountId: sa2 },
+    ]);
+
+    const bal1AfterClose = (await fetchToken(rpc, platform.getUserTokenAccount(staker1))).data.amount;
+    const bal2AfterClose = (await fetchToken(rpc, platform.getUserTokenAccount(staker2))).data.amount;
+
+    const expectedWinnerCloseGain = 2n * expectedPoolFee + expectedCreatorFee;
+    expect(bal1AfterClose - bal1AfterUnstake).to.equal(expectedWinnerCloseGain);
+    expect(bal2AfterClose - bal2AfterUnstake).to.equal(0n);
+
+    expect(await platform.accountExists(await platform.getStakeAccountAddress(staker1, sa1))).to.be.false;
+    expect(await platform.accountExists(await platform.getStakeAccountAddress(staker2, sa2))).to.be.false;
+  });
 });

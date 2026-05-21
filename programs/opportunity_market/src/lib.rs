@@ -75,40 +75,16 @@ pub mod opportunity_market {
         )
     }
 
-    pub fn propose_new_update_authority(
-        ctx: Context<ProposeNewUpdateAuthority>,
+    pub fn set_update_authority(
+        ctx: Context<SetUpdateAuthority>,
     ) -> Result<()> {
-        instructions::propose_new_update_authority(ctx)
+        instructions::set_update_authority(ctx)
     }
 
-    pub fn propose_new_fee_claim_authority(
-        ctx: Context<ProposeNewFeeClaimAuthority>,
+    pub fn set_fee_claim_authority(
+        ctx: Context<SetFeeClaimAuthority>,
     ) -> Result<()> {
-        instructions::propose_new_fee_claim_authority(ctx)
-    }
-
-    pub fn finalize_new_update_authority(
-        ctx: Context<FinalizeNewUpdateAuthority>,
-    ) -> Result<()> {
-        instructions::finalize_new_update_authority(ctx)
-    }
-
-    pub fn finalize_new_fee_claim_authority(
-        ctx: Context<FinalizeNewFeeClaimAuthority>,
-    ) -> Result<()> {
-        instructions::finalize_new_fee_claim_authority(ctx)
-    }
-
-    pub fn cancel_update_authority_change(
-        ctx: Context<CancelUpdateAuthorityChange>,
-    ) -> Result<()> {
-        instructions::cancel_update_authority_change(ctx)
-    }
-
-    pub fn cancel_fee_claim_authority_change(
-        ctx: Context<CancelFeeClaimAuthorityChange>,
-    ) -> Result<()> {
-        instructions::cancel_fee_claim_authority_change(ctx)
+        instructions::set_fee_claim_authority(ctx)
     }
 
     pub fn init_allowed_mint(ctx: Context<InitAllowedMint>) -> Result<()> {

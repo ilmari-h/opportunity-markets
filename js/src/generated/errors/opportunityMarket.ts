@@ -74,12 +74,10 @@ export const OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK = 0x178b; // 6027
 export const OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED = 0x178c; // 6028
 /** MarketNotPaused: Market is not paused */
 export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED = 0x178d; // 6029
-/** TimelockNotElapsed: Timelock period has not elapsed yet */
-export const OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED = 0x178e; // 6030
 /** StakeBelowMinimum: Stake amount is below the market minimum */
-export const OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM = 0x178f; // 6031
+export const OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM = 0x178e; // 6030
 /** SelectOptionsDeadlinePassed: Deadline for selecting winning options has passed */
-export const OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED = 0x1790; // 6032
+export const OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED = 0x178f; // 6031
 
 export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION
@@ -111,7 +109,6 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM
   | typeof OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK
   | typeof OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED
-  | typeof OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED
   | typeof OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH
   | typeof OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED
   | typeof OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED;
@@ -150,7 +147,6 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM]: `Stake amount is below the market minimum`,
     [OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK]: `Stake account is not in a stuck or failed state`,
     [OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED]: `Tally already incremented for this stake account`,
-    [OPPORTUNITY_MARKET_ERROR__TIMELOCK_NOT_ELAPSED]: `Timelock period has not elapsed yet`,
     [OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH]: `Operation called outside its permitted time window`,
     [OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED]: `Unauthorized`,
     [OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED]: `Market winner already selected`,

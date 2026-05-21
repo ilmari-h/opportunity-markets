@@ -16,29 +16,25 @@ import {
 import {
   type ParsedAddMarketOptionInstruction,
   type ParsedAddRewardInstruction,
-  type ParsedCancelFeeClaimAuthorityChangeInstruction,
-  type ParsedCancelUpdateAuthorityChangeInstruction,
   type ParsedClaimCreatorFeesInstruction,
   type ParsedClaimFeesInstruction,
   type ParsedCloseStakeAccountInstruction,
   type ParsedCloseStuckStakeAccountInstruction,
   type ParsedCreateMarketInstruction,
   type ParsedEndRevealPeriodInstruction,
-  type ParsedFinalizeNewFeeClaimAuthorityInstruction,
-  type ParsedFinalizeNewUpdateAuthorityInstruction,
   type ParsedFinalizeRevealStakeInstruction,
   type ParsedInitAllowedMintInstruction,
   type ParsedInitPlatformConfigInstruction,
   type ParsedInitStakeAccountInstruction,
   type ParsedOpenMarketInstruction,
   type ParsedPauseStakingInstruction,
-  type ParsedProposeNewFeeClaimAuthorityInstruction,
-  type ParsedProposeNewUpdateAuthorityInstruction,
   type ParsedResolveMarketInstruction,
   type ParsedResumeStakingInstruction,
   type ParsedRevealStakeCallbackInstruction,
   type ParsedRevealStakeCompDefInstruction,
   type ParsedRevealStakeInstruction,
+  type ParsedSetFeeClaimAuthorityInstruction,
+  type ParsedSetUpdateAuthorityInstruction,
   type ParsedSetWinningOptionInstruction,
   type ParsedStakeCallbackInstruction,
   type ParsedStakeCompDefInstruction,
@@ -64,7 +60,6 @@ export enum OpportunityMarketAccount {
   OpportunityMarketSponsor,
   PlatformConfig,
   StakeAccount,
-  TimelockedAccountChange,
 }
 
 export function identifyOpportunityMarketAccount(
@@ -203,17 +198,6 @@ export function identifyOpportunityMarketAccount(
   ) {
     return OpportunityMarketAccount.StakeAccount;
   }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([212, 170, 131, 144, 16, 51, 205, 22])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketAccount.TimelockedAccountChange;
-  }
   throw new Error(
     'The provided account could not be identified as a opportunityMarket account.'
   );
@@ -222,29 +206,25 @@ export function identifyOpportunityMarketAccount(
 export enum OpportunityMarketInstruction {
   AddMarketOption,
   AddReward,
-  CancelFeeClaimAuthorityChange,
-  CancelUpdateAuthorityChange,
   ClaimCreatorFees,
   ClaimFees,
   CloseStakeAccount,
   CloseStuckStakeAccount,
   CreateMarket,
   EndRevealPeriod,
-  FinalizeNewFeeClaimAuthority,
-  FinalizeNewUpdateAuthority,
   FinalizeRevealStake,
   InitAllowedMint,
   InitPlatformConfig,
   InitStakeAccount,
   OpenMarket,
   PauseStaking,
-  ProposeNewFeeClaimAuthority,
-  ProposeNewUpdateAuthority,
   ResolveMarket,
   ResumeStaking,
   RevealStake,
   RevealStakeCallback,
   RevealStakeCompDef,
+  SetFeeClaimAuthority,
+  SetUpdateAuthority,
   SetWinningOption,
   Stake,
   StakeCallback,
@@ -279,28 +259,6 @@ export function identifyOpportunityMarketInstruction(
     )
   ) {
     return OpportunityMarketInstruction.AddReward;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([158, 0, 189, 141, 126, 74, 140, 189])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.CancelFeeClaimAuthorityChange;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([193, 127, 213, 94, 136, 199, 133, 229])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.CancelUpdateAuthorityChange;
   }
   if (
     containsBytes(
@@ -372,28 +330,6 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([101, 102, 211, 163, 210, 183, 108, 153])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.FinalizeNewFeeClaimAuthority;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([46, 87, 119, 22, 184, 132, 188, 216])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.FinalizeNewUpdateAuthority;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([92, 201, 94, 219, 117, 53, 255, 230])
       ),
       0
@@ -460,28 +396,6 @@ export function identifyOpportunityMarketInstruction(
     containsBytes(
       data,
       fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([40, 106, 95, 197, 50, 31, 172, 97])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.ProposeNewFeeClaimAuthority;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([190, 245, 249, 53, 37, 130, 25, 87])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketInstruction.ProposeNewUpdateAuthority;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
         new Uint8Array([155, 23, 80, 173, 46, 74, 23, 239])
       ),
       0
@@ -532,6 +446,28 @@ export function identifyOpportunityMarketInstruction(
     )
   ) {
     return OpportunityMarketInstruction.RevealStakeCompDef;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([75, 250, 161, 197, 43, 196, 161, 3])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.SetFeeClaimAuthority;
+  }
+  if (
+    containsBytes(
+      data,
+      fixEncoderSize(getBytesEncoder(), 8).encode(
+        new Uint8Array([166, 198, 186, 255, 217, 170, 103, 155])
+      ),
+      0
+    )
+  ) {
+    return OpportunityMarketInstruction.SetUpdateAuthority;
   }
   if (
     containsBytes(
@@ -625,12 +561,6 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.AddReward;
     } & ParsedAddRewardInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.CancelFeeClaimAuthorityChange;
-    } & ParsedCancelFeeClaimAuthorityChangeInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.CancelUpdateAuthorityChange;
-    } & ParsedCancelUpdateAuthorityChangeInstruction<TProgram>)
-  | ({
       instructionType: OpportunityMarketInstruction.ClaimCreatorFees;
     } & ParsedClaimCreatorFeesInstruction<TProgram>)
   | ({
@@ -648,12 +578,6 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.EndRevealPeriod;
     } & ParsedEndRevealPeriodInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.FinalizeNewFeeClaimAuthority;
-    } & ParsedFinalizeNewFeeClaimAuthorityInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.FinalizeNewUpdateAuthority;
-    } & ParsedFinalizeNewUpdateAuthorityInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.FinalizeRevealStake;
     } & ParsedFinalizeRevealStakeInstruction<TProgram>)
@@ -673,12 +597,6 @@ export type ParsedOpportunityMarketInstruction<
       instructionType: OpportunityMarketInstruction.PauseStaking;
     } & ParsedPauseStakingInstruction<TProgram>)
   | ({
-      instructionType: OpportunityMarketInstruction.ProposeNewFeeClaimAuthority;
-    } & ParsedProposeNewFeeClaimAuthorityInstruction<TProgram>)
-  | ({
-      instructionType: OpportunityMarketInstruction.ProposeNewUpdateAuthority;
-    } & ParsedProposeNewUpdateAuthorityInstruction<TProgram>)
-  | ({
       instructionType: OpportunityMarketInstruction.ResolveMarket;
     } & ParsedResolveMarketInstruction<TProgram>)
   | ({
@@ -693,6 +611,12 @@ export type ParsedOpportunityMarketInstruction<
   | ({
       instructionType: OpportunityMarketInstruction.RevealStakeCompDef;
     } & ParsedRevealStakeCompDefInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.SetFeeClaimAuthority;
+    } & ParsedSetFeeClaimAuthorityInstruction<TProgram>)
+  | ({
+      instructionType: OpportunityMarketInstruction.SetUpdateAuthority;
+    } & ParsedSetUpdateAuthorityInstruction<TProgram>)
   | ({
       instructionType: OpportunityMarketInstruction.SetWinningOption;
     } & ParsedSetWinningOptionInstruction<TProgram>)

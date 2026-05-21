@@ -68,12 +68,17 @@ pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, 
     let user_stake_end = stake_account.unstaked_at_timestamp
         .unwrap_or(reveal_start);
 
+    // Stake inclusive of fees
+    let stake_base_amount = stake_amount
+        .checked_add(ctx.accounts.stake_account.fees.total()?)
+        .ok_or(ErrorCode::Overflow)?;
+
     let user_score = calculate_user_score(
         ctx.accounts.option.created_at,
         reveal_start,
         staked_at_timestamp,
         user_stake_end,
-        stake_amount,
+        stake_base_amount,
         market.earliness_cutoff_seconds,
         market.earliness_multiplier,
         market.disable_time_weighting,
