@@ -75,7 +75,6 @@ pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, 
         stake_base_amount,
         market.earliness_cutoff_seconds,
         market.earliness_multiplier,
-        market.disable_time_weighting,
     )?;
 
     ctx.accounts.option.total_score = ctx.accounts.option.total_score

@@ -33,7 +33,6 @@ pub struct MarketCreatedEvent {
     pub market_resolution_deadline_seconds: u64,
     pub min_reveal_period_seconds: u64,
     pub max_reveal_period_seconds: u64,
-    pub disable_time_weighting: bool,
     pub timestamp: i64,
 }
 

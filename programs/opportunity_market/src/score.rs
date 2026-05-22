@@ -64,24 +64,24 @@ pub fn calculate_user_score(
     stake_amount: u64,
     earliness_cutoff_seconds: u64,
     earliness_multiplier: u16,
-    disable_time_weighting: bool,
 ) -> Result<u64> {
-    let (amount, time_pct, earliness) =
-        calculate_user_score_components(option_created, reveal_start, user_staked_at, user_stake_end, stake_amount, earliness_cutoff_seconds, earliness_multiplier)?;
+    let (amount, time_pct, earliness) = calculate_user_score_components(
+        option_created,
+        reveal_start,
+        user_staked_at,
+        user_stake_end,
+        stake_amount,
+        earliness_cutoff_seconds,
+        earliness_multiplier,
+    )?;
 
     // score = amount * time_pct * earliness / PRECISION
     // Use u128 intermediate to avoid overflow.
-    let weighted = if disable_time_weighting {
-        (amount as u128)
-            .checked_mul(earliness as u128)
-            .ok_or(ErrorCode::Overflow)?
-    } else {
-        (amount as u128)
-            .checked_mul(time_pct as u128)
-            .ok_or(ErrorCode::Overflow)?
-            .checked_mul(earliness as u128)
-            .ok_or(ErrorCode::Overflow)?
-    };
+    let weighted = (amount as u128)
+        .checked_mul(time_pct as u128)
+        .ok_or(ErrorCode::Overflow)?
+        .checked_mul(earliness as u128)
+        .ok_or(ErrorCode::Overflow)?;
 
     let user_score = weighted
         .checked_div(PRECISION as u128)
@@ -112,7 +112,7 @@ mod tests {
         let (amount, time_pct, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
-            MARKET_OPENED,                       
+            MARKET_OPENED,
             reveal_start,
             STAKE,
             ONE_WEEK,
@@ -142,7 +142,7 @@ mod tests {
         .unwrap();
 
         // 1.0x
-        assert_eq!(earliness, PRECISION); 
+        assert_eq!(earliness, PRECISION);
     }
 
     #[test]
@@ -212,7 +212,6 @@ mod tests {
             STAKE,
             ONE_WEEK,
             MULT_1_5X,
-            false,
         )
         .unwrap();
 
@@ -235,7 +234,6 @@ mod tests {
             u64::MAX,
             ONE_WEEK,
             MULT_2X,
-            false,
         );
         assert!(result.is_ok());
     }
@@ -271,7 +269,6 @@ mod tests {
             0,
             ONE_WEEK,
             MULT_2X,
-            false,
         )
         .unwrap();
 
@@ -291,7 +288,6 @@ mod tests {
             STAKE,
             ONE_WEEK,
             MULT_2X,
-            false,
         )
         .unwrap();
 
@@ -328,7 +324,6 @@ mod tests {
             STAKE,
             ONE_WEEK,
             MULT_2X,
-            false,
         );
         assert!(r.is_err());
     }
@@ -340,47 +335,13 @@ mod tests {
             MARKET_OPENED,
             reveal_start,
             MARKET_OPENED + 100,
-
             // unstake before stake
             MARKET_OPENED + 50,
             STAKE,
             ONE_WEEK,
             MULT_2X,
-            false,
         );
         assert!(r.is_err());
-    }
-
-    #[test]
-    fn no_time_factor() {
-        let reveal_start = MARKET_OPENED + ONE_WEEK;
-
-        let early = calculate_user_score(
-            MARKET_OPENED,
-            reveal_start,
-            MARKET_OPENED,
-            reveal_start,
-            STAKE,
-            ONE_WEEK,
-            MULT_1X,
-            true,
-        )
-        .unwrap();
-
-        let late = calculate_user_score(
-            MARKET_OPENED,
-            reveal_start,
-            MARKET_OPENED + ONE_WEEK / 2,
-            reveal_start,
-            STAKE,
-            ONE_WEEK,
-            MULT_1X,
-            true,
-        )
-        .unwrap();
-
-        assert_eq!(early, STAKE);
-        assert_eq!(early, late);
     }
 
     #[test]

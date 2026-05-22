@@ -163,5 +163,3 @@ $$\text{score} = s \cdot t \cdot e$$
 - $e$ = the earliness factor, in $[1, m]$
 
  Earliness factor $e$ decays linearly from a maximum multiplier $m$ (`earliness_multiplier` in market account) down to $1$ over a configurable window (`earliness_cutoff_seconds` in market account). User that stakes on an option right after it's created gets $e=m$, whereas user staking at the earliness window boundary or later gets $e=1$.
-
-If the market is created with `disable_time_weighting` set, the stake-time factor $t$ is dropped from the product and a staker's score is simply $\text{score} = s \cdot e$.
