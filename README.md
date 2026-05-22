@@ -39,6 +39,16 @@ bun install
 ./test.sh
 ```
 
+### Regenerating the JS client
+
+After changing the program (instructions, accounts, types, errors), regenerate the IDL and the Solana Kit client in `js/`:
+
+```bash
+anchor run js-generate
+```
+
+This runs `anchor build`, copies the IDL into `js/src/idl/`, installs deps, and runs Codama to regenerate `js/src/generated/`.
+
 ### Troubleshooting: `DeclaredProgramIdMismatch`
 
 If tests fail with `Error Code: DeclaredProgramIdMismatch`, the compiled `.so` binary has a different program ID baked in than the deploy keypair. This happens when:
