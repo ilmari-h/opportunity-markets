@@ -48,7 +48,6 @@ export type MarketCreatedEvent = {
   marketResolutionDeadlineSeconds: bigint;
   minRevealPeriodSeconds: bigint;
   maxRevealPeriodSeconds: bigint;
-  disableTimeWeighting: boolean;
   timestamp: bigint;
 };
 
@@ -69,7 +68,6 @@ export type MarketCreatedEventArgs = {
   marketResolutionDeadlineSeconds: number | bigint;
   minRevealPeriodSeconds: number | bigint;
   maxRevealPeriodSeconds: number | bigint;
-  disableTimeWeighting: boolean;
   timestamp: number | bigint;
 };
 
@@ -91,7 +89,6 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['marketResolutionDeadlineSeconds', getU64Encoder()],
     ['minRevealPeriodSeconds', getU64Encoder()],
     ['maxRevealPeriodSeconds', getU64Encoder()],
-    ['disableTimeWeighting', getBooleanEncoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
@@ -114,7 +111,6 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
     ['minRevealPeriodSeconds', getU64Decoder()],
     ['maxRevealPeriodSeconds', getU64Decoder()],
-    ['disableTimeWeighting', getBooleanDecoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
