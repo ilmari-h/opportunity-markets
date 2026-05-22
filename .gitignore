@@ -16,3 +16,5 @@ compute-defs.sh
 test-market.sh
 
 .env
+.vscode/
+.claude/

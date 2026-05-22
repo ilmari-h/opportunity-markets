@@ -2,9 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
-use crate::constants::{
-    ALLOWED_MINT_SEED, MAX_EARLINESS_MULTIPLIER, OPPORTUNITY_MARKET_SEED,
-};
+use crate::constants::{ALLOWED_MINT_SEED, MAX_EARLINESS_MULTIPLIER, OPPORTUNITY_MARKET_SEED};
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, MarketCreatedEvent};
 use crate::score::PRECISION;
@@ -63,7 +61,6 @@ pub fn create_market(
     earliness_multiplier: u16,
     min_stake_amount: u64,
     market_fee_claimer: Pubkey,
-    disable_time_weighting: bool,
 ) -> Result<()> {
     require!(
         (earliness_multiplier as u64) >= PRECISION
@@ -78,7 +75,10 @@ pub fn create_market(
         reward_pool_fee: ctx.accounts.platform_config.reward_pool_fee_bp as u64,
         creator_fee: ctx.accounts.platform_config.creator_fee_bp as u64,
     };
-    let market_resolution_deadline_seconds = ctx.accounts.platform_config.market_resolution_deadline_seconds;
+    let market_resolution_deadline_seconds = ctx
+        .accounts
+        .platform_config
+        .market_resolution_deadline_seconds;
     let min_reveal_period_seconds = ctx.accounts.platform_config.min_reveal_period_seconds;
     let max_reveal_period_seconds = ctx.accounts.platform_config.max_reveal_period_seconds;
     let market = &mut ctx.accounts.market;
@@ -101,7 +101,6 @@ pub fn create_market(
     market.max_reveal_period_seconds = max_reveal_period_seconds;
     market.reveal_ended = false;
     market.min_stake_amount = min_stake_amount;
-    market.disable_time_weighting = disable_time_weighting;
 
     emit_ts!(MarketCreatedEvent {
         market: market.key(),
@@ -120,7 +119,6 @@ pub fn create_market(
         market_resolution_deadline_seconds: market_resolution_deadline_seconds,
         min_reveal_period_seconds: min_reveal_period_seconds,
         max_reveal_period_seconds: max_reveal_period_seconds,
-        disable_time_weighting: disable_time_weighting,
     });
 
     Ok(())

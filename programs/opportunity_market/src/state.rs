@@ -101,9 +101,6 @@ pub struct OpportunityMarket {
 
     // Minimum stake amount (in SPL token base units) required for a stake.
     pub min_stake_amount: u64,
-
-    // When true, score drops the stake-time factor: score = s · e instead of s · t · e.
-    pub disable_time_weighting: bool,
 }
 
 #[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, InitSpace)]
@@ -187,12 +184,12 @@ pub struct StakeAccount {
     pub unstaked: bool, // whether staked tokens have been returned
     pub id: u32,
 
-    // Computation account pubkey of the in-flight stake computation. 
+    // Computation account pubkey of the in-flight stake computation.
     // `Some` means a stake computation is pending; None means no stake is in flight.
     pub pending_stake_computation: Option<Pubkey>,
 
     // True while MPC reveal computation is in flight
-    pub pending_reveal: bool,                
+    pub pending_reveal: bool,
 }
 
 #[account]
