@@ -14,7 +14,7 @@ pub struct Unstake<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
-    /// CHECK: Any account — this is the stake account owner. Permissionless.
+    /// CHECK: Must sign when unstaking early.
     pub owner: UncheckedAccount<'info>,
 
     #[account(
@@ -69,6 +69,7 @@ pub fn unstake(
 
     if current_timestamp < stake_end {
         require!(market.allow_unstaking_early, ErrorCode::TimeWindowMismatch);
+        require!(ctx.accounts.owner.is_signer, ErrorCode::Unauthorized);
         ctx.accounts.stake_account.unstaked_at_timestamp = Some(current_timestamp);
     }
 

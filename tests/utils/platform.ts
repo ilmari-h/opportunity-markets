@@ -129,6 +129,12 @@ export interface RevealRequest {
   stakeAccountId: number;
 }
 
+export interface UnstakeRequest {
+  userId: Address;
+  stakeAccountId: number;
+  signerId?: Address;
+}
+
 export interface TallyIncrement {
   userId: Address;
   optionId: number;
@@ -967,28 +973,29 @@ export class Platform {
     return stakeAccountId;
   }
 
-  async unstakeBatch(requests: RevealRequest[]): Promise<void> {
+  async unstakeBatch(requests: UnstakeRequest[]): Promise<void> {
     for (const r of requests) {
-      const user = this.getUser(r.userId);
+      const owner = this.getUser(r.userId);
+      const signer = r.signerId ? this.getUser(r.signerId) : owner;
 
       const ix = await unstakeIx({
-        signer: user.solanaKeypair,
-        owner: user.solanaKeypair.address,
+        signer: signer.solanaKeypair,
+        owner: owner.solanaKeypair.address,
         market: this.marketAddress,
         tokenMint: this.mint.address,
-        ownerTokenAccount: user.tokenAccount,
+        ownerTokenAccount: owner.tokenAccount,
         tokenProgram: TOKEN_PROGRAM_ADDRESS,
         stakeAccountId: r.stakeAccountId,
       });
 
-      await sendTransaction(this.rpc, this.sendAndConfirm, user.solanaKeypair, [ix], {
+      await sendTransaction(this.rpc, this.sendAndConfirm, signer.solanaKeypair, [ix], {
         label: `Unstake`,
       });
     }
   }
 
-  async unstake(userId: Address, stakeAccountId: number): Promise<void> {
-    await this.unstakeBatch([{ userId, stakeAccountId }]);
+  async unstake(userId: Address, stakeAccountId: number, signerId?: Address): Promise<void> {
+    await this.unstakeBatch([{ userId, stakeAccountId, signerId }]);
   }
 
   // ============================================================================

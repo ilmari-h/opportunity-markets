@@ -899,6 +899,53 @@ describe("OpportunityMarket", () => {
     );
   });
 
+  it("staking becomes permissionless only after stake period", async () => {
+    const timeToStake = 12n;
+    const stakeAmount = 50_000_000n;
+
+    const observer = loadObserverKeypair();
+
+    const platform = await Platform.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 2,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketConfig: {
+        rewardAmount: 1_000_000_000n,
+        timeToStake,
+        allowUnstakingEarly: true,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    const stakeEnd = await platform.openMarket();
+
+    const [staker, thirdParty] = platform.participants;
+    const { optionId: optionA } = await platform.addOption();
+    await platform.addOption();
+
+    const stakeAccountId = await platform.stakeOnOption(staker, stakeAmount, optionA);
+
+    // While stake window is open, only the owner may unstake
+    await shouldThrowCustomError(
+      () => platform.unstake(staker, stakeAccountId, thirdParty),
+      OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
+    );
+
+    let stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
+    expect(stakeAccount.data.unstaked).to.be.false;
+
+    // Once stake_end has passed, unstake is permissionless
+    await sleepUntilOnChainTimestamp(Number(stakeEnd) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+    await platform.unstake(staker, stakeAccountId, thirdParty);
+
+    stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
+    expect(stakeAccount.data.unstaked).to.be.true;
+    // Post-stake-end unstake does NOT record an early unstake timestamp.
+    expect(isNone(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
+  });
+
   it("locked sponsor cannot withdraw but unlocked sponsor can", async () => {
     const lockedAmount = 500_000_000n;
     const unlockedAmount = 300_000_000n;
