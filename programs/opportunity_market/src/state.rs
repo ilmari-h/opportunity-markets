@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+use crate::constants::{MAX_CREATOR_FEE_BP, MAX_PLATFORM_FEE_BP, MAX_REWARD_POOL_FEE_BP, MAX_TOTAL_FEE_BP};
 use crate::error::ErrorCode;
 
 #[account]
@@ -17,9 +18,7 @@ pub struct PlatformConfig {
     pub fee_claim_authority: Pubkey,
 
     // Platform fee in basis points
-    pub platform_fee_bp: u16,
-    pub reward_pool_fee_bp: u16,
-    pub creator_fee_bp: u16,
+    pub fee_rates: FeeRates,
 
     pub market_resolution_deadline_seconds: u64,
 
@@ -79,7 +78,7 @@ pub struct OpportunityMarket {
 
     pub staking_paused: bool,
 
-    pub fees: Fees,
+    pub fee_rates: FeeRates,
 
     // Unclaimed platform fees held in the market ATA.
     pub collected_platform_fees: u64,
@@ -104,50 +103,61 @@ pub struct OpportunityMarket {
 }
 
 #[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, InitSpace)]
-pub struct Fees {
-    pub platform_fee: u64,
-    pub reward_pool_fee: u64,
-    pub creator_fee: u64,
+pub struct FeeRates {
+    pub platform_fee_bp: u16,
+    pub reward_pool_fee_bp: u16,
+    pub creator_fee_bp: u16,
 }
 
-impl Fees {
-    pub fn total(&self) -> Result<u64> {
-        let total_fee = self
-            .platform_fee
-            .checked_add(self.reward_pool_fee)
-            .ok_or(ErrorCode::Overflow)?
-            .checked_add(self.creator_fee)
-            .ok_or(ErrorCode::Overflow)?;
-        Ok(total_fee)
+impl FeeRates {
+    pub fn new(platform_fee_bp: u16, reward_pool_fee_bp: u16, creator_fee_bp: u16) -> Result<Self> {
+        require!(
+            platform_fee_bp <= MAX_PLATFORM_FEE_BP,
+            ErrorCode::InvalidFeeRates
+        );
+        require!(
+            reward_pool_fee_bp <= MAX_REWARD_POOL_FEE_BP,
+            ErrorCode::InvalidFeeRates
+        );
+        require!(creator_fee_bp <= MAX_CREATOR_FEE_BP, ErrorCode::InvalidFeeRates);
+        require!(
+            platform_fee_bp + reward_pool_fee_bp + creator_fee_bp <= MAX_TOTAL_FEE_BP,
+            ErrorCode::InvalidFeeRates
+        );
+        Ok(Self {
+            platform_fee_bp,
+            reward_pool_fee_bp,
+            creator_fee_bp,
+        })
     }
 }
 
 impl OpportunityMarket {
-    pub fn calculate_fees(&self, amount: u64) -> Result<Fees> {
+    pub fn calculate_fees(&self, amount: u64) -> Result<CollectedFees> {
         let platform_fee = (amount as u128)
-            .checked_mul(self.fees.platform_fee as u128)
+            .checked_mul(self.fee_rates.platform_fee_bp as u128)
             .ok_or(ErrorCode::Overflow)?
             .checked_div(10_000)
             .ok_or(ErrorCode::Overflow)? as u64;
         let reward_pool_fee = (amount as u128)
-            .checked_mul(self.fees.reward_pool_fee as u128)
+            .checked_mul(self.fee_rates.reward_pool_fee_bp as u128)
             .ok_or(ErrorCode::Overflow)?
             .checked_div(10_000)
             .ok_or(ErrorCode::Overflow)? as u64;
         let creator_fee = (amount as u128)
-            .checked_mul(self.fees.creator_fee as u128)
+            .checked_mul(self.fee_rates.creator_fee_bp as u128)
             .ok_or(ErrorCode::Overflow)?
             .checked_div(10_000)
             .ok_or(ErrorCode::Overflow)? as u64;
 
-        Ok(Fees {
+        Ok(CollectedFees {
             platform_fee,
             reward_pool_fee,
             creator_fee,
         })
     }
 
-    pub fn deduct_stake_fees(&mut self, fees: &Fees) -> Result<u64> {
+    pub fn deduct_stake_fees(&mut self, fees: &CollectedFees) -> Result<u64> {
         self.reward_amount = self
             .reward_amount
             .checked_sub(fees.reward_pool_fee)
@@ -162,6 +172,25 @@ impl OpportunityMarket {
     }
 }
 
+
+#[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, InitSpace)]
+pub struct CollectedFees {
+    pub platform_fee: u64,
+    pub reward_pool_fee: u64,
+    pub creator_fee: u64,
+}
+
+impl CollectedFees {
+    pub fn total(&self) -> Result<u64> {
+        let total_fee = self
+            .platform_fee
+            .checked_add(self.reward_pool_fee)
+            .ok_or(ErrorCode::Overflow)?
+            .checked_add(self.creator_fee)
+            .ok_or(ErrorCode::Overflow)?;
+        Ok(total_fee)
+    }
+}
 #[account]
 #[derive(InitSpace)]
 pub struct StakeAccount {
@@ -176,7 +205,7 @@ pub struct StakeAccount {
     pub staked_at_timestamp: Option<u64>,
     pub unstaked_at_timestamp: Option<u64>,
     pub amount: u64, // net stake (after all fees)
-    pub fees: Fees,  // fees owed to the platform, reward pool, and creator
+    pub collected_fees: CollectedFees,  // fees owed to the platform, reward pool, and creator
     pub revealed_option: Option<u64>,
     pub score: Option<u64>,
     pub total_incremented: bool,

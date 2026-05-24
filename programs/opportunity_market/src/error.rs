@@ -64,4 +64,6 @@ pub enum ErrorCode {
     StakeBelowMinimum,
     #[msg("Deadline for selecting winning options has passed")]
     SelectOptionsDeadlinePassed,
+    #[msg("Invalid fee rates")]
+    InvalidFeeRates,
 }

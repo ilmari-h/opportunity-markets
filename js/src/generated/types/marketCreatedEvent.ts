@@ -29,7 +29,12 @@ import {
   type FixedSizeDecoder,
   type FixedSizeEncoder,
 } from '@solana/kit';
-import { getFeesDecoder, getFeesEncoder, type Fees, type FeesArgs } from '.';
+import {
+  getFeeRatesDecoder,
+  getFeeRatesEncoder,
+  type FeeRates,
+  type FeeRatesArgs,
+} from '.';
 
 export type MarketCreatedEvent = {
   market: Address;
@@ -43,7 +48,7 @@ export type MarketCreatedEvent = {
   authorizedReaderPubkey: Array<number>;
   allowUnstakingEarly: boolean;
   minStakeAmount: bigint;
-  fees: Fees;
+  feeRates: FeeRates;
   marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: bigint;
   minRevealPeriodSeconds: bigint;
@@ -63,7 +68,7 @@ export type MarketCreatedEventArgs = {
   authorizedReaderPubkey: Array<number>;
   allowUnstakingEarly: boolean;
   minStakeAmount: number | bigint;
-  fees: FeesArgs;
+  feeRates: FeeRatesArgs;
   marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: number | bigint;
   minRevealPeriodSeconds: number | bigint;
@@ -84,7 +89,7 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
     ['allowUnstakingEarly', getBooleanEncoder()],
     ['minStakeAmount', getU64Encoder()],
-    ['fees', getFeesEncoder()],
+    ['feeRates', getFeeRatesEncoder()],
     ['marketFeeClaimer', getAddressEncoder()],
     ['marketResolutionDeadlineSeconds', getU64Encoder()],
     ['minRevealPeriodSeconds', getU64Encoder()],
@@ -106,7 +111,7 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['allowUnstakingEarly', getBooleanDecoder()],
     ['minStakeAmount', getU64Decoder()],
-    ['fees', getFeesDecoder()],
+    ['feeRates', getFeeRatesDecoder()],
     ['marketFeeClaimer', getAddressDecoder()],
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
     ['minRevealPeriodSeconds', getU64Decoder()],

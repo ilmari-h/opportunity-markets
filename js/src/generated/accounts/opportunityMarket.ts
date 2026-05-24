@@ -49,10 +49,10 @@ import {
   type ReadonlyUint8Array,
 } from '@solana/kit';
 import {
-  getFeesDecoder,
-  getFeesEncoder,
-  type Fees,
-  type FeesArgs,
+  getFeeRatesDecoder,
+  getFeeRatesEncoder,
+  type FeeRates,
+  type FeeRatesArgs,
 } from '../types';
 
 export const OPPORTUNITY_MARKET_DISCRIMINATOR = new Uint8Array([
@@ -84,7 +84,7 @@ export type OpportunityMarket = {
   allowUnstakingEarly: boolean;
   authorizedReaderPubkey: Array<number>;
   stakingPaused: boolean;
-  fees: Fees;
+  feeRates: FeeRates;
   collectedPlatformFees: bigint;
   collectedCreatorFees: bigint;
   marketFeeClaimer: Address;
@@ -113,7 +113,7 @@ export type OpportunityMarketArgs = {
   allowUnstakingEarly: boolean;
   authorizedReaderPubkey: Array<number>;
   stakingPaused: boolean;
-  fees: FeesArgs;
+  feeRates: FeeRatesArgs;
   collectedPlatformFees: number | bigint;
   collectedCreatorFees: number | bigint;
   marketFeeClaimer: Address;
@@ -145,7 +145,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['allowUnstakingEarly', getBooleanEncoder()],
       ['authorizedReaderPubkey', getArrayEncoder(getU8Encoder(), { size: 32 })],
       ['stakingPaused', getBooleanEncoder()],
-      ['fees', getFeesEncoder()],
+      ['feeRates', getFeeRatesEncoder()],
       ['collectedPlatformFees', getU64Encoder()],
       ['collectedCreatorFees', getU64Encoder()],
       ['marketFeeClaimer', getAddressEncoder()],
@@ -179,7 +179,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['allowUnstakingEarly', getBooleanDecoder()],
     ['authorizedReaderPubkey', getArrayDecoder(getU8Decoder(), { size: 32 })],
     ['stakingPaused', getBooleanDecoder()],
-    ['fees', getFeesDecoder()],
+    ['feeRates', getFeeRatesDecoder()],
     ['collectedPlatformFees', getU64Decoder()],
     ['collectedCreatorFees', getU64Decoder()],
     ['marketFeeClaimer', getAddressDecoder()],

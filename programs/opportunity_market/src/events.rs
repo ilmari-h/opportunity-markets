@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::state::Fees;
+use crate::state::FeeRates;
 
 /// Emits an event with `timestamp` automatically set from `Clock::get()`.
 macro_rules! emit_ts {
@@ -28,7 +28,7 @@ pub struct MarketCreatedEvent {
     pub authorized_reader_pubkey: [u8; 32],
     pub allow_unstaking_early: bool,
     pub min_stake_amount: u64,
-    pub fees: Fees,
+    pub fee_rates: FeeRates,
     pub market_fee_claimer: Pubkey,
     pub market_resolution_deadline_seconds: u64,
     pub min_reveal_period_seconds: u64,

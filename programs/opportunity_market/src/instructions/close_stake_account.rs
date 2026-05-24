@@ -100,8 +100,8 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
         )?
     } else {
         // Market expired: refund reward_pool_fee + creator_fee.
-        let fees = ctx.accounts.stake_account.fees;
-        ctx.accounts.market.deduct_stake_fees(&fees)?
+        let collected_fees = ctx.accounts.stake_account.collected_fees;
+        ctx.accounts.market.deduct_stake_fees(&collected_fees)?
     };
 
     if payout > 0 {
@@ -181,7 +181,7 @@ fn compute_winning_payout(
         )
         .ok_or(ErrorCode::Overflow)? as u64;
 
-    let fees = stake_account.fees;
+    let fees = stake_account.collected_fees;
     let fees_refund = fees
         .reward_pool_fee
         .checked_add(fees.creator_fee)

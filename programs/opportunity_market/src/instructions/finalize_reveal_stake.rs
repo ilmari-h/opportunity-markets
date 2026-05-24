@@ -65,7 +65,7 @@ pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, 
         .unwrap_or(reveal_start);
 
     let stake_base_amount = stake_amount
-        .checked_add(ctx.accounts.stake_account.fees.total()?)
+        .checked_add(ctx.accounts.stake_account.collected_fees.total()?)
         .ok_or(ErrorCode::Overflow)?;
     let user_score = calculate_user_score(
         ctx.accounts.option.created_at,
@@ -88,7 +88,7 @@ pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, 
     // Winning option means stake fees get refunded, so deduct from market account.
     // Actual refund transfer happens in `close_stake_account` together with reward.
     if ctx.accounts.option.selected {
-        let fees = ctx.accounts.stake_account.fees;
+        let fees = ctx.accounts.stake_account.collected_fees;
         ctx.accounts.market.deduct_stake_fees(&fees)?;
     }
 

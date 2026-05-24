@@ -51,10 +51,10 @@ import {
   type ReadonlyUint8Array,
 } from '@solana/kit';
 import {
-  getFeesDecoder,
-  getFeesEncoder,
-  type Fees,
-  type FeesArgs,
+  getCollectedFeesDecoder,
+  getCollectedFeesEncoder,
+  type CollectedFees,
+  type CollectedFeesArgs,
 } from '../types';
 
 export const STAKE_ACCOUNT_DISCRIMINATOR = new Uint8Array([
@@ -80,7 +80,7 @@ export type StakeAccount = {
   stakedAtTimestamp: Option<bigint>;
   unstakedAtTimestamp: Option<bigint>;
   amount: bigint;
-  fees: Fees;
+  collectedFees: CollectedFees;
   revealedOption: Option<bigint>;
   score: Option<bigint>;
   totalIncremented: boolean;
@@ -103,7 +103,7 @@ export type StakeAccountArgs = {
   stakedAtTimestamp: OptionOrNullable<number | bigint>;
   unstakedAtTimestamp: OptionOrNullable<number | bigint>;
   amount: number | bigint;
-  fees: FeesArgs;
+  collectedFees: CollectedFeesArgs;
   revealedOption: OptionOrNullable<number | bigint>;
   score: OptionOrNullable<number | bigint>;
   totalIncremented: boolean;
@@ -132,7 +132,7 @@ export function getStakeAccountEncoder(): Encoder<StakeAccountArgs> {
       ['stakedAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['unstakedAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['amount', getU64Encoder()],
-      ['fees', getFeesEncoder()],
+      ['collectedFees', getCollectedFeesEncoder()],
       ['revealedOption', getOptionEncoder(getU64Encoder())],
       ['score', getOptionEncoder(getU64Encoder())],
       ['totalIncremented', getBooleanEncoder()],
@@ -163,7 +163,7 @@ export function getStakeAccountDecoder(): Decoder<StakeAccount> {
     ['stakedAtTimestamp', getOptionDecoder(getU64Decoder())],
     ['unstakedAtTimestamp', getOptionDecoder(getU64Decoder())],
     ['amount', getU64Decoder()],
-    ['fees', getFeesDecoder()],
+    ['collectedFees', getCollectedFeesDecoder()],
     ['revealedOption', getOptionDecoder(getU64Decoder())],
     ['score', getOptionDecoder(getU64Decoder())],
     ['totalIncremented', getBooleanDecoder()],

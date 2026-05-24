@@ -68,7 +68,7 @@ pub fn close_stuck_stake_account(
     let market = &ctx.accounts.market;
     let amount = stake_account.amount;
     let total_refund = amount
-        .checked_add(stake_account.fees.total()?)
+        .checked_add(stake_account.collected_fees.total()?)
         .ok_or(ErrorCode::Overflow)?;
 
     if total_refund > 0 {
@@ -106,9 +106,9 @@ pub fn close_stuck_stake_account(
         stake_account: ctx.accounts.stake_account.key(),
         stake_account_id: stake_account_id,
         refunded_amount: amount,
-        refunded_platform_fee: stake_account.fees.platform_fee,
-        refunded_reward_pool_fee: stake_account.fees.reward_pool_fee,
-        refunded_creator_fee: stake_account.fees.creator_fee,
+        refunded_platform_fee: stake_account.collected_fees.platform_fee,
+        refunded_reward_pool_fee: stake_account.collected_fees.reward_pool_fee,
+        refunded_creator_fee: stake_account.collected_fees.creator_fee,
     });
 
     Ok(())

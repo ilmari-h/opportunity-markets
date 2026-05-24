@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
 
 use crate::constants::{
-    MAX_CREATOR_FEE_BP, MAX_MAX_REVEAL_PERIOD_SECONDS, MAX_PLATFORM_FEE_BP, MAX_TOTAL_FEE_BP,
+    MAX_MAX_REVEAL_PERIOD_SECONDS,
     MIN_MAX_REVEAL_PERIOD_SECONDS,
 };
 #[cfg(feature = "production-settings")]
 use crate::constants::MIN_MARKET_RESOLUTION_DEADLINE_SECONDS;
 use crate::error::ErrorCode;
-use crate::state::PlatformConfig;
+use crate::state::{FeeRates, PlatformConfig};
 
 #[derive(Accounts)]
 pub struct UpdatePlatformConfig<'info> {
@@ -29,20 +29,7 @@ pub fn update_platform_config(
     min_reveal_period_seconds: u64,
     max_reveal_period_seconds: u64,
     market_resolution_deadline_seconds: u64,
-) -> Result<()> {
-    require!(
-        platform_fee_bp <= MAX_PLATFORM_FEE_BP,
-        ErrorCode::InvalidParameters
-    );
-    require!(
-        creator_fee_bp <= MAX_CREATOR_FEE_BP,
-        ErrorCode::InvalidParameters
-    );
-    require!(
-        (platform_fee_bp as u32) + (reward_pool_fee_bp as u32) + (creator_fee_bp as u32)
-            <= MAX_TOTAL_FEE_BP as u32,
-        ErrorCode::InvalidParameters
-    );
+) -> Result<()> {    
     #[cfg(feature = "production-settings")]
     require!(
         market_resolution_deadline_seconds >= MIN_MARKET_RESOLUTION_DEADLINE_SECONDS,
@@ -56,9 +43,7 @@ pub fn update_platform_config(
     );
 
     let platform_config = &mut ctx.accounts.platform_config;
-    platform_config.platform_fee_bp = platform_fee_bp;
-    platform_config.reward_pool_fee_bp = reward_pool_fee_bp;
-    platform_config.creator_fee_bp = creator_fee_bp;
+    platform_config.fee_rates = FeeRates::new(platform_fee_bp, reward_pool_fee_bp, creator_fee_bp)?;
     platform_config.min_time_to_stake_seconds = min_time_to_stake_seconds;
     platform_config.min_reveal_period_seconds = min_reveal_period_seconds;
     platform_config.max_reveal_period_seconds = max_reveal_period_seconds;

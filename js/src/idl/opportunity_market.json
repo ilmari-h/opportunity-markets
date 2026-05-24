@@ -3319,6 +3319,11 @@
       "code": 6030,
       "name": "SelectOptionsDeadlinePassed",
       "msg": "Deadline for selecting winning options has passed"
+    },
+    {
+      "code": 6031,
+      "name": "InvalidFeeRates",
+      "msg": "Invalid fee rates"
     }
   ],
   "types": [
@@ -3596,6 +3601,26 @@
       }
     },
     {
+      "name": "CollectedFees",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "platform_fee",
+            "type": "u64"
+          },
+          {
+            "name": "reward_pool_fee",
+            "type": "u64"
+          },
+          {
+            "name": "creator_fee",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
       "name": "ComputationDefinitionAccount",
       "docs": [
         "An account representing a [ComputationDefinition] in a MXE."
@@ -3771,21 +3796,21 @@
       }
     },
     {
-      "name": "Fees",
+      "name": "FeeRates",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "platform_fee",
-            "type": "u64"
+            "name": "platform_fee_bp",
+            "type": "u16"
           },
           {
-            "name": "reward_pool_fee",
-            "type": "u64"
+            "name": "reward_pool_fee_bp",
+            "type": "u16"
           },
           {
-            "name": "creator_fee",
-            "type": "u64"
+            "name": "creator_fee_bp",
+            "type": "u16"
           }
         ]
       }
@@ -3969,10 +3994,10 @@
             "type": "u64"
           },
           {
-            "name": "fees",
+            "name": "fee_rates",
             "type": {
               "defined": {
-                "name": "Fees"
+                "name": "FeeRates"
               }
             }
           },
@@ -4267,10 +4292,10 @@
             "type": "bool"
           },
           {
-            "name": "fees",
+            "name": "fee_rates",
             "type": {
               "defined": {
-                "name": "Fees"
+                "name": "FeeRates"
               }
             }
           },
@@ -4516,16 +4541,12 @@
             "type": "pubkey"
           },
           {
-            "name": "platform_fee_bp",
-            "type": "u16"
-          },
-          {
-            "name": "reward_pool_fee_bp",
-            "type": "u16"
-          },
-          {
-            "name": "creator_fee_bp",
-            "type": "u16"
+            "name": "fee_rates",
+            "type": {
+              "defined": {
+                "name": "FeeRates"
+              }
+            }
           },
           {
             "name": "market_resolution_deadline_seconds",
@@ -4932,10 +4953,10 @@
             "type": "u64"
           },
           {
-            "name": "fees",
+            "name": "collected_fees",
             "type": {
               "defined": {
-                "name": "Fees"
+                "name": "CollectedFees"
               }
             }
           },

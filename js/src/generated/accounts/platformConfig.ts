@@ -23,8 +23,6 @@ import {
   getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU16Decoder,
-  getU16Encoder,
   getU32Decoder,
   getU32Encoder,
   getU64Decoder,
@@ -46,6 +44,12 @@ import {
   type MaybeEncodedAccount,
   type ReadonlyUint8Array,
 } from '@solana/kit';
+import {
+  getFeeRatesDecoder,
+  getFeeRatesEncoder,
+  type FeeRates,
+  type FeeRatesArgs,
+} from '../types';
 
 export const PLATFORM_CONFIG_DISCRIMINATOR = new Uint8Array([
   160, 78, 128, 0, 248, 83, 230, 160,
@@ -63,9 +67,7 @@ export type PlatformConfig = {
   name: string;
   updateAuthority: Address;
   feeClaimAuthority: Address;
-  platformFeeBp: number;
-  rewardPoolFeeBp: number;
-  creatorFeeBp: number;
+  feeRates: FeeRates;
   marketResolutionDeadlineSeconds: bigint;
   minTimeToStakeSeconds: bigint;
   minRevealPeriodSeconds: bigint;
@@ -77,9 +79,7 @@ export type PlatformConfigArgs = {
   name: string;
   updateAuthority: Address;
   feeClaimAuthority: Address;
-  platformFeeBp: number;
-  rewardPoolFeeBp: number;
-  creatorFeeBp: number;
+  feeRates: FeeRatesArgs;
   marketResolutionDeadlineSeconds: number | bigint;
   minTimeToStakeSeconds: number | bigint;
   minRevealPeriodSeconds: number | bigint;
@@ -94,9 +94,7 @@ export function getPlatformConfigEncoder(): Encoder<PlatformConfigArgs> {
       ['name', addEncoderSizePrefix(getUtf8Encoder(), getU32Encoder())],
       ['updateAuthority', getAddressEncoder()],
       ['feeClaimAuthority', getAddressEncoder()],
-      ['platformFeeBp', getU16Encoder()],
-      ['rewardPoolFeeBp', getU16Encoder()],
-      ['creatorFeeBp', getU16Encoder()],
+      ['feeRates', getFeeRatesEncoder()],
       ['marketResolutionDeadlineSeconds', getU64Encoder()],
       ['minTimeToStakeSeconds', getU64Encoder()],
       ['minRevealPeriodSeconds', getU64Encoder()],
@@ -113,9 +111,7 @@ export function getPlatformConfigDecoder(): Decoder<PlatformConfig> {
     ['name', addDecoderSizePrefix(getUtf8Decoder(), getU32Decoder())],
     ['updateAuthority', getAddressDecoder()],
     ['feeClaimAuthority', getAddressDecoder()],
-    ['platformFeeBp', getU16Decoder()],
-    ['rewardPoolFeeBp', getU16Decoder()],
-    ['creatorFeeBp', getU16Decoder()],
+    ['feeRates', getFeeRatesDecoder()],
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
     ['minTimeToStakeSeconds', getU64Decoder()],
     ['minRevealPeriodSeconds', getU64Decoder()],

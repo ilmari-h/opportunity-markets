@@ -8,7 +8,7 @@ use arcium_client::idl::arcium::types::CallbackAccount;
 use crate::constants::STAKE_ACCOUNT_SEED;
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, StakedEvent};
-use crate::state::{Fees, OpportunityMarket, StakeAccount};
+use crate::state::{CollectedFees, OpportunityMarket, StakeAccount};
 use crate::COMP_DEF_OFFSET_STAKE;
 use crate::{ID, ID_CONST, ArciumSignerAccount};
 
@@ -127,9 +127,9 @@ pub fn stake(
         ErrorCode::TimeWindowMismatch
     );
 
-    let fees = market.calculate_fees(amount)?;
+    let collected_fees = market.calculate_fees(amount)?;
     let net_amount = amount
-        .checked_sub(fees.total()?)
+        .checked_sub(collected_fees.total()?)
         .ok_or(ErrorCode::Overflow)?;
 
     transfer_checked(
@@ -149,7 +149,7 @@ pub fn stake(
     // Set stake account fields
     ctx.accounts.stake_account.staked_at_timestamp = Some(current_timestamp);
     ctx.accounts.stake_account.amount = net_amount;
-    ctx.accounts.stake_account.fees = fees;
+    ctx.accounts.stake_account.collected_fees = collected_fees;
     ctx.accounts.stake_account.user_pubkey = user_pubkey;
     ctx.accounts.stake_account.state_nonce = state_nonce;
     ctx.accounts.stake_account.locked = true;
@@ -263,11 +263,11 @@ pub fn stake_callback(
     ctx.accounts.stake_account.state_nonce_disclosure = stake_data_shared.nonce;
     ctx.accounts.stake_account.encrypted_option_disclosure = stake_data_shared.ciphertexts[0];
 
-    let Fees {
+    let CollectedFees {
         platform_fee,
         reward_pool_fee,
         creator_fee,
-    } = ctx.accounts.stake_account.fees;
+    } = ctx.accounts.stake_account.collected_fees;
     if platform_fee > 0 {
         ctx.accounts.market.collected_platform_fees = ctx.accounts.market
             .collected_platform_fees

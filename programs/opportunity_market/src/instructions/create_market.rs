@@ -6,7 +6,7 @@ use crate::constants::{ALLOWED_MINT_SEED, MAX_EARLINESS_MULTIPLIER, OPPORTUNITY_
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, MarketCreatedEvent};
 use crate::score::PRECISION;
-use crate::state::{AllowedMint, Fees, OpportunityMarket, PlatformConfig};
+use crate::state::{AllowedMint, OpportunityMarket, PlatformConfig};
 
 #[derive(Accounts)]
 #[instruction(market_index: u64)]
@@ -69,12 +69,7 @@ pub fn create_market(
     );
 
     let creator_key = ctx.accounts.creator.key();
-    let platform_key = ctx.accounts.platform_config.key();
-    let fees = Fees {
-        platform_fee: ctx.accounts.platform_config.platform_fee_bp as u64,
-        reward_pool_fee: ctx.accounts.platform_config.reward_pool_fee_bp as u64,
-        creator_fee: ctx.accounts.platform_config.creator_fee_bp as u64,
-    };
+    let platform_key = ctx.accounts.platform_config.key();    
     let market_resolution_deadline_seconds = ctx
         .accounts
         .platform_config
@@ -94,7 +89,7 @@ pub fn create_market(
     market.earliness_multiplier = earliness_multiplier;
     market.allow_unstaking_early = allow_unstaking_early;
     market.authorized_reader_pubkey = authorized_reader_pubkey;
-    market.fees = fees;
+    market.fee_rates = ctx.accounts.platform_config.fee_rates;
     market.market_fee_claimer = market_fee_claimer;
     market.market_resolution_deadline_seconds = market_resolution_deadline_seconds;
     market.min_reveal_period_seconds = min_reveal_period_seconds;
@@ -114,7 +109,7 @@ pub fn create_market(
         earliness_cutoff_seconds: earliness_cutoff_seconds,
         earliness_multiplier: earliness_multiplier,
         min_stake_amount: min_stake_amount,
-        fees: fees,
+        fee_rates: ctx.accounts.platform_config.fee_rates,
         market_fee_claimer: market_fee_claimer,
         market_resolution_deadline_seconds: market_resolution_deadline_seconds,
         min_reveal_period_seconds: min_reveal_period_seconds,
