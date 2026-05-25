@@ -23,7 +23,7 @@ pub struct FinalizeRevealStake<'info> {
         seeds = [STAKE_ACCOUNT_SEED, owner.key().as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump = stake_account.bump,
 
-        constraint = !stake_account.total_incremented @ ErrorCode::TallyAlreadyIncremented,
+        constraint = stake_account.score.is_none() @ ErrorCode::TallyAlreadyIncremented,
     )]
     pub stake_account: Account<'info, StakeAccount>,
 
@@ -83,11 +83,10 @@ pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, 
 
     // Store the user's score in their stake account for reward calculation
     ctx.accounts.stake_account.score = Some(user_score);
-    ctx.accounts.stake_account.total_incremented = true;
 
     // Winning option means stake fees get refunded, so deduct from market account.
     // Actual refund transfer happens in `close_stake_account` together with reward.
-    if ctx.accounts.option.selected {
+    if ctx.accounts.option.reward_percentage_bp.is_some() {
         let fees = ctx.accounts.stake_account.collected_fees;
         ctx.accounts.market.deduct_stake_fees(&fees)?;
     }

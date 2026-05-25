@@ -38,7 +38,7 @@ pub struct Stake<'info> {
         bump = stake_account.bump,
         constraint = stake_account.staked_at_timestamp.is_none() @ ErrorCode::AlreadyStaked,
         constraint = !stake_account.unstaked @ ErrorCode::AlreadyUnstaked,
-        constraint = !stake_account.locked @ ErrorCode::Locked,
+        constraint = stake_account.pending_stake_computation.is_none() @ ErrorCode::Locked,
     )]
     pub stake_account: Box<Account<'info, StakeAccount>>,
 
@@ -152,7 +152,6 @@ pub fn stake(
     ctx.accounts.stake_account.collected_fees = collected_fees;
     ctx.accounts.stake_account.user_pubkey = user_pubkey;
     ctx.accounts.stake_account.state_nonce = state_nonce;
-    ctx.accounts.stake_account.locked = true;
     ctx.accounts.stake_account.pending_stake_computation =
         Some(ctx.accounts.computation_account.key());
 
@@ -251,7 +250,6 @@ pub fn stake_callback(
     );
 
     // Unlock
-    ctx.accounts.stake_account.locked = false;
     ctx.accounts.stake_account.pending_stake_computation = None;
 
     let stake_data_mxe = res.field_0;

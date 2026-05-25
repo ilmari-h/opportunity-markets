@@ -26,7 +26,7 @@ pub struct RevealStake<'info> {
         seeds = [STAKE_ACCOUNT_SEED, owner.key().as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump = stake_account.bump,
         constraint = stake_account.revealed_option.is_none() @ ErrorCode::AlreadyRevealed,
-        constraint = !stake_account.locked || stake_account.pending_reveal @ ErrorCode::Locked,
+        constraint = stake_account.pending_stake_computation.is_none() || stake_account.pending_reveal @ ErrorCode::Locked,
     )]
     pub stake_account: Box<Account<'info, StakeAccount>>,
 
@@ -82,8 +82,6 @@ pub fn reveal_stake(
     let stake_account_key = ctx.accounts.stake_account.key();
     let stake_account_nonce = ctx.accounts.stake_account.state_nonce;
 
-    // Lock StakeAccount while MPC computation is pending
-    ctx.accounts.stake_account.locked = true;
     ctx.accounts.stake_account.pending_reveal = true;
 
     let user_pubkey = ctx.accounts.stake_account.user_pubkey;
@@ -162,8 +160,6 @@ pub fn reveal_stake_callback(
         ErrorCode::InvalidAccountState
     );
 
-    // Unlock only on success
-    ctx.accounts.stake_account.locked = false;
     ctx.accounts.stake_account.pending_reveal = false;
 
     // Set revealed option

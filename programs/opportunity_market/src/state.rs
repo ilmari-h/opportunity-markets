@@ -208,8 +208,6 @@ pub struct StakeAccount {
     pub collected_fees: CollectedFees,  // fees owed to the platform, reward pool, and creator
     pub revealed_option: Option<u64>,
     pub score: Option<u64>,
-    pub total_incremented: bool,
-    pub locked: bool,
     pub unstaked: bool, // whether staked tokens have been returned
     pub id: u32,
 
@@ -231,8 +229,7 @@ pub struct OpportunityMarketOption {
     pub total_staked: u64,
     pub total_score: u64,
 
-    pub selected: bool,
-    pub reward_percentage_bp: u16,
+    pub reward_percentage_bp: Option<u16>,
 }
 
 #[account]

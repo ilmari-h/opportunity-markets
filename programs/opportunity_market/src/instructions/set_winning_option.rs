@@ -56,11 +56,7 @@ pub fn set_winning_option(
         ErrorCode::SelectOptionsDeadlinePassed,
     );
 
-    let previous = if ctx.accounts.option.selected {
-        ctx.accounts.option.reward_percentage_bp
-    } else {
-        0
-    };
+    let previous = ctx.accounts.option.reward_percentage_bp.unwrap_or(0);
     let new_alloc = ctx
         .accounts
         .market
@@ -71,8 +67,7 @@ pub fn set_winning_option(
         .ok_or(ErrorCode::Overflow)?;
     require!(new_alloc <= 10_000, ErrorCode::InvalidParameters);
 
-    ctx.accounts.option.selected = reward_percentage_bp > 0;
-    ctx.accounts.option.reward_percentage_bp = reward_percentage_bp;
+    ctx.accounts.option.reward_percentage_bp = Some(reward_percentage_bp);
     ctx.accounts.market.winning_option_allocation = new_alloc;
 
     emit_ts!(WinningOptionSetEvent {
