@@ -94,7 +94,6 @@ pub fn create_market(
     market.market_resolution_deadline_seconds = market_resolution_deadline_seconds;
     market.min_reveal_period_seconds = min_reveal_period_seconds;
     market.max_reveal_period_seconds = max_reveal_period_seconds;
-    market.reveal_ended = false;
     market.min_stake_amount = min_stake_amount;
 
     emit_ts!(MarketCreatedEvent {
