@@ -8,7 +8,7 @@ import {
   getClusterAccAddress,
 } from "@arcium-hq/client";
 import { PublicKey } from "@solana/web3.js";
-import { BN } from "@coral-xyz/anchor";
+import { BN } from "@anchor-lang/core";
 
 const ARCIUM_CLUSTER_OFFSET = 456;
 const PROGRAM_ID = new PublicKey("bnchXx34qGANGyEL6MxTYdG8iXmUmSPyQFAGhxj1VKn");

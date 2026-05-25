@@ -16,68 +16,66 @@ import { OPPORTUNITY_MARKET_PROGRAM_ADDRESS } from '../programs';
 
 /** AbortedComputation: Computation aborted */
 export const OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION = 0x1770; // 6000
-/** ClusterNotSet: Cluster not set */
-export const OPPORTUNITY_MARKET_ERROR__CLUSTER_NOT_SET = 0x1771; // 6001
 /** Unauthorized: Unauthorized */
-export const OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED = 0x1772; // 6002
+export const OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED = 0x1771; // 6001
 /** InsufficientBalance: Insufficient balance */
-export const OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_BALANCE = 0x1773; // 6003
+export const OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_BALANCE = 0x1772; // 6002
 /** InsufficientRewardFunding: Insufficient reward funding */
-export const OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING = 0x1774; // 6004
+export const OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING = 0x1773; // 6003
 /** InvalidParameters: Invalid parameters */
-export const OPPORTUNITY_MARKET_ERROR__INVALID_PARAMETERS = 0x1775; // 6005
+export const OPPORTUNITY_MARKET_ERROR__INVALID_PARAMETERS = 0x1774; // 6004
 /** MarketAlreadyOpen: Market is already open */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN = 0x1776; // 6006
+export const OPPORTUNITY_MARKET_ERROR__MARKET_ALREADY_OPEN = 0x1775; // 6005
 /** InvalidOptionId: Invalid option ID */
-export const OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_ID = 0x1777; // 6007
+export const OPPORTUNITY_MARKET_ERROR__INVALID_OPTION_ID = 0x1776; // 6006
 /** MarketNotOpen: Market is not open */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN = 0x1778; // 6008
+export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_OPEN = 0x1777; // 6007
 /** TimeWindowMismatch: Operation called outside its permitted time window */
-export const OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH = 0x1779; // 6009
+export const OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH = 0x1778; // 6008
 /** NoStake: Stake account has no recorded stake */
-export const OPPORTUNITY_MARKET_ERROR__NO_STAKE = 0x177a; // 6010
+export const OPPORTUNITY_MARKET_ERROR__NO_STAKE = 0x1779; // 6009
 /** WinnerAlreadySelected: Market winner already selected */
-export const OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED = 0x177b; // 6011
+export const OPPORTUNITY_MARKET_ERROR__WINNER_ALREADY_SELECTED = 0x177a; // 6010
 /** AlreadyRevealed: Stake already revealed */
-export const OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED = 0x177c; // 6012
+export const OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED = 0x177b; // 6011
 /** MarketNotResolved: Market not yet resolved */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED = 0x177d; // 6013
+export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED = 0x177c; // 6012
 /** NotRevealed: Stake not yet revealed */
-export const OPPORTUNITY_MARKET_ERROR__NOT_REVEALED = 0x177e; // 6014
+export const OPPORTUNITY_MARKET_ERROR__NOT_REVEALED = 0x177d; // 6013
 /** TallyAlreadyIncremented: Tally already incremented for this stake account */
-export const OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED = 0x177f; // 6015
+export const OPPORTUNITY_MARKET_ERROR__TALLY_ALREADY_INCREMENTED = 0x177e; // 6014
 /** Overflow: Arithmetic overflow */
-export const OPPORTUNITY_MARKET_ERROR__OVERFLOW = 0x1780; // 6016
+export const OPPORTUNITY_MARKET_ERROR__OVERFLOW = 0x177f; // 6015
 /** RevealPeriodEnded: Reveal period has already ended */
-export const OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED = 0x1781; // 6017
+export const OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_ENDED = 0x1780; // 6016
 /** InvalidMint: Token mint does not match account mint */
-export const OPPORTUNITY_MARKET_ERROR__INVALID_MINT = 0x1782; // 6018
+export const OPPORTUNITY_MARKET_ERROR__INVALID_MINT = 0x1781; // 6017
 /** AlreadyUnstaked: Already unstaked */
-export const OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED = 0x1783; // 6019
+export const OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED = 0x1782; // 6018
 /** AlreadyStaked: Already staked for this stake account */
-export const OPPORTUNITY_MARKET_ERROR__ALREADY_STAKED = 0x1784; // 6020
+export const OPPORTUNITY_MARKET_ERROR__ALREADY_STAKED = 0x1783; // 6019
 /** DepositBelowMinimum: Deposit amount below minimum required for option creation */
-export const OPPORTUNITY_MARKET_ERROR__DEPOSIT_BELOW_MINIMUM = 0x1785; // 6021
+export const OPPORTUNITY_MARKET_ERROR__DEPOSIT_BELOW_MINIMUM = 0x1784; // 6020
 /** AddOptionStakeFailed: Add option stake failed: insufficient balance or below minimum deposit */
-export const OPPORTUNITY_MARKET_ERROR__ADD_OPTION_STAKE_FAILED = 0x1786; // 6022
+export const OPPORTUNITY_MARKET_ERROR__ADD_OPTION_STAKE_FAILED = 0x1785; // 6021
 /** Locked: Account is locked */
-export const OPPORTUNITY_MARKET_ERROR__LOCKED = 0x1787; // 6023
+export const OPPORTUNITY_MARKET_ERROR__LOCKED = 0x1786; // 6022
 /** InvalidAccountState: Invalid account state */
-export const OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE = 0x1788; // 6024
+export const OPPORTUNITY_MARKET_ERROR__INVALID_ACCOUNT_STATE = 0x1787; // 6023
 /** NoFeesToClaim: No fees to claim */
-export const OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM = 0x1789; // 6025
+export const OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM = 0x1788; // 6024
 /** StakeNotStuck: Stake account is not in a stuck or failed state */
-export const OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK = 0x178a; // 6026
+export const OPPORTUNITY_MARKET_ERROR__STAKE_NOT_STUCK = 0x1789; // 6025
 /** MarketPaused: Market staking is currently paused */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED = 0x178b; // 6027
+export const OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED = 0x178a; // 6026
 /** MarketNotPaused: Market is not paused */
-export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED = 0x178c; // 6028
+export const OPPORTUNITY_MARKET_ERROR__MARKET_NOT_PAUSED = 0x178b; // 6027
 /** StakeBelowMinimum: Stake amount is below the market minimum */
-export const OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM = 0x178d; // 6029
+export const OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM = 0x178c; // 6028
 /** SelectOptionsDeadlinePassed: Deadline for selecting winning options has passed */
-export const OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED = 0x178e; // 6030
+export const OPPORTUNITY_MARKET_ERROR__SELECT_OPTIONS_DEADLINE_PASSED = 0x178d; // 6029
 /** InvalidFeeRates: Invalid fee rates */
-export const OPPORTUNITY_MARKET_ERROR__INVALID_FEE_RATES = 0x178f; // 6031
+export const OPPORTUNITY_MARKET_ERROR__INVALID_FEE_RATES = 0x178e; // 6030
 
 export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION
@@ -85,7 +83,6 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED
   | typeof OPPORTUNITY_MARKET_ERROR__ALREADY_STAKED
   | typeof OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED
-  | typeof OPPORTUNITY_MARKET_ERROR__CLUSTER_NOT_SET
   | typeof OPPORTUNITY_MARKET_ERROR__DEPOSIT_BELOW_MINIMUM
   | typeof OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_BALANCE
   | typeof OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING
@@ -123,7 +120,6 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__ALREADY_REVEALED]: `Stake already revealed`,
     [OPPORTUNITY_MARKET_ERROR__ALREADY_STAKED]: `Already staked for this stake account`,
     [OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED]: `Already unstaked`,
-    [OPPORTUNITY_MARKET_ERROR__CLUSTER_NOT_SET]: `Cluster not set`,
     [OPPORTUNITY_MARKET_ERROR__DEPOSIT_BELOW_MINIMUM]: `Deposit amount below minimum required for option creation`,
     [OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_BALANCE]: `Insufficient balance`,
     [OPPORTUNITY_MARKET_ERROR__INSUFFICIENT_REWARD_FUNDING]: `Insufficient reward funding`,

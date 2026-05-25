@@ -86,7 +86,7 @@ pub fn close_stuck_stake_account(
 
         transfer_checked(
             CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.token_program.key(),
                 TransferChecked {
                     from: ctx.accounts.market_token_ata.to_account_info(),
                     mint: ctx.accounts.token_mint.to_account_info(),

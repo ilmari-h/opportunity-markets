@@ -50,11 +50,6 @@ export const OPPORTUNITY_MARKET_PROGRAM_ADDRESS =
 export enum OpportunityMarketAccount {
   AllowedMint,
   ArciumSignerAccount,
-  ClockAccount,
-  Cluster,
-  ComputationDefinitionAccount,
-  FeePool,
-  MXEAccount,
   OpportunityMarket,
   OpportunityMarketOption,
   OpportunityMarketSponsor,
@@ -87,61 +82,6 @@ export function identifyOpportunityMarketAccount(
     )
   ) {
     return OpportunityMarketAccount.ArciumSignerAccount;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([152, 171, 158, 195, 75, 61, 51, 8])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketAccount.ClockAccount;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([236, 225, 118, 228, 173, 106, 18, 60])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketAccount.Cluster;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([245, 176, 217, 221, 253, 104, 172, 200])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketAccount.ComputationDefinitionAccount;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([172, 38, 77, 146, 148, 5, 51, 242])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketAccount.FeePool;
-  }
-  if (
-    containsBytes(
-      data,
-      fixEncoderSize(getBytesEncoder(), 8).encode(
-        new Uint8Array([103, 26, 85, 250, 179, 159, 17, 117])
-      ),
-      0
-    )
-  ) {
-    return OpportunityMarketAccount.MXEAccount;
   }
   if (
     containsBytes(

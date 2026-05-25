@@ -1,4 +1,5 @@
 [toolchain]
+anchor_version = "1.0.2"
 package_manager = "yarn"
 
 [features]
@@ -7,9 +8,6 @@ skip-lint = false
 
 [programs.localnet]
 opportunity_market = "B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg"
-
-[registry]
-url = "https://api.apr.dev"
 
 [provider]
 cluster = "http://127.0.0.1:8899"
@@ -25,6 +23,6 @@ shutdown_wait = 2000
 upgradeable = false
 
 [test.validator]
-bind_address = "0.0.0.0"
+bind_address = "127.0.0.1"
 ledger = ".anchor/test-ledger"
 rpc_port = 8899

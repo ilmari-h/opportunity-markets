@@ -23,9 +23,14 @@ arcium build
 echo "Running unit tests..."
 cargo test -p opportunity_market --lib
 
-# Integration tests (--skip-build prevents overwriting the keypair)
+# Integration tests
 echo "Running integration tests..."
-arcium test --skip-build
+# This block here is for a temp fix with mxe issue
+if [ -f artifacts/localnet/mxe_utility_pubkeys.bin ]; then
+  arcium test --skip-build --skip-keygen
+else
+  arcium test --skip-build
+fi
 
 # Kill stale solana-test-validator if one is hogging port 8899
 STALE_PID=$(lsof -ti :8899 || true)

@@ -1,5 +1,5 @@
 import { getMXEPublicKey } from "@arcium-hq/client";
-import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
+import { AnchorProvider, Wallet } from "@anchor-lang/core";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
 import * as os from "os";

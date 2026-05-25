@@ -4,8 +4,6 @@ use anchor_lang::prelude::*;
 pub enum ErrorCode {
     #[msg("Computation aborted")]
     AbortedComputation,
-    #[msg("Cluster not set")]
-    ClusterNotSet,
     #[msg("Unauthorized")]
     Unauthorized,
     #[msg("Insufficient balance")]

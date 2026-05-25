@@ -19,7 +19,7 @@ pub struct CloseStakeAccount<'info> {
         seeds = [OPPORTUNITY_MARKET_SEED, market.platform.as_ref(), market.creator.as_ref(), &market.index.to_le_bytes()],
         bump = market.bump,
     )]
-    pub market: Account<'info, OpportunityMarket>,
+    pub market: Box<Account<'info, OpportunityMarket>>,
 
     #[account(
         mut,
@@ -29,16 +29,16 @@ pub struct CloseStakeAccount<'info> {
         // Staked tokens must have been returned before closing
         constraint = stake_account.unstaked @ ErrorCode::InvalidAccountState,
     )]
-    pub stake_account: Account<'info, StakeAccount>,
+    pub stake_account: Box<Account<'info, StakeAccount>>,
 
     #[account(
         seeds = [OPTION_SEED, market.key().as_ref(), &option_id.to_le_bytes()],
         bump = option.bump,
     )]
-    pub option: Account<'info, OpportunityMarketOption>,
+    pub option: Box<Account<'info, OpportunityMarketOption>>,
 
     #[account(address = market.mint)]
-    pub token_mint: InterfaceAccount<'info, Mint>,
+    pub token_mint: Box<InterfaceAccount<'info, Mint>>,
 
     /// Market-owned ATA holding all program-held tokens for this market
     #[account(
@@ -47,7 +47,7 @@ pub struct CloseStakeAccount<'info> {
         associated_token::authority = market,
         associated_token::token_program = token_program,
     )]
-    pub market_token_ata: InterfaceAccount<'info, TokenAccount>,
+    pub market_token_ata: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// Owner's token account to receive rewards
     #[account(
@@ -56,7 +56,7 @@ pub struct CloseStakeAccount<'info> {
         token::authority = owner,
         token::token_program = token_program,
     )]
-    pub owner_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub owner_token_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
@@ -119,7 +119,7 @@ pub fn close_stake_account(ctx: Context<CloseStakeAccount>, option_id: u64, _sta
 
         transfer_checked(
             CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.token_program.key(),
                 TransferChecked {
                     from: ctx.accounts.market_token_ata.to_account_info(),
                     mint: ctx.accounts.token_mint.to_account_info(),

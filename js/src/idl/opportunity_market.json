@@ -2746,71 +2746,6 @@
       ]
     },
     {
-      "name": "ClockAccount",
-      "discriminator": [
-        152,
-        171,
-        158,
-        195,
-        75,
-        61,
-        51,
-        8
-      ]
-    },
-    {
-      "name": "Cluster",
-      "discriminator": [
-        236,
-        225,
-        118,
-        228,
-        173,
-        106,
-        18,
-        60
-      ]
-    },
-    {
-      "name": "ComputationDefinitionAccount",
-      "discriminator": [
-        245,
-        176,
-        217,
-        221,
-        253,
-        104,
-        172,
-        200
-      ]
-    },
-    {
-      "name": "FeePool",
-      "discriminator": [
-        172,
-        38,
-        77,
-        146,
-        148,
-        5,
-        51,
-        242
-      ]
-    },
-    {
-      "name": "MXEAccount",
-      "discriminator": [
-        103,
-        26,
-        85,
-        250,
-        179,
-        159,
-        17,
-        117
-      ]
-    },
-    {
       "name": "OpportunityMarket",
       "discriminator": [
         207,
@@ -3172,156 +3107,151 @@
     },
     {
       "code": 6001,
-      "name": "ClusterNotSet",
-      "msg": "Cluster not set"
-    },
-    {
-      "code": 6002,
       "name": "Unauthorized",
       "msg": "Unauthorized"
     },
     {
-      "code": 6003,
+      "code": 6002,
       "name": "InsufficientBalance",
       "msg": "Insufficient balance"
     },
     {
-      "code": 6004,
+      "code": 6003,
       "name": "InsufficientRewardFunding",
       "msg": "Insufficient reward funding"
     },
     {
-      "code": 6005,
+      "code": 6004,
       "name": "InvalidParameters",
       "msg": "Invalid parameters"
     },
     {
-      "code": 6006,
+      "code": 6005,
       "name": "MarketAlreadyOpen",
       "msg": "Market is already open"
     },
     {
-      "code": 6007,
+      "code": 6006,
       "name": "InvalidOptionId",
       "msg": "Invalid option ID"
     },
     {
-      "code": 6008,
+      "code": 6007,
       "name": "MarketNotOpen",
       "msg": "Market is not open"
     },
     {
-      "code": 6009,
+      "code": 6008,
       "name": "TimeWindowMismatch",
       "msg": "Operation called outside its permitted time window"
     },
     {
-      "code": 6010,
+      "code": 6009,
       "name": "NoStake",
       "msg": "Stake account has no recorded stake"
     },
     {
-      "code": 6011,
+      "code": 6010,
       "name": "WinnerAlreadySelected",
       "msg": "Market winner already selected"
     },
     {
-      "code": 6012,
+      "code": 6011,
       "name": "AlreadyRevealed",
       "msg": "Stake already revealed"
     },
     {
-      "code": 6013,
+      "code": 6012,
       "name": "MarketNotResolved",
       "msg": "Market not yet resolved"
     },
     {
-      "code": 6014,
+      "code": 6013,
       "name": "NotRevealed",
       "msg": "Stake not yet revealed"
     },
     {
-      "code": 6015,
+      "code": 6014,
       "name": "TallyAlreadyIncremented",
       "msg": "Tally already incremented for this stake account"
     },
     {
-      "code": 6016,
+      "code": 6015,
       "name": "Overflow",
       "msg": "Arithmetic overflow"
     },
     {
-      "code": 6017,
+      "code": 6016,
       "name": "RevealPeriodEnded",
       "msg": "Reveal period has already ended"
     },
     {
-      "code": 6018,
+      "code": 6017,
       "name": "InvalidMint",
       "msg": "Token mint does not match account mint"
     },
     {
-      "code": 6019,
+      "code": 6018,
       "name": "AlreadyUnstaked",
       "msg": "Already unstaked"
     },
     {
-      "code": 6020,
+      "code": 6019,
       "name": "AlreadyStaked",
       "msg": "Already staked for this stake account"
     },
     {
-      "code": 6021,
+      "code": 6020,
       "name": "DepositBelowMinimum",
       "msg": "Deposit amount below minimum required for option creation"
     },
     {
-      "code": 6022,
+      "code": 6021,
       "name": "AddOptionStakeFailed",
       "msg": "Add option stake failed: insufficient balance or below minimum deposit"
     },
     {
-      "code": 6023,
+      "code": 6022,
       "name": "Locked",
       "msg": "Account is locked"
     },
     {
-      "code": 6024,
+      "code": 6023,
       "name": "InvalidAccountState",
       "msg": "Invalid account state"
     },
     {
-      "code": 6025,
+      "code": 6024,
       "name": "NoFeesToClaim",
       "msg": "No fees to claim"
     },
     {
-      "code": 6026,
+      "code": 6025,
       "name": "StakeNotStuck",
       "msg": "Stake account is not in a stuck or failed state"
     },
     {
-      "code": 6027,
+      "code": 6026,
       "name": "MarketPaused",
       "msg": "Market staking is currently paused"
     },
     {
-      "code": 6028,
+      "code": 6027,
       "name": "MarketNotPaused",
       "msg": "Market is not paused"
     },
     {
-      "code": 6029,
+      "code": 6028,
       "name": "StakeBelowMinimum",
       "msg": "Stake amount is below the market minimum"
     },
     {
-      "code": 6030,
+      "code": 6029,
       "name": "SelectOptionsDeadlinePassed",
       "msg": "Deadline for selecting winning options has passed"
     },
     {
-      "code": 6031,
+      "code": 6030,
       "name": "InvalidFeeRates",
       "msg": "Invalid fee rates"
     }
@@ -3629,9 +3559,9 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "finalization_authority",
+            "name": "deactivation_slot",
             "type": {
-              "option": "pubkey"
+              "option": "u64"
             }
           },
           {
@@ -3657,6 +3587,15 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "padding",
+            "type": {
+              "array": [
+                "u8",
+                24
+              ]
+            }
           }
         ]
       }
@@ -3873,10 +3812,12 @@
         "kind": "struct",
         "fields": [
           {
+            "name": "_padding",
+            "type": "u8"
+          },
+          {
             "name": "cluster",
-            "type": {
-              "option": "u32"
-            }
+            "type": "u32"
           },
           {
             "name": "keygen_offset",

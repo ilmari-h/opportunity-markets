@@ -5,6 +5,8 @@ import {
   type Instruction,
   SolanaRpcApi,
   Rpc,
+  assertAccountExists,
+  fetchEncodedAccount,
 } from "@solana/kit";
 import {
   getMXEAccAddress,
@@ -17,7 +19,7 @@ import {
   getStakeCompDefInstruction,
   getRevealStakeCompDefInstruction,
   OPPORTUNITY_MARKET_PROGRAM_ADDRESS,
-  fetchMXEAccount,
+  getMXEAccountDecoder,
 } from "../generated";
 import { BN } from "bn.js";
 import { type BaseInstructionParams } from "./instructionParams";
@@ -41,7 +43,10 @@ export interface InitCompDefConfig extends BaseInstructionParams {}
 export async function getMxeAccount(rpc: Rpc<SolanaRpcApi>, programId: Address = OPPORTUNITY_MARKET_PROGRAM_ADDRESS) {
   const programIdLegacy = new PublicKey(programId);
   const mxeAddress = toAddress(getMXEAccAddress(programIdLegacy));
-  return fetchMXEAccount(rpc, mxeAddress)
+  const encoded = await fetchEncodedAccount(rpc, mxeAddress);
+  assertAccountExists(encoded);
+  const data = getMXEAccountDecoder().decode(encoded.data.slice(8));
+  return { address: mxeAddress, data };
 }
 
 export function getCompDefAccount(

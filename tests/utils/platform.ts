@@ -55,7 +55,7 @@ import {
   getOpportunityMarketAddress,
 } from "../../js/src";
 import { randomBytes } from "crypto";
-import * as anchor from "@coral-xyz/anchor";
+import * as anchor from "@anchor-lang/core";
 import { PublicKey } from "@solana/web3.js";
 import { generateX25519Keypair, X25519Keypair, createCipher } from "../../js/src/x25519/keypair";
 import { createTokenMint, createAta, mintTokensTo } from "./spl-token";

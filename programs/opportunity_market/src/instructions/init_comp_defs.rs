@@ -30,18 +30,17 @@ pub struct StakeCompDef<'info> {
 pub fn stake_comp_def(ctx: Context<StakeCompDef>) -> Result<()> {
     #[cfg(feature = "production-settings")]
     {
-        init_comp_def(
+        init_computation_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
                 source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/stake.arcis".to_string(),
                 hash: circuit_hash!("stake"),
             })),
-            None,
         )?;
     }
     #[cfg(not(feature = "production-settings"))]
     {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_computation_def(ctx.accounts, None)?;
     }
     Ok(())
 }
@@ -69,18 +68,17 @@ pub struct RevealStakeCompDef<'info> {
 pub fn reveal_stake_comp_def(ctx: Context<RevealStakeCompDef>) -> Result<()> {
     #[cfg(feature = "production-settings")]
     {
-        init_comp_def(
+        init_computation_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
                 source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/reveal_stake.arcis".to_string(),
                 hash: circuit_hash!("reveal_stake"),
             })),
-            None,
         )?;
     }
     #[cfg(not(feature = "production-settings"))]
     {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_computation_def(ctx.accounts, None)?;
     }
     Ok(())
 }

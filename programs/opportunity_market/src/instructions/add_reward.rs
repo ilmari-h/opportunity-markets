@@ -82,7 +82,7 @@ pub fn add_reward(ctx: Context<AddReward>, amount: u64, lock: bool) -> Result<()
     // Transfer tokens from sponsor to the market's ATA.
     transfer_checked(
         CpiContext::new(
-            ctx.accounts.token_program.to_account_info(),
+            ctx.accounts.token_program.key(),
             TransferChecked {
                 from: ctx.accounts.sponsor_token_account.to_account_info(),
                 mint: ctx.accounts.token_mint.to_account_info(),
