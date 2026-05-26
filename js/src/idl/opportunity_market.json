@@ -1944,7 +1944,7 @@
           "type": "u64"
         },
         {
-          "name": "reward_percentage_bp",
+          "name": "reward_bp",
           "type": "u16"
         }
       ]
@@ -4298,15 +4298,13 @@
           },
           {
             "name": "total_score",
-            "type": "u64"
+            "type": "u128"
           },
           {
-            "name": "selected",
-            "type": "bool"
-          },
-          {
-            "name": "reward_percentage_bp",
-            "type": "u16"
+            "name": "reward_bp",
+            "type": {
+              "option": "u16"
+            }
           }
         ]
       }
@@ -4563,7 +4561,7 @@
           },
           {
             "name": "total_score",
-            "type": "u64"
+            "type": "u128"
           },
           {
             "name": "total_stake",
@@ -4912,14 +4910,6 @@
             "type": {
               "option": "u64"
             }
-          },
-          {
-            "name": "total_incremented",
-            "type": "bool"
-          },
-          {
-            "name": "locked",
-            "type": "bool"
           },
           {
             "name": "unstaked",
@@ -5330,7 +5320,7 @@
             "type": "u64"
           },
           {
-            "name": "reward_percentage_bp",
+            "name": "reward_bp",
             "type": "u16"
           },
           {

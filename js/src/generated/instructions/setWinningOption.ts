@@ -80,12 +80,12 @@ export type SetWinningOptionInstruction<
 export type SetWinningOptionInstructionData = {
   discriminator: ReadonlyUint8Array;
   optionId: bigint;
-  rewardPercentageBp: number;
+  rewardBp: number;
 };
 
 export type SetWinningOptionInstructionDataArgs = {
   optionId: number | bigint;
-  rewardPercentageBp: number;
+  rewardBp: number;
 };
 
 export function getSetWinningOptionInstructionDataEncoder(): FixedSizeEncoder<SetWinningOptionInstructionDataArgs> {
@@ -93,7 +93,7 @@ export function getSetWinningOptionInstructionDataEncoder(): FixedSizeEncoder<Se
     getStructEncoder([
       ['discriminator', fixEncoderSize(getBytesEncoder(), 8)],
       ['optionId', getU64Encoder()],
-      ['rewardPercentageBp', getU16Encoder()],
+      ['rewardBp', getU16Encoder()],
     ]),
     (value) => ({ ...value, discriminator: SET_WINNING_OPTION_DISCRIMINATOR })
   );
@@ -103,7 +103,7 @@ export function getSetWinningOptionInstructionDataDecoder(): FixedSizeDecoder<Se
   return getStructDecoder([
     ['discriminator', fixDecoderSize(getBytesDecoder(), 8)],
     ['optionId', getU64Decoder()],
-    ['rewardPercentageBp', getU16Decoder()],
+    ['rewardBp', getU16Decoder()],
   ]);
 }
 
@@ -126,7 +126,7 @@ export type SetWinningOptionAsyncInput<
   market: Address<TAccountMarket>;
   option?: Address<TAccountOption>;
   optionId: SetWinningOptionInstructionDataArgs['optionId'];
-  rewardPercentageBp: SetWinningOptionInstructionDataArgs['rewardPercentageBp'];
+  rewardBp: SetWinningOptionInstructionDataArgs['rewardBp'];
 };
 
 export async function getSetWinningOptionInstructionAsync<
@@ -212,7 +212,7 @@ export type SetWinningOptionInput<
   market: Address<TAccountMarket>;
   option: Address<TAccountOption>;
   optionId: SetWinningOptionInstructionDataArgs['optionId'];
-  rewardPercentageBp: SetWinningOptionInstructionDataArgs['rewardPercentageBp'];
+  rewardBp: SetWinningOptionInstructionDataArgs['rewardBp'];
 };
 
 export function getSetWinningOptionInstruction<
