@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 // Fixed-point scale factor to avoid decimal division
 pub const PRECISION: u64 = 10_000;
 // Dividing score by 200 ensures that there is no overflow possible while still maintaining score as precise as possible
-pub const OVERFLOW_DIVISOR: u128 = 200; 
+pub const OVERFLOW_DIVISOR: u128 = 200;
 
 pub fn calculate_user_score_components(
     option_created: u64,
@@ -14,7 +14,7 @@ pub fn calculate_user_score_components(
     earliness_cutoff_seconds: u64, // unlimited, not an issue
     earliness_multiplier: u16,     // 10000 - 20000
 ) -> Result<(u64, u64)> {
-    require!(reveal_start > option_created, ErrorCode::InvalidParameters);    
+    require!(reveal_start > option_created, ErrorCode::InvalidParameters);
 
     let earliness_cutoff = earliness_cutoff_seconds.max(1);
     let earliness_multiplier = earliness_multiplier as u64;
@@ -39,7 +39,7 @@ pub fn calculate_user_score_components(
         .checked_mul(100)
         .ok_or(ErrorCode::Overflow)?
         .checked_div(max_stake_duration)
-        .ok_or(ErrorCode::Overflow)?;    
+        .ok_or(ErrorCode::Overflow)?;
 
     let boost_range = earliness_multiplier
         .checked_sub(PRECISION)
@@ -77,18 +77,18 @@ pub fn calculate_user_score(
         earliness_multiplier,
     )?;
 
-    // score = amount * time_pct * earliness / PRECISION
-    // Use u128 intermediate to avoid overflow.
-    let result_u128 = (stake_amount as u128)
+    // score = amount * time_pct * earliness / (PRECISION * OVERFLOW_DIVISOR)
+    Ok((stake_amount as u128)
         .checked_mul(time_pct as u128)
         .ok_or(ErrorCode::Overflow)?
         .checked_mul(earliness as u128)
         .ok_or(ErrorCode::Overflow)?
         .checked_div(PRECISION as u128)
         .ok_or(ErrorCode::Overflow)?
-        .checked_div(OVERFLOW_DIVISOR) 
-        .ok_or(ErrorCode::Overflow)?;
-    Ok(result_u128.try_into().map_err(|_| ErrorCode::Overflow)?)
+        .checked_div(OVERFLOW_DIVISOR)
+        .ok_or(ErrorCode::Overflow)?
+        .try_into()
+        .map_err(|_| ErrorCode::Overflow)?)
 }
 
 #[cfg(test)]
@@ -216,7 +216,7 @@ mod tests {
     }
 
     #[test]
-    fn max_value_stake_does_not_overflow() {        
+    fn max_value_stake_does_not_overflow() {
         let result = calculate_user_score(
             MARKET_OPENED,
             MARKET_OPENED + MAX_TIME_TO_STAKE_SECONDS,
@@ -352,7 +352,7 @@ mod tests {
         let score = calculate_user_score(
             MARKET_OPENED,
             reveal_start,
-            MARKET_OPENED, 
+            MARKET_OPENED,
             reveal_start,
             1,
             ONE_WEEK,
