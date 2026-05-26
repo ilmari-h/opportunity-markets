@@ -3,57 +3,60 @@ use anchor_lang::prelude::*;
 
 // Fixed-point scale factor to avoid decimal division
 pub const PRECISION: u64 = 10_000;
+// Dividing score by 200 ensures that there is no overflow possible while still maintaining score as precise as possible
+pub const OVERFLOW_DIVISOR: u128 = 200; 
 
 pub fn calculate_user_score_components(
     option_created: u64,
     reveal_start: u64,
     user_staked_at: u64,
     user_stake_end: u64,
-    stake_amount: u64,
-    earliness_cutoff_seconds: u64,
-    earliness_multiplier: u16,
-) -> Result<(u64, u64, u64)> {
+    earliness_cutoff_seconds: u64, // unlimited, not an issue
+    earliness_multiplier: u16,     // 10000 - 20000
+) -> Result<(u64, u64)> {
+    require!(reveal_start > option_created, ErrorCode::InvalidParameters);    
+
     let earliness_cutoff = earliness_cutoff_seconds.max(1);
     let earliness_multiplier = earliness_multiplier as u64;
 
-    let total_stake_period = reveal_start
-        .checked_sub(option_created)
-        .ok_or(ErrorCode::Overflow)?;
-
     // saturating_sub: a stake placed before the option existed gets peak earliness boost
-    let stake_since_creation = user_staked_at
-        .saturating_sub(option_created)
-        .max(1);
+    let delay_after_option_creation = user_staked_at.saturating_sub(option_created).max(1);
 
-    let actual_stake_duration = user_stake_end
-        .checked_sub(user_staked_at)
+    let earliest_stake_start = option_created;
+    let latest_stake_end = reveal_start;
+    let valid_stake_start = user_staked_at.max(earliest_stake_start);
+    let valid_stake_end = user_stake_end.min(latest_stake_end);
+
+    let max_stake_duration = latest_stake_end
+        .checked_sub(earliest_stake_start)
         .ok_or(ErrorCode::Overflow)?;
 
-    // Linear decay from earliness_multiplier at t=0 down to PRECISION at t>=earliness_cutoff.
+    let valid_stake_duration = valid_stake_end
+        .checked_sub(valid_stake_start)
+        .ok_or(ErrorCode::Overflow)?;
+
+    let stake_time_percentage = valid_stake_duration
+        .checked_mul(100)
+        .ok_or(ErrorCode::Overflow)?
+        .checked_div(max_stake_duration)
+        .ok_or(ErrorCode::Overflow)?;    
+
     let boost_range = earliness_multiplier
         .checked_sub(PRECISION)
         .ok_or(ErrorCode::Overflow)?;
 
     let earliness_factor = earliness_multiplier
         .checked_sub(
-            stake_since_creation
+            delay_after_option_creation
                 .min(earliness_cutoff)
                 .checked_mul(boost_range)
                 .ok_or(ErrorCode::Overflow)?
-                / earliness_cutoff,
+                .checked_div(earliness_cutoff)
+                .ok_or(ErrorCode::Overflow)?,
         )
         .ok_or(ErrorCode::Overflow)?;
 
-    // No `.max(1)` here: an early unstake should be allowed to score 0 on the
-    // time component, otherwise the reward formula always pays a sliver to
-    // someone who never actually committed capital.
-    let stake_time_percentage = (actual_stake_duration as u128)
-        .checked_mul(100)
-        .ok_or(ErrorCode::Overflow)?
-        .checked_div((total_stake_period.max(1)) as u128)
-        .ok_or(ErrorCode::Overflow)? as u64;
-
-    Ok((stake_amount, stake_time_percentage, earliness_factor))
+    Ok((stake_time_percentage, earliness_factor))
 }
 
 pub fn calculate_user_score(
@@ -65,36 +68,33 @@ pub fn calculate_user_score(
     earliness_cutoff_seconds: u64,
     earliness_multiplier: u16,
 ) -> Result<u64> {
-    let (amount, time_pct, earliness) = calculate_user_score_components(
+    let (time_pct, earliness) = calculate_user_score_components(
         option_created,
         reveal_start,
         user_staked_at,
         user_stake_end,
-        stake_amount,
         earliness_cutoff_seconds,
         earliness_multiplier,
     )?;
 
     // score = amount * time_pct * earliness / PRECISION
     // Use u128 intermediate to avoid overflow.
-    let weighted = (amount as u128)
+    let result_u128 = (stake_amount as u128)
         .checked_mul(time_pct as u128)
         .ok_or(ErrorCode::Overflow)?
         .checked_mul(earliness as u128)
-        .ok_or(ErrorCode::Overflow)?;
-
-    let user_score = weighted
+        .ok_or(ErrorCode::Overflow)?
         .checked_div(PRECISION as u128)
         .ok_or(ErrorCode::Overflow)?
-        .try_into()
-        .map_err(|_| ErrorCode::Overflow)?;
-
-    Ok(user_score)
+        .checked_div(OVERFLOW_DIVISOR) 
+        .ok_or(ErrorCode::Overflow)?;
+    Ok(result_u128.try_into().map_err(|_| ErrorCode::Overflow)?)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constants::MAX_TIME_TO_STAKE_SECONDS;
 
     // Realistic baseline: 1,000,000 tokens with 9 decimals
     const STAKE: u64 = 1_000_000_000_000_000;
@@ -111,18 +111,16 @@ mod tests {
     fn peak_boost_when_staking_at_market_open() {
         // Staker enters at t=0, never unstakes early.
         let reveal_start = MARKET_OPENED + ONE_WEEK;
-        let (amount, time_pct, earliness) = calculate_user_score_components(
+        let (time_pct, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
             MARKET_OPENED,
             reveal_start,
-            STAKE,
             ONE_WEEK,
             MULT_2X,
         )
         .unwrap();
 
-        assert_eq!(amount, STAKE);
         assert_eq!(time_pct, 100);
         // .max(1) on stake_since_creation shaves one tick off the peak.
         assert_eq!(earliness, 2 * PRECISION - (PRECISION / ONE_WEEK));
@@ -132,12 +130,11 @@ mod tests {
     fn no_boost_at_cutoff_boundary() {
         let reveal_start = MARKET_OPENED + ONE_WEEK;
         let cutoff = 24 * 60 * 60; // 1 day
-        let (_, _, earliness) = calculate_user_score_components(
+        let (_, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
             MARKET_OPENED + cutoff,
             reveal_start,
-            STAKE,
             cutoff,
             MULT_2X,
         )
@@ -151,12 +148,11 @@ mod tests {
     fn no_boost_after_cutoff() {
         let reveal_start = MARKET_OPENED + ONE_WEEK;
         let cutoff = 24 * 60 * 60;
-        let (_, _, earliness) = calculate_user_score_components(
+        let (_, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
             MARKET_OPENED + 2 * cutoff,
             reveal_start,
-            STAKE,
             cutoff,
             MULT_2X,
         )
@@ -170,12 +166,11 @@ mod tests {
     fn midway_boost_is_linear() {
         let reveal_start = MARKET_OPENED + ONE_WEEK;
         let cutoff = 24 * 60 * 60;
-        let (_, _, earliness) = calculate_user_score_components(
+        let (_, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
             MARKET_OPENED + cutoff / 2,
             reveal_start,
-            STAKE,
             cutoff,
             MULT_2X,
         )
@@ -188,12 +183,11 @@ mod tests {
     #[test]
     fn multiplier_equal_to_precision_means_no_boost() {
         let reveal_start = MARKET_OPENED + ONE_WEEK;
-        let (_, _, earliness) = calculate_user_score_components(
+        let (_, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
             MARKET_OPENED + 60,
             reveal_start,
-            STAKE,
             ONE_WEEK,
             MULT_1X,
         )
@@ -217,45 +211,23 @@ mod tests {
         )
         .unwrap();
 
-        // amount * time_pct(100) * earliness(~15000) / PRECISION
-        //   = 1e15 * 100 * 15000 / 10000 ≈ 1.5e16
-        // .max(1) on stake_since_creation shaves off one tick.
-        let expected_earliness = 15_000 - (5_000 / ONE_WEEK);
-        let expected = (STAKE as u128) * 100 * (expected_earliness as u128) / (PRECISION as u128);
+        let expected = 750000000000000;
         assert_eq!(score as u128, expected);
     }
 
     #[test]
-    fn realistic_full_score_with_1_5x_multiplier_overflow() {
-        // Stake 1M tokens (9 decimals) at t=0 of a 1-week market, never unstake.
-        let reveal_start = MARKET_OPENED + ONE_WEEK;
+    fn max_value_stake_does_not_overflow() {        
         let result = calculate_user_score(
             MARKET_OPENED,
-            reveal_start,
+            MARKET_OPENED + MAX_TIME_TO_STAKE_SECONDS,
             MARKET_OPENED,
-            reveal_start,
-            STAKE * 200,
-            ONE_WEEK,
-            MULT_1_5X,
-        );
-        assert!(result.is_err());
-        assert_eq!(result.err().unwrap(), ErrorCode::Overflow.into());
-    }
-
-    #[test]
-    fn max_u64_stake_does_not_overflow() {
-        let reveal_start = MARKET_OPENED + ONE_WEEK;
-        let result = calculate_user_score(
-            MARKET_OPENED,
-            reveal_start,
-            MARKET_OPENED,
-            reveal_start,
             u64::MAX,
-            ONE_WEEK,
+            u64::MAX,
+            u64::MAX,
             MULT_2X,
         );
-        assert!(result.is_err());
-        assert_eq!(result.err().unwrap(), ErrorCode::Overflow.into());
+        println!("result: {:?}", result);
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -263,12 +235,11 @@ mod tests {
         // User stakes at t=0, unstakes 1 day into a 1-week market.
         let reveal_start = MARKET_OPENED + ONE_WEEK;
         let day = 24 * 60 * 60;
-        let (_, time_pct, _) = calculate_user_score_components(
+        let (time_pct, _) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
             MARKET_OPENED,
             MARKET_OPENED + day,
-            STAKE,
             ONE_WEEK,
             MULT_1_5X,
         )
@@ -300,16 +271,9 @@ mod tests {
         // Staker unstakes the same second they stake.
         let reveal_start = MARKET_OPENED + ONE_WEEK;
         let t = MARKET_OPENED + 60;
-        let score = calculate_user_score(
-            MARKET_OPENED,
-            reveal_start,
-            t,
-            t,
-            STAKE,
-            ONE_WEEK,
-            MULT_2X,
-        )
-        .unwrap();
+        let score =
+            calculate_user_score(MARKET_OPENED, reveal_start, t, t, STAKE, ONE_WEEK, MULT_2X)
+                .unwrap();
 
         assert_eq!(score, 0);
     }
@@ -319,12 +283,11 @@ mod tests {
         // Cutoff = 0 is .max(1)'d internally; any stake_since_creation >= 1 hits the
         // clamp, so factor = PRECISION (1.0x) regardless of staking time.
         let reveal_start = MARKET_OPENED + ONE_WEEK;
-        let (_, _, earliness) = calculate_user_score_components(
+        let (_, earliness) = calculate_user_score_components(
             MARKET_OPENED,
             reveal_start,
             MARKET_OPENED + 60,
             reveal_start,
-            STAKE,
             0,
             MULT_2X,
         )
@@ -370,17 +333,32 @@ mod tests {
         let user_staked_at = MARKET_OPENED + 10;
         let option_created = MARKET_OPENED + 60 * 60;
 
-        let (_, _, earliness) = calculate_user_score_components(
+        let (_, earliness) = calculate_user_score_components(
             option_created,
             reveal_start,
             user_staked_at,
             reveal_start,
-            STAKE,
             ONE_WEEK,
             MULT_2X,
         )
         .unwrap();
 
         assert_eq!(earliness, 2 * PRECISION - (PRECISION / ONE_WEEK));
+    }
+
+    #[test]
+    fn tiny_stake_gets_some_score() {
+        let reveal_start = MARKET_OPENED + ONE_WEEK;
+        let score = calculate_user_score(
+            MARKET_OPENED,
+            reveal_start,
+            MARKET_OPENED, 
+            reveal_start,
+            1,
+            ONE_WEEK,
+            MULT_2X,
+        )
+        .unwrap();
+        assert_eq!(score, 1);
     }
 }

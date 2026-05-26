@@ -136,9 +136,9 @@ pub mod opportunity_market {
     pub fn set_winning_option(
         ctx: Context<SetWinningOption>,
         option_id: u64,
-        reward_percentage_bp: u16,
+        reward_bp: u16,
     ) -> Result<()> {
-        instructions::set_winning_option(ctx, option_id, reward_percentage_bp)
+        instructions::set_winning_option(ctx, option_id, reward_bp)
     }
 
     pub fn resolve_market(ctx: Context<ResolveMarket>) -> Result<()> {
