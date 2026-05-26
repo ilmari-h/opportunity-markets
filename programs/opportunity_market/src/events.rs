@@ -131,7 +131,7 @@ pub struct RevealStakeFinalizedEvent {
     pub user_stake: u64,
     pub user_score: u64,
 
-    pub total_score: u64,
+    pub total_score: u128,
     pub total_stake: u64,
 
     pub timestamp: i64,

@@ -78,7 +78,7 @@ pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, 
     )?;
 
     ctx.accounts.option.total_score = ctx.accounts.option.total_score
-        .checked_add(user_score)
+        .checked_add(user_score as u128)
         .ok_or(ErrorCode::Overflow)?;
 
     // Store the user's score in their stake account for reward calculation

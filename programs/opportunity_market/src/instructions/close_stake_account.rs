@@ -175,7 +175,7 @@ fn compute_winning_payout(
         .checked_mul(option.reward_bp.unwrap_or(0) as u128)
         .ok_or(ErrorCode::Overflow)?
         .checked_div(
-            (total_score as u128)
+            total_score
                 .checked_mul(10_000)
                 .ok_or(ErrorCode::Overflow)?,
         )
