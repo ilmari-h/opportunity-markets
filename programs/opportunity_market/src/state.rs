@@ -138,17 +138,23 @@ impl OpportunityMarket {
             .checked_mul(self.fee_rates.platform_fee_bp as u128)
             .ok_or(ErrorCode::Overflow)?
             .checked_div(10_000)
-            .ok_or(ErrorCode::Overflow)? as u64;
+            .ok_or(ErrorCode::Overflow)?
+            .try_into()
+            .map_err(|_| ErrorCode::Overflow)?;
         let reward_pool_fee = (amount as u128)
             .checked_mul(self.fee_rates.reward_pool_fee_bp as u128)
             .ok_or(ErrorCode::Overflow)?
             .checked_div(10_000)
-            .ok_or(ErrorCode::Overflow)? as u64;
+            .ok_or(ErrorCode::Overflow)?
+            .try_into()
+            .map_err(|_| ErrorCode::Overflow)?;
         let creator_fee = (amount as u128)
             .checked_mul(self.fee_rates.creator_fee_bp as u128)
             .ok_or(ErrorCode::Overflow)?
             .checked_div(10_000)
-            .ok_or(ErrorCode::Overflow)? as u64;
+            .ok_or(ErrorCode::Overflow)?
+            .try_into()
+            .map_err(|_| ErrorCode::Overflow)?;
 
         Ok(CollectedFees {
             platform_fee,
