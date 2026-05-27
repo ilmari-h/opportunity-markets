@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::constants::STAKE_ACCOUNT_SEED;
+use crate::error::ErrorCode;
 use crate::events::{emit_ts, StakeAccountInitializedEvent};
 use crate::state::{OpportunityMarket, StakeAccount};
 
@@ -14,6 +15,9 @@ pub struct InitStakeAccount<'info> {
     /// No signature required: this instruction is permissionless.
     pub owner: UncheckedAccount<'info>,
 
+    #[account(
+        constraint = market.stake_end_timestamp.is_some() @ ErrorCode::MarketNotOpen,
+    )]
     pub market: Account<'info, OpportunityMarket>,
 
     #[account(
@@ -28,10 +32,7 @@ pub struct InitStakeAccount<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn init_stake_account(
-    ctx: Context<InitStakeAccount>,
-    stake_account_id: u32,
-) -> Result<()> {
+pub fn init_stake_account(ctx: Context<InitStakeAccount>, stake_account_id: u32) -> Result<()> {
     let stake_account = &mut ctx.accounts.stake_account;
 
     stake_account.bump = ctx.bumps.stake_account;
