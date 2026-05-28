@@ -53,6 +53,8 @@ pub struct AddReward<'info> {
 }
 
 pub fn add_reward(ctx: Context<AddReward>, amount: u64, lock: bool) -> Result<()> {
+    require!(amount > 0, ErrorCode::InsufficientRewardFunding);
+
     let market = &ctx.accounts.market;
 
     // Allow anytime before staking ends
