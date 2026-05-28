@@ -37,7 +37,7 @@ pub struct Stake<'info> {
         seeds = [STAKE_ACCOUNT_SEED, stake_account.owner.as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump = stake_account.bump,
         constraint = stake_account.staked_at_timestamp.is_none() @ ErrorCode::AlreadyStaked,
-        constraint = !stake_account.unstaked @ ErrorCode::AlreadyUnstaked,
+        constraint = stake_account.unstaked_at_timestamp.is_none() @ ErrorCode::AlreadyUnstaked,
         constraint = stake_account.pending_stake_computation.is_none() @ ErrorCode::Locked,
     )]
     pub stake_account: Box<Account<'info, StakeAccount>>,

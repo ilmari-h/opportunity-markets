@@ -28,7 +28,7 @@ pub struct Unstake<'info> {
         mut,
         seeds = [STAKE_ACCOUNT_SEED, owner.key().as_ref(), market.key().as_ref(), &stake_account_id.to_le_bytes()],
         bump = stake_account.bump,
-        constraint = !stake_account.unstaked @ ErrorCode::AlreadyUnstaked,
+        constraint = stake_account.unstaked_at_timestamp.is_none() @ ErrorCode::AlreadyUnstaked,
         constraint = stake_account.staked_at_timestamp.is_some() @ ErrorCode::NoStake,
     )]
     pub stake_account: Box<Account<'info, StakeAccount>>,
@@ -71,6 +71,8 @@ pub fn unstake(
         require!(market.allow_unstaking_early, ErrorCode::TimeWindowMismatch);
         require!(ctx.accounts.owner.is_signer, ErrorCode::Unauthorized);
         ctx.accounts.stake_account.unstaked_at_timestamp = Some(current_timestamp);
+    } else {
+        ctx.accounts.stake_account.unstaked_at_timestamp = Some(stake_end);
     }
 
     let amount = ctx.accounts.stake_account.amount;
@@ -103,8 +105,6 @@ pub fn unstake(
             ctx.accounts.token_mint.decimals,
         )?;
     }
-
-    ctx.accounts.stake_account.unstaked = true;
 
     emit_ts!(UnstakedEvent {
         owner: ctx.accounts.stake_account.owner,

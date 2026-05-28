@@ -837,14 +837,12 @@ describe("OpportunityMarket", () => {
     expect(balanceBeforeStake - balanceAfterStake).to.equal(stakeAmount);
 
     let stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
-    expect(stakeAccount.data.unstaked).to.be.false;
     expect(isNone(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
 
     // Single-step unstake during the staking window (allowed because market opted in).
     await platform.unstake(staker, stakeAccountId);
 
     stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
-    expect(stakeAccount.data.unstaked).to.be.true;
     // Early unstake records the shortened staking window for scoring.
     expect(isSome(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
 
@@ -934,16 +932,14 @@ describe("OpportunityMarket", () => {
     );
 
     let stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
-    expect(stakeAccount.data.unstaked).to.be.false;
+    expect(isNone(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
 
     // Once stake_end has passed, unstake is permissionless
     await sleepUntilOnChainTimestamp(Number(stakeEnd) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
     await platform.unstake(staker, stakeAccountId, thirdParty);
 
     stakeAccount = await platform.fetchStakeAccountData(staker, stakeAccountId);
-    expect(stakeAccount.data.unstaked).to.be.true;
-    // Post-stake-end unstake does NOT record an early unstake timestamp.
-    expect(isNone(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
+    expect(isSome(stakeAccount.data.unstakedAtTimestamp)).to.be.true;
   });
 
   it("locked sponsor cannot withdraw but unlocked sponsor can", async () => {
