@@ -15,6 +15,7 @@ export * from "./initStakeAccount";
 export * from "./initAllowedMint";
 export * from "./closeStakeAccount";
 export * from "./closeStuckStakeAccount";
+export * from "./closeOptionAccount";
 export * from "./unstake";
 export * from "./finalizeRevealStake";
 export * from "./createPlatformConfig";

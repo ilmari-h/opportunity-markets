@@ -11,6 +11,8 @@ import {
   OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM,
   OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED,
   OPPORTUNITY_MARKET_ERROR__INVALID_PARAMETERS,
+  OPPORTUNITY_MARKET_ERROR__OPTION_STILL_NEEDED,
+  OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_NOT_OVER,
 } from "../js/src";
 
 import { OpportunityMarket } from "../target/types/opportunity_market";
@@ -131,8 +133,8 @@ describe("OpportunityMarket", () => {
     expect(isSome(resolvedMarket.data.resolvedAtTimestamp)).to.be.true;
     expect(resolvedMarket.data.winningOptionAllocation).to.equal(10_000);
     const winningOption = await platform.fetchOptionData(winningOptionIndex);
-    expect(winningOption.data.selected).to.be.true;
-    expect(winningOption.data.rewardPercentageBp).to.equal(10_000);
+    expect(isSome(winningOption.data.rewardPercentageBp)).to.be.true;
+    expect(unwrapOption(winningOption.data.rewardPercentageBp)).to.equal(10_000);
 
     // Reveal stakes for winners
     const winners = platform.participants.filter(
@@ -190,6 +192,16 @@ describe("OpportunityMarket", () => {
       })
     );
 
+    // Closing option accounts before the reveal period ends fails.
+    await shouldThrowCustomError(
+      () => platform.closeOptionAccount(winningOptionIndex),
+      OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_NOT_OVER,
+    );
+    await shouldThrowCustomError(
+      () => platform.closeOptionAccount(optionB),
+      OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_NOT_OVER,
+    );
+
     await platform.endRevealPeriod();
 
     // After the reveal period ends, the market creator can claim the
@@ -231,6 +243,12 @@ describe("OpportunityMarket", () => {
       }))
     );
     const marketBalanceBefore = (await fetchToken(rpc, marketAta)).data.amount;
+
+    // The winning option still cannot be closed while some stake accounts are open.
+    await shouldThrowCustomError(
+      () => platform.closeOptionAccount(winningOptionIndex),
+      OPPORTUNITY_MARKET_ERROR__OPTION_STILL_NEEDED,
+    );
 
     // Close stake accounts for winners (transfers reward only)
     await platform.closeStakeAccountBatch(
@@ -316,6 +334,15 @@ describe("OpportunityMarket", () => {
 
     const marketAfter = await platform.fetchMarket();
     expect(marketAfter.data.collectedPlatformFees).to.equal(0n, "Market collected platform fees should be 0 after claiming");
+
+    // Close every option account
+    await platform.closeOptionAccount(winningOptionIndex);
+    await platform.closeOptionAccount(optionB);
+
+    for (const optionId of [winningOptionIndex, optionB]) {
+      const addr = await platform.getOptionAddress(optionId);
+      expect(await platform.accountExists(addr)).to.be.false;
+    }
   });
 
   it("distributes rewards across multiple winning options", async () => {
@@ -382,8 +409,8 @@ describe("OpportunityMarket", () => {
     ];
     for (const { optionId, rewardPercentageBp } of expectedWinners) {
       const opt = await platform.fetchOptionData(optionId);
-      expect(opt.data.selected).to.be.true;
-      expect(opt.data.rewardPercentageBp).to.equal(rewardPercentageBp);
+      expect(isSome(opt.data.rewardPercentageBp)).to.be.true;
+      expect(unwrapOption(opt.data.rewardPercentageBp)).to.equal(rewardPercentageBp);
     }
 
     // Reveal all stake accounts
@@ -715,8 +742,8 @@ describe("OpportunityMarket", () => {
     expect(isSome(market.data.resolvedAtTimestamp)).to.be.true;
     expect(market.data.winningOptionAllocation).to.equal(10_000);
     const optionAAccount = await platform.fetchOptionData(optionA);
-    expect(optionAAccount.data.selected).to.be.true;
-    expect(optionAAccount.data.rewardPercentageBp).to.equal(10_000);
+    expect(isSome(optionAAccount.data.rewardPercentageBp)).to.be.true;
+    expect(unwrapOption(optionAAccount.data.rewardPercentageBp)).to.equal(10_000);
   });
 
   it("allows adding more reward during staking", async () => {

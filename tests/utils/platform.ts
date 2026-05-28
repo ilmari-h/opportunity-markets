@@ -38,6 +38,7 @@ import {
   revealStake,
   finalizeRevealStake,
   closeStakeAccount,
+  closeOptionAccount,
   closeStuckStakeAccount as closeStuckStakeAccountIx,
   unstake as unstakeIx,
   openMarket as openMarketIx,
@@ -897,6 +898,19 @@ export class Platform {
 
   async closeStakeAccount(userId: Address, optionId: number, stakeAccountId: number): Promise<void> {
     await this.closeStakeAccountBatch([{ userId, optionId, stakeAccountId }]);
+  }
+
+  async closeOptionAccount(optionId: number): Promise<void> {
+    const ix = await closeOptionAccount({
+      signer: this.marketCreator.solanaKeypair,
+      creator: this.creator,
+      market: this.marketAddress,
+      optionId,
+    });
+
+    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
+      label: `Close option account ${optionId}`,
+    });
   }
 
   /**
