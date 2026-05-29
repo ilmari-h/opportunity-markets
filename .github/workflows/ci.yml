@@ -12,28 +12,54 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Installs the Arcium CLI (+ anchor/solana). These versions are pinned
-      # here and MUST be kept in sync with the repo: the action ref + arcium
-      # version with `arcis` in encrypted-ixs/Cargo.toml, and anchor-version
-      # with `anchor_version` in Anchor.toml. See README "Formatting & linting".
-      - uses: arcium-hq/setup-arcium@v0.10.3
+      # The Arcium attribute macros read the compiled circuits (build/*.arcis)
+      # at macro-expansion time, so clippy needs them present. They only change
+      # when the circuits in encrypted-ixs/ change, so cache them and rebuild
+      # only on a miss. No restore-keys: a stale partial match would mismatch
+      # the source, so we require an exact hit or rebuild from scratch.
+      - name: Cache compiled confidential instructions
+        id: arcis
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: arcis-${{ hashFiles('encrypted-ixs/**', 'Arcium.toml') }}
+
+      # Cache miss only (i.e. circuits changed): install the Arcium toolchain and
+      # recompile the circuits. Pinned versions must track the repo — see README
+      # "Formatting & linting". The action ref can't be an expression, so bump it
+      # alongside the arcium-version.
+      - name: Install Arcium toolchain
+        if: steps.arcis.outputs.cache-hit != 'true'
+        uses: arcium-hq/setup-arcium@v0.10.3
         with:
           runner-arch-os: x86_64_linux
           arcium-version: "0.10.3"
           anchor-version: "1.0.2"
 
+      # --skip-program skips the Solana program build (clippy compiles it anyway);
+      # --skip-keys-sync avoids needing a wallet keypair in CI.
+      - name: Build confidential instructions
+        if: steps.arcis.outputs.cache-hit != 'true'
+        run: arcium build --skip-program --skip-keys-sync
+
+      # Caches the cargo registry + target dir so the clippy compile is fast on
+      # warm runs (the bulk of the remaining time once arcis is cached). Uses
+      # GitHub's first-party cache action rather than a third-party one.
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-${{ runner.os }}-
+
       # rust-toolchain.toml pins the channel (1.89.0) and the
       # rustfmt + clippy components, so rustup installs them on first use.
       - name: Show toolchain
         run: rustup show
-
-      # Compiles encrypted-ixs into build/*.arcis, which the Arcium attribute
-      # macros read at macro-expansion time. Without them `cargo clippy` panics
-      # with "Could not read compiled confidential ix at path build/<name>.arcis".
-      # --skip-program skips the Solana program build (clippy compiles it anyway);
-      # --skip-keys-sync avoids needing a wallet keypair in CI.
-      - name: Build confidential instructions
-        run: arcium build --skip-program --skip-keys-sync
 
       - name: rustfmt (check formatting)
         run: cargo fmt --all -- --check
