@@ -55,7 +55,8 @@ pub fn init_platform_config(
         ErrorCode::InvalidParameters
     );
     require!(
-        (MIN_MAX_REVEAL_PERIOD_SECONDS..=MAX_MAX_REVEAL_PERIOD_SECONDS).contains(&max_reveal_period_seconds)
+        (MIN_MAX_REVEAL_PERIOD_SECONDS..=MAX_MAX_REVEAL_PERIOD_SECONDS)
+            .contains(&max_reveal_period_seconds)
             && max_reveal_period_seconds > min_reveal_period_seconds,
         ErrorCode::InvalidParameters
     );

@@ -40,6 +40,17 @@ cargo clippy --workspace --all-targets -- -D warnings
 `too_many_arguments` and `diverging_sub_expression` are allowed in
 `programs/opportunity_market/Cargo.toml`.
 
+clippy needs the compiled confidential instructions (`build/*.arcis`) present,
+because the Arcium attribute macros read them at macro-expansion time. CI caches
+`build/` keyed on a hash of `encrypted-ixs/`, and only installs the Arcium
+toolchain (`arcium-hq/setup-arcium`) and runs `arcium build` on a cache miss —
+i.e. when the circuits change. The pinned versions in `.github/workflows/ci.yml`
+must be bumped together with the repo whenever they change:
+
+- `setup-arcium@vX.Y.Z` ref **and** `arcium-version` ← keep matching `arcis` in
+  `encrypted-ixs/Cargo.toml` (and the `arcium-*` crates in the program manifest)
+- `anchor-version` ← keep matching `anchor_version` in `Anchor.toml`
+
 ### Program keypair
 
 Tests use a deterministic program keypair assumed to be located at `../B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg.json`. If you don't have this keypair, generate your own and update the
