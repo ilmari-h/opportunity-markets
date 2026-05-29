@@ -14,10 +14,9 @@ pub struct ClaimFees<'info> {
 
     #[account(
         mut,
-        seeds = [OPPORTUNITY_MARKET_SEED, market.platform.as_ref(), market.creator.as_ref(), &market.index.to_le_bytes()],
+        seeds = [OPPORTUNITY_MARKET_SEED, platform_config.key().as_ref(), market.creator.as_ref(), &market.index.to_le_bytes()],
         bump = market.bump,
         constraint = market.collected_platform_fees > 0 @ ErrorCode::NoFeesToClaim,
-        constraint = market.platform == platform_config.key() @ ErrorCode::Unauthorized,
     )]
     pub market: Box<Account<'info, OpportunityMarket>>,
 
