@@ -16,7 +16,7 @@ Program address on Solana Devnet: `B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg`
 
 ## Build & Test
 
-Arcium v0.9.2 cli required.
+Arcium v0.10.3 cli required.
 
 Before testing, make sure you build without the feature `production-settings`.
 In `programs/opportunity_market/Cargo.toml` make sure it's not in the defaults array.
