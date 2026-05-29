@@ -12,10 +12,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Installs the Arcium CLI (+ anchor/solana). These versions are pinned
+      # here and MUST be kept in sync with the repo: the action ref + arcium
+      # version with `arcis` in encrypted-ixs/Cargo.toml, and anchor-version
+      # with `anchor_version` in Anchor.toml. See README "Formatting & linting".
+      - uses: arcium-hq/setup-arcium@v0.10.3
+        with:
+          runner-arch-os: x86_64_linux
+          arcium-version: "0.10.3"
+          anchor-version: "1.0.2"
+
       # rust-toolchain.toml pins the channel (1.89.0) and the
       # rustfmt + clippy components, so rustup installs them on first use.
       - name: Show toolchain
         run: rustup show
+
+      # Compiles encrypted-ixs into build/*.arcis, which the Arcium attribute
+      # macros read at macro-expansion time. Without them `cargo clippy` panics
+      # with "Could not read compiled confidential ix at path build/<name>.arcis".
+      # --skip-program skips the Solana program build (clippy compiles it anyway);
+      # --skip-keys-sync avoids needing a wallet keypair in CI.
+      - name: Build confidential instructions
+        run: arcium build --skip-program --skip-keys-sync
 
       - name: rustfmt (check formatting)
         run: cargo fmt --all -- --check
