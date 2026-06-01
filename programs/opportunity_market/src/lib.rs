@@ -17,7 +17,7 @@ pub use state::*;
 pub const COMP_DEF_OFFSET_STAKE: u32 = comp_def_offset("stake");
 pub const COMP_DEF_OFFSET_REVEAL_STAKE: u32 = comp_def_offset("reveal_stake");
 
-declare_id!("B3NCHsGBkdZrPYPJY2rjg4UwmyRotMmFWhxa5hMHwLeg");
+declare_id!("5qE385RZgBicx5QF3TGgjfe9jnHGZB64g6yggmyLw9f5");
 
 #[arcium_program]
 pub mod opportunity_market {

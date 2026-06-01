@@ -7,9 +7,12 @@ use crate::state::OpportunityMarket;
 #[derive(Accounts)]
 pub struct EndRevealPeriod<'info> {
     pub signer: Signer<'info>,
+    // TODO: If the creator assigned reward_bp to options with no stakes that never finalize,
+    // `winning_option_active_bp` stays 0 and this market cannot end the reveal period.
     #[account(
         mut,
         constraint = !market.reveal_ended @ ErrorCode::RevealPeriodEnded,
+        constraint = market.winning_option_active_bp > 0 @ ErrorCode::NoFinalizedWinningOption,
     )]
     pub market: Account<'info, OpportunityMarket>,
 }
