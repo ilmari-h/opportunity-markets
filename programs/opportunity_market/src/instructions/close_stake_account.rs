@@ -209,11 +209,7 @@ fn compute_winning_payout(
         .ok_or(ErrorCode::Overflow)?
         .checked_mul(option.reward_bp.unwrap_or(0) as u128)
         .ok_or(ErrorCode::Overflow)?
-        .checked_div(
-            total_score
-                .checked_mul(10_000)
-                .ok_or(ErrorCode::Overflow)?,
-        )
+        .checked_div(total_score.checked_mul(10_000).ok_or(ErrorCode::Overflow)?)
         .ok_or(ErrorCode::Overflow)? as u64;
 
     let fees = stake_account.collected_fees;
