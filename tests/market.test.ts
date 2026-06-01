@@ -1412,15 +1412,20 @@ describe("OpportunityMarket", () => {
 
     const stakeEnd = Number(await platform.openMarket());
     const { optionId } = await platform.addOption();
+    const user = platform.participants[0];
+    const stakeAccountId = await platform.stakeOnOption(user, 1_000_000n, optionId);
 
     await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
     await platform.selectSingleWinningOption(optionId);
+
+    await platform.revealStake(user, stakeAccountId);
+    await platform.finalizeRevealStake(user, optionId, stakeAccountId);
 
     const resolvedAt = Number(
       unwrapOption((await platform.fetchMarket()).data.resolvedAtTimestamp),
     );
 
-    // Closing immediately after resolve must fail
+    // Closing before min_reveal_period must fail (active_bp satisfied via finalize above)
     await shouldThrowCustomError(
       () => platform.endRevealPeriod(),
       OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
