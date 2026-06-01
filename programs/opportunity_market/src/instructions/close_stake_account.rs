@@ -86,7 +86,6 @@ pub fn close_stake_account<'info>(
 
     // Load option data if account is still open; a closed non-winning option has
     // owner == SystemProgram and empty data after Anchor zeroes it out.
-
     let option_closed =
         ctx.accounts.option.owner == &System::id() && ctx.accounts.option.data_is_empty();
     let option_acc: Option<Account<'info, OpportunityMarketOption>> = if !option_closed {
@@ -156,12 +155,15 @@ pub fn close_stake_account<'info>(
     let unstaked_at_timestamp = stake_account.unstaked_at_timestamp.unwrap_or(stake_end);
     let score = stake_account.score.unwrap_or(0);
 
-    // Decrement total_staked and write back; skipped if option was already closed
+    // Decrement total_staked and write back; skipped if option was already closed.
     if let Some(mut opt) = option_acc {
-        opt.total_staked = opt
-            .total_staked
-            .checked_sub(stake_account.amount)
-            .ok_or(ErrorCode::Overflow)?;
+        // Only decrement if stake reveal was finalized and `total_staked` was incremented
+        if stake_account.score.is_some() {
+            opt.total_staked = opt
+                .total_staked
+                .checked_sub(stake_account.amount)
+                .ok_or(ErrorCode::Overflow)?;
+        }
         opt.exit(ctx.program_id)?;
     }
 
@@ -191,7 +193,7 @@ fn compute_winning_payout(
         Some(o) => o,
     };
 
-    if option.reward_percentage_bp.is_none() {
+    if option.reward_bp.is_none() {
         return Ok(0);
     }
 
@@ -205,13 +207,9 @@ fn compute_winning_payout(
     let reward = (user_score as u128)
         .checked_mul(market.reward_amount as u128)
         .ok_or(ErrorCode::Overflow)?
-        .checked_mul(option.reward_percentage_bp.unwrap_or(0) as u128)
+        .checked_mul(option.reward_bp.unwrap_or(0) as u128)
         .ok_or(ErrorCode::Overflow)?
-        .checked_div(
-            (total_score as u128)
-                .checked_mul(10_000)
-                .ok_or(ErrorCode::Overflow)?,
-        )
+        .checked_div(total_score.checked_mul(10_000).ok_or(ErrorCode::Overflow)?)
         .ok_or(ErrorCode::Overflow)? as u64;
 
     let fees = stake_account.collected_fees;

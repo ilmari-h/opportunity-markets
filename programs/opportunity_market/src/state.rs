@@ -239,9 +239,9 @@ pub struct OpportunityMarketOption {
     pub created_at: u64,
 
     pub total_staked: u64,
-    pub total_score: u64,
+    pub total_score: u128,
 
-    pub reward_percentage_bp: Option<u16>,
+    pub reward_bp: Option<u16>,
 }
 
 #[account]

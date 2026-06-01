@@ -99,7 +99,7 @@ interface MarketConfig {
   earlinessCutoffSeconds: bigint;
   earlinessMultiplier: number;
   minStakeAmount: bigint;
-  creatorFeeClaimer?: Address;
+  marketFeeClaimer?: Address;
 }
 
 export interface PlatformConfigArgs {
@@ -435,8 +435,9 @@ export class Platform {
       earlinessCutoffSeconds: marketConfig.earlinessCutoffSeconds,
       earlinessMultiplier: marketConfig.earlinessMultiplier,
       minStakeAmount: marketConfig.minStakeAmount,
-      creatorFeeClaimer:
-        marketConfig.creatorFeeClaimer ?? runner.marketCreator.solanaKeypair.address,
+      disableTimeWeighting: false,
+      marketFeeClaimer:
+        marketConfig.marketFeeClaimer ?? runner.marketCreator.solanaKeypair.address,
     });
 
     await sendTransaction(runner.rpc, runner.sendAndConfirm, runner.marketCreator.solanaKeypair, [createMarketIx], {
@@ -564,15 +565,15 @@ export class Platform {
   }
 
   async selectWinningOptions(
-    selections: Array<{ optionId: number; rewardPercentageBp: number }>,
+    selections: Array<{ optionId: number; rewardBp: number }>,
   ): Promise<void> {
     const setIxs = await Promise.all(
-      selections.map(({ optionId, rewardPercentageBp }) =>
+      selections.map(({ optionId, rewardBp }) =>
         setWinningOptionIx({
           marketAuthority: this.marketCreator.solanaKeypair,
           market: this.marketAddress,
           optionId,
-          rewardPercentageBp,
+          rewardBp,
         }),
       ),
     );
@@ -592,19 +593,19 @@ export class Platform {
   }
 
   async selectSingleWinningOption(optionId: number): Promise<void> {
-    await this.selectWinningOptions([{ optionId, rewardPercentageBp: 10_000 }]);
+    await this.selectWinningOptions([{ optionId, rewardBp: 10_000 }]);
   }
 
-  async setWinningOption(optionId: number, rewardPercentageBp: number): Promise<void> {
+  async setWinningOption(optionId: number, rewardBp: number): Promise<void> {
     const ix = await setWinningOptionIx({
       marketAuthority: this.marketCreator.solanaKeypair,
       market: this.marketAddress,
       optionId,
-      rewardPercentageBp,
+      rewardBp,
     });
 
     await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
-      label: `Set winning option ${optionId} = ${rewardPercentageBp} bp`,
+      label: `Set winning option ${optionId} = ${rewardBp} bp`,
     });
   }
 

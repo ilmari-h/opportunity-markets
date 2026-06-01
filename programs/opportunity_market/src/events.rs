@@ -94,7 +94,7 @@ pub struct WinningOptionSetEvent {
     pub market_authority: Pubkey,
     pub option: Pubkey,
     pub option_id: u64,
-    pub reward_percentage_bp: u16,
+    pub reward_bp: u16,
     pub winning_option_allocation: u16,
     pub timestamp: i64,
 }
@@ -131,7 +131,7 @@ pub struct RevealStakeFinalizedEvent {
     pub user_stake: u64,
     pub user_score: u64,
 
-    pub total_score: u64,
+    pub total_score: u128,
     pub total_stake: u64,
 
     pub timestamp: i64,

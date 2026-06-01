@@ -19,7 +19,8 @@ export interface CreateMarketParams extends BaseInstructionParams {
   earlinessCutoffSeconds: bigint;
   earlinessMultiplier: number;
   minStakeAmount: bigint;
-  creatorFeeClaimer: Address;
+  marketFeeClaimer: Address;
+  disableTimeWeighting: boolean;
 }
 
 export async function createMarket(

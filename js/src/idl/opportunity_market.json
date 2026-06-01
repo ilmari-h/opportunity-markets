@@ -384,7 +384,8 @@
               },
               {
                 "kind": "account",
-                "path": "platform_config"
+                "path": "market.platform",
+                "account": "OpportunityMarket"
               },
               {
                 "kind": "account",
@@ -1193,7 +1194,7 @@
           "type": "u64"
         },
         {
-          "name": "creator_fee_claimer",
+          "name": "market_fee_claimer",
           "type": "pubkey"
         }
       ]
@@ -2054,7 +2055,7 @@
           "type": "u64"
         },
         {
-          "name": "reward_percentage_bp",
+          "name": "reward_bp",
           "type": "u16"
         }
       ]
@@ -3812,7 +3813,7 @@
             "type": "pubkey"
           },
           {
-            "name": "creator_fee_claimer",
+            "name": "market_fee_claimer",
             "type": "pubkey"
           },
           {
@@ -4091,7 +4092,7 @@
             }
           },
           {
-            "name": "creator_fee_claimer",
+            "name": "market_fee_claimer",
             "type": "pubkey"
           },
           {
@@ -4397,7 +4398,7 @@
             "type": "u64"
           },
           {
-            "name": "creator_fee_claimer",
+            "name": "market_fee_claimer",
             "type": "pubkey"
           },
           {
@@ -4450,10 +4451,10 @@
           },
           {
             "name": "total_score",
-            "type": "u64"
+            "type": "u128"
           },
           {
-            "name": "reward_percentage_bp",
+            "name": "reward_bp",
             "type": {
               "option": "u16"
             }
@@ -4745,7 +4746,7 @@
           },
           {
             "name": "total_score",
-            "type": "u64"
+            "type": "u128"
           },
           {
             "name": "total_stake",
@@ -5504,7 +5505,7 @@
             "type": "u64"
           },
           {
-            "name": "reward_percentage_bp",
+            "name": "reward_bp",
             "type": "u16"
           },
           {

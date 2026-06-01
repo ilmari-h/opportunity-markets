@@ -27,13 +27,13 @@ pub struct SetWinningOption<'info> {
 pub fn set_winning_option(
     ctx: Context<SetWinningOption>,
     _option_id: u64,
-    reward_percentage_bp: u16,
+    reward_bp: u16,
 ) -> Result<()> {
     require!(
         ctx.accounts.market.resolved_at_timestamp.is_none(),
         ErrorCode::WinnerAlreadySelected,
     );
-    require!(reward_percentage_bp <= 10_000, ErrorCode::InvalidParameters);
+    require!(reward_bp <= 10_000, ErrorCode::InvalidParameters);
 
     let stake_end = ctx
         .accounts
@@ -56,18 +56,18 @@ pub fn set_winning_option(
         ErrorCode::SelectOptionsDeadlinePassed,
     );
 
-    let previous = ctx.accounts.option.reward_percentage_bp.unwrap_or(0);
+    let previous = ctx.accounts.option.reward_bp.unwrap_or(0);
     let new_alloc = ctx
         .accounts
         .market
         .winning_option_allocation
         .checked_sub(previous)
         .ok_or(ErrorCode::Overflow)?
-        .checked_add(reward_percentage_bp)
+        .checked_add(reward_bp)
         .ok_or(ErrorCode::Overflow)?;
     require!(new_alloc <= 10_000, ErrorCode::InvalidParameters);
 
-    ctx.accounts.option.reward_percentage_bp = Some(reward_percentage_bp);
+    ctx.accounts.option.reward_bp = Some(reward_bp);
     ctx.accounts.market.winning_option_allocation = new_alloc;
 
     emit_ts!(WinningOptionSetEvent {
@@ -75,7 +75,7 @@ pub fn set_winning_option(
         market_authority: ctx.accounts.market_authority.key(),
         option: ctx.accounts.option.key(),
         option_id: ctx.accounts.option.id,
-        reward_percentage_bp: reward_percentage_bp,
+        reward_bp: reward_bp,
         winning_option_allocation: new_alloc,
     });
 

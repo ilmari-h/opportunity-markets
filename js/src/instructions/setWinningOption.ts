@@ -9,7 +9,7 @@ export interface SetWinningOptionParams extends BaseInstructionParams {
   marketAuthority: TransactionSigner;
   market: Address;
   optionId: number | bigint;
-  rewardPercentageBp: number;
+  rewardBp: number;
 }
 
 export async function setWinningOption(

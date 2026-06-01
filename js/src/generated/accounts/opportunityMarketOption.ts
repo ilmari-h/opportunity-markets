@@ -23,6 +23,8 @@ import {
   getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
+  getU128Decoder,
+  getU128Encoder,
   getU16Decoder,
   getU16Encoder,
   getU64Decoder,
@@ -63,7 +65,7 @@ export type OpportunityMarketOption = {
   createdAt: bigint;
   totalStaked: bigint;
   totalScore: bigint;
-  rewardPercentageBp: Option<number>;
+  rewardBp: Option<number>;
 };
 
 export type OpportunityMarketOptionArgs = {
@@ -73,7 +75,7 @@ export type OpportunityMarketOptionArgs = {
   createdAt: number | bigint;
   totalStaked: number | bigint;
   totalScore: number | bigint;
-  rewardPercentageBp: OptionOrNullable<number>;
+  rewardBp: OptionOrNullable<number>;
 };
 
 export function getOpportunityMarketOptionEncoder(): Encoder<OpportunityMarketOptionArgs> {
@@ -85,8 +87,8 @@ export function getOpportunityMarketOptionEncoder(): Encoder<OpportunityMarketOp
       ['creator', getAddressEncoder()],
       ['createdAt', getU64Encoder()],
       ['totalStaked', getU64Encoder()],
-      ['totalScore', getU64Encoder()],
-      ['rewardPercentageBp', getOptionEncoder(getU16Encoder())],
+      ['totalScore', getU128Encoder()],
+      ['rewardBp', getOptionEncoder(getU16Encoder())],
     ]),
     (value) => ({
       ...value,
@@ -103,8 +105,8 @@ export function getOpportunityMarketOptionDecoder(): Decoder<OpportunityMarketOp
     ['creator', getAddressDecoder()],
     ['createdAt', getU64Decoder()],
     ['totalStaked', getU64Decoder()],
-    ['totalScore', getU64Decoder()],
-    ['rewardPercentageBp', getOptionDecoder(getU16Decoder())],
+    ['totalScore', getU128Decoder()],
+    ['rewardBp', getOptionDecoder(getU16Decoder())],
   ]);
 }
 

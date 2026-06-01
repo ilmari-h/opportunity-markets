@@ -133,8 +133,8 @@ describe("OpportunityMarket", () => {
     expect(isSome(resolvedMarket.data.resolvedAtTimestamp)).to.be.true;
     expect(resolvedMarket.data.winningOptionAllocation).to.equal(10_000);
     const winningOption = await platform.fetchOptionData(winningOptionIndex);
-    expect(isSome(winningOption.data.rewardPercentageBp)).to.be.true;
-    expect(unwrapOption(winningOption.data.rewardPercentageBp)).to.equal(10_000);
+    expect(isSome(winningOption.data.rewardBp)).to.be.true;
+    expect(unwrapOption(winningOption.data.rewardBp)).to.equal(10_000);
 
     // Reveal stakes for winners
     const winners = platform.participants.filter(
@@ -393,24 +393,24 @@ describe("OpportunityMarket", () => {
     // Creator selects 3 winning options with different allocations: A=50%, B=30%, E=20%.
     await platform.waitForStakeEnd();
     await platform.selectWinningOptions([
-      { optionId: optA, rewardPercentageBp: 5000 },
-      { optionId: optB, rewardPercentageBp: 3000 },
-      { optionId: optE, rewardPercentageBp: 2000 },
+      { optionId: optA, rewardBp: 5000 },
+      { optionId: optB, rewardBp: 3000 },
+      { optionId: optE, rewardBp: 2000 },
     ]);
 
     // Verify market is resolved and each winning option carries its allocation.
     const resolvedMarket = await platform.fetchMarket();
     expect(isSome(resolvedMarket.data.resolvedAtTimestamp)).to.be.true;
     expect(resolvedMarket.data.winningOptionAllocation).to.equal(10_000);
-    const expectedWinners: Array<{ optionId: number; rewardPercentageBp: number }> = [
-      { optionId: optA, rewardPercentageBp: 5000 },
-      { optionId: optB, rewardPercentageBp: 3000 },
-      { optionId: optE, rewardPercentageBp: 2000 },
+    const expectedWinners: Array<{ optionId: number; rewardBp: number }> = [
+      { optionId: optA, rewardBp: 5000 },
+      { optionId: optB, rewardBp: 3000 },
+      { optionId: optE, rewardBp: 2000 },
     ];
-    for (const { optionId, rewardPercentageBp } of expectedWinners) {
+    for (const { optionId, rewardBp } of expectedWinners) {
       const opt = await platform.fetchOptionData(optionId);
-      expect(isSome(opt.data.rewardPercentageBp)).to.be.true;
-      expect(unwrapOption(opt.data.rewardPercentageBp)).to.equal(rewardPercentageBp);
+      expect(isSome(opt.data.rewardBp)).to.be.true;
+      expect(unwrapOption(opt.data.rewardBp)).to.equal(rewardBp);
     }
 
     // Reveal all stake accounts
@@ -742,8 +742,8 @@ describe("OpportunityMarket", () => {
     expect(isSome(market.data.resolvedAtTimestamp)).to.be.true;
     expect(market.data.winningOptionAllocation).to.equal(10_000);
     const optionAAccount = await platform.fetchOptionData(optionA);
-    expect(isSome(optionAAccount.data.rewardPercentageBp)).to.be.true;
-    expect(unwrapOption(optionAAccount.data.rewardPercentageBp)).to.equal(10_000);
+    expect(isSome(optionAAccount.data.rewardBp)).to.be.true;
+    expect(unwrapOption(optionAAccount.data.rewardBp)).to.equal(10_000);
   });
 
   it("allows adding more reward during staking", async () => {

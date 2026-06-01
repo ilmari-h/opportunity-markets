@@ -29,7 +29,7 @@ export type WinningOptionSetEvent = {
   marketAuthority: Address;
   option: Address;
   optionId: bigint;
-  rewardPercentageBp: number;
+  rewardBp: number;
   winningOptionAllocation: number;
   timestamp: bigint;
 };
@@ -39,7 +39,7 @@ export type WinningOptionSetEventArgs = {
   marketAuthority: Address;
   option: Address;
   optionId: number | bigint;
-  rewardPercentageBp: number;
+  rewardBp: number;
   winningOptionAllocation: number;
   timestamp: number | bigint;
 };
@@ -50,7 +50,7 @@ export function getWinningOptionSetEventEncoder(): FixedSizeEncoder<WinningOptio
     ['marketAuthority', getAddressEncoder()],
     ['option', getAddressEncoder()],
     ['optionId', getU64Encoder()],
-    ['rewardPercentageBp', getU16Encoder()],
+    ['rewardBp', getU16Encoder()],
     ['winningOptionAllocation', getU16Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
@@ -62,7 +62,7 @@ export function getWinningOptionSetEventDecoder(): FixedSizeDecoder<WinningOptio
     ['marketAuthority', getAddressDecoder()],
     ['option', getAddressDecoder()],
     ['optionId', getU64Decoder()],
-    ['rewardPercentageBp', getU16Decoder()],
+    ['rewardBp', getU16Decoder()],
     ['winningOptionAllocation', getU16Decoder()],
     ['timestamp', getI64Decoder()],
   ]);

@@ -92,7 +92,7 @@ pub fn finalize_reveal_stake(
         .accounts
         .option
         .total_score
-        .checked_add(user_score)
+        .checked_add(user_score as u128)
         .ok_or(ErrorCode::Overflow)?;
 
     // Store the user's score in their stake account for reward calculation
@@ -100,7 +100,7 @@ pub fn finalize_reveal_stake(
 
     // Winning option means stake fees get refunded, so deduct from market account.
     // Actual refund transfer happens in `close_stake_account` together with reward.
-    if ctx.accounts.option.reward_percentage_bp.is_some() {
+    if ctx.accounts.option.reward_bp.is_some() {
         let fees = ctx.accounts.stake_account.collected_fees;
         ctx.accounts.market.deduct_stake_fees(&fees)?;
     }

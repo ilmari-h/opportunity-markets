@@ -87,7 +87,7 @@ export type OpportunityMarket = {
   feeRates: FeeRates;
   collectedPlatformFees: bigint;
   collectedCreatorFees: bigint;
-  creatorFeeClaimer: Address;
+  marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: bigint;
   minRevealPeriodSeconds: bigint;
   maxRevealPeriodSeconds: bigint;
@@ -116,7 +116,7 @@ export type OpportunityMarketArgs = {
   feeRates: FeeRatesArgs;
   collectedPlatformFees: number | bigint;
   collectedCreatorFees: number | bigint;
-  creatorFeeClaimer: Address;
+  marketFeeClaimer: Address;
   marketResolutionDeadlineSeconds: number | bigint;
   minRevealPeriodSeconds: number | bigint;
   maxRevealPeriodSeconds: number | bigint;
@@ -148,7 +148,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['feeRates', getFeeRatesEncoder()],
       ['collectedPlatformFees', getU64Encoder()],
       ['collectedCreatorFees', getU64Encoder()],
-      ['creatorFeeClaimer', getAddressEncoder()],
+      ['marketFeeClaimer', getAddressEncoder()],
       ['marketResolutionDeadlineSeconds', getU64Encoder()],
       ['minRevealPeriodSeconds', getU64Encoder()],
       ['maxRevealPeriodSeconds', getU64Encoder()],
@@ -182,7 +182,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['feeRates', getFeeRatesDecoder()],
     ['collectedPlatformFees', getU64Decoder()],
     ['collectedCreatorFees', getU64Decoder()],
-    ['creatorFeeClaimer', getAddressDecoder()],
+    ['marketFeeClaimer', getAddressDecoder()],
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
     ['minRevealPeriodSeconds', getU64Decoder()],
     ['maxRevealPeriodSeconds', getU64Decoder()],

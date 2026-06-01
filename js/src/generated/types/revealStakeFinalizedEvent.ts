@@ -14,6 +14,8 @@ import {
   getI64Encoder,
   getStructDecoder,
   getStructEncoder,
+  getU128Decoder,
+  getU128Encoder,
   getU32Decoder,
   getU32Encoder,
   getU64Decoder,
@@ -59,7 +61,7 @@ export function getRevealStakeFinalizedEventEncoder(): FixedSizeEncoder<RevealSt
     ['optionId', getU64Encoder()],
     ['userStake', getU64Encoder()],
     ['userScore', getU64Encoder()],
-    ['totalScore', getU64Encoder()],
+    ['totalScore', getU128Encoder()],
     ['totalStake', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
@@ -74,7 +76,7 @@ export function getRevealStakeFinalizedEventDecoder(): FixedSizeDecoder<RevealSt
     ['optionId', getU64Decoder()],
     ['userStake', getU64Decoder()],
     ['userScore', getU64Decoder()],
-    ['totalScore', getU64Decoder()],
+    ['totalScore', getU128Decoder()],
     ['totalStake', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
