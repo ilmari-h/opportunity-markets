@@ -89,7 +89,7 @@ pub struct OpportunityMarket {
     pub collected_creator_fees: u64,
 
     // Authority allowed to claim creator fees (only after winners are selected).
-    pub market_fee_claimer: Pubkey,
+    pub creator_fee_claimer: Pubkey,
 
     // Snapshot from platform at create time.
     pub market_resolution_deadline_seconds: u64,

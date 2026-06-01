@@ -97,7 +97,7 @@ pub mod opportunity_market {
         earliness_cutoff_seconds: u64,
         earliness_multiplier: u16,
         min_stake_amount: u64,
-        market_fee_claimer: Pubkey,
+        creator_fee_claimer: Pubkey,
     ) -> Result<()> {
         instructions::create_market(
             ctx,
@@ -109,7 +109,7 @@ pub mod opportunity_market {
             earliness_cutoff_seconds,
             earliness_multiplier,
             min_stake_amount,
-            market_fee_claimer,
+            creator_fee_claimer,
         )
     }
 
