@@ -49,10 +49,9 @@ export async function ensurePlatformConfig(
   if (existing.exists) {
     const s = existing.data;
     if (
-      s.platformFeeBp === platformFeeBp &&
-      s.rewardPoolFeeBp === rewardPoolFeeBp &&
-      s.creatorFeeBp === creatorFeeBp &&
-      s.revealAuthority === revealAuthority &&
+      s.feeRates.platformFeeBp === platformFeeBp &&
+      s.feeRates.rewardPoolFeeBp === rewardPoolFeeBp &&
+      s.feeRates.creatorFeeBp === creatorFeeBp &&
       s.minTimeToStakeSeconds === minTimeToStakeSeconds &&
       s.revealPeriodSeconds === revealPeriodSeconds &&
       s.marketResolutionDeadlineSeconds === marketResolutionDeadlineSeconds

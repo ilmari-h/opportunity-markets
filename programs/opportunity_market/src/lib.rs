@@ -119,14 +119,6 @@ pub mod opportunity_market {
         instructions::open_market(ctx, time_to_stake)
     }
 
-    pub fn pause_staking(ctx: Context<PauseStaking>) -> Result<()> {
-        instructions::pause_staking(ctx)
-    }
-
-    pub fn resume_staking(ctx: Context<ResumeStaking>) -> Result<()> {
-        instructions::resume_staking(ctx)
-    }
-
     pub fn set_winning_option(
         ctx: Context<SetWinningOption>,
         option_id: u64,

@@ -120,7 +120,7 @@ export type CreateMarketInstructionData = {
   earlinessCutoffSeconds: bigint;
   earlinessMultiplier: number;
   minStakeAmount: bigint;
-  marketFeeClaimer: Address;
+  creatorFeeClaimer: Address;
 };
 
 export type CreateMarketInstructionDataArgs = {
@@ -131,7 +131,7 @@ export type CreateMarketInstructionDataArgs = {
   earlinessCutoffSeconds: number | bigint;
   earlinessMultiplier: number;
   minStakeAmount: number | bigint;
-  marketFeeClaimer: Address;
+  creatorFeeClaimer: Address;
 };
 
 export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<CreateMarketInstructionDataArgs> {
@@ -145,7 +145,7 @@ export function getCreateMarketInstructionDataEncoder(): FixedSizeEncoder<Create
       ['earlinessCutoffSeconds', getU64Encoder()],
       ['earlinessMultiplier', getU16Encoder()],
       ['minStakeAmount', getU64Encoder()],
-      ['marketFeeClaimer', getAddressEncoder()],
+      ['creatorFeeClaimer', getAddressEncoder()],
     ]),
     (value) => ({ ...value, discriminator: CREATE_MARKET_DISCRIMINATOR })
   );
@@ -161,7 +161,7 @@ export function getCreateMarketInstructionDataDecoder(): FixedSizeDecoder<Create
     ['earlinessCutoffSeconds', getU64Decoder()],
     ['earlinessMultiplier', getU16Decoder()],
     ['minStakeAmount', getU64Decoder()],
-    ['marketFeeClaimer', getAddressDecoder()],
+    ['creatorFeeClaimer', getAddressDecoder()],
   ]);
 }
 
@@ -203,7 +203,7 @@ export type CreateMarketAsyncInput<
   earlinessCutoffSeconds: CreateMarketInstructionDataArgs['earlinessCutoffSeconds'];
   earlinessMultiplier: CreateMarketInstructionDataArgs['earlinessMultiplier'];
   minStakeAmount: CreateMarketInstructionDataArgs['minStakeAmount'];
-  marketFeeClaimer: CreateMarketInstructionDataArgs['marketFeeClaimer'];
+  creatorFeeClaimer: CreateMarketInstructionDataArgs['creatorFeeClaimer'];
 };
 
 export async function getCreateMarketInstructionAsync<
@@ -385,7 +385,7 @@ export type CreateMarketInput<
   earlinessCutoffSeconds: CreateMarketInstructionDataArgs['earlinessCutoffSeconds'];
   earlinessMultiplier: CreateMarketInstructionDataArgs['earlinessMultiplier'];
   minStakeAmount: CreateMarketInstructionDataArgs['minStakeAmount'];
-  marketFeeClaimer: CreateMarketInstructionDataArgs['marketFeeClaimer'];
+  creatorFeeClaimer: CreateMarketInstructionDataArgs['creatorFeeClaimer'];
 };
 
 export function getCreateMarketInstruction<

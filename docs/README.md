@@ -113,11 +113,7 @@ This setup effectively turns the opportunity market into a speculative market à
 #### Unstaking
 
 If the market configuration allows, users can reclaim their stake back at any time with the `unstake` instruction. Longer stake however results in a higher score and more potential yield.
-Othewise, the user must wait until the staking period ends before unstaking.
-
-#### Pausing staking
-
-During the staking period, the market creator can call the `pause_staking` instruction to prevent users from placing new stakes into the market. Staking can be resumed with `resume_staking`.
+Otherwise, the user must wait until the staking period ends before unstaking.
 
 #### Resolving the market
 

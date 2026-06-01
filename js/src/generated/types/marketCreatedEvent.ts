@@ -49,7 +49,7 @@ export type MarketCreatedEvent = {
   allowUnstakingEarly: boolean;
   minStakeAmount: bigint;
   feeRates: FeeRates;
-  marketFeeClaimer: Address;
+  creatorFeeClaimer: Address;
   marketResolutionDeadlineSeconds: bigint;
   revealPeriodSeconds: bigint;
   timestamp: bigint;
@@ -68,7 +68,7 @@ export type MarketCreatedEventArgs = {
   allowUnstakingEarly: boolean;
   minStakeAmount: number | bigint;
   feeRates: FeeRatesArgs;
-  marketFeeClaimer: Address;
+  creatorFeeClaimer: Address;
   marketResolutionDeadlineSeconds: number | bigint;
   revealPeriodSeconds: number | bigint;
   timestamp: number | bigint;
@@ -88,7 +88,7 @@ export function getMarketCreatedEventEncoder(): FixedSizeEncoder<MarketCreatedEv
     ['allowUnstakingEarly', getBooleanEncoder()],
     ['minStakeAmount', getU64Encoder()],
     ['feeRates', getFeeRatesEncoder()],
-    ['marketFeeClaimer', getAddressEncoder()],
+    ['creatorFeeClaimer', getAddressEncoder()],
     ['marketResolutionDeadlineSeconds', getU64Encoder()],
     ['revealPeriodSeconds', getU64Encoder()],
     ['timestamp', getI64Encoder()],
@@ -109,7 +109,7 @@ export function getMarketCreatedEventDecoder(): FixedSizeDecoder<MarketCreatedEv
     ['allowUnstakingEarly', getBooleanDecoder()],
     ['minStakeAmount', getU64Decoder()],
     ['feeRates', getFeeRatesDecoder()],
-    ['marketFeeClaimer', getAddressDecoder()],
+    ['creatorFeeClaimer', getAddressDecoder()],
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
     ['revealPeriodSeconds', getU64Decoder()],
     ['timestamp', getI64Decoder()],

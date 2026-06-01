@@ -106,7 +106,7 @@ pub struct MarketResolvedEvent {
 }
 
 #[event]
-pub struct RewardClaimedEvent {
+pub struct StakeAccountClosedEvent {
     pub owner: Pubkey,
     pub market: Pubkey,
     pub stake_account: Pubkey,
@@ -114,7 +114,7 @@ pub struct RewardClaimedEvent {
     pub option_id: u64,
     pub reward_amount: u64,
     pub staked_at_timestamp: u64,
-    pub unstaked_at_timestamp: u64,
+    pub stake_end_timestamp: u64,
     pub stake_amount: u64,
     pub score: u64,
     pub timestamp: i64,
@@ -186,18 +186,6 @@ pub struct AllowedMintInitializedEvent {
     pub allowed_mint: Pubkey,
     pub platform: Pubkey,
     pub mint: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct StakingPausedEvent {
-    pub market: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct StakingResumedEvent {
-    pub market: Pubkey,
     pub timestamp: i64,
 }
 

@@ -77,8 +77,6 @@ pub struct OpportunityMarket {
     // Public key for voluntary disclosure of encrypted stake data
     pub authorized_reader_pubkey: [u8; 32],
 
-    pub staking_paused: bool,
-
     pub fee_rates: FeeRates,
 
     // Unclaimed platform fees held in the market ATA.
