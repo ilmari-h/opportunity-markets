@@ -133,8 +133,7 @@ describe("OpportunityMarket", () => {
     expect(isSome(resolvedMarket.data.resolvedAtTimestamp)).to.be.true;
     expect(resolvedMarket.data.winningOptionAllocation).to.equal(10_000);
     const winningOption = await platform.fetchOptionData(winningOptionIndex);
-    expect(isSome(winningOption.data.rewardBp)).to.be.true;
-    expect(unwrapOption(winningOption.data.rewardBp)).to.equal(10_000);
+    expect(winningOption.data.rewardBp).to.equal(10_000);
 
     // Reveal stakes for winners
     const winners = platform.participants.filter(
@@ -409,8 +408,7 @@ describe("OpportunityMarket", () => {
     ];
     for (const { optionId, rewardBp } of expectedWinners) {
       const opt = await platform.fetchOptionData(optionId);
-      expect(isSome(opt.data.rewardBp)).to.be.true;
-      expect(unwrapOption(opt.data.rewardBp)).to.equal(rewardBp);
+      expect(opt.data.rewardBp).to.equal(rewardBp);
     }
 
     // Reveal all stake accounts
@@ -427,6 +425,8 @@ describe("OpportunityMarket", () => {
       platform.finalizeRevealStake(user1, optB, u1StakeIds[1]),
       platform.finalizeRevealStake(user2, optE, u2StakeIds[0]),
     ]);
+
+    expect((await platform.fetchMarket()).data.winningOptionActiveBp).to.equal(10_000);
 
     // Reclaim staked tokens for all accounts
     await platform.unstakeBatch([
@@ -742,8 +742,7 @@ describe("OpportunityMarket", () => {
     expect(isSome(market.data.resolvedAtTimestamp)).to.be.true;
     expect(market.data.winningOptionAllocation).to.equal(10_000);
     const optionAAccount = await platform.fetchOptionData(optionA);
-    expect(isSome(optionAAccount.data.rewardBp)).to.be.true;
-    expect(unwrapOption(optionAAccount.data.rewardBp)).to.equal(10_000);
+    expect(optionAAccount.data.rewardBp).to.equal(10_000);
   });
 
   it("allows adding more reward during staking", async () => {
