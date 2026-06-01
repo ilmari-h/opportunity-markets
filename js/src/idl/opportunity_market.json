@@ -1606,33 +1606,6 @@
       ]
     },
     {
-      "name": "pause_staking",
-      "discriminator": [
-        245,
-        191,
-        35,
-        58,
-        88,
-        250,
-        229,
-        60
-      ],
-      "accounts": [
-        {
-          "name": "market_authority",
-          "signer": true,
-          "relations": [
-            "market"
-          ]
-        },
-        {
-          "name": "market",
-          "writable": true
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "resolve_market",
       "discriminator": [
         155,
@@ -1643,33 +1616,6 @@
         74,
         23,
         239
-      ],
-      "accounts": [
-        {
-          "name": "market_authority",
-          "signer": true,
-          "relations": [
-            "market"
-          ]
-        },
-        {
-          "name": "market",
-          "writable": true
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "resume_staking",
-      "discriminator": [
-        31,
-        200,
-        175,
-        23,
-        211,
-        22,
-        63,
-        155
       ],
       "accounts": [
         {
@@ -3144,32 +3090,6 @@
       ]
     },
     {
-      "name": "StakingPausedEvent",
-      "discriminator": [
-        45,
-        97,
-        179,
-        123,
-        64,
-        45,
-        253,
-        164
-      ]
-    },
-    {
-      "name": "StakingResumedEvent",
-      "discriminator": [
-        61,
-        202,
-        117,
-        241,
-        29,
-        137,
-        191,
-        132
-      ]
-    },
-    {
       "name": "StuckStakeClosedEvent",
       "discriminator": [
         0,
@@ -3355,51 +3275,41 @@
     },
     {
       "code": 6026,
-      "name": "MarketPaused",
-      "msg": "Market staking is currently paused"
-    },
-    {
-      "code": 6027,
-      "name": "MarketNotPaused",
-      "msg": "Market is not paused"
-    },
-    {
-      "code": 6028,
       "name": "StakeBelowMinimum",
       "msg": "Stake amount is below the market minimum"
     },
     {
-      "code": 6029,
+      "code": 6027,
       "name": "SelectOptionsDeadlinePassed",
       "msg": "Deadline for selecting winning options has passed"
     },
     {
-      "code": 6030,
+      "code": 6028,
       "name": "InvalidFeeRates",
       "msg": "Invalid fee rates"
     },
     {
-      "code": 6031,
+      "code": 6029,
       "name": "OptionStillNeeded",
       "msg": "Option still needed"
     },
     {
-      "code": 6032,
+      "code": 6030,
       "name": "CreatorMismatch",
       "msg": "Creator mismatch"
     },
     {
-      "code": 6033,
+      "code": 6031,
       "name": "RevealPeriodNotOver",
       "msg": "Reveal period not over"
     },
     {
-      "code": 6034,
+      "code": 6032,
       "name": "NoRewardToClaim",
       "msg": "No reward to claim"
     },
     {
-      "code": 6035,
+      "code": 6033,
       "name": "RewardAlreadyClaimed",
       "msg": "Reward already claimed"
     }
@@ -4377,10 +4287,6 @@
             }
           },
           {
-            "name": "staking_paused",
-            "type": "bool"
-          },
-          {
             "name": "fee_rates",
             "type": {
               "defined": {
@@ -5286,38 +5192,6 @@
           {
             "name": "amount",
             "type": "u64"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "StakingPausedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "market",
-            "type": "pubkey"
-          },
-          {
-            "name": "timestamp",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "StakingResumedEvent",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "market",
-            "type": "pubkey"
           },
           {
             "name": "timestamp",

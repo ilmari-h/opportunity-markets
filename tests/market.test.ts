@@ -7,7 +7,6 @@ import {
   OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
   OPPORTUNITY_MARKET_ERROR__ALREADY_UNSTAKED,
   OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
-  OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED,
   OPPORTUNITY_MARKET_ERROR__STAKE_BELOW_MINIMUM,
   OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED,
   OPPORTUNITY_MARKET_ERROR__INVALID_PARAMETERS,
@@ -1109,23 +1108,6 @@ describe("OpportunityMarket", () => {
     await platform.openMarket();
     const { optionId } = await platform.addOption();
     const user = platform.participants[0];
-
-    // Pause staking
-    await platform.pauseStaking();
-
-    // Staking should fail while paused
-    await shouldThrowCustomError(
-      () => platform.stakeOnOption(user, 50_000_000n, optionId),
-      OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED
-    );
-
-    // Resume staking
-    await platform.resumeStaking();
-
-    // Staking should succeed after resume
-    const stakeAccountId = await platform.stakeOnOption(user, 50_000_000n, optionId);
-    const stakeAccount = await platform.fetchStakeAccountData(user, stakeAccountId);
-    expect(stakeAccount.data.amount > 0n).to.be.true;
   });
 
   it("collects fee components correctly", async () => {

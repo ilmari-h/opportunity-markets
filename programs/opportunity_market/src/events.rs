@@ -191,18 +191,6 @@ pub struct AllowedMintInitializedEvent {
 }
 
 #[event]
-pub struct StakingPausedEvent {
-    pub market: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct StakingResumedEvent {
-    pub market: Pubkey,
-    pub timestamp: i64,
-}
-
-#[event]
 pub struct StuckStakeClosedEvent {
     pub owner: Pubkey,
     pub market: Pubkey,
