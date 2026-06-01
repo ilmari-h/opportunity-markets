@@ -14,9 +14,9 @@ export interface EnsurePlatformConfigParams extends BaseInstructionParams {
   rewardPoolFeeBp: number;
   creatorFeeBp: number;
   feeClaimAuthority: Address;
+  revealAuthority: Address;
   minTimeToStakeSeconds: bigint;
-  minRevealPeriodSeconds: bigint;
-  maxRevealPeriodSeconds: bigint;
+  revealPeriodSeconds: bigint;
   marketResolutionDeadlineSeconds: bigint;
 }
 
@@ -32,9 +32,9 @@ export async function ensurePlatformConfig(
     rewardPoolFeeBp,
     creatorFeeBp,
     feeClaimAuthority,
+    revealAuthority,
     minTimeToStakeSeconds,
-    minRevealPeriodSeconds,
-    maxRevealPeriodSeconds,
+    revealPeriodSeconds,
     marketResolutionDeadlineSeconds,
   } = params;
   const config = programAddress ? { programAddress } : undefined;
@@ -52,9 +52,9 @@ export async function ensurePlatformConfig(
       s.platformFeeBp === platformFeeBp &&
       s.rewardPoolFeeBp === rewardPoolFeeBp &&
       s.creatorFeeBp === creatorFeeBp &&
+      s.revealAuthority === revealAuthority &&
       s.minTimeToStakeSeconds === minTimeToStakeSeconds &&
-      s.minRevealPeriodSeconds === minRevealPeriodSeconds &&
-      s.maxRevealPeriodSeconds === maxRevealPeriodSeconds &&
+      s.revealPeriodSeconds === revealPeriodSeconds &&
       s.marketResolutionDeadlineSeconds === marketResolutionDeadlineSeconds
     ) {
       return null;
@@ -67,9 +67,9 @@ export async function ensurePlatformConfig(
         platformFeeBp,
         rewardPoolFeeBp,
         creatorFeeBp,
+        revealAuthority,
         minTimeToStakeSeconds,
-        minRevealPeriodSeconds,
-        maxRevealPeriodSeconds,
+        revealPeriodSeconds,
         marketResolutionDeadlineSeconds,
       },
       config,
@@ -84,9 +84,9 @@ export async function ensurePlatformConfig(
       rewardPoolFeeBp,
       creatorFeeBp,
       feeClaimAuthority,
+      revealAuthority,
       minTimeToStakeSeconds,
-      minRevealPeriodSeconds,
-      maxRevealPeriodSeconds,
+      revealPeriodSeconds,
       marketResolutionDeadlineSeconds,
     },
     config,

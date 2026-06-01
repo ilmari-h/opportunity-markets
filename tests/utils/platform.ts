@@ -113,8 +113,8 @@ export interface PlatformConfigArgs {
   rewardPoolFeeBp?: number;
   creatorFeeBp?: number;
   marketResolutionDeadlineSeconds?: bigint;
-  minRevealPeriodSeconds?: bigint;
-  maxRevealPeriodSeconds?: bigint;
+  revealPeriodSeconds?: bigint;
+  revealAuthority?: Address;
   name?: string;
 }
 
@@ -163,9 +163,9 @@ const DEFAULT_CONFIG: Required<Omit<PlatformConfigArgs, "name">> = {
   creatorFeeBp: 0,
   // Program enforces a hard floor of 7 days.
   marketResolutionDeadlineSeconds: 7n * 24n * 60n * 60n,
-  minRevealPeriodSeconds: 1n,
   // Program enforces 1 week .. 60 days; pick the floor for tests.
-  maxRevealPeriodSeconds: 7n * 24n * 60n * 60n,
+  revealPeriodSeconds: 7n * 24n * 60n * 60n,
+  revealAuthority: undefined as unknown as Address,
   marketConfig: {
     rewardAmount: 1_000_000_000n,
     // Short by design so tests can wait through the stake window quickly.
@@ -272,8 +272,8 @@ export class Platform {
       rewardPoolFeeBp,
       creatorFeeBp,
       marketResolutionDeadlineSeconds,
-      minRevealPeriodSeconds,
-      maxRevealPeriodSeconds,
+      revealPeriodSeconds,
+      revealAuthority,
     } = mergedConfig;
     const platformName = config.name ?? generatePlatformName();
 
@@ -327,6 +327,9 @@ export class Platform {
     runner.platformConfigAddress = platformConfigAddress;
     runner.platformName = platformName;
 
+    const resolvedRevealAuthority =
+      revealAuthority ?? creatorAccountBase.keypair.address;
+
     const platformConfigIx = await createPlatformConfig(runner.rpc, {
       signer: deployer,
       name: platformName,
@@ -334,9 +337,9 @@ export class Platform {
       rewardPoolFeeBp,
       creatorFeeBp,
       feeClaimAuthority: creatorAccountBase.keypair.address,
+      revealAuthority: resolvedRevealAuthority,
       minTimeToStakeSeconds: 1n,
-      minRevealPeriodSeconds,
-      maxRevealPeriodSeconds,
+      revealPeriodSeconds,
       marketResolutionDeadlineSeconds,
     });
     await sendTransaction(runner.rpc, runner.sendAndConfirm, deployer, [platformConfigIx], {
@@ -431,7 +434,6 @@ export class Platform {
       marketAuthority: runner.marketCreator.solanaKeypair.address,
       allowUnstakingEarly: marketConfig.allowUnstakingEarly,
       authorizedReaderPubkey: marketConfig.authorizedReaderPubkey,
-      revealPeriodAuthority: runner.marketCreator.solanaKeypair.address,
       earlinessCutoffSeconds: marketConfig.earlinessCutoffSeconds,
       earlinessMultiplier: marketConfig.earlinessMultiplier,
       minStakeAmount: marketConfig.minStakeAmount,
@@ -656,15 +658,22 @@ export class Platform {
     });
   }
 
-  async endRevealPeriod(): Promise<void> {
+  async endRevealPeriod(signer?: KeyPairSigner): Promise<void> {
     const ix = endRevealPeriodIx({
-      signer: this.marketCreator.solanaKeypair,
+      signer: signer ?? this.marketCreator.solanaKeypair,
+      platformConfig: this.platformConfigAddress,
       market: this.marketAddress,
     });
 
-    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
-      label: "End reveal period",
-    });
+    await sendTransaction(
+      this.rpc,
+      this.sendAndConfirm,
+      signer ?? this.marketCreator.solanaKeypair,
+      [ix],
+      {
+        label: "End reveal period",
+      },
+    );
   }
 
   async pauseStaking(): Promise<void> {
