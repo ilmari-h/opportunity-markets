@@ -24,7 +24,7 @@ import {
   type FixedSizeEncoder,
 } from '@solana/kit';
 
-export type RewardClaimedEvent = {
+export type StakeAccountClosedEvent = {
   owner: Address;
   market: Address;
   stakeAccount: Address;
@@ -32,13 +32,13 @@ export type RewardClaimedEvent = {
   optionId: bigint;
   rewardAmount: bigint;
   stakedAtTimestamp: bigint;
-  unstakedAtTimestamp: bigint;
+  stakeEndTimestamp: bigint;
   stakeAmount: bigint;
   score: bigint;
   timestamp: bigint;
 };
 
-export type RewardClaimedEventArgs = {
+export type StakeAccountClosedEventArgs = {
   owner: Address;
   market: Address;
   stakeAccount: Address;
@@ -46,13 +46,13 @@ export type RewardClaimedEventArgs = {
   optionId: number | bigint;
   rewardAmount: number | bigint;
   stakedAtTimestamp: number | bigint;
-  unstakedAtTimestamp: number | bigint;
+  stakeEndTimestamp: number | bigint;
   stakeAmount: number | bigint;
   score: number | bigint;
   timestamp: number | bigint;
 };
 
-export function getRewardClaimedEventEncoder(): FixedSizeEncoder<RewardClaimedEventArgs> {
+export function getStakeAccountClosedEventEncoder(): FixedSizeEncoder<StakeAccountClosedEventArgs> {
   return getStructEncoder([
     ['owner', getAddressEncoder()],
     ['market', getAddressEncoder()],
@@ -61,14 +61,14 @@ export function getRewardClaimedEventEncoder(): FixedSizeEncoder<RewardClaimedEv
     ['optionId', getU64Encoder()],
     ['rewardAmount', getU64Encoder()],
     ['stakedAtTimestamp', getU64Encoder()],
-    ['unstakedAtTimestamp', getU64Encoder()],
+    ['stakeEndTimestamp', getU64Encoder()],
     ['stakeAmount', getU64Encoder()],
     ['score', getU64Encoder()],
     ['timestamp', getI64Encoder()],
   ]);
 }
 
-export function getRewardClaimedEventDecoder(): FixedSizeDecoder<RewardClaimedEvent> {
+export function getStakeAccountClosedEventDecoder(): FixedSizeDecoder<StakeAccountClosedEvent> {
   return getStructDecoder([
     ['owner', getAddressDecoder()],
     ['market', getAddressDecoder()],
@@ -77,19 +77,19 @@ export function getRewardClaimedEventDecoder(): FixedSizeDecoder<RewardClaimedEv
     ['optionId', getU64Decoder()],
     ['rewardAmount', getU64Decoder()],
     ['stakedAtTimestamp', getU64Decoder()],
-    ['unstakedAtTimestamp', getU64Decoder()],
+    ['stakeEndTimestamp', getU64Decoder()],
     ['stakeAmount', getU64Decoder()],
     ['score', getU64Decoder()],
     ['timestamp', getI64Decoder()],
   ]);
 }
 
-export function getRewardClaimedEventCodec(): FixedSizeCodec<
-  RewardClaimedEventArgs,
-  RewardClaimedEvent
+export function getStakeAccountClosedEventCodec(): FixedSizeCodec<
+  StakeAccountClosedEventArgs,
+  StakeAccountClosedEvent
 > {
   return combineCodec(
-    getRewardClaimedEventEncoder(),
-    getRewardClaimedEventDecoder()
+    getStakeAccountClosedEventEncoder(),
+    getStakeAccountClosedEventDecoder()
   );
 }

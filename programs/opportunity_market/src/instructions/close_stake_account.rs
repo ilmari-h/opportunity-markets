@@ -5,7 +5,7 @@ use anchor_spl::token_interface::{
 
 use crate::constants::{OPPORTUNITY_MARKET_SEED, OPTION_SEED, STAKE_ACCOUNT_SEED};
 use crate::error::ErrorCode;
-use crate::events::{emit_ts, RewardClaimedEvent};
+use crate::events::{StakeAccountClosedEvent, emit_ts};
 use crate::state::{OpportunityMarket, OpportunityMarketOption, StakeAccount};
 
 #[derive(Accounts)]
@@ -151,8 +151,8 @@ pub fn close_stake_account<'info>(
     }
 
     let stake_account = &ctx.accounts.stake_account;
-    let staked_at_timestamp = stake_account.staked_at_timestamp.unwrap_or(stake_end);
-    let unstaked_at_timestamp = stake_account.unstaked_at_timestamp.unwrap_or(stake_end);
+    let staked_at_timestamp = stake_account.staked_at_timestamp.unwrap_or(0);
+    let stake_end_timestamp = stake_account.unstaked_at_timestamp.unwrap_or(stake_end);
     let score = stake_account.score.unwrap_or(0);
 
     // Decrement total_staked and write back; skipped if option was already closed.
@@ -167,7 +167,7 @@ pub fn close_stake_account<'info>(
         opt.exit(ctx.program_id)?;
     }
 
-    emit_ts!(RewardClaimedEvent {
+    emit_ts!(StakeAccountClosedEvent {
         owner: ctx.accounts.owner.key(),
         market: ctx.accounts.market.key(),
         stake_account: stake_account.key(),
@@ -176,7 +176,7 @@ pub fn close_stake_account<'info>(
         stake_amount: stake_account.amount,
         reward_amount: if resolved { payout } else { 0 },
         staked_at_timestamp: staked_at_timestamp,
-        unstaked_at_timestamp: unstaked_at_timestamp,
+        stake_end_timestamp: stake_end_timestamp,
         score: score,
     });
 

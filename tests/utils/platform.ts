@@ -435,8 +435,7 @@ export class Platform {
       earlinessCutoffSeconds: marketConfig.earlinessCutoffSeconds,
       earlinessMultiplier: marketConfig.earlinessMultiplier,
       minStakeAmount: marketConfig.minStakeAmount,
-      disableTimeWeighting: false,
-      marketFeeClaimer:
+      creatorFeeClaimer:
         marketConfig.marketFeeClaimer ?? runner.marketCreator.solanaKeypair.address,
     });
 
