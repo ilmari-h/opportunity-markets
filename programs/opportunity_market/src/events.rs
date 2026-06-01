@@ -31,8 +31,7 @@ pub struct MarketCreatedEvent {
     pub fee_rates: FeeRates,
     pub creator_fee_claimer: Pubkey,
     pub market_resolution_deadline_seconds: u64,
-    pub min_reveal_period_seconds: u64,
-    pub max_reveal_period_seconds: u64,
+    pub reveal_period_seconds: u64,
     pub timestamp: i64,
 }
 

@@ -77,7 +77,6 @@ export type OpportunityMarket = {
   winningOptionAllocation: number;
   rewardAmount: bigint;
   marketAuthority: Address;
-  revealPeriodAuthority: Address;
   mint: Address;
   earlinessCutoffSeconds: bigint;
   earlinessMultiplier: number;
@@ -88,8 +87,7 @@ export type OpportunityMarket = {
   collectedCreatorFees: bigint;
   creatorFeeClaimer: Address;
   marketResolutionDeadlineSeconds: bigint;
-  minRevealPeriodSeconds: bigint;
-  maxRevealPeriodSeconds: bigint;
+  revealPeriodSeconds: bigint;
   revealEnded: boolean;
   minStakeAmount: bigint;
 };
@@ -105,7 +103,6 @@ export type OpportunityMarketArgs = {
   winningOptionAllocation: number;
   rewardAmount: number | bigint;
   marketAuthority: Address;
-  revealPeriodAuthority: Address;
   mint: Address;
   earlinessCutoffSeconds: number | bigint;
   earlinessMultiplier: number;
@@ -116,8 +113,7 @@ export type OpportunityMarketArgs = {
   collectedCreatorFees: number | bigint;
   creatorFeeClaimer: Address;
   marketResolutionDeadlineSeconds: number | bigint;
-  minRevealPeriodSeconds: number | bigint;
-  maxRevealPeriodSeconds: number | bigint;
+  revealPeriodSeconds: number | bigint;
   revealEnded: boolean;
   minStakeAmount: number | bigint;
 };
@@ -136,7 +132,6 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['winningOptionAllocation', getU16Encoder()],
       ['rewardAmount', getU64Encoder()],
       ['marketAuthority', getAddressEncoder()],
-      ['revealPeriodAuthority', getAddressEncoder()],
       ['mint', getAddressEncoder()],
       ['earlinessCutoffSeconds', getU64Encoder()],
       ['earlinessMultiplier', getU16Encoder()],
@@ -147,8 +142,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['collectedCreatorFees', getU64Encoder()],
       ['creatorFeeClaimer', getAddressEncoder()],
       ['marketResolutionDeadlineSeconds', getU64Encoder()],
-      ['minRevealPeriodSeconds', getU64Encoder()],
-      ['maxRevealPeriodSeconds', getU64Encoder()],
+      ['revealPeriodSeconds', getU64Encoder()],
       ['revealEnded', getBooleanEncoder()],
       ['minStakeAmount', getU64Encoder()],
     ]),
@@ -169,7 +163,6 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['winningOptionAllocation', getU16Decoder()],
     ['rewardAmount', getU64Decoder()],
     ['marketAuthority', getAddressDecoder()],
-    ['revealPeriodAuthority', getAddressDecoder()],
     ['mint', getAddressDecoder()],
     ['earlinessCutoffSeconds', getU64Decoder()],
     ['earlinessMultiplier', getU16Decoder()],
@@ -180,8 +173,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['collectedCreatorFees', getU64Decoder()],
     ['creatorFeeClaimer', getAddressDecoder()],
     ['marketResolutionDeadlineSeconds', getU64Decoder()],
-    ['minRevealPeriodSeconds', getU64Decoder()],
-    ['maxRevealPeriodSeconds', getU64Decoder()],
+    ['revealPeriodSeconds', getU64Decoder()],
     ['revealEnded', getBooleanDecoder()],
     ['minStakeAmount', getU64Decoder()],
   ]);

@@ -1373,10 +1373,8 @@ describe("OpportunityMarket", () => {
     expect(stakeAccount.data.amount > 0n).to.be.true;
   });
 
-  it("reveal period cannot be closed before min_reveal_period has passed", async () => {
-    const minRevealPeriodSeconds = 15n;
+  it("reveal period authority can close immediately after resolution", async () => {
     const timeToStake = 5n;
-
     const observer = loadObserverKeypair();
 
     const platform = await Platform.initialize(provider, programId, {
@@ -1385,7 +1383,6 @@ describe("OpportunityMarket", () => {
       numParticipants: 1,
       airdropLamports: 2_000_000_000n,
       initialTokenAmount: 2_000_000_000n,
-      minRevealPeriodSeconds,
       marketConfig: {
         rewardAmount: 0n,
         timeToStake,
@@ -1399,21 +1396,40 @@ describe("OpportunityMarket", () => {
     await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
     await platform.selectSingleWinningOption(optionId);
 
-    const resolvedAt = Number(
-      unwrapOption((await platform.fetchMarket()).data.resolvedAtTimestamp),
-    );
-
-    // Closing immediately after resolve must fail
-    await shouldThrowCustomError(
-      () => platform.endRevealPeriod(),
-      OPPORTUNITY_MARKET_ERROR__TIME_WINDOW_MISMATCH,
-    );
-
-    await sleepUntilOnChainTimestamp(
-      resolvedAt + Number(minRevealPeriodSeconds) + ONCHAIN_TIMESTAMP_BUFFER_SECONDS,
-    );
     await platform.endRevealPeriod();
+    expect((await platform.fetchMarket()).data.revealEnded).to.be.true;
+  });
 
+  it("non-authority cannot close reveal period before reveal_period_seconds", async () => {
+    const timeToStake = 5n;
+    const observer = loadObserverKeypair();
+
+    const platform = await Platform.initialize(provider, programId, {
+      rpcUrl: RPC_URL,
+      wsUrl: WS_URL,
+      numParticipants: 2,
+      airdropLamports: 2_000_000_000n,
+      initialTokenAmount: 2_000_000_000n,
+      marketConfig: {
+        rewardAmount: 0n,
+        timeToStake,
+        authorizedReaderPubkey: observer.publicKey,
+      },
+    });
+
+    const stakeEnd = Number(await platform.openMarket());
+    const { optionId } = await platform.addOption();
+
+    await sleepUntilOnChainTimestamp(stakeEnd + ONCHAIN_TIMESTAMP_BUFFER_SECONDS);
+    await platform.selectSingleWinningOption(optionId);
+
+    const nonAuthority = platform.getUserSigner(platform.participants[0]);
+    await shouldThrowCustomError(
+      () => platform.endRevealPeriod(nonAuthority),
+      OPPORTUNITY_MARKET_ERROR__UNAUTHORIZED,
+    );
+
+    await platform.endRevealPeriod();
     expect((await platform.fetchMarket()).data.revealEnded).to.be.true;
   });
 

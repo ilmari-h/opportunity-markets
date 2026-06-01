@@ -1177,10 +1177,6 @@
           }
         },
         {
-          "name": "reveal_period_authority",
-          "type": "pubkey"
-        },
-        {
           "name": "earliness_cutoff_seconds",
           "type": "u64"
         },
@@ -1218,6 +1214,9 @@
         {
           "name": "market",
           "writable": true
+        },
+        {
+          "name": "platform_config"
         }
       ],
       "args": []
@@ -1476,15 +1475,15 @@
           "type": "pubkey"
         },
         {
+          "name": "reveal_authority",
+          "type": "pubkey"
+        },
+        {
           "name": "min_time_to_stake_seconds",
           "type": "u64"
         },
         {
-          "name": "min_reveal_period_seconds",
-          "type": "u64"
-        },
-        {
-          "name": "max_reveal_period_seconds",
+          "name": "reveal_period_seconds",
           "type": "u64"
         },
         {
@@ -2591,15 +2590,15 @@
           "type": "u16"
         },
         {
+          "name": "reveal_authority",
+          "type": "pubkey"
+        },
+        {
           "name": "min_time_to_stake_seconds",
           "type": "u64"
         },
         {
-          "name": "min_reveal_period_seconds",
-          "type": "u64"
-        },
-        {
-          "name": "max_reveal_period_seconds",
+          "name": "reveal_period_seconds",
           "type": "u64"
         },
         {
@@ -4009,11 +4008,7 @@
             "type": "u64"
           },
           {
-            "name": "min_reveal_period_seconds",
-            "type": "u64"
-          },
-          {
-            "name": "max_reveal_period_seconds",
+            "name": "reveal_period_seconds",
             "type": "u64"
           },
           {
@@ -4258,10 +4253,6 @@
             "type": "pubkey"
           },
           {
-            "name": "reveal_period_authority",
-            "type": "pubkey"
-          },
-          {
             "name": "mint",
             "type": "pubkey"
           },
@@ -4311,11 +4302,7 @@
             "type": "u64"
           },
           {
-            "name": "min_reveal_period_seconds",
-            "type": "u64"
-          },
-          {
-            "name": "max_reveal_period_seconds",
+            "name": "reveal_period_seconds",
             "type": "u64"
           },
           {
@@ -4586,11 +4573,11 @@
             "type": "u64"
           },
           {
-            "name": "min_reveal_period_seconds",
-            "type": "u64"
+            "name": "reveal_authority",
+            "type": "pubkey"
           },
           {
-            "name": "max_reveal_period_seconds",
+            "name": "reveal_period_seconds",
             "type": "u64"
           }
         ]
