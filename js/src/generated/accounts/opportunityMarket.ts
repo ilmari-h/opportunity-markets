@@ -75,6 +75,7 @@ export type OpportunityMarket = {
   stakeEndTimestamp: Option<bigint>;
   resolvedAtTimestamp: Option<bigint>;
   winningOptionAllocation: number;
+  winningOptionActiveBp: number;
   rewardAmount: bigint;
   marketAuthority: Address;
   revealPeriodAuthority: Address;
@@ -104,6 +105,7 @@ export type OpportunityMarketArgs = {
   stakeEndTimestamp: OptionOrNullable<number | bigint>;
   resolvedAtTimestamp: OptionOrNullable<number | bigint>;
   winningOptionAllocation: number;
+  winningOptionActiveBp: number;
   rewardAmount: number | bigint;
   marketAuthority: Address;
   revealPeriodAuthority: Address;
@@ -136,6 +138,7 @@ export function getOpportunityMarketEncoder(): Encoder<OpportunityMarketArgs> {
       ['stakeEndTimestamp', getOptionEncoder(getU64Encoder())],
       ['resolvedAtTimestamp', getOptionEncoder(getU64Encoder())],
       ['winningOptionAllocation', getU16Encoder()],
+      ['winningOptionActiveBp', getU16Encoder()],
       ['rewardAmount', getU64Encoder()],
       ['marketAuthority', getAddressEncoder()],
       ['revealPeriodAuthority', getAddressEncoder()],
@@ -170,6 +173,7 @@ export function getOpportunityMarketDecoder(): Decoder<OpportunityMarket> {
     ['stakeEndTimestamp', getOptionDecoder(getU64Decoder())],
     ['resolvedAtTimestamp', getOptionDecoder(getU64Decoder())],
     ['winningOptionAllocation', getU16Decoder()],
+    ['winningOptionActiveBp', getU16Decoder()],
     ['rewardAmount', getU64Decoder()],
     ['marketAuthority', getAddressDecoder()],
     ['revealPeriodAuthority', getAddressDecoder()],
