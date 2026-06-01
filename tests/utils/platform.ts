@@ -42,8 +42,6 @@ import {
   closeStuckStakeAccount as closeStuckStakeAccountIx,
   unstake as unstakeIx,
   openMarket as openMarketIx,
-  pauseStaking as pauseStakingIx,
-  resumeStaking as resumeStakingIx,
   addReward as addRewardIx,
   withdrawReward as withdrawRewardIx,
   endRevealPeriod as endRevealPeriodIx,
@@ -664,28 +662,6 @@ export class Platform {
 
     await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
       label: "End reveal period",
-    });
-  }
-
-  async pauseStaking(): Promise<void> {
-    const ix = pauseStakingIx({
-      marketAuthority: this.marketCreator.solanaKeypair,
-      market: this.marketAddress,
-    });
-
-    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
-      label: "Pause staking",
-    });
-  }
-
-  async resumeStaking(): Promise<void> {
-    const ix = resumeStakingIx({
-      marketAuthority: this.marketCreator.solanaKeypair,
-      market: this.marketAddress,
-    });
-
-    await sendTransaction(this.rpc, this.sendAndConfirm, this.marketCreator.solanaKeypair, [ix], {
-      label: "Resume staking",
     });
   }
 
