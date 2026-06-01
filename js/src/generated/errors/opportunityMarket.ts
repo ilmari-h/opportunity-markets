@@ -82,10 +82,12 @@ export const OPPORTUNITY_MARKET_ERROR__OPTION_STILL_NEEDED = 0x178f; // 6031
 export const OPPORTUNITY_MARKET_ERROR__CREATOR_MISMATCH = 0x1790; // 6032
 /** RevealPeriodNotOver: Reveal period not over */
 export const OPPORTUNITY_MARKET_ERROR__REVEAL_PERIOD_NOT_OVER = 0x1791; // 6033
+/** NoFinalizedWinningOption: No winning option has a finalized stake */
+export const OPPORTUNITY_MARKET_ERROR__NO_FINALIZED_WINNING_OPTION = 0x1792; // 6034
 /** NoRewardToClaim: No reward to claim */
-export const OPPORTUNITY_MARKET_ERROR__NO_REWARD_TO_CLAIM = 0x1792; // 6034
+export const OPPORTUNITY_MARKET_ERROR__NO_REWARD_TO_CLAIM = 0x1793; // 6035
 /** RewardAlreadyClaimed: Reward already claimed */
-export const OPPORTUNITY_MARKET_ERROR__REWARD_ALREADY_CLAIMED = 0x1793; // 6035
+export const OPPORTUNITY_MARKET_ERROR__REWARD_ALREADY_CLAIMED = 0x1794; // 6036
 
 export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__ABORTED_COMPUTATION
@@ -109,6 +111,7 @@ export type OpportunityMarketError =
   | typeof OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED
   | typeof OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED
   | typeof OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM
+  | typeof OPPORTUNITY_MARKET_ERROR__NO_FINALIZED_WINNING_OPTION
   | typeof OPPORTUNITY_MARKET_ERROR__NO_REWARD_TO_CLAIM
   | typeof OPPORTUNITY_MARKET_ERROR__NO_STAKE
   | typeof OPPORTUNITY_MARKET_ERROR__NOT_REVEALED
@@ -151,6 +154,7 @@ if (process.env.NODE_ENV !== 'production') {
     [OPPORTUNITY_MARKET_ERROR__MARKET_NOT_RESOLVED]: `Market not yet resolved`,
     [OPPORTUNITY_MARKET_ERROR__MARKET_PAUSED]: `Market staking is currently paused`,
     [OPPORTUNITY_MARKET_ERROR__NO_FEES_TO_CLAIM]: `No fees to claim`,
+    [OPPORTUNITY_MARKET_ERROR__NO_FINALIZED_WINNING_OPTION]: `No winning option has a finalized stake`,
     [OPPORTUNITY_MARKET_ERROR__NO_REWARD_TO_CLAIM]: `No reward to claim`,
     [OPPORTUNITY_MARKET_ERROR__NO_STAKE]: `Stake account has no recorded stake`,
     [OPPORTUNITY_MARKET_ERROR__NOT_REVEALED]: `Stake not yet revealed`,
