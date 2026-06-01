@@ -1,9 +1,8 @@
 use anchor_lang::prelude::*;
 
 use crate::constants::{
-    MAX_MAX_REVEAL_PERIOD_SECONDS, MAX_PLATFORM_NAME_LEN,
-    MIN_MAX_REVEAL_PERIOD_SECONDS, MIN_PLATFORM_NAME_LEN,
-    PLATFORM_CONFIG_SEED,
+    MAX_MAX_REVEAL_PERIOD_SECONDS, MAX_PLATFORM_NAME_LEN, MIN_MAX_REVEAL_PERIOD_SECONDS,
+    MIN_PLATFORM_NAME_LEN, PLATFORM_CONFIG_SEED,
 };
 #[cfg(feature = "production-settings")]
 use crate::constants::{MIN_MARKET_RESOLUTION_DEADLINE_SECONDS, MIN_TIME_TO_STAKE_FLOOR_SECONDS};
@@ -56,8 +55,8 @@ pub fn init_platform_config(
         ErrorCode::InvalidParameters
     );
     require!(
-        max_reveal_period_seconds >= MIN_MAX_REVEAL_PERIOD_SECONDS
-            && max_reveal_period_seconds <= MAX_MAX_REVEAL_PERIOD_SECONDS
+        (MIN_MAX_REVEAL_PERIOD_SECONDS..=MAX_MAX_REVEAL_PERIOD_SECONDS)
+            .contains(&max_reveal_period_seconds)
             && max_reveal_period_seconds > min_reveal_period_seconds,
         ErrorCode::InvalidParameters
     );

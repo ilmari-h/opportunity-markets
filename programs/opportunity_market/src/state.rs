@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{MAX_CREATOR_FEE_BP, MAX_PLATFORM_FEE_BP, MAX_REWARD_POOL_FEE_BP, MAX_TOTAL_FEE_BP};
+use crate::constants::{
+    MAX_CREATOR_FEE_BP, MAX_PLATFORM_FEE_BP, MAX_REWARD_POOL_FEE_BP, MAX_TOTAL_FEE_BP,
+};
 use crate::error::ErrorCode;
 
 #[account]
@@ -87,7 +89,7 @@ pub struct OpportunityMarket {
     pub collected_creator_fees: u64,
 
     // Authority allowed to claim creator fees (only after winners are selected).
-    pub market_fee_claimer: Pubkey,
+    pub creator_fee_claimer: Pubkey,
 
     // Snapshot from platform at create time.
     pub market_resolution_deadline_seconds: u64,
@@ -119,7 +121,10 @@ impl FeeRates {
             reward_pool_fee_bp <= MAX_REWARD_POOL_FEE_BP,
             ErrorCode::InvalidFeeRates
         );
-        require!(creator_fee_bp <= MAX_CREATOR_FEE_BP, ErrorCode::InvalidFeeRates);
+        require!(
+            creator_fee_bp <= MAX_CREATOR_FEE_BP,
+            ErrorCode::InvalidFeeRates
+        );
         require!(
             platform_fee_bp + reward_pool_fee_bp + creator_fee_bp <= MAX_TOTAL_FEE_BP,
             ErrorCode::InvalidFeeRates
@@ -178,7 +183,6 @@ impl OpportunityMarket {
     }
 }
 
-
 #[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, InitSpace)]
 pub struct CollectedFees {
     pub platform_fee: u64,
@@ -210,8 +214,8 @@ pub struct StakeAccount {
     pub state_nonce_disclosure: u128,
     pub staked_at_timestamp: Option<u64>,
     pub unstaked_at_timestamp: Option<u64>,
-    pub amount: u64, // net stake (after all fees)
-    pub collected_fees: CollectedFees,  // fees owed to the platform, reward pool, and creator
+    pub amount: u64,                   // net stake (after all fees)
+    pub collected_fees: CollectedFees, // fees owed to the platform, reward pool, and creator
     pub revealed_option: Option<u64>,
     pub score: Option<u64>,
     pub unstaked: bool, // whether staked tokens have been returned
@@ -249,4 +253,3 @@ pub struct OpportunityMarketSponsor {
     pub reward_deposited: u64,
     pub reward_locked: bool,
 }
-

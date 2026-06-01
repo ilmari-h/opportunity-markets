@@ -122,7 +122,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(time_pct, 100);
-        // .max(1) on stake_since_creation shaves one tick off the peak.
+        // .max(1) on delay_after_option_creation shaves one tick off the peak.
         assert_eq!(earliness, 2 * PRECISION - (PRECISION / ONE_WEEK));
     }
 
@@ -280,7 +280,7 @@ mod tests {
 
     #[test]
     fn zero_cutoff_does_not_panic_and_gives_no_boost() {
-        // Cutoff = 0 is .max(1)'d internally; any stake_since_creation >= 1 hits the
+        // Cutoff = 0 is .max(1)'d internally; any delay_after_option_creation >= 1 hits the
         // clamp, so factor = PRECISION (1.0x) regardless of staking time.
         let reveal_start = MARKET_OPENED + ONE_WEEK;
         let (_, earliness) = calculate_user_score_components(

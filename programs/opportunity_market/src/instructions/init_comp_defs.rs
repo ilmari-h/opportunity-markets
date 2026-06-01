@@ -33,7 +33,8 @@ pub fn stake_comp_def(ctx: Context<StakeCompDef>) -> Result<()> {
         init_computation_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/stake.arcis".to_string(),
+                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/stake.arcis"
+                    .to_string(),
                 hash: circuit_hash!("stake"),
             })),
         )?;
@@ -71,7 +72,8 @@ pub fn reveal_stake_comp_def(ctx: Context<RevealStakeCompDef>) -> Result<()> {
         init_computation_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/reveal_stake.arcis".to_string(),
+                source: "https://pub-f4c38b2a6f20431a8856eb3b17373497.r2.dev/reveal_stake.arcis"
+                    .to_string(),
                 hash: circuit_hash!("reveal_stake"),
             })),
         )?;

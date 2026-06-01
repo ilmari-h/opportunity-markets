@@ -17,7 +17,10 @@ pub struct ResumeStaking<'info> {
 pub fn resume_staking(ctx: Context<ResumeStaking>) -> Result<()> {
     let market = &mut ctx.accounts.market;
 
-    require!(market.stake_end_timestamp.is_some(), ErrorCode::MarketNotOpen);
+    require!(
+        market.stake_end_timestamp.is_some(),
+        ErrorCode::MarketNotOpen
+    );
     require!(
         market.resolved_at_timestamp.is_none(),
         ErrorCode::WinnerAlreadySelected,

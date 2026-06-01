@@ -1,11 +1,8 @@
 use anchor_lang::prelude::*;
 
-use crate::constants::{
-    MAX_MAX_REVEAL_PERIOD_SECONDS,
-    MIN_MAX_REVEAL_PERIOD_SECONDS,
-};
 #[cfg(feature = "production-settings")]
 use crate::constants::MIN_MARKET_RESOLUTION_DEADLINE_SECONDS;
+use crate::constants::{MAX_MAX_REVEAL_PERIOD_SECONDS, MIN_MAX_REVEAL_PERIOD_SECONDS};
 use crate::error::ErrorCode;
 use crate::state::{FeeRates, PlatformConfig};
 
@@ -29,15 +26,15 @@ pub fn update_platform_config(
     min_reveal_period_seconds: u64,
     max_reveal_period_seconds: u64,
     market_resolution_deadline_seconds: u64,
-) -> Result<()> {    
+) -> Result<()> {
     #[cfg(feature = "production-settings")]
     require!(
         market_resolution_deadline_seconds >= MIN_MARKET_RESOLUTION_DEADLINE_SECONDS,
         ErrorCode::InvalidParameters
     );
     require!(
-        max_reveal_period_seconds >= MIN_MAX_REVEAL_PERIOD_SECONDS
-            && max_reveal_period_seconds <= MAX_MAX_REVEAL_PERIOD_SECONDS
+        (MIN_MAX_REVEAL_PERIOD_SECONDS..=MAX_MAX_REVEAL_PERIOD_SECONDS)
+            .contains(&max_reveal_period_seconds)
             && max_reveal_period_seconds > min_reveal_period_seconds,
         ErrorCode::InvalidParameters
     );

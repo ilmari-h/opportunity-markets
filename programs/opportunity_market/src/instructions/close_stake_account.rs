@@ -3,9 +3,9 @@ use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 
+use crate::constants::{OPPORTUNITY_MARKET_SEED, OPTION_SEED, STAKE_ACCOUNT_SEED};
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, RewardClaimedEvent};
-use crate::constants::{OPPORTUNITY_MARKET_SEED, OPTION_SEED, STAKE_ACCOUNT_SEED};
 use crate::state::{OpportunityMarket, OpportunityMarketOption, StakeAccount};
 
 #[derive(Accounts)]
@@ -63,7 +63,11 @@ pub struct CloseStakeAccount<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn close_stake_account<'info>(ctx: Context<'info, CloseStakeAccount<'info>>, option_id: u64, _stake_account_id: u32) -> Result<()> {
+pub fn close_stake_account<'info>(
+    ctx: Context<'info, CloseStakeAccount<'info>>,
+    option_id: u64,
+    _stake_account_id: u32,
+) -> Result<()> {
     let clock = Clock::get()?;
     let current_time = clock.unix_timestamp as u64;
 
@@ -82,9 +86,12 @@ pub fn close_stake_account<'info>(ctx: Context<'info, CloseStakeAccount<'info>>,
 
     // Load option data if account is still open; a closed non-winning option has
     // owner == SystemProgram and empty data after Anchor zeroes it out.
-    let option_closed = ctx.accounts.option.owner == &System::id() && ctx.accounts.option.data_is_empty();
+    let option_closed =
+        ctx.accounts.option.owner == &System::id() && ctx.accounts.option.data_is_empty();
     let option_acc: Option<Account<'info, OpportunityMarketOption>> = if !option_closed {
-        Some(Account::<OpportunityMarketOption>::try_from(ctx.accounts.option.as_ref())?)
+        Some(Account::<OpportunityMarketOption>::try_from(
+            ctx.accounts.option.as_ref(),
+        )?)
     } else {
         None
     };
@@ -150,10 +157,10 @@ pub fn close_stake_account<'info>(ctx: Context<'info, CloseStakeAccount<'info>>,
 
     // Decrement total_staked and write back; skipped if option was already closed.
     if let Some(mut opt) = option_acc {
-
         // Only decrement if stake reveal was finalized and `total_staked` was incremented
         if stake_account.score.is_some() {
-            opt.total_staked = opt.total_staked
+            opt.total_staked = opt
+                .total_staked
                 .checked_sub(stake_account.amount)
                 .ok_or(ErrorCode::Overflow)?;
         }
@@ -215,5 +222,7 @@ fn compute_winning_payout(
         .checked_add(fees.creator_fee)
         .ok_or(ErrorCode::Overflow)?;
 
-    reward.checked_add(fees_refund).ok_or(ErrorCode::Overflow.into())
+    reward
+        .checked_add(fees_refund)
+        .ok_or(ErrorCode::Overflow.into())
 }

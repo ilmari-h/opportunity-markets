@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+
 use crate::constants::MAX_TIME_TO_STAKE_SECONDS;
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, MarketOpenedEvent};

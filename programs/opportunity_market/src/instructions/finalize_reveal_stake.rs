@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
-use crate::score::calculate_user_score;
+use crate::constants::{OPTION_SEED, STAKE_ACCOUNT_SEED};
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, RevealStakeFinalizedEvent};
-use crate::constants::{OPTION_SEED, STAKE_ACCOUNT_SEED};
+use crate::score::calculate_user_score;
 use crate::state::{OpportunityMarket, OpportunityMarketOption, StakeAccount};
 
 #[derive(Accounts)]
@@ -37,7 +37,11 @@ pub struct FinalizeRevealStake<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, _stake_account_id: u32) -> Result<()> {
+pub fn finalize_reveal_stake(
+    ctx: Context<FinalizeRevealStake>,
+    option_id: u64,
+    _stake_account_id: u32,
+) -> Result<()> {
     let market = &ctx.accounts.market;
 
     // Check that we are within the reveal window
@@ -48,21 +52,28 @@ pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, 
     require!(current_time >= reveal_start, ErrorCode::TimeWindowMismatch);
     require!(!market.reveal_ended, ErrorCode::RevealPeriodEnded);
 
-    let revealed_option = ctx.accounts.stake_account.revealed_option.ok_or(ErrorCode::NotRevealed)?;
+    let revealed_option = ctx
+        .accounts
+        .stake_account
+        .revealed_option
+        .ok_or(ErrorCode::NotRevealed)?;
     require!(revealed_option == option_id, ErrorCode::InvalidOptionId);
 
     let stake_amount = ctx.accounts.stake_account.amount;
 
-    ctx.accounts.option.total_staked = ctx.accounts.option.total_staked
+    ctx.accounts.option.total_staked = ctx
+        .accounts
+        .option
+        .total_staked
         .checked_add(stake_amount)
         .ok_or(ErrorCode::Overflow)?;
 
     let stake_account = &ctx.accounts.stake_account;
 
-    let staked_at_timestamp = stake_account.staked_at_timestamp
+    let staked_at_timestamp = stake_account
+        .staked_at_timestamp
         .ok_or(ErrorCode::NoStake)?;
-    let user_stake_end = stake_account.unstaked_at_timestamp
-        .unwrap_or(reveal_start);
+    let user_stake_end = stake_account.unstaked_at_timestamp.unwrap_or(reveal_start);
 
     let stake_base_amount = stake_amount
         .checked_add(ctx.accounts.stake_account.collected_fees.total()?)
@@ -77,7 +88,10 @@ pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, 
         market.earliness_multiplier,
     )?;
 
-    ctx.accounts.option.total_score = ctx.accounts.option.total_score
+    ctx.accounts.option.total_score = ctx
+        .accounts
+        .option
+        .total_score
         .checked_add(user_score as u128)
         .ok_or(ErrorCode::Overflow)?;
 

@@ -3,9 +3,9 @@ use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 
+use crate::constants::{OPPORTUNITY_MARKET_SEED, STAKE_ACCOUNT_SEED};
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, UnstakedEvent};
-use crate::constants::{OPPORTUNITY_MARKET_SEED, STAKE_ACCOUNT_SEED};
 use crate::state::{OpportunityMarket, StakeAccount};
 
 #[derive(Accounts)]
@@ -58,10 +58,7 @@ pub struct Unstake<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn unstake(
-    ctx: Context<Unstake>,
-    _stake_account_id: u32,
-) -> Result<()> {
+pub fn unstake(ctx: Context<Unstake>, _stake_account_id: u32) -> Result<()> {
     let market = &ctx.accounts.market;
 
     let stake_end = market.stake_end_timestamp.ok_or(ErrorCode::MarketNotOpen)?;

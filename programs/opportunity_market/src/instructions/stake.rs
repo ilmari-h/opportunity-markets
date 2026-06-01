@@ -10,7 +10,7 @@ use crate::error::ErrorCode;
 use crate::events::{emit_ts, StakedEvent};
 use crate::state::{CollectedFees, OpportunityMarket, StakeAccount};
 use crate::COMP_DEF_OFFSET_STAKE;
-use crate::{ID, ID_CONST, ArciumSignerAccount};
+use crate::{ArciumSignerAccount, ID, ID_CONST};
 
 #[queue_computation_accounts("stake", payer)]
 #[derive(Accounts)]
@@ -164,11 +164,9 @@ pub fn stake(
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(input_nonce)
         .encrypted_u64(selected_option_ciphertext)
-
         // Authorized reader context (Shared)
         .x25519_pubkey(authorized_reader_pubkey)
         .plaintext_u128(authorized_reader_nonce) // .account => no locking by hand
-
         // Stake account context (Shared for MXE output encryption)
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(state_nonce)
@@ -267,19 +265,25 @@ pub fn stake_callback(
         creator_fee,
     } = ctx.accounts.stake_account.collected_fees;
     if platform_fee > 0 {
-        ctx.accounts.market.collected_platform_fees = ctx.accounts.market
+        ctx.accounts.market.collected_platform_fees = ctx
+            .accounts
+            .market
             .collected_platform_fees
             .checked_add(platform_fee)
             .ok_or(ErrorCode::Overflow)?;
     }
     if reward_pool_fee > 0 {
-        ctx.accounts.market.reward_amount = ctx.accounts.market
+        ctx.accounts.market.reward_amount = ctx
+            .accounts
+            .market
             .reward_amount
             .checked_add(reward_pool_fee)
             .ok_or(ErrorCode::Overflow)?;
     }
     if creator_fee > 0 {
-        ctx.accounts.market.collected_creator_fees = ctx.accounts.market
+        ctx.accounts.market.collected_creator_fees = ctx
+            .accounts
+            .market
             .collected_creator_fees
             .checked_add(creator_fee)
             .ok_or(ErrorCode::Overflow)?;

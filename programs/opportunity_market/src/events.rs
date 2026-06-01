@@ -29,7 +29,7 @@ pub struct MarketCreatedEvent {
     pub allow_unstaking_early: bool,
     pub min_stake_amount: u64,
     pub fee_rates: FeeRates,
-    pub market_fee_claimer: Pubkey,
+    pub creator_fee_claimer: Pubkey,
     pub market_resolution_deadline_seconds: u64,
     pub min_reveal_period_seconds: u64,
     pub max_reveal_period_seconds: u64,
@@ -218,7 +218,7 @@ pub struct StuckStakeClosedEvent {
 #[event]
 pub struct CreatorFeesClaimedEvent {
     pub market: Pubkey,
-    pub market_fee_claimer: Pubkey,
+    pub creator_fee_claimer: Pubkey,
     pub mint: Pubkey,
     pub destination: Pubkey,
     pub amount: u64,

@@ -17,8 +17,8 @@ mod circuits {
         stake_account_ctx: Shared,
     ) -> (
         // Shared more expensive than mxe btw!
-        Enc<Shared, SelectedOption>,  // stake data for user
-        Enc<Shared, SelectedOption>,  // stake data for disclosure
+        Enc<Shared, SelectedOption>, // stake data for user
+        Enc<Shared, SelectedOption>, // stake data for disclosure
     ) {
         let input = input_ctx.to_arcis();
         (
@@ -29,9 +29,7 @@ mod circuits {
 
     // Reveal stake: decrypt option from stake account
     #[instruction]
-    pub fn reveal_stake(
-        stake_account_ctx: Enc<Shared, SelectedOption>,
-    ) -> u64 {
+    pub fn reveal_stake(stake_account_ctx: Enc<Shared, SelectedOption>) -> u64 {
         let stake_data = stake_account_ctx.to_arcis();
         stake_data.selected_option.reveal()
     }

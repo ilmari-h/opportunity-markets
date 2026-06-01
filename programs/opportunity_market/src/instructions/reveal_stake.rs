@@ -2,9 +2,9 @@ use anchor_lang::prelude::*;
 use arcium_anchor::prelude::*;
 use arcium_client::idl::arcium::types::CallbackAccount;
 
+use crate::constants::STAKE_ACCOUNT_SEED;
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, StakeRevealedEvent};
-use crate::constants::STAKE_ACCOUNT_SEED;
 use crate::state::{OpportunityMarket, StakeAccount};
 use crate::COMP_DEF_OFFSET_REVEAL_STAKE;
 use crate::{ArciumSignerAccount, ID, ID_CONST};
@@ -63,7 +63,6 @@ pub struct RevealStake<'info> {
     pub arcium_program: Program<'info, Arcium>,
 }
 
-
 // This operation is permissionless:
 // after the staking period has ended and an option has been selected, anyone can reveal anyones vote.
 pub fn reveal_stake(
@@ -72,7 +71,6 @@ pub fn reveal_stake(
     _stake_account_id: u32,
 ) -> Result<()> {
     let market = &ctx.accounts.market;
-
 
     require!(
         market.resolved_at_timestamp.is_some(),
@@ -91,7 +89,7 @@ pub fn reveal_stake(
         // Stake account encrypted option (Enc<Shared, SelectedOption>)
         .x25519_pubkey(user_pubkey)
         .plaintext_u128(stake_account_nonce)
-        .account(stake_account_key, 8, 32 * 1)
+        .account(stake_account_key, 8, 32)
         .build();
 
     // Queue computation with callback
@@ -103,12 +101,10 @@ pub fn reveal_stake(
         vec![RevealStakeCallback::callback_ix(
             computation_offset,
             &ctx.accounts.mxe_account,
-            &[
-                CallbackAccount {
-                    pubkey: stake_account_key,
-                    is_writable: true,
-                },
-            ],
+            &[CallbackAccount {
+                pubkey: stake_account_key,
+                is_writable: true,
+            }],
         )?],
         1,
         0,
@@ -152,7 +148,7 @@ pub fn reveal_stake_callback(
         Err(e) => return Err(e),
     };
 
-    // Only run on the queue-time stake_account. 
+    // Only run on the queue-time stake_account.
     // A late callback delivered after close_stake_account + re-init would see pending_reveal=false
     require!(
         ctx.accounts.stake_account.pending_reveal

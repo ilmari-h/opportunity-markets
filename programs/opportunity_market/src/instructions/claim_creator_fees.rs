@@ -3,9 +3,9 @@ use anchor_spl::token_interface::{
     transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked,
 };
 
+use crate::constants::OPPORTUNITY_MARKET_SEED;
 use crate::error::ErrorCode;
 use crate::events::{emit_ts, CreatorFeesClaimedEvent};
-use crate::constants::OPPORTUNITY_MARKET_SEED;
 use crate::state::OpportunityMarket;
 
 #[derive(Accounts)]
@@ -19,7 +19,7 @@ pub struct ClaimCreatorFees<'info> {
         constraint = market.resolved_at_timestamp.is_some() @ ErrorCode::MarketNotResolved,
         constraint = market.reveal_ended @ ErrorCode::TimeWindowMismatch,
         constraint = market.collected_creator_fees > 0 @ ErrorCode::NoFeesToClaim,
-        constraint = market.market_fee_claimer == signer.key() @ ErrorCode::Unauthorized,
+        constraint = market.creator_fee_claimer == signer.key() @ ErrorCode::Unauthorized,
     )]
     pub market: Box<Account<'info, OpportunityMarket>>,
 
@@ -78,7 +78,7 @@ pub fn claim_creator_fees(ctx: Context<ClaimCreatorFees>) -> Result<()> {
 
     emit_ts!(CreatorFeesClaimedEvent {
         market: ctx.accounts.market.key(),
-        market_fee_claimer: ctx.accounts.signer.key(),
+        creator_fee_claimer: ctx.accounts.signer.key(),
         mint: ctx.accounts.token_mint.key(),
         destination: ctx.accounts.destination_token_account.key(),
         amount: fees,

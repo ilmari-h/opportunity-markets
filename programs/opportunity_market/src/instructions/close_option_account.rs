@@ -51,7 +51,7 @@ pub fn close_option_account(ctx: Context<CloseOptionAccount>, option_id: u64) ->
 
     let resolved = ctx.accounts.market.resolved_at_timestamp.is_some();
     let expired = !resolved && current_time >= select_deadline;
-    require!(resolved || expired, ErrorCode::MarketNotResolved);        
+    require!(resolved || expired, ErrorCode::MarketNotResolved);
 
     emit_ts!(OptionClosedEvent {
         option: ctx.accounts.option.key(),

@@ -7,8 +7,8 @@ pub mod constants;
 pub mod error;
 pub mod events;
 pub mod instructions;
-pub mod state;
 pub mod score;
+pub mod state;
 
 pub use error::ErrorCode;
 pub use instructions::*;
@@ -75,15 +75,11 @@ pub mod opportunity_market {
         )
     }
 
-    pub fn set_update_authority(
-        ctx: Context<SetUpdateAuthority>,
-    ) -> Result<()> {
+    pub fn set_update_authority(ctx: Context<SetUpdateAuthority>) -> Result<()> {
         instructions::set_update_authority(ctx)
     }
 
-    pub fn set_fee_claim_authority(
-        ctx: Context<SetFeeClaimAuthority>,
-    ) -> Result<()> {
+    pub fn set_fee_claim_authority(ctx: Context<SetFeeClaimAuthority>) -> Result<()> {
         instructions::set_fee_claim_authority(ctx)
     }
 
@@ -101,7 +97,7 @@ pub mod opportunity_market {
         earliness_cutoff_seconds: u64,
         earliness_multiplier: u16,
         min_stake_amount: u64,
-        market_fee_claimer: Pubkey,
+        creator_fee_claimer: Pubkey,
     ) -> Result<()> {
         instructions::create_market(
             ctx,
@@ -113,7 +109,7 @@ pub mod opportunity_market {
             earliness_cutoff_seconds,
             earliness_multiplier,
             min_stake_amount,
-            market_fee_claimer,
+            creator_fee_claimer,
         )
     }
 
@@ -157,15 +153,26 @@ pub mod opportunity_market {
         instructions::add_reward(ctx, amount, lock)
     }
 
-    pub fn finalize_reveal_stake(ctx: Context<FinalizeRevealStake>, option_id: u64, stake_account_id: u32) -> Result<()> {
+    pub fn finalize_reveal_stake(
+        ctx: Context<FinalizeRevealStake>,
+        option_id: u64,
+        stake_account_id: u32,
+    ) -> Result<()> {
         instructions::finalize_reveal_stake(ctx, option_id, stake_account_id)
     }
 
-    pub fn close_stake_account<'info>(ctx: Context<'info, CloseStakeAccount<'info>>, option_id: u64, stake_account_id: u32) -> Result<()> {
+    pub fn close_stake_account<'info>(
+        ctx: Context<'info, CloseStakeAccount<'info>>,
+        option_id: u64,
+        stake_account_id: u32,
+    ) -> Result<()> {
         instructions::close_stake_account(ctx, option_id, stake_account_id)
     }
 
-    pub fn close_stuck_stake_account(ctx: Context<CloseStuckStakeAccount>, stake_account_id: u32) -> Result<()> {
+    pub fn close_stuck_stake_account(
+        ctx: Context<CloseStuckStakeAccount>,
+        stake_account_id: u32,
+    ) -> Result<()> {
         instructions::close_stuck_stake_account(ctx, stake_account_id)
     }
 
@@ -185,10 +192,7 @@ pub mod opportunity_market {
         instructions::claim_creator_fees(ctx)
     }
 
-    pub fn init_stake_account(
-        ctx: Context<InitStakeAccount>,
-        stake_account_id: u32,
-    ) -> Result<()> {
+    pub fn init_stake_account(ctx: Context<InitStakeAccount>, stake_account_id: u32) -> Result<()> {
         instructions::init_stake_account(ctx, stake_account_id)
     }
 
@@ -243,5 +247,4 @@ pub mod opportunity_market {
     ) -> Result<()> {
         instructions::reveal_stake_callback(ctx, output)
     }
-
 }

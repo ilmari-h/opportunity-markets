@@ -10,7 +10,7 @@ name = "opportunity_market"
 
 [features]
 default = []
-cesscpi = ["no-entrypoint"]
+cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
 no-log-ix-name = []
@@ -29,3 +29,7 @@ anchor-spl = "1.0.2"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }
+
+[lints.clippy]
+too_many_arguments = "allow"
+diverging_sub_expression = "allow"

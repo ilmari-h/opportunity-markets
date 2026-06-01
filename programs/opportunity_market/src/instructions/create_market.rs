@@ -60,7 +60,7 @@ pub fn create_market(
     earliness_cutoff_seconds: u64,
     earliness_multiplier: u16,
     min_stake_amount: u64,
-    market_fee_claimer: Pubkey,
+    creator_fee_claimer: Pubkey,
 ) -> Result<()> {
     require!(
         (earliness_multiplier as u64) >= PRECISION
@@ -69,7 +69,7 @@ pub fn create_market(
     );
 
     let creator_key = ctx.accounts.creator.key();
-    let platform_key = ctx.accounts.platform_config.key();    
+    let platform_key = ctx.accounts.platform_config.key();
     let market_resolution_deadline_seconds = ctx
         .accounts
         .platform_config
@@ -90,7 +90,7 @@ pub fn create_market(
     market.allow_unstaking_early = allow_unstaking_early;
     market.authorized_reader_pubkey = authorized_reader_pubkey;
     market.fee_rates = ctx.accounts.platform_config.fee_rates;
-    market.market_fee_claimer = market_fee_claimer;
+    market.creator_fee_claimer = creator_fee_claimer;
     market.market_resolution_deadline_seconds = market_resolution_deadline_seconds;
     market.min_reveal_period_seconds = min_reveal_period_seconds;
     market.max_reveal_period_seconds = max_reveal_period_seconds;
@@ -109,7 +109,7 @@ pub fn create_market(
         earliness_multiplier: earliness_multiplier,
         min_stake_amount: min_stake_amount,
         fee_rates: ctx.accounts.platform_config.fee_rates,
-        market_fee_claimer: market_fee_claimer,
+        creator_fee_claimer: creator_fee_claimer,
         market_resolution_deadline_seconds: market_resolution_deadline_seconds,
         min_reveal_period_seconds: min_reveal_period_seconds,
         max_reveal_period_seconds: max_reveal_period_seconds,
