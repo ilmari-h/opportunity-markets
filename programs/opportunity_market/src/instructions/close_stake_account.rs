@@ -5,7 +5,7 @@ use anchor_spl::token_interface::{
 
 use crate::constants::{OPPORTUNITY_MARKET_SEED, OPTION_SEED, STAKE_ACCOUNT_SEED};
 use crate::error::ErrorCode;
-use crate::events::{StakeAccountClosedEvent, emit_ts};
+use crate::events::{emit_ts, StakeAccountClosedEvent};
 use crate::state::{OpportunityMarket, OpportunityMarketOption, StakeAccount};
 
 #[derive(Accounts)]
