@@ -24,7 +24,7 @@ import {
 
 export type CreatorFeesClaimedEvent = {
   market: Address;
-  marketFeeClaimer: Address;
+  creatorFeeClaimer: Address;
   mint: Address;
   destination: Address;
   amount: bigint;
@@ -33,7 +33,7 @@ export type CreatorFeesClaimedEvent = {
 
 export type CreatorFeesClaimedEventArgs = {
   market: Address;
-  marketFeeClaimer: Address;
+  creatorFeeClaimer: Address;
   mint: Address;
   destination: Address;
   amount: number | bigint;
@@ -43,7 +43,7 @@ export type CreatorFeesClaimedEventArgs = {
 export function getCreatorFeesClaimedEventEncoder(): FixedSizeEncoder<CreatorFeesClaimedEventArgs> {
   return getStructEncoder([
     ['market', getAddressEncoder()],
-    ['marketFeeClaimer', getAddressEncoder()],
+    ['creatorFeeClaimer', getAddressEncoder()],
     ['mint', getAddressEncoder()],
     ['destination', getAddressEncoder()],
     ['amount', getU64Encoder()],
@@ -54,7 +54,7 @@ export function getCreatorFeesClaimedEventEncoder(): FixedSizeEncoder<CreatorFee
 export function getCreatorFeesClaimedEventDecoder(): FixedSizeDecoder<CreatorFeesClaimedEvent> {
   return getStructDecoder([
     ['market', getAddressDecoder()],
-    ['marketFeeClaimer', getAddressDecoder()],
+    ['creatorFeeClaimer', getAddressDecoder()],
     ['mint', getAddressDecoder()],
     ['destination', getAddressDecoder()],
     ['amount', getU64Decoder()],

@@ -101,8 +101,7 @@ async function main() {
     earlinessCutoffSeconds: BigInt(config.earlinessCutoffSeconds),
     earlinessMultiplier: config.earlinessMultiplier ?? 10_000,
     minStakeAmount: BigInt(config.minStakeAmount ?? 0),
-    marketFeeClaimer: config.marketFeeClaimer ? address(config.marketFeeClaimer) : payer.address,
-    disableTimeWeighting: config.disableTimeWeighting ?? false,
+    creatorFeeClaimer: config.creatorFeeClaimer ? address(config.creatorFeeClaimer) : payer.address,
     programAddress: PROGRAM_ID,
   });
 

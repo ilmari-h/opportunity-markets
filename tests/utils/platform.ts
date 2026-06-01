@@ -99,7 +99,7 @@ interface MarketConfig {
   earlinessCutoffSeconds: bigint;
   earlinessMultiplier: number;
   minStakeAmount: bigint;
-  marketFeeClaimer?: Address;
+  creatorFeeClaimer?: Address;
 }
 
 export interface PlatformConfigArgs {
@@ -435,9 +435,8 @@ export class Platform {
       earlinessCutoffSeconds: marketConfig.earlinessCutoffSeconds,
       earlinessMultiplier: marketConfig.earlinessMultiplier,
       minStakeAmount: marketConfig.minStakeAmount,
-      disableTimeWeighting: false,
-      marketFeeClaimer:
-        marketConfig.marketFeeClaimer ?? runner.marketCreator.solanaKeypair.address,
+      creatorFeeClaimer:
+        marketConfig.creatorFeeClaimer ?? runner.marketCreator.solanaKeypair.address,
     });
 
     await sendTransaction(runner.rpc, runner.sendAndConfirm, runner.marketCreator.solanaKeypair, [createMarketIx], {

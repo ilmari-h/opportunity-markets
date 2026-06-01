@@ -384,8 +384,7 @@
               },
               {
                 "kind": "account",
-                "path": "market.platform",
-                "account": "OpportunityMarket"
+                "path": "platform_config"
               },
               {
                 "kind": "account",
@@ -1194,7 +1193,7 @@
           "type": "u64"
         },
         {
-          "name": "market_fee_claimer",
+          "name": "creator_fee_claimer",
           "type": "pubkey"
         }
       ]
@@ -3813,7 +3812,7 @@
             "type": "pubkey"
           },
           {
-            "name": "market_fee_claimer",
+            "name": "creator_fee_claimer",
             "type": "pubkey"
           },
           {
@@ -4092,7 +4091,7 @@
             }
           },
           {
-            "name": "market_fee_claimer",
+            "name": "creator_fee_claimer",
             "type": "pubkey"
           },
           {
@@ -4398,7 +4397,7 @@
             "type": "u64"
           },
           {
-            "name": "market_fee_claimer",
+            "name": "creator_fee_claimer",
             "type": "pubkey"
           },
           {
